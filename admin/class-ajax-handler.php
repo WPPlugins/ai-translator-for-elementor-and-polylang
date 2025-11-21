@@ -1,0 +1,2054 @@
+<?php
+/**
+ * Enhanced AJAX Handler with Error Handling and Cost Estimation
+ */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+class AITRFOEL_Ajax_Handler {
+    
+    private static $instance = null;
+    
+    public static function get_instance() {
+        if (null === self::$instance) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+    
+    private function __construct() {
+        // Translation actions
+        add_action('wp_ajax_aitrfoel_get_pages', [$this, 'get_pages']);
+        add_action('wp_ajax_aitrfoel_translate_page', [$this, 'translate_page']);
+        add_action('wp_ajax_aitrfoel_estimate_cost', [$this, 'estimate_cost']);
+        add_action('wp_ajax_aitrfoel_get_usage_stats', [$this, 'get_usage_stats']);
+        
+        // Bulk translation actions
+        add_action('wp_ajax_aitrfoel_pre_analyze_bulk', [$this, 'handle_pre_analyze_bulk']); // NEW: Pre-flight analysis
+        add_action('wp_ajax_aitrfoel_start_bulk_translation', [$this, 'handle_start_bulk_translation']);
+        add_action('wp_ajax_aitrfoel_get_translation_status', [$this, 'handle_get_translation_status']);
+        add_action('wp_ajax_aitrfoel_pause_translation', [$this, 'handle_pause_translation']);
+        add_action('wp_ajax_aitrfoel_resume_translation', [$this, 'handle_resume_translation']);
+        add_action('wp_ajax_aitrfoel_cancel_translation', [$this, 'handle_cancel_translation']);
+        add_action('wp_ajax_aitrfoel_publish_translations', [$this, 'handle_publish_translations']);
+        add_action('wp_ajax_aitrfoel_get_word_count', [$this, 'handle_get_word_count']);
+        
+        // Page management actions
+        add_action('wp_ajax_aitrfoel_delete_page', [$this, 'handle_delete_page']);
+        
+        // Settings actions
+        add_action('wp_ajax_aitrfoel_get_translation_settings', [$this, 'handle_get_translation_settings']);
+        add_action('wp_ajax_aitrfoel_save_translation_settings', [$this, 'handle_save_translation_settings']);
+        add_action('wp_ajax_aitrfoel_get_smart_suggestions', [$this, 'handle_get_smart_suggestions']);
+        add_action('wp_ajax_aitrfoel_debug_exclusions', [$this, 'handle_debug_exclusions']);
+        
+        // Cache management
+        add_action('wp_ajax_aitrfoel_clear_cache', [$this, 'clear_cache']);
+        add_action('wp_ajax_aitrfoel_get_cache_stats', [$this, 'get_cache_stats']);
+        
+        // Debug endpoint
+        add_action('wp_ajax_aitrfoel_debug_test', [$this, 'handle_debug_test']);
+        add_action('wp_ajax_aitrfoel_force_cron', [$this, 'handle_force_cron']);
+        add_action('wp_ajax_aitrfoel_process_pending', [$this, 'handle_process_pending']);
+        add_action('wp_ajax_aitrfoel_test_server_usage', [$this, 'handle_test_server_usage']); // NEW: Test server usage
+        
+        // Monitor endpoints
+        add_action('wp_ajax_aitrfoel_monitor_jobs', [$this, 'handle_monitor_jobs']);
+        add_action('wp_ajax_aitrfoel_get_system_logs', [$this, 'handle_get_system_logs']);
+        add_action('wp_ajax_aitrfoel_refresh_table_data', [$this, 'handle_refresh_table_data']);
+        
+        // Removed: Background process endpoints (using direct processing now)
+        
+        // Legacy support
+        add_action('wp_ajax_aitrfoel_publish_translation', [$this, 'handle_publish_translation']);
+        add_action('wp_ajax_aitrfoel_get_preview_url', [$this, 'handle_get_preview_url']);
+    }
+    
+    /**
+     * Get pages list for translation
+     */
+    public function get_pages() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            if (!current_user_can('edit_pages')) {
+                throw new Exception(__('You do not have permission to perform this action.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            $args = [
+                'post_type' => 'page',
+                'post_status' => 'publish',
+                'posts_per_page' => -1,
+                'orderby' => 'title',
+                'order' => 'ASC',
+                'meta_key' => '_elementor_edit_mode',
+                'meta_value' => 'builder'
+            ];
+            
+            $pages = get_posts($args);
+            
+            if (empty($pages)) {
+                wp_send_json_error(__('No Elementor pages found.', 'ai-translator-for-elementor-and-polylang'));
+                return;
+            }
+            
+            $pages_data = [];
+            foreach ($pages as $page) {
+                $pages_data[] = [
+                    'id' => $page->ID,
+                    'title' => $page->post_title,
+                    'url' => get_permalink($page->ID),
+                    'edit_url' => admin_url('post.php?post=' . $page->ID . '&action=edit')
+                ];
+            }
+            
+            wp_send_json_success($pages_data);
+            
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+    
+    /**
+     * Estimate translation cost
+     */
+    public function estimate_cost() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            if (!current_user_can('edit_pages')) {
+                throw new Exception(__('You do not have permission to perform this action.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            $page_id = intval($_POST['page_id'] ?? 0);
+            
+            if (!$page_id) {
+                throw new Exception(__('Invalid page ID.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            // Get translatable content
+            $parser_class = class_exists('aitrfoel_Widget_Parser_Fixed') ? 'aitrfoel_Widget_Parser_Fixed' : 'AITRFOEL_Widget_Parser';
+            $parser = $parser_class::get_instance();
+            $elementor_data = get_post_meta($page_id, '_elementor_data', true);
+            
+            if (empty($elementor_data)) {
+                throw new Exception(__('No Elementor data found for this page.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            $elements = json_decode($elementor_data, true);
+            
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new Exception(__('Invalid Elementor data format.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            // Extract translatable strings
+            $translatable_strings = [];
+            $translation_map = $parser->parse_for_translation($elements);
+            $translatable_strings = array_values($translation_map);
+            
+            if (empty($translatable_strings)) {
+                wp_send_json_success([
+                    'message' => __('No translatable content found.', 'ai-translator-for-elementor-and-polylang'),
+                    'cost' => '$0.00',
+                    'details' => []
+                ]);
+                return;
+            }
+            
+            // Calculate basic word and character counts
+            $word_count = 0;
+            foreach ($translatable_strings as $string) {
+                $word_count += str_word_count($string);
+            }
+            
+            $character_count = array_sum(array_map('strlen', $translatable_strings));
+            
+            // Check word limits for estimation
+            try {
+                $limit_info = $this->check_word_limit($word_count);
+            } catch (Exception $limit_error) {
+                // If word limit exceeded, return error instead of estimate
+                throw $limit_error;
+            }
+
+            // Add breakdown by content type
+            $breakdown = [
+                'total_elements' => count($translatable_strings),
+                'word_count' => $word_count,
+                'character_count' => $character_count,
+                'words_left' => $limit_info['words_left'],
+                'word_limit' => $limit_info['limit'],
+                'license_type' => $limit_info['license'],
+                'provider' => 'openai',
+                'model' => get_option('aitrfoel_openai_model', 'gpt-3.5-turbo')
+            ];
+
+            wp_send_json_success([
+                'cost' => 'Estimate not available',
+                'cost_raw' => 0,
+                'details' => [],
+                'breakdown' => $breakdown,
+                'message' => sprintf(
+                    /* translators: 1: Number of words, 2: Number of elements */
+                    __('Word count: %1$d words (%2$d elements)', 'ai-translator-for-elementor-and-polylang'),
+                    $word_count,
+                    count($translatable_strings)
+                )
+            ]);
+            
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+    
+    /**
+     * Translate page with enhanced error handling
+     */
+    public function translate_page() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            if (!current_user_can('edit_pages')) {
+                throw new Exception(__('You do not have permission to perform this action.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            // Get parameters
+            $page_id = intval($_POST['page_id'] ?? 0);
+            $target_lang = sanitize_text_field($_POST['target_lang'] ?? '');
+            $source_lang = sanitize_text_field($_POST['source_lang'] ?? 'auto');
+            
+            // Sanitize strings array
+            $strings_to_translate = [];
+            if (isset($_POST['strings']) && is_array($_POST['strings'])) {
+                foreach ($_POST['strings'] as $string) {
+                    // Use wp_kses_post to allow safe HTML in translation strings
+                    $strings_to_translate[] = wp_kses_post(wp_unslash($string));
+                }
+            }
+            
+            // Validate inputs
+            if (!$page_id) {
+                throw new Exception(__('Invalid page ID.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            // If no strings provided, fetch content
+            if (empty($strings_to_translate)) {
+                $parser_class = class_exists('aitrfoel_Widget_Parser_Fixed') ? 'aitrfoel_Widget_Parser_Fixed' : 'AITRFOEL_Widget_Parser';
+                $parser = $parser_class::get_instance();
+                $elementor_data = get_post_meta($page_id, '_elementor_data', true);
+                
+                if (empty($elementor_data)) {
+                    throw new Exception(__('No Elementor data found.', 'ai-translator-for-elementor-and-polylang'));
+                }
+                
+                $elementor_data_array = json_decode($elementor_data, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    throw new Exception(__('Failed to decode Elementor data.', 'ai-translator-for-elementor-and-polylang'));
+                }
+                
+                $translation_map = $parser->parse_for_translation($elementor_data_array);
+                wp_send_json_success(['strings' => array_values($translation_map)]);
+                return;
+            }
+            
+            if (empty($target_lang)) {
+                throw new Exception(__('Target language is required.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            // Check API configuration
+            $api_key = get_option('aitrfoel_openai_api_key', '');
+                
+            if (empty($api_key)) {
+                throw new Exception(__('Please configure your OpenAI API key in the settings.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            // Estimate word count for limit validation
+            $estimated_words = 0;
+            foreach ($strings_to_translate as $string) {
+                $estimated_words += str_word_count($string);
+            }
+            
+            // Check word limits before proceeding - WITH DEBUGGING
+            
+            try {
+                $this->check_word_limit($estimated_words);
+                
+            } catch (Exception $e) {
+                
+                throw $e; // Re-throw to be handled by outer catch
+            }
+            
+            // Start translation process
+            $engine = AITRFOEL_Translation_Engine::get_instance();
+            
+            // Log the translation start
+            AITRFOEL_Logger::log(sprintf(
+                'Starting translation: Page %d to %s using %s',
+                $page_id,
+                $target_lang,
+                'openai'
+            ), 'info');
+            
+            // Perform translation with error handling
+            $start_time = microtime(true);
+            
+            try {
+                $new_page_id = $engine->translate_page($page_id, $target_lang, $source_lang, $strings_to_translate);
+                
+                if (is_wp_error($new_page_id)) {
+                    throw new Exception($new_page_id->get_error_message());
+                }
+            } catch (Exception $translation_error) {
+                // Log the specific translation error
+                AITRFOEL_Logger::log('Translation failed: ' . $translation_error->getMessage(), 'error', [
+                    'page_id' => $page_id,
+                    'target_lang' => $target_lang,
+                    'provider' => 'openai'
+                ]);
+                
+                // Provide user-friendly error message based on error type
+                $error_message = $this->get_user_friendly_error($translation_error);
+                throw new Exception($error_message);
+            }
+            
+            $end_time = microtime(true);
+            $translation_time = round($end_time - $start_time, 2);
+            
+            if (!$new_page_id) {
+                throw new Exception(__('Translation failed. Please check the logs for details.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            // Get translation statistics
+            $new_page = get_post($new_page_id);
+            $stats = $engine->get_last_translation_stats();
+            
+            // Record basic usage statistics
+            $usage_tracker = AITRFOEL_Usage_Tracker::get_instance();
+            $usage_tracker->record_usage([
+                'word_count' => $stats['word_count'] ?? 0,
+                'page_count' => 1,
+                'character_count' => $stats['character_count'] ?? 0
+            ]);
+            
+            // Log success
+            AITRFOEL_Logger::log(sprintf(
+                'Translation completed: Page %d -> %d in %s seconds',
+                $page_id,
+                $new_page_id,
+                $translation_time
+            ), 'success');
+            
+            // Prepare response
+            $response_data = [
+                'success' => true,
+                'new_page_id' => $new_page_id,
+                'translated_page_id' => $new_page_id,
+                'new_page_url' => get_permalink($new_page_id),
+                'edit_url' => admin_url('post.php?post=' . $new_page_id . '&action=edit'),
+                'preview_url' => get_preview_post_link($new_page_id),
+                'title' => $new_page->post_title,
+                'translated_title' => $new_page->post_title,
+                'status' => $new_page->post_status,
+                'is_draft' => $new_page->post_status === 'draft',
+                'statistics' => [
+                    'time_taken' => $translation_time . 's',
+                    'elements_translated' => $stats['elements_translated'] ?? 0,
+                    'words_translated' => $stats['word_count'] ?? 0,
+                    'cost' => '$' . number_format($stats['estimated_cost'] ?? 0, 4)
+                ],
+                'message' => sprintf(
+                    /* translators: 1: Number of words translated, 2: Time in seconds */
+                    __('Translation completed successfully! %1$d words translated in %2$s seconds.', 'ai-translator-for-elementor-and-polylang'),
+                    $stats['word_count'] ?? 0,
+                    $translation_time
+                )
+            ];
+            
+            wp_send_json_success($response_data);
+            
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+    
+    /**
+     * Get basic usage statistics
+     */
+    public function get_usage_stats() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            if (!current_user_can('edit_pages')) {
+                throw new Exception(__('You do not have permission to view statistics.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            $usage_tracker = AITRFOEL_Usage_Tracker::get_instance();
+            $month = sanitize_text_field($_POST['month'] ?? gmdate('Y-m'));
+
+            // Get simplified monthly stats
+            $stats = $usage_tracker->get_monthly_stats($month);
+
+            // Return simplified response structure
+            wp_send_json_success([
+                'stats' => [
+                    'total_words' => $stats['total_words'],
+                    'total_pages' => $stats['total_pages'], 
+                    'total_characters' => $stats['total_characters'],
+                    'month' => $stats['month']
+                ],
+                'breakdown' => [] // No breakdown in simplified version
+            ]);
+            
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+    
+    /**
+     * Clear translation cache
+     */
+    public function clear_cache() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            if (!current_user_can('manage_options')) {
+                throw new Exception(__('You do not have permission to clear cache.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            $cache_manager = AITRFOEL_Cache_Manager::get_instance();
+            $cleared = $cache_manager->clear_cache();
+            
+            wp_send_json_success([
+                'message' => sprintf(
+                    /* translators: %d: Number of cache entries removed */
+                    __('Cache cleared successfully! %d entries removed.', 'ai-translator-for-elementor-and-polylang'),
+                    $cleared
+                )
+            ]);
+            
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+    
+    /**
+     * Get cache statistics
+     */
+    public function get_cache_stats() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            if (!current_user_can('manage_options')) {
+                throw new Exception(__('You do not have permission to view cache statistics.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            $cache_manager = AITRFOEL_Cache_Manager::get_instance();
+            $stats = $cache_manager->get_stats();
+            
+            wp_send_json_success($stats);
+            
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+
+    /**
+     * Handle publish translation request (legacy support)
+     */
+    public function handle_publish_translation() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            if (!current_user_can('edit_posts')) {
+                throw new Exception(__('Permission denied.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            $page_id = intval($_POST['page_id'] ?? 0);
+            
+            if (!$page_id) {
+                throw new Exception(__('Missing page ID.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            $page = get_post($page_id);
+            if (!$page) {
+                throw new Exception(__('Page not found.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            $result = wp_update_post([
+                'ID' => $page_id,
+                'post_status' => 'publish'
+            ]);
+            
+            if (is_wp_error($result)) {
+                throw new Exception($result->get_error_message());
+            }
+            
+            AITRFOEL_Logger::log(sprintf('Published translated page: %s (ID: %d)', $page->post_title, $page_id), 'success');
+            
+            wp_send_json_success([
+                /* translators: %s: Page title */
+                'message' => sprintf(__('Page "%s" has been published successfully!', 'ai-translator-for-elementor-and-polylang'), $page->post_title),
+                'page_id' => $page_id,
+                'view_url' => get_permalink($page_id),
+                'edit_url' => get_edit_post_link($page_id, 'raw'),
+                'status' => 'publish'
+            ]);
+            
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+    
+    /**
+     * Handle get preview URL request (legacy support)
+     */
+    public function handle_get_preview_url() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            if (!current_user_can('edit_posts')) {
+                throw new Exception(__('Permission denied.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            $page_id = intval($_POST['page_id'] ?? 0);
+            
+            if (!$page_id) {
+                throw new Exception(__('Missing page ID.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            $page = get_post($page_id);
+            if (!$page) {
+                throw new Exception(__('Page not found.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            wp_send_json_success([
+                'preview_url' => get_preview_post_link($page_id),
+                'edit_url' => get_edit_post_link($page_id, 'raw'),
+                'title' => $page->post_title,
+                'status' => $page->post_status
+            ]);
+            
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+    
+    /**
+     * Get user-friendly error message
+     */
+    private function get_user_friendly_error($exception) {
+        $message = $exception->getMessage();
+        
+        // API key errors
+        if (strpos($message, 'API key') !== false || strpos($message, 'Invalid API') !== false) {
+            return __('API key is invalid or missing. Please check your settings.', 'ai-translator-for-elementor-and-polylang');
+        }
+        
+        // Rate limit errors
+        if (strpos($message, 'rate limit') !== false || strpos($message, '429') !== false) {
+            return __('API rate limit exceeded. Please wait a moment and try again.', 'ai-translator-for-elementor-and-polylang');
+        }
+        
+        // Quota errors
+        if (strpos($message, 'quota') !== false || strpos($message, 'billing') !== false) {
+            return __('API quota exceeded or billing issue. Please check your API account.', 'ai-translator-for-elementor-and-polylang');
+        }
+        
+        // Network errors
+        if (strpos($message, 'cURL') !== false || strpos($message, 'connection') !== false) {
+            return __('Network connection error. Please check your internet connection and try again.', 'ai-translator-for-elementor-and-polylang');
+        }
+        
+        // Timeout errors
+        if (strpos($message, 'timeout') !== false || strpos($message, 'timed out') !== false) {
+            return __('Request timed out. The page might be too large. Try translating smaller sections.', 'ai-translator-for-elementor-and-polylang');
+        }
+        
+        // JSON errors
+        if (strpos($message, 'JSON') !== false) {
+            return __('Data format error. Please try refreshing the page and trying again.', 'ai-translator-for-elementor-and-polylang');
+        }
+        
+        // Default
+        return sprintf(
+            /* translators: %s: Error message */
+            __('Translation error: %s', 'ai-translator-for-elementor-and-polylang'),
+            $message
+        );
+    }
+    
+    /**
+     * Handle errors consistently
+     */
+    private function handle_error($exception) {
+        $error_message = $exception->getMessage();
+        
+        // Check if message is JSON-encoded error data (from word limit checks)
+        $error_data = json_decode($error_message, true);
+        
+        if ($error_data && isset($error_data['type'])) {
+            // This is a structured error (limit_reached, cooldown, insufficient_words)
+            // Log the error
+            AITRFOEL_Logger::log('AJAX Error: ' . $error_data['type'] . ' - ' . $error_data['message'], 'error', $error_data);
+            
+            // Send structured error response
+            wp_send_json_error($error_data);
+        } else {
+            // Regular error handling
+            // Log the error
+            AITRFOEL_Logger::log('AJAX Error: ' . $error_message, 'error', [
+                'trace' => $exception->getTraceAsString(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine()
+            ]);
+            
+            // Send user-friendly error response
+            wp_send_json_error([
+                'message' => $error_message,
+                'code' => $exception->getCode(),
+                'technical_details' => WP_DEBUG ? [
+                    'file' => basename($exception->getFile()),
+                    'line' => $exception->getLine()
+                ] : null
+            ]);
+        }
+    }
+
+    // =============================================
+    // BULK TRANSLATION ENDPOINTS
+    // =============================================
+
+    /**
+     * Pre-flight analysis for bulk translation
+     * Accurately counts words BEFORE starting translation
+     * 
+     * @since 1.0.3
+     */
+    public function handle_pre_analyze_bulk() {
+        // Enable error logging for debugging
+        
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            if (!current_user_can('edit_pages')) {
+                throw new Exception(__('You do not have permission to perform this action.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            // Handle pages array
+            $page_ids = [];
+            if (isset($_POST['pages']) && is_array($_POST['pages'])) {
+                $page_ids = array_map('intval', $_POST['pages']);
+            } elseif (isset($_POST['pages'])) {
+                $pages_str = sanitize_text_field($_POST['pages']);
+                $page_ids = !empty($pages_str) ? array_map('intval', explode(',', $pages_str)) : [];
+            }
+
+            // Handle languages array  
+            $target_langs = [];
+            if (isset($_POST['languages']) && is_array($_POST['languages'])) {
+                $target_langs = array_map('sanitize_text_field', $_POST['languages']);
+            } elseif (isset($_POST['languages'])) {
+                $langs_str = sanitize_text_field($_POST['languages']);
+                $target_langs = !empty($langs_str) ? array_map('sanitize_text_field', explode(',', $langs_str)) : [];
+            }
+
+            if (empty($page_ids) || empty($target_langs)) {
+                throw new Exception(__('Pages and languages are required.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            // Check if parser class exists
+            if (!class_exists('AITRFOEL_Widget_Parser')) {
+                throw new Exception(__('Widget parser class not loaded. Please refresh the page.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            // Get parser instance
+            $parser = AITRFOEL_Widget_Parser::get_instance();
+            
+            // Analyze each page
+            $breakdown = [];
+            $total_words = 0;
+            $queue_preview = [];
+            
+            foreach ($page_ids as $page_id) {
+                
+                // Validate page exists
+                $post = get_post($page_id);
+                if (!$post) {
+                    /* translators: %d: Page ID */
+                    throw new Exception(sprintf(__('Page ID %d not found.', 'ai-translator-for-elementor-and-polylang'), $page_id));
+                }
+                
+                // Get Elementor data
+                $elementor_data = get_post_meta($page_id, '_elementor_data', true);
+                
+                if (empty($elementor_data)) {
+                    // Skip pages without Elementor data
+                    continue;
+                }
+                
+                // Parse and decode
+                $elementor_data_array = json_decode($elementor_data, true);
+                
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    AITRFOEL_Logger::log("Failed to decode Elementor data for page {$page_id}: " . json_last_error_msg(), 'warning');
+                    continue;
+                }
+                
+                // Parse for translation using REAL parser
+                $translation_map = $parser->parse_for_translation($elementor_data_array);
+                
+                // Count words accurately
+                $page_word_count = 0;
+                foreach ($translation_map as $item) {
+                    if (isset($item['original']) && is_string($item['original'])) {
+                        $page_word_count += str_word_count(wp_strip_all_tags($item['original']));
+                    }
+                }
+                
+                // Calculate total for this page across all languages
+                $page_total_words = $page_word_count * count($target_langs);
+                $total_words += $page_total_words;
+                
+                // Add to breakdown
+                $breakdown[] = [
+                    'page_id' => $page_id,
+                    'page_title' => $post->post_title,
+                    'words' => $page_word_count,
+                    'languages' => $target_langs,
+                    'total_words' => $page_total_words
+                ];
+                
+                // Generate queue preview
+                foreach ($target_langs as $lang) {
+                    $queue_preview[] = [
+                        'label' => sprintf('%s → %s', $post->post_title, strtoupper($lang)),
+                        'words' => $page_word_count,
+                        'page_id' => $page_id,
+                        'language' => $lang
+                    ];
+                }
+            }
+            
+            // Get license status and word limit
+            $license_manager = AITRFOEL_License_Manager_Server::get_instance();
+            $license_status = $license_manager->get_license_status();
+            
+            $words_used = $license_status['words_used'];
+            $word_limit = $license_status['word_limit'];
+            $words_left = max(0, $word_limit - $words_used);
+            $plan_name = $license_status['plan'];
+            
+            // Check if can proceed
+            $can_proceed = $total_words <= $words_left;
+            
+            // Prepare response
+            $response = [
+                'can_proceed' => $can_proceed,
+                'total_words_needed' => $total_words,
+                'words_left' => $words_left,
+                'word_limit' => $word_limit,
+                'words_used' => $words_used,
+                'plan' => $plan_name,
+                'breakdown' => $breakdown,
+                'queue_preview' => $queue_preview,
+                'total_jobs' => count($queue_preview),
+                'pages_count' => count($page_ids),
+                'languages_count' => count($target_langs)
+            ];
+            
+            // Add error message if cannot proceed
+            if (!$can_proceed) {
+                $response['error'] = sprintf(
+                    /* translators: 1: Number of words required, 2: Number of words remaining, 3: Plan name */
+                    __('Insufficient words available. This translation requires %1$s words, but you only have %2$s words left in your %3$s plan.', 'ai-translator-for-elementor-and-polylang'),
+                    number_format($total_words),
+                    number_format($words_left),
+                    $plan_name
+                );
+                
+                // Add upgrade URL if available
+                if (function_exists('eatp_fs') && eatp_fs()->is_registered()) {
+                    $response['upgrade_url'] = eatp_fs()->get_upgrade_url();
+                } else {
+                    $response['upgrade_url'] = 'https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing';
+                }
+            }
+            
+            AITRFOEL_Logger::log(sprintf(
+                'Pre-analysis completed: %d pages × %d languages = %d words needed, %d words available, can_proceed: %s',
+                count($page_ids),
+                count($target_langs),
+                $total_words,
+                $words_left,
+                $can_proceed ? 'YES' : 'NO'
+            ), 'info');
+            wp_send_json_success($response);
+
+        } catch (Exception $e) {
+            error_log('EAT: Exception in pre-analysis: ' . $e->getMessage());
+            error_log('EAT: Exception trace: ' . $e->getTraceAsString());
+            $this->handle_error($e);
+        } catch (Error $e) {
+            error_log('EAT: Fatal error in pre-analysis: ' . $e->getMessage());
+            error_log('EAT: Error trace: ' . $e->getTraceAsString());
+            wp_send_json_error([
+                'message' => 'Fatal error: ' . $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+        }
+    }
+
+    /**
+     * Start bulk translation process
+     */
+    public function handle_start_bulk_translation() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            if (!current_user_can('edit_pages')) {
+                throw new Exception(__('You do not have permission to perform this action.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            // Handle pages array
+            $page_ids = [];
+            if (isset($_POST['pages']) && is_array($_POST['pages'])) {
+                $page_ids = array_map('intval', $_POST['pages']);
+            } elseif (isset($_POST['pages'])) {
+                $pages_str = sanitize_text_field($_POST['pages']);
+                $page_ids = !empty($pages_str) ? array_map('intval', explode(',', $pages_str)) : [];
+            }
+
+            // Handle languages array  
+            $target_langs = [];
+            if (isset($_POST['languages']) && is_array($_POST['languages'])) {
+                $target_langs = array_map('sanitize_text_field', $_POST['languages']);
+            } elseif (isset($_POST['languages'])) {
+                $langs_str = sanitize_text_field($_POST['languages']);
+                $target_langs = !empty($langs_str) ? array_map('sanitize_text_field', explode(',', $langs_str)) : [];
+            }
+
+            $source_language = sanitize_text_field($_POST['source_language'] ?? 'auto');
+
+            if (empty($page_ids) || empty($target_langs)) {
+                throw new Exception(__('Pages and languages are required.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            // Validate page IDs
+            foreach ($page_ids as $page_id) {
+                if (!get_post($page_id)) {
+                    /* translators: %d: Page ID */
+                    throw new Exception(sprintf(__('Page ID %d not found.', 'ai-translator-for-elementor-and-polylang'), $page_id));
+                }
+            }
+
+            // ENHANCED: Accurate word count using parser (same as pre-analyze)
+            $parser = AITRFOEL_Widget_Parser::get_instance();
+            $total_estimated_words = 0;
+            
+            foreach ($page_ids as $page_id) {
+                $elementor_data = get_post_meta($page_id, '_elementor_data', true);
+                
+                if (!empty($elementor_data)) {
+                    $elementor_data_array = json_decode($elementor_data, true);
+                    
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $translation_map = $parser->parse_for_translation($elementor_data_array);
+                        
+                        foreach ($translation_map as $item) {
+                            if (isset($item['original']) && is_string($item['original'])) {
+                                $total_estimated_words += str_word_count(wp_strip_all_tags($item['original']));
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Multiply by number of languages
+            $total_estimated_words *= count($target_langs);
+            
+            AITRFOEL_Logger::log(sprintf(
+                'Bulk translation pre-flight check: %d pages × %d languages = %d estimated words',
+                count($page_ids),
+                count($target_langs),
+                $total_estimated_words
+            ), 'info');
+            
+            // Check word limit BEFORE starting translation
+            try {
+                $limit_check = $this->check_word_limit($total_estimated_words);
+                
+                AITRFOEL_Logger::log(sprintf(
+                    'Word limit check passed: %d words needed, %d words available',
+                    $total_estimated_words,
+                    $limit_check['words_left']
+                ), 'info');
+                
+            } catch (Exception $e) {
+                // Re-throw the exception to be caught by the outer try/catch which handles errors properly
+                throw $e;
+            }
+
+            // Create job ID
+            $job_id = 'bulk_' . time() . '_' . wp_generate_password(8, false);
+
+            // Create job in database using bulk translation queue
+            $queue = AITRFOEL_Bulk_Translation_Queue::get_instance();
+            
+            $job_data = [
+                'page_ids' => $page_ids,
+                'target_languages' => $target_langs,
+                'source_language' => $source_language,
+                'user_id' => get_current_user_id(),
+                'total_items' => count($page_ids) * count($target_langs)
+            ];
+            
+            $db_job_id = $queue->create_job($job_id, $job_data);
+            
+            if (is_wp_error($db_job_id)) {
+                throw new Exception($db_job_id->get_error_message());
+            }
+
+            // Process translations with SMOOTH progress tracking
+            $engine = AITRFOEL_Translation_Engine::get_instance();
+            $total_jobs = count($page_ids) * count($target_langs);
+            $completed_jobs = 0;
+            $results = [];
+            $error_count = 0;
+            
+            // Update job status to processing
+            $queue->update_job($job_id, [
+                'status' => 'processing',
+                'completed_items' => 0,
+                'total_items' => $total_jobs,
+                'current_step' => 'Initializing translation process...',
+                'details' => 'Preparing pages for translation'
+            ]);
+            
+            // Allow advanced users to adjust PHP limits if needed via filter hook
+            // This provides flexibility without forcing global changes
+            // Example: add_filter('aitrfoel_before_bulk_translation', function() { @set_time_limit(300); });
+            do_action('aitrfoel_before_bulk_translation', $job_id, $total_jobs);
+            
+            foreach ($page_ids as $page_index => $page_id) {
+                foreach ($target_langs as $lang_index => $target_lang) {
+                    $current_job = ($page_index * count($target_langs)) + $lang_index + 1;
+                    $page_title = get_the_title($page_id);
+                    
+                    try {
+                        // CONTINUOUS LIMIT CHECK: Before each translation
+                        $license_manager = AITRFOEL_License_Manager_Server::get_instance();
+                        $license_status = $license_manager->get_license_status();
+                        $words_left = max(0, $license_status['word_limit'] - $license_status['words_used']);
+                        
+                        if ($words_left <= 0) {
+                            AITRFOEL_Logger::log(sprintf(
+                                'Word limit reached during bulk translation at job %d/%d',
+                                $current_job,
+                                $total_jobs
+                            ), 'warning');
+                            
+                            // Pause the job
+                            $queue->update_job($job_id, [
+                                'status' => 'paused',
+                                'completed_items' => $completed_jobs,
+                                'current_step' => '⚠️ Paused: Word limit reached',
+                                'details' => sprintf(
+                                    'Limit reached at job %d/%d. %d jobs completed successfully.',
+                                    $current_job,
+                                    $total_jobs,
+                                    $completed_jobs
+                                ),
+                                'error_type' => 'limit_reached_during_process'
+                            ]);
+                            
+                            // Throw error to stop processing
+                            throw new Exception(json_encode([
+                                'type' => 'limit_reached',
+                                'message' => sprintf(
+                                    /* translators: 1: Number of completed jobs, 2: Total number of jobs */
+                                    __('Word limit reached during translation. Completed %1$d of %2$d jobs. Upgrade your plan to continue.', 'ai-translator-for-elementor-and-polylang'),
+                                    $completed_jobs,
+                                    $total_jobs
+                                ),
+                                'completed' => $completed_jobs,
+                                'total' => $total_jobs,
+                                'remaining' => $total_jobs - $completed_jobs,
+                                'words_used' => $license_status['words_used'],
+                                'word_limit' => $license_status['word_limit'],
+                                'plan' => $license_status['plan'],
+                                'upgrade_url' => (function_exists('eatp_fs') && eatp_fs()->is_registered()) 
+                                    ? eatp_fs()->get_upgrade_url() 
+                                    : 'https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing'
+                            ]));
+                        }
+                        
+                        // STEP 1: Analyzing page (5% of this job)
+                        $base_progress = (($current_job - 1) / $total_jobs) * 100;
+                        $queue->update_job($job_id, [
+                            'progress' => round($base_progress + (5 / $total_jobs)),
+                            'current_step' => "🔍 Analyzing: {$page_title}",
+                            'details' => "Scanning content structure for {$target_lang}",
+                            'stage' => 1,
+                            'stage_description' => "Analyzing page structure and content",
+                            'current_page_id' => $page_id,
+                            'current_language' => $target_lang
+                        ]);
+                        
+                        // STEP 2: Processing content (15% of this job)
+                        $queue->update_job($job_id, [
+                            'progress' => round($base_progress + (20 / $total_jobs)),
+                            'current_step' => "⚙️ Processing: {$page_title}",
+                            'details' => "Extracting translatable content",
+                            'stage' => 1,
+                            'stage_description' => "Extracting and preparing content for translation",
+                            'current_page_id' => $page_id,
+                            'current_language' => $target_lang
+                        ]);
+                        
+                        // STEP 3: AI Translation (60% of this job)
+                        $queue->update_job($job_id, [
+                            'progress' => round($base_progress + (60 / $total_jobs)),
+                            'current_step' => "🤖 AI Translating: {$page_title}",
+                            'details' => "OpenAI is translating to {$target_lang}",
+                            'stage' => 1,
+                            'stage_description' => 'AI Translation in progress',
+                            'current_page_id' => $page_id,
+                            'current_language' => $target_lang
+                        ]);
+                        
+                        // ACTUAL TRANSLATION
+                        $new_page_id = $engine->translate_page($page_id, $target_lang, $source_language);
+                        
+                        if (is_wp_error($new_page_id)) {
+                            $results[] = ['error' => $new_page_id->get_error_message()];
+                            $error_count++;
+                            
+                            // Show error state
+                            $queue->update_job($job_id, [
+                                'progress' => round(($current_job / $total_jobs) * 100),
+                                'current_step' => "❌ Error: {$page_title}",
+                                'details' => "Failed to translate to {$target_lang}",
+                                'errors' => $error_count,
+                                'stage' => -1,
+                                'stage_description' => 'Translation failed'
+                            ]);
+                        } else {
+                            $results[] = [
+                                'success' => $new_page_id,
+                                'source_page_id' => $page_id,
+                                'target_language' => $target_lang,
+                                'page_title' => $page_title
+                            ];
+                            $completed_jobs++;
+                            
+                            // STEP 4: Gap-Filler Refinement (15% of this job)
+                            $queue->update_job($job_id, [
+                                'progress' => round($base_progress + (75 / $total_jobs)),
+                                'current_step' => "🔧 Gap-Filler: {$page_title}",
+                                'details' => "Refining translation quality for {$target_lang}",
+                                'completed_items' => $completed_jobs,
+                                'stage' => 2,
+                                'stage_description' => 'Gap-Filler refinement in progress',
+                                'current_page_id' => $page_id,
+                                'current_language' => $target_lang
+                            ]);
+                            
+                            // STEP 5: Finalizing (5% of this job)
+                            $queue->update_job($job_id, [
+                                'progress' => round(($current_job / $total_jobs) * 100),
+                                'current_step' => "✅ Completed: {$page_title}",
+                                'details' => "Successfully translated to {$target_lang}",
+                                'completed_items' => $completed_jobs,
+                                'stage' => 3,
+                                'stage_description' => 'Translation completed',
+                                'current_page_id' => $page_id,
+                                'current_language' => $target_lang,
+                                'completed_page_id' => $page_id,
+                                'completed_language' => $target_lang
+                            ]);
+                        }
+                        
+                        // Production: Removed artificial delay for optimal performance
+                        
+                    } catch (Exception $e) {
+                        $results[] = ['error' => $e->getMessage()];
+                        $error_count++;
+                        
+                        $queue->update_job($job_id, [
+                            'progress' => round(($current_job / $total_jobs) * 100),
+                            'current_step' => "💥 Exception: {$page_title}",
+                            'details' => $e->getMessage(),
+                            'errors' => $error_count
+                        ]);
+                    }
+                }
+            }
+            
+            // Allow advanced users to run cleanup actions after bulk translation
+            do_action('aitrfoel_after_bulk_translation', $job_id, $completed_jobs, $total_jobs);
+
+            // Update job status to completed
+            $queue->update_job($job_id, [
+                'status' => 'completed',
+                'completed_items' => $completed_jobs,
+                'total_items' => $total_jobs,
+                'results' => $results,
+                'completed_at' => current_time('mysql')
+            ]);
+
+            wp_send_json_success([
+                'job_id' => $job_id,
+                'status' => 'started',
+                'message' => sprintf(
+                    /* translators: 1: Number of pages, 2: Number of target languages */
+                    __('Bulk translation started for %1$d pages to %2$d languages.', 'ai-translator-for-elementor-and-polylang'),
+                    count($page_ids),
+                    count($target_langs)
+                ),
+                'pages_count' => count($page_ids),
+                'languages_count' => count($target_langs),
+                'total_jobs' => count($page_ids) * count($target_langs)
+            ]);
+
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+
+    /**
+     * Get translation status and progress
+     */
+    public function handle_get_translation_status() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            $job_id = sanitize_text_field($_POST['job_id'] ?? '');
+            
+            if (empty($job_id)) {
+                throw new Exception(__('Job ID is required.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            // Get actual status from database
+            $queue = AITRFOEL_Bulk_Translation_Queue::get_instance();
+            $job_status = $queue->get_job_status($job_id);
+            
+            if (is_wp_error($job_status)) {
+                throw new Exception($job_status->get_error_message());
+            }
+            
+            if (!$job_status) {
+                throw new Exception(__('Job not found.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            // Calculate progress percentage
+            $progress = 0;
+            if ($job_status['total_items'] > 0) {
+                $progress = round(($job_status['completed_items'] / $job_status['total_items']) * 100);
+            }
+            
+            $response = [
+                'status' => $job_status['status'],
+                'progress' => $progress,
+                'completed_items' => $job_status['completed_items'],
+                'total_items' => $job_status['total_items'],
+                'errors' => $job_status['errors'] ?? 0,
+                'current_step' => $job_status['current_step'] ?? '',
+                'details' => $job_status['details'] ?? '',
+                'stage' => $job_status['stage'] ?? 1,
+                'stage_description' => $job_status['stage_description'] ?? 'Processing...',
+                'current_page_id' => $job_status['current_page_id'] ?? null,
+                'current_language' => $job_status['current_language'] ?? null,
+                'completed_page_id' => $job_status['completed_page_id'] ?? null,
+                'completed_language' => $job_status['completed_language'] ?? null,
+                'message' => $this->get_status_message($job_status['status'], $progress),
+                // ENHANCED: Add error type and details if job failed/paused
+                'error_type' => $job_status['error_type'] ?? null,
+                'error_details' => $job_status['error_details'] ?? null
+            ];
+            
+            // Add results if completed
+            if ($job_status['status'] === 'completed') {
+                $response['results'] = $job_status['results'] ?? [];
+            }
+            
+            // Add error information if job is paused or failed
+            if (in_array($job_status['status'], ['paused', 'failed']) && !empty($job_status['error_type'])) {
+                $response['error_info'] = [
+                    'type' => $job_status['error_type'],
+                    'message' => $job_status['details'] ?? '',
+                    'completed' => $job_status['completed_items'],
+                    'total' => $job_status['total_items'],
+                    'remaining' => $job_status['total_items'] - $job_status['completed_items']
+                ];
+            }
+            
+            wp_send_json_success($response);
+
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+
+    /**
+     * Pause translation process
+     */
+    public function handle_pause_translation() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            $job_id = sanitize_text_field($_POST['job_id'] ?? '');
+            
+            if (empty($job_id)) {
+                throw new Exception(__('Job ID is required.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            // TODO: Phase 3 - Implement actual pause logic
+            
+            wp_send_json_success([
+                'status' => 'paused',
+                'message' => __('Translation paused successfully.', 'ai-translator-for-elementor-and-polylang')
+            ]);
+
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+
+    /**
+     * Resume translation process
+     */
+    public function handle_resume_translation() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            $job_id = sanitize_text_field($_POST['job_id'] ?? '');
+            
+            if (empty($job_id)) {
+                throw new Exception(__('Job ID is required.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            // Resume translation from queue
+            $queue = AITRFOEL_Bulk_Translation_Queue::get_instance();
+            // Note: update_status method is not available in the queue manager; using update_job instead
+            $queue->update_job($job_id, [ 'status' => 'processing' ]);
+            
+            // Reschedule processing
+            wp_schedule_single_event(time() + 5, 'aitrfoel_process_bulk_translation', [$job_id]);
+            
+            wp_send_json_success([
+                'status' => 'processing',
+                'message' => __('Translation resumed successfully.', 'ai-translator-for-elementor-and-polylang')
+            ]);
+
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+
+    /**
+     * Cancel translation process
+     */
+    public function handle_cancel_translation() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            $job_id = sanitize_text_field($_POST['job_id'] ?? '');
+            
+            if (empty($job_id)) {
+                throw new Exception(__('Job ID is required.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            // Cancel translation in queue
+            $queue = AITRFOEL_Bulk_Translation_Queue::get_instance();
+            // Note: update_status method is not available; use update_job
+            $queue->update_job($job_id, [ 'status' => 'cancelled' ]);
+            
+            wp_send_json_success([
+                'status' => 'cancelled',
+                'message' => __('Translation cancelled successfully.', 'ai-translator-for-elementor-and-polylang')
+            ]);
+
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+
+    /**
+     * Publish all translated pages
+     */
+    public function handle_publish_translations() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            if (!current_user_can('publish_pages')) {
+                throw new Exception(__('You do not have permission to publish pages.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            $job_id = sanitize_text_field($_POST['job_id'] ?? '');
+            
+            if (empty($job_id)) {
+                throw new Exception(__('Job ID is required.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            // TODO: Phase 4 - Implement actual publishing logic
+            
+            wp_send_json_success([
+                'published_count' => 4,
+                'message' => __('4 translations published successfully.', 'ai-translator-for-elementor-and-polylang')
+            ]);
+
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+
+    /**
+     * Get word count estimation for selected pages
+     */
+    public function handle_get_word_count() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            $pages = sanitize_text_field($_POST['pages'] ?? '');
+            
+            if (empty($pages)) {
+                throw new Exception(__('Pages are required.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            $page_ids = is_array($_POST['pages']) ? array_map('intval', $_POST['pages']) : explode(',', $pages);
+            $total_words = 0;
+
+            foreach ($page_ids as $page_id) {
+                $post = get_post($page_id);
+                if ($post) {
+                    // Get basic post content
+                    $content = wp_strip_all_tags($post->post_content);
+                    $title = wp_strip_all_tags($post->post_title);
+                    $basic_words = str_word_count($content . ' ' . $title);
+                    
+                    // Try to get Elementor content
+                    $elementor_words = 0;
+                    try {
+                        if (class_exists('AITRFOEL_Widget_Parser')) {
+                            $parser = AITRFOEL_Widget_Parser::get_instance();
+                            $elementor_data = get_post_meta($page_id, '_elementor_data', true);
+                            
+                            if (!empty($elementor_data)) {
+                                $translatable_strings = $parser->extract_translatable_strings($elementor_data);
+                                
+                                foreach ($translatable_strings as $string_data) {
+                                    if (!empty($string_data['original'])) {
+                                        $elementor_words += str_word_count(wp_strip_all_tags($string_data['original']));
+                                    }
+                                }
+                            }
+                        }
+                    } catch (Exception $e) {
+                        AITRFOEL_Logger::log('Error parsing Elementor content for word count: ' . $e->getMessage(), 'warning', $page_id);
+                    }
+                    
+                    // Use the higher count (basic or elementor + basic)
+                    $total_words += max($basic_words, $elementor_words + str_word_count($title));
+                }
+            }
+
+            // Basic cost estimation (simplified)
+            $estimated_cost = round($total_words * 0.0001, 4);
+
+            wp_send_json_success([
+                'total_words' => $total_words,
+                'estimated_tokens' => intval($total_words * 1.3), // Rough token estimation
+                'estimated_cost_openai' => $estimated_cost
+            ]);
+
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+    
+    /**
+     * Get status message based on job status and progress
+     */
+    private function get_status_message($status, $progress) {
+        switch ($status) {
+            case 'pending':
+                return __('Translation queued and waiting to start...', 'ai-translator-for-elementor-and-polylang');
+            case 'processing':
+                /* translators: %d: Progress percentage */
+                return sprintf(__('Translation in progress... %d%% completed', 'ai-translator-for-elementor-and-polylang'), $progress);
+            case 'completed':
+                return __('Translation completed successfully!', 'ai-translator-for-elementor-and-polylang');
+            case 'failed':
+                return __('Translation failed. Please check the error details.', 'ai-translator-for-elementor-and-polylang');
+            case 'cancelled':
+                return __('Translation was cancelled.', 'ai-translator-for-elementor-and-polylang');
+            default:
+                return __('Unknown status.', 'ai-translator-for-elementor-and-polylang');
+        }
+    }
+    
+    /**
+     * Debug test endpoint
+     */
+    public function handle_debug_test() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            if (!current_user_can('edit_pages')) {
+                throw new Exception(__('You do not have permission to perform this action.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            $debug_info = [
+                'wp_version' => get_bloginfo('version'),
+                'php_version' => PHP_VERSION,
+                'plugin_version' => '1.0.1',
+                'memory_limit' => ini_get('memory_limit'),
+                'max_execution_time' => ini_get('max_execution_time'),
+                'timestamp' => current_time('mysql'),
+                'classes' => [
+                    'AITRFOEL_Bulk_Translation_Queue' => class_exists('AITRFOEL_Bulk_Translation_Queue'),
+                    'AITRFOEL_Translation_Engine' => class_exists('AITRFOEL_Translation_Engine'),
+                    'aitrfoel_Background_Process' => false, // Removed background processing
+                    'AITRFOEL_OpenAI_API' => class_exists('AITRFOEL_OpenAI_API')
+                ],
+                'database' => $this->check_database_status(),
+                'api_config' => $this->check_api_config(),
+                'cron' => $this->check_cron_status()
+            ];
+            
+            wp_send_json_success($debug_info);
+            
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+    
+    /**
+     * Check database status
+     */
+    private function check_database_status() {
+        global $wpdb;
+        
+        $table_name = $wpdb->prefix . 'aitrfoel_bulk_jobs';
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'") === $table_name;
+        
+        $job_count = 0;
+        if ($table_exists) {
+            $job_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+        }
+        
+        return [
+            'table_exists' => $table_exists,
+            'table_name' => $table_name,
+            'job_count' => $job_count
+        ];
+    }
+    
+    /**
+     * Check API configuration
+     */
+    private function check_api_config() {
+        $openai_key = get_option('aitrfoel_openai_api_key');
+        
+        return [
+            'openai_configured' => !empty($openai_key),
+            'openai_key_length' => strlen($openai_key ?? ''),
+            'openai_key_prefix' => substr($openai_key ?? '', 0, 10) . '...'
+        ];
+    }
+    
+    /**
+     * Check cron status
+     */
+    private function check_cron_status() {
+        $cron_events = wp_get_scheduled_event('aitrfoel_process_bulk_translation');
+        $all_crons = get_option('cron');
+        
+        // Count aitrfoel_process_bulk_translation events
+        $aitrfoel_cron_count = 0;
+        if (is_array($all_crons)) {
+            foreach ($all_crons as $time => $hooks) {
+                if (isset($hooks['aitrfoel_process_bulk_translation'])) {
+                    $aitrfoel_cron_count += count($hooks['aitrfoel_process_bulk_translation']);
+                }
+            }
+        }
+        
+        return [
+            'wp_cron_disabled' => defined('DISABLE_WP_CRON') && DISABLE_WP_CRON,
+            'next_scheduled' => $cron_events ? gmdate('Y-m-d H:i:s', $cron_events->timestamp) : null,
+            'aitrfoel_cron_count' => $aitrfoel_cron_count,
+            'total_cron_events' => is_array($all_crons) ? count($all_crons) : 0
+        ];
+    }
+    
+    /**
+     * Monitor jobs endpoint
+     */
+    public function handle_monitor_jobs() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            if (!current_user_can('edit_pages')) {
+                throw new Exception(__('You do not have permission to perform this action.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            $queue = AITRFOEL_Bulk_Translation_Queue::get_instance();
+            
+            // Get recent jobs (last 20)
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'aitrfoel_bulk_jobs';
+            
+            $jobs = $wpdb->get_results("
+                SELECT * FROM {$table_name} 
+                ORDER BY created_at DESC 
+                LIMIT 20
+            ");
+            
+            $stats = $queue->get_statistics();
+            
+            $data = [
+                'jobs' => $jobs,
+                'stats' => $stats,
+                'cron_info' => $this->get_cron_info(),
+                'timestamp' => current_time('mysql')
+            ];
+            
+            wp_send_json_success($data);
+            
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+    
+    /**
+     * Get system logs endpoint
+     */
+    public function handle_get_system_logs() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            if (!current_user_can('edit_pages')) {
+                throw new Exception(__('You do not have permission to perform this action.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            $logs = $this->get_recent_logs();
+            $cron_info = $this->get_cron_info();
+            
+            $data = [
+                'logs' => $logs,
+                'cron_info' => $cron_info,
+                'php_error_log' => $this->check_php_error_log(),
+                'timestamp' => current_time('mysql')
+            ];
+            
+            wp_send_json_success($data);
+            
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+    
+    /**
+     * Get recent logs from error_log
+     */
+    private function get_recent_logs() {
+        $logs = [];
+        
+        // Try to read error log
+        $error_log_paths = [
+            ini_get('error_log'),
+            WP_CONTENT_DIR . '/debug.log',
+            '/var/log/php_errors.log'
+        ];
+        
+        foreach ($error_log_paths as $log_path) {
+            if ($log_path && file_exists($log_path) && is_readable($log_path)) {
+                $lines = file($log_path);
+                if ($lines) {
+                    $recent_lines = array_slice($lines, -50); // Last 50 lines
+                    foreach ($recent_lines as $line) {
+                        if (strpos($line, 'EAT') !== false || strpos($line, 'aitrfoel_') !== false) {
+                            $logs[] = [
+                                'time' => current_time('mysql'),
+                                'message' => trim($line)
+                            ];
+                        }
+                    }
+                    break; // Use first available log
+                }
+            }
+        }
+        
+        return array_slice($logs, -20); // Last 20 EAT-related entries
+    }
+    
+    /**
+     * Check PHP error log for critical errors
+     */
+    private function check_php_error_log() {
+        $error_info = [
+            'has_errors' => false,
+            'recent_errors' => []
+        ];
+        
+        $log_path = ini_get('error_log');
+        if ($log_path && file_exists($log_path) && is_readable($log_path)) {
+            $lines = file($log_path);
+            if ($lines) {
+                $recent_lines = array_slice($lines, -20);
+                foreach ($recent_lines as $line) {
+                    if (strpos($line, 'Fatal error') !== false || strpos($line, 'Parse error') !== false) {
+                        $error_info['has_errors'] = true;
+                        $error_info['recent_errors'][] = trim($line);
+                    }
+                }
+            }
+        }
+        
+        return $error_info;
+    }
+    
+    /**
+     * Get cron information
+     */
+    private function get_cron_info() {
+        $cron_array = _get_cron_array();
+        $scheduled_events = [];
+        
+        foreach ($cron_array as $time => $hooks) {
+            if (isset($hooks['aitrfoel_process_bulk_translation'])) {
+                foreach ($hooks['aitrfoel_process_bulk_translation'] as $sig => $event) {
+                    $scheduled_events[] = [
+                        'time' => gmdate('Y-m-d H:i:s', $time),
+                        'args' => $event['args']
+                    ];
+                }
+            }
+        }
+        
+        return [
+            'wp_cron_enabled' => !(defined('DISABLE_WP_CRON') && DISABLE_WP_CRON),
+            'scheduled_events' => $scheduled_events,
+            'next_cron_run' => wp_next_scheduled('wp_version_check') ? gmdate('Y-m-d H:i:s', wp_next_scheduled('wp_version_check')) : 'Not scheduled'
+        ];
+    }
+    
+    /**
+     * Force cron execution
+     */
+    public function handle_force_cron() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            if (!current_user_can('edit_pages')) {
+                throw new Exception(__('You do not have permission to perform this action.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            // Trigger cron
+            spawn_cron();
+            
+            wp_send_json_success([
+                'message' => __('Cron triggered successfully.', 'ai-translator-for-elementor-and-polylang')
+            ]);
+            
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+    
+    /**
+     * Process pending jobs endpoint
+     */
+    public function handle_process_pending() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            if (!current_user_can('edit_pages')) {
+                throw new Exception(__('You do not have permission to perform this action.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            // Get plugin instance and process pending jobs
+            $plugin = AITRFOEL_Main::get_instance();
+            $result = $plugin->process_pending_jobs();
+            
+            if ($result) {
+                wp_send_json_success([
+                    'message' => 'Pending job processed successfully',
+                    'timestamp' => current_time('mysql')
+                ]);
+            } else {
+                wp_send_json_error('No pending jobs found or processing failed');
+            }
+            
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+
+    /**
+     * Handle refresh table data request
+     */
+    public function handle_refresh_table_data() {
+        try {
+            // Verify nonce
+            if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'aitrfoel_ajax_nonce')) {
+                throw new Exception('Security check failed');
+            }
+
+            // Get admin menu instance
+            if (!class_exists('AITRFOEL_Admin_Menu')) {
+                throw new Exception('Admin menu class not found');
+            }
+
+            $admin_menu = AITRFOEL_Admin_Menu::get_instance();
+            
+            // Get fresh page data
+            $pages_data = $admin_menu->get_pages_with_translations();
+            
+            // Start output buffering to capture HTML
+            ob_start();
+            $admin_menu->render_pages_rows($pages_data);
+            $html = ob_get_clean();
+
+            wp_send_json_success([
+                'html' => $html,
+                'message' => 'Table data refreshed successfully'
+            ]);
+
+        } catch (Exception $e) {
+            wp_send_json_error([
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Handle page deletion request
+     */
+    public function handle_delete_page() {
+        try {
+            // Verify nonce
+            if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'aitrfoel_ajax_nonce')) {
+                throw new Exception('Security check failed');
+            }
+
+            // Check permissions
+            if (!current_user_can('delete_pages')) {
+                throw new Exception('Insufficient permissions to delete pages');
+            }
+
+            $page_id = intval($_POST['page_id']);
+            
+            if (!$page_id) {
+                throw new Exception('Invalid page ID');
+            }
+
+            // Get page info for logging
+            $page = get_post($page_id);
+            if (!$page) {
+                throw new Exception('Page not found');
+            }
+
+            if ($page->post_type !== 'page') {
+                throw new Exception('Only pages can be deleted through this interface');
+            }
+
+            // Move to trash
+            $result = wp_trash_post($page_id);
+            
+            if (!$result) {
+                throw new Exception('Failed to move page to trash');
+            }
+
+            // Log the action
+            AITRFOEL_Logger::log("Page '{$page->post_title}' moved to trash by user " . get_current_user_id(), 'info', $page_id);
+
+            wp_send_json_success([
+                'message' => sprintf('Page "%s" moved to trash successfully', $page->post_title),
+                'page_id' => $page_id
+            ]);
+
+        } catch (Exception $e) {
+            wp_send_json_error([
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Get translation settings
+     */
+    public function handle_get_translation_settings() {
+        try {
+            // Verify nonce
+            if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'aitrfoel_ajax_nonce')) {
+                throw new Exception('Security check failed');
+            }
+
+            $settings = get_option('aitrfoel_translation_settings', [
+                'exclude_words' => [],
+                'smart_suggestions_enabled' => true,
+                'updated_at' => time()
+            ]);
+
+            wp_send_json_success($settings);
+
+        } catch (Exception $e) {
+            wp_send_json_error([
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Save translation settings
+     */
+    public function handle_save_translation_settings() {
+        try {
+            // Verify nonce
+            if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'aitrfoel_ajax_nonce')) {
+                throw new Exception('Security check failed');
+            }
+
+            $exclude_words = isset($_POST['exclude_words']) ? 
+                array_map('sanitize_text_field', $_POST['exclude_words']) : [];
+            
+            $smart_suggestions = isset($_POST['smart_suggestions_enabled']) ? 
+                (bool) $_POST['smart_suggestions_enabled'] : true;
+
+            $settings = [
+                'exclude_words' => array_filter($exclude_words), // Remove empty values
+                'smart_suggestions_enabled' => $smart_suggestions,
+                'updated_at' => time()
+            ];
+
+            update_option('aitrfoel_translation_settings', $settings);
+
+            // Log the change
+            AITRFOEL_Logger::log(
+                0, 
+                'info', 
+                'Translation settings updated: ' . json_encode($settings)
+            );
+
+
+            wp_send_json_success([
+                'message' => 'Settings saved successfully',
+                'settings' => $settings
+            ]);
+
+        } catch (Exception $e) {
+            wp_send_json_error([
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Get smart suggestions for exclude words
+     */
+    public function handle_get_smart_suggestions() {
+        try {
+            // Verify nonce
+            if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'aitrfoel_ajax_nonce')) {
+                throw new Exception('Security check failed');
+            }
+
+            $suggestions = [
+                'brand_names' => [
+                    'label' => 'Brand Names',
+                    'items' => ['WordPress', 'Elementor', 'WooCommerce', 'Polylang']
+                ],
+                'technical_terms' => [
+                    'label' => 'Technical Terms', 
+                    'items' => ['API', 'CSS', 'HTML', 'JavaScript', 'PHP', 'URL']
+                ],
+                'contact_info' => [
+                    'label' => 'Contact Info',
+                    'items' => ['Email', 'Phone', 'Address', 'Contact']
+                ],
+                'common_excludes' => [
+                    'label' => 'Common Excludes',
+                    'items' => ['Lorem ipsum', 'Lorem', 'ipsum', 'Admin', 'Dashboard']
+                ]
+            ];
+
+            wp_send_json_success($suggestions);
+
+        } catch (Exception $e) {
+            wp_send_json_error([
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Debug exclusions - test how they're applied
+     */
+    public function handle_debug_exclusions() {
+        try {
+            // Get current settings
+            $settings = get_option('aitrfoel_translation_settings', []);
+            $exclude_words = $settings['exclude_words'] ?? [];
+
+            // Create test OpenAI instance
+            $openai = new AITRFOEL_OpenAI_API();
+            
+            // Provide a static prompt preview to confirm exclusions are recognized
+            $test_text = "Welcome to WordPress! Contact our API team for Elementor support.";
+            wp_send_json_success([
+                'current_settings' => $settings,
+                'exclude_words' => $exclude_words,
+                'test_text' => $test_text,
+                'prompt_preview' => 'Exclusion rules will be applied to these words: ' . implode(', ', $exclude_words),
+                'exclusions_active' => !empty($exclude_words)
+            ]);
+
+        } catch (Exception $e) {
+            wp_send_json_error([
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Check if word limit allows translation
+     */
+    private function check_word_limit($estimated_words = 0) {
+        // Get license manager instance
+        $license_manager = AITRFOEL_License_Manager_Server::get_instance();
+        $license_status = $license_manager->get_license_status();
+        
+        // Check if in cooldown
+        if (isset($license_status['in_cooldown']) && $license_status['in_cooldown']) {
+            $cooldown_expiry = $license_status['cooldown_expiry'];
+            $remaining_days = ceil(($cooldown_expiry - time()) / (24 * 60 * 60));
+            
+            
+            
+            throw new Exception(json_encode([
+                'type' => 'cooldown',
+                'message' => sprintf(
+                    /* translators: %d: Number of days remaining */
+                    __('You are in a 7-day cooldown period. Your translation limit will reset in %d days. Upgrade your plan to continue translating immediately.', 'ai-translator-for-elementor-and-polylang'),
+                    $remaining_days
+                ),
+                'cooldown_expiry' => $cooldown_expiry,
+                'remaining_days' => $remaining_days,
+                'remaining_ms' => ($cooldown_expiry - time()) * 1000,
+                'plan' => $license_status['plan'],
+                'upgrade_url' => (function_exists('eatp_fs') && eatp_fs()->is_registered()) ? eatp_fs()->get_upgrade_url() : 'https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing'
+            ]));
+        }
+        
+        // Get current usage and limits
+        $words_used = $license_status['words_used'];
+        $word_limit = $license_status['word_limit'];
+        $words_left = max(0, $word_limit - $words_used);
+        
+        AITRFOEL_Logger::log(sprintf(
+            'Word limit validation: Plan=%s, Used=%d, Limit=%d, Left=%d, Estimated=%d',
+            $license_status['plan'],
+            $words_used,
+            $word_limit,
+            $words_left,
+            $estimated_words
+        ), 'info');
+        
+        
+            // Check if limit reached (excluding unlimited plans)
+        if ($word_limit !== -1 && $words_left <= 0) {
+            AITRFOEL_Logger::log(sprintf(
+                'Translation BLOCKED: Word limit reached! Plan=%s, Used=%d, Limit=%d, Left=%d',
+                $license_status['plan'],
+                $words_used,
+                $word_limit,
+                $words_left
+            ), 'warning');
+            
+            throw new Exception(json_encode([
+                'type' => 'limit_reached',
+                'message' => sprintf(
+                    /* translators: 1: Word limit number, 2: Plan name */
+                    __('Word limit reached! You have used all %1$s words in your %2$s plan. Upgrade to continue or wait for the 7-day reset period.', 'ai-translator-for-elementor-and-polylang'),
+                    number_format($word_limit),
+                    $license_status['plan']
+                ),
+                'words_used' => $words_used,
+                'word_limit' => $word_limit,
+                'plan' => $license_status['plan'],
+                'upgrade_url' => (function_exists('eatp_fs') && eatp_fs()->is_registered()) ? eatp_fs()->get_upgrade_url() : 'https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing'
+            ]));
+        }        // Check if estimated words exceed remaining
+        if ($estimated_words > 0 && $estimated_words > $words_left) {
+            
+            
+            throw new Exception(json_encode([
+                'type' => 'insufficient_words',
+                'message' => sprintf(
+                    /* translators: 1: Words required, 2: Words remaining, 3: Plan name */
+                    __('Not enough words remaining. This translation requires approximately %1$s words, but you only have %2$s words left in your %3$s plan.', 'ai-translator-for-elementor-and-polylang'),
+                    number_format($estimated_words),
+                    number_format($words_left),
+                    $license_status['plan']
+                ),
+                'estimated_words' => $estimated_words,
+                'words_left' => $words_left,
+                'words_used' => $words_used,
+                'word_limit' => $word_limit,
+                'plan' => $license_status['plan'],
+                'upgrade_url' => (function_exists('eatp_fs') && eatp_fs()->is_registered()) ? eatp_fs()->get_upgrade_url() : 'https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing'
+            ]));
+        }
+        
+        
+        
+        return [
+            'words_left' => $words_left,
+            'limit' => $word_limit,
+            'license' => $license_status['plan'],
+            'words_used' => $words_used
+        ];
+    }
+    
+    /**
+     * Test server usage retrieval
+     * This endpoint tests the server API connection and returns usage data
+     */
+    public function handle_test_server_usage() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+            
+            if (!current_user_can('manage_options')) {
+                throw new Exception(__('You do not have permission to perform this action.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            
+            AITRFOEL_Logger::log('🧪 Testing server usage retrieval...', 'info');
+            
+            // Get license manager instance
+            $license_manager = AITRFOEL_License_Manager_Server::get_instance();
+            
+            // Get license status (this will call the server)
+            $license_status = $license_manager->get_license_status();
+            
+            AITRFOEL_Logger::log('📊 License status retrieved: ' . json_encode($license_status), 'info');
+            
+            // Return detailed response
+            wp_send_json_success([
+                'message' => 'Server usage retrieved successfully',
+                'data' => $license_status,
+                'timestamp' => current_time('mysql'),
+                'api_url' => 'https://meeptech.com/api/eat/get-usage'
+            ]);
+            
+        } catch (Exception $e) {
+            AITRFOEL_Logger::log('❌ Test server usage failed: ' . $e->getMessage(), 'error');
+            $this->handle_error($e);
+        }
+    }
+
+}

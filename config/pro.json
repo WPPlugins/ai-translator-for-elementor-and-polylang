@@ -1,0 +1,13 @@
+{
+    "features":  {
+                     "usage_tracking":  true,
+                     "auto_translate":  true,
+                     "freemius":  true,
+                     "advanced_cache":  true,
+                     "bulk_translation":  true
+                 },
+    "exclude_files":  [
+
+                      ],
+    "version":  "pro"
+}

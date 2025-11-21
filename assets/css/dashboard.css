@@ -1,0 +1,2326 @@
+﻿/**
+ * Dashboard CSS for Elementor AI Translator
+ * Styles for bulk translation interface
+ */
+
+/* Main Dashboard Wrapper
+   IMPORTANT: Do NOT style core .wrap globally — scope to plugin wrappers only */
+.aitrfoel-admin-wrapper, .aitrfoel-dashboard-wrapper {
+    width: calc(100% - 36px);
+    max-width: none;
+    margin: 0px 36px 20px 0;
+    position: relative;
+}
+
+
+/* Plugin Header - Full Width */
+.eat-plugin-header {
+    background: #fff;
+    margin: -20px -36px 20px -20px;
+    padding: 8px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    position: relative;
+    z-index: 1;
+    /* Stretch to container edges via negative margins; no explicit vw width to prevent overflow */
+}
+
+.eat-plugin-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1d1d1f;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.eat-breadcrumb-separator {
+    color: #666;
+    margin: 0 4px;
+    font-weight: 300;
+    font-size: 14px;
+}
+
+.eat-current-page {
+    color: #2271b1;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.aitrfoel-dashboard-wrapper .description {
+    margin-bottom: 20px;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Stats Grid in Dashboard */
+.aitrfoel-dashboard-wrapper .eat-stats-grid {
+    margin: 20px 0 30px 0;
+}
+
+/* Top bar stats grid styling */
+.eat-stats-grid.eat-top-bar {
+    background: #f8f9fa;
+    border: 1px solid #e1e1e1;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 20px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Compact Stats Bar */
+.eat-compact-stats-bar {
+    background: #fff;
+    color: #2271b1;
+    width:100%;
+          padding: 12px 36px 12px 20px;
+    margin: 0px 0px 20px -20px;
+    border-radius: 0px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+    box-shadow: 0 2px 8px rgba(0,115,170,0.15);
+    border-bottom: 1px solid #e1e1e1;
+    transition: background-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+/* Visual flash when stats are updated */
+.eat-compact-stats-bar.eat-stats-updated {
+    background: #f0f6fc;
+    box-shadow: 0 2px 16px rgba(0,115,170,0.3);
+}
+
+@keyframes slideInFromTop {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.eat-compact-stat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.eat-compact-stat.eat-compact-license {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.eat-compact-label {
+    color: #2271b1;
+    font-size: 13px;
+}
+
+.eat-compact-value {
+    color:#1d1d1f;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+/* Words Left - Green background with yellow text */
+.eat-words-left-stat {
+    background: #28a745 !important;
+    padding: 8px 16px !important;
+    border-radius: 6px !important;
+}
+
+.eat-words-left-label {
+    color: #ffeb3b !important;
+    font-weight: 600 !important;
+}
+
+.eat-words-left-value {
+    color: #ffeb3b !important;
+    font-weight: 700 !important;
+}
+
+.eat-compact-buy-btn {
+    background:#0073aa;
+    color: white;
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s;
+    margin-left: 8px;
+    border: 1px solid #0073aa;
+}
+
+.eat-compact-buy-btn:hover {
+    border: 1px solid rgb(0 115 170);
+    background: #e7f3ff;
+    color: #0073aa;
+}
+
+.eat-compact-upgrade-btn {
+    background: rgba(255, 193, 7, 0.9);
+    color: #212529;
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.eat-compact-upgrade-btn:hover {
+    background: #ffc107;
+    color: #212529;
+    text-decoration: none;
+    border-color: #ffc107;
+}
+
+.eat-compact-license-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.eat-compact-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.eat-compact-limit-reached {
+    color: #ff6b6b !important;
+    font-weight: 700 !important;
+}
+
+/* Tooltip Styling */
+.eat-tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.eat-tooltip:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: normal;
+    line-height: 1.4;
+    white-space: pre-line;
+    z-index: 1000;
+    min-width: 200px;
+    max-width: 300px;
+    text-align: left;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: tooltipFadeIn 0.2s ease-out;
+}
+
+.eat-tooltip:hover::before {
+    content: \"\";
+    position: absolute;
+    bottom: 115%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.9);
+    z-index: 1001;
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* Special positioning for action buttons */
+.eat-compact-actions .eat-tooltip:hover::after {
+    bottom: 125%;
+    left: 0;
+    transform: none;
+}
+
+.eat-compact-actions .eat-tooltip:hover::before {
+    bottom: 115%;
+    left: 20px;
+    transform: none;
+}
+
+/* Custom tooltip overrides default browser tooltip */
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .aitrfoel-admin-wrapper, .aitrfoel-dashboard-wrapper {
+        width: calc(100% - 16px);
+        margin: 0px 16px 20px 0;
+    }
+    
+    .eat-stat-card.eat-stat-flex {
+        flex-direction: column;
+        text-align: center;
+        gap: 8px;
+    }
+    
+    .eat-stat-card.eat-stat-flex .eat-stat-label {
+        margin-bottom: 5px;
+    }
+    
+    .eat-buy-tokens-btn {
+        margin-left: 0;
+        margin-top: 8px;
+    }
+    
+    /* Hide view buttons on mobile */
+    .aitrfoel-dashboard-wrapper .column-actions .button-secondary {
+        display: none;
+    }
+    
+    /* Compact stats bar responsive - inline layout */
+    .eat-compact-stats-bar {
+        background: transparent;
+        margin: 0px 0px 20px 0px;
+        box-shadow: none;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0;
+        padding: 8px 0;
+        border-bottom: 1px solid #e1e1e1;
+    }
+    
+    .eat-compact-stat {
+        flex: none;
+        padding: 4px 8px;
+        border-right: 1px solid #e1e1e1;
+        border-bottom: none;
+        font-size: 12px;
+        min-width: auto;
+        justify-content: center;
+        text-align: center;
+    }
+    
+    .eat-compact-stat:last-child {
+        border-right: none;
+    }
+    
+    .eat-compact-stat.eat-compact-license {
+        margin-left: 0;
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+        flex: 1;
+        min-width: 100%;
+        margin-top: 4px;
+        border-right: none;
+        border-top: 1px solid #e1e1e1;
+        padding-top: 8px;
+    }
+    
+    /* Mobile compact stat text adjustments */
+    .eat-compact-stat .eat-compact-label {
+        font-size: 11px;
+        margin-bottom: 2px;
+    }
+    
+    .eat-compact-stat .eat-compact-value {
+        font-size: 13px;
+        font-weight: 600;
+    }
+    
+    /* Hide border-right on last compact stat */
+    .eat-compact-stat:last-child {
+        border-right: none;
+    }
+    
+    /* Hide breadcrumb separator on mobile */
+    .eat-breadcrumb-separator {
+        display: none;
+    }
+    
+    .eat-compact-license-info {
+        justify-content: space-between;
+    }
+    
+    .eat-compact-actions {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    
+    .eat-compact-buy-btn,
+    .eat-compact-upgrade-btn {
+        flex: 1;
+        text-align: center;
+        min-width: 100px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .eat-bulk-actions {
+        margin-left: 0;
+        justify-content: space-between;
+    }
+}
+
+/* Notices */
+.aitrfoel-dashboard-wrapper .notice {
+    margin: 15px 0;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Bulk Translation Bar - Sticky */
+.eat-bulk-translation-bar {
+    background: #f8f9fa;
+    border: 1px solid #e1e1e1;
+    border-radius: 6px;
+    padding: 20px;
+    margin: 30px 0 20px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    position: sticky;
+    position: -webkit-sticky; /* Safari support */
+    top: 32px; /* Account for WordPress admin bar */
+    z-index: 100; /* Higher z-index to ensure it stays on top */
+    backdrop-filter: blur(10px); /* Add subtle blur effect */
+    background: rgba(248, 249, 250, 0.95); /* Semi-transparent background */
+    transition: all 0.3s ease; /* Smooth transition */
+}
+
+/* Enhanced styling when sticky is active */
+.eat-bulk-translation-bar.is-sticky {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-color: #d1d5db;
+    border-left: 4px solid #0073aa; /* Blue left border to indicate sticky state */
+}
+
+/* Add a subtle animation when becoming sticky */
+.eat-bulk-translation-bar.is-sticky::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #0073aa, #00a0d2);
+    opacity: 0.7;
+}
+
+.eat-bulk-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.eat-bulk-selection {
+    display: none; /* Hide the redundant selection count */
+}
+
+.eat-bulk-selection strong {
+    color: #0073aa;
+    font-weight: 600;
+}
+
+.eat-bulk-languages {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.eat-bulk-languages label {
+    font-weight: 500;
+    color: #555;
+}
+
+.eat-bulk-languages select {
+    min-width: 120px;
+}
+
+.eat-target-languages {
+    position: relative;
+}
+
+.eat-source-languages {
+    position: relative;
+}
+
+.eat-dropdown-content {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    z-index: 50;
+    min-width: 200px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.eat-bulk-stats {
+    color: #666;
+    font-size: 13px;
+}
+
+.eat-bulk-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 10px;
+}
+
+.eat-bulk-actions .button {
+    position: relative;
+}
+
+.eat-bulk-actions .button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ИСКЛЮЧЕНИЕ ДЛЯ КНОПКИ ПЕРЕВОДА - НЕ ЗАТРАГИВАТЬ! */
+.eat-bulk-actions #eat-start-translation:disabled {
+    opacity: 1 !important;
+    cursor: default !important;
+}
+
+
+
+/* Disabled dropdown styles */
+.eat-source-languages.disabled .button,
+.eat-target-languages.disabled .button {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #f6f7f7 !important;
+    color: #a0a5aa !important;
+    border-color: #dcdcde !important;
+}
+
+.eat-source-languages.disabled .button:hover,
+.eat-target-languages.disabled .button:hover {
+    background: #f6f7f7 !important;
+    color: #a0a5aa !important;
+    border-color: #dcdcde !important;
+}
+
+.eat-bulk-actions .button-primary:disabled,
+.eat-bulk-actions .button.button-disabled {
+    background: #ccc !important;
+    border-color: #ccc !important;
+    color: #666 !important;
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* ИСКЛЮЧЕНИЕ ДЛЯ КНОПКИ ПЕРЕВОДА - разрешаем анимацию загрузчика */
+.eat-bulk-actions #eat-start-translation.loading:disabled,
+.eat-bulk-actions #eat-start-translation.success:disabled {
+    opacity: 1 !important;
+    cursor: unset !important;
+}
+
+
+
+/* Improved tooltips */
+.eat-bulk-actions .button[title]:hover:after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    z-index: 50;
+}
+
+.eat-bulk-stats {
+    color: #666;
+    font-size: 12px;
+    font-style: italic;
+}
+
+/* Dashboard Table */
+.aitrfoel-dashboard-table {
+    background: white;
+    border: 1px solid #e1e1e1;
+    
+    margin-top: 20px;
+}
+
+.aitrfoel-dashboard-table table {
+    margin: 0;
+    border: none;
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: separate; /* Required for box-shadow on tr */
+    border-spacing: 0; /* No space between rows within a group */
+}
+
+.aitrfoel-dashboard-table tbody {
+    border-spacing: 0;
+}
+
+.aitrfoel-dashboard-table tr {
+    border-spacing: 0;
+}
+
+.aitrfoel-dashboard-table th {
+    padding-bottom: 20px; /* Adjust for border-spacing */
+}
+
+/* Column Width Distribution - Best Practice */
+.aitrfoel-dashboard-table .column-cb {
+    width: 40px;
+    text-align: center;
+}
+
+/* Align checkboxes - target specific elements */
+.aitrfoel-dashboard-table td.column-cb,
+.aitrfoel-dashboard-table th.check-column {
+    vertical-align: middle;
+    padding: 12px 15px;
+   
+}
+
+.aitrfoel-dashboard-table td.column-cb input[type="checkbox"],
+.aitrfoel-dashboard-table th.check-column input[type="checkbox"] {
+       margin: 0px 10px;
+}
+
+.aitrfoel-dashboard-table th.check-column input[type="checkbox"] {
+    margin: 0px 12px; 
+}
+
+.aitrfoel-dashboard-table .column-title {
+    width: 22%;
+    min-width: 200px;
+}
+
+.aitrfoel-dashboard-table .column-languages {
+    width: 16%;
+    text-align: center;
+    padding: 8px 12px;
+}
+
+.aitrfoel-dashboard-table .column-status {
+    width: 12%;
+    text-align: center;
+    padding: 8px 12px;
+}
+
+.aitrfoel-dashboard-table .column-page-type {
+    width: 10%;
+    text-align: center;
+    padding: 8px 12px;
+}
+
+.aitrfoel-dashboard-table .column-actions {
+    width: 30%;
+    text-align: center;
+    padding: 8px 12px;
+}
+
+.aitrfoel-dashboard-table .column-expand {
+    width: 50px;
+    text-align: center;
+    padding: 8px 12px;
+}
+
+/* Table Header Styling */
+.aitrfoel-dashboard-table th {
+   
+   
+    font-weight: 600;
+    color: #555;
+    padding: 12px 15px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Table Cell Styling */
+.aitrfoel-dashboard-table td {
+    padding: 12px 15px;
+    vertical-align: middle;
+  
+}
+
+.eat-group-last .column-title, .expanded .column-title {
+border-bottom: 1px solid #eef2f7;}
+
+/* Avoid double borders on child rows: remove default bottoms, we'll draw our own */
+/* (v1 reset removed) */
+
+/* Hover only on parent (clickable to expand), not on child rows */
+.aitrfoel-dashboard-table tbody tr.eat-source-page:hover td,
+.aitrfoel-dashboard-table tbody tr.eat-source-page:hover th {
+    background-color: #eef5ff !important;
+}
+
+/* Neutralize hover on child rows */
+.eat-translation-page:hover,
+.aitrfoel-dashboard-table tbody tr.eat-translation-page:hover td,
+.aitrfoel-dashboard-table tbody tr.eat-translation-page:hover th {
+    background-color: inherit !important;
+}
+
+/* Page Rows Styling */
+.eat-source-page {
+    background: #fff;
+    position: relative;
+}
+
+.eat-source-page:hover {
+    background: #f8f9fa;
+}
+
+/* Subtle hint: nudge chevron on parent-row hover to suggest expandability */
+.aitrfoel-dashboard-table tbody tr.eat-source-page:hover .eat-expand-button .dashicons {
+    transform: translateX(-1px);
+    opacity: 0.9;
+}
+
+.eat-translation-page {
+    background: #f7f9fc; /* cooler tone to distinguish from parent */
+}
+
+/* Disable WP zebra striping just for our table (defensive) */
+.aitrfoel-dashboard-table .wp-list-table tbody > tr:nth-child(odd) > td,
+.aitrfoel-dashboard-table .wp-list-table tbody > tr:nth-child(odd) > th {
+    background: transparent;
+        border-bottom: 0px solid #f1f1f1;
+}
+
+.eat-translation-page:hover {
+    background: #f0f0f0;
+}
+
+/* Grouping styles for translation rows */
+.eat-source-page.has-translations,
+.eat-translation-page {
+    position: relative;
+}
+
+/* Add margin using a pseudo-element on the row */
+/* .eat-source-page.has-translations {
+    box-shadow: 0 -1px 0 0 #e0e0e0, -1px 0 0 0 #e0e0e0, 1px 0 0 0 #e0e0e0;
+   
+}*/
+
+.eat-source-page {
+     margin-bottom: 10px; /* This won't work on TR, but let's try another way if needed */
+}
+
+/* Keep WordPress table semantics intact */
+tr.eat-source-page {
+    display: table-row;
+    margin-bottom: 0; /* margins on tr don't apply; avoid layout hacks */
+    border-radius: 0;
+}
+
+.eat-source-page.has-translations {
+   
+    margin-bottom: 0;
+}
+
+
+/* (v1 group frame shadows removed) */
+
+/* Keep translation rows as proper table rows (visibility is controlled below) */
+tr.eat-translation-page {
+    display: table-row;
+}
+
+/* Accordion Table Functionality */
+.eat-translation-collapsed,
+tr.eat-translation-page.eat-translation-collapsed {
+    display: none !important;
+}
+
+.eat-translation-expanded,
+tr.eat-translation-page.eat-translation-expanded {
+    display: table-row !important;
+}
+
+/* Force hide all translation rows by default */
+tr.eat-translation-page {
+    display: none !important;
+}
+
+tr.eat-translation-page.eat-translation-expanded {
+    display: table-row !important;
+}
+
+.eat-expand-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 3px;
+   
+    color: #666;
+}
+
+.eat-expand-button:hover {
+    background: #f0f0f0;
+    color: #2271b1;
+}
+
+.eat-expand-button .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+
+
+
+
+
+/* Keep default cursor on rows, but links must look clickable */
+.eat-page-title-link {
+    color: inherit;
+    text-decoration: none;
+}
+.eat-page-title-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.eat-page-title-link:hover .eat-page-lang {
+    text-decoration: none;
+}
+
+/* Page Title Column */
+.aitrfoel-dashboard-wrapper .column-title {
+    position: relative;
+}
+
+.eat-page-lang {
+    color: #999;
+    font-size: 11px;
+    font-weight: normal;
+    margin-left: 8px;
+    background: #f5f5f5;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.eat-page-status {
+    font-size: 11px;
+    color: #666;
+    margin-top: 6px;
+    font-style: italic;
+}
+
+.eat-translation-indent {
+    color: #666;
+}
+
+/* (v1 ascii connector/dot rules removed) */
+
+/* (v1 separators and title background lines removed) */
+
+/* (v1 connectors removed; v2 handles connectors under .eat-tree-v2) */
+
+/* Language Flags */
+.eat-lang-flag {
+    display: inline-block;
+    padding: 3px 6px;
+    margin: 1px 2px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+.eat-lang-exists {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.eat-lang-missing {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Page Type Styling */
+.eat-page-type {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: help;
+    text-align: center;
+    min-width: 60px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.eat-page-elementor {
+    background: #e7f3ff;
+    color: #0073aa;
+}
+
+.eat-page-standard {
+    background: #f3f4f6;
+    color: #666;
+}
+
+/* Translation Status */
+.eat-translation-status {
+    color: #0073aa;
+    font-weight: 500;
+    font-size: 12px;
+}
+
+.eat-status-complete {
+    color: #28a745;
+    font-weight: 500;
+    font-size: 12px;
+}
+
+.eat-translation-note {
+    color: #666;
+    font-style: italic;
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+/* Checkboxes */
+.eat-page-checkbox:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Action Buttons */
+.aitrfoel-dashboard-wrapper .column-actions {
+    white-space: nowrap;
+}
+
+.aitrfoel-dashboard-wrapper .column-actions .button {
+    margin: 0 2px;
+    font-size: 11px;
+    padding: 4px 10px;
+    height: auto;
+    line-height: 1.4;
+    border-radius: 4px;
+    text-decoration: none;
+}
+
+.aitrfoel-dashboard-wrapper .column-actions .button:first-child {
+    margin-left: 0;
+}
+
+.aitrfoel-dashboard-wrapper .column-actions .button:last-child {
+    margin-right: 0;
+}
+
+/* Enhanced button styles */
+.aitrfoel-dashboard-wrapper .column-actions .button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.non-clickable {
+    pointer-events: none;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .aitrfoel-dashboard-table .column-languages {
+        width: 18%;
+    }
+    
+    .aitrfoel-dashboard-table .column-status {
+        width: 12%;
+    }
+    
+    .aitrfoel-dashboard-table .column-page-type {
+        width: 10%;
+    }
+}
+
+@media (max-width: 1024px) {
+    .eat-bulk-content {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+    
+    .eat-bulk-actions {
+        margin-left: 0;
+        justify-content: space-between;
+    }
+    
+    .aitrfoel-dashboard-table .column-title {
+        width: 40%;
+    }
+    
+    .aitrfoel-dashboard-table .column-languages {
+        width: 25%;
+    }
+}
+
+@media (max-width: 768px) {
+    .eat-bulk-translation-bar {
+        padding: 15px;
+        top: 46px; /* Higher top for mobile admin bar */
+        margin: 15px 0 15px 0; /* Reduced margins on mobile */
+    }
+    
+    .eat-bulk-translation-bar.is-sticky {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        border-radius: 0; /* Remove border radius when sticky on mobile */
+        margin-left: -15px;
+        margin-right: -15px;
+        padding-left: 30px;
+        padding-right: 30px;
+    }
+    
+    .eat-bulk-languages {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        align-items: start;
+    }
+    
+    .eat-source-languages,
+    .eat-target-languages {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .eat-bulk-languages label {
+        font-size: 13px;
+        margin-bottom: 4px;
+    }
+    
+    .eat-bulk-languages select,
+    .eat-bulk-languages .button {
+        width: 100%;
+        font-size: 14px;
+    }
+    
+    .aitrfoel-dashboard-table table {
+        font-size: 14px;
+    }
+    
+    .aitrfoel-dashboard-table .column-languages,
+    .aitrfoel-dashboard-table .column-status,
+    .aitrfoel-dashboard-table .column-page-type {
+        display: none;
+    }
+    
+    .aitrfoel-dashboard-table .column-title {
+        width: 60%;
+    }
+    
+    .aitrfoel-dashboard-table .column-actions {
+        width: 30%;
+    }
+    
+    /* Hide Edit and View buttons on mobile - show only Delete button */
+    .aitrfoel-dashboard-wrapper .column-actions .button:nth-child(1),
+    .aitrfoel-dashboard-wrapper .column-actions .button:nth-child(2) {
+        display: none;
+    }
+    
+    /* Keep only the delete button visible on mobile */
+    .aitrfoel-dashboard-wrapper .column-actions .eat-delete-page {
+        display: inline-block;
+    }
+}
+
+/* УДАЛЁН СТАРЫЙ КОД - НЕ НУЖЕН */
+
+/* ==============================================
+   КНОПКА ПЕРЕВОДА - BEST PRACTICES АНИМАЦИЯ  
+   ============================================== */
+
+/* Базовая кнопка перевода */
+#eat-start-translation {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border-radius: 6px;
+    font-weight: 600;
+    padding: 10px 20px;
+    font-size: 14px;
+}
+
+/* СОСТОЯНИЕ ЗАГРУЗКИ - Движущиеся полосы + пульсация */
+#eat-start-translation.loading {
+    background: #0073aa !important;
+    background-size: 100% !important;
+    animation: 
+        movingStripes 1s linear infinite,
+        pulseGlow 2s ease-in-out infinite !important;
+    color: white !important;
+    border-color: #0073aa !important;
+    cursor: wait !important;
+    transform: scale(1.02) !important;
+    box-shadow: 0 4px 15px rgba(0, 115, 170, 0.4) !important;
+    position: relative !important;
+}
+
+/* Add shimmer overlay effect for loading state */
+#eat-start-translation.loading::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.4) 50%,
+        transparent 100%
+    );
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* =============================
+ *  Tree/Dividers v2 (CSS-only)
+ *  Scope: .aitrfoel-dashboard-wrapper.eat-tree-v2
+ * ============================= */
+.aitrfoel-dashboard-wrapper.eat-tree-v2 .wp-list-table {
+    border-collapse: separate; /* avoid implicit merging */
+    border-spacing: 0;         /* keep tight grid */
+}
+
+/* 1) Reset default bottoms so we control all horizontals */
+.aitrfoel-dashboard-wrapper.eat-tree-v2 .eat-translation-page td,
+.aitrfoel-dashboard-wrapper.eat-tree-v2 .eat-translation-page th,
+.aitrfoel-dashboard-wrapper.eat-tree-v2 .eat-source-page.expanded td,
+.aitrfoel-dashboard-wrapper.eat-tree-v2 .eat-source-page.expanded th {
+   
+}
+
+/* 2) Group frame (top/bottom) — draw on all cells except title to not cross the vertical line */
+.aitrfoel-dashboard-wrapper.eat-tree-v2 .eat-source-page.expanded + .eat-translation-page td:not(.column-title),
+.aitrfoel-dashboard-wrapper.eat-tree-v2 .eat-source-page.expanded + .eat-translation-page th {
+    border-top: 1px solid #eef2f7;
+}
+.aitrfoel-dashboard-wrapper.eat-tree-v2 .eat-translation-page.eat-group-last td:not(.column-title),
+.aitrfoel-dashboard-wrapper.eat-tree-v2 .eat-translation-page.eat-group-last th {
+    border-bottom: 1px solid #eef2f7;
+}
+
+
+
+/* 4) Vertical connector and elbow in title column */
+.aitrfoel-dashboard-wrapper.eat-tree-v2 .eat-translation-page .column-title {
+    position: relative;
+    padding-left: 32px;
+    background-image: none; /* neutralize prior non-v2 background lines, v2 rules below will override */
+}
+.aitrfoel-dashboard-wrapper.eat-tree-v2 .eat-translation-page .column-title::before {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e2e7f0;
+    border-radius: 1px;
+}
+.aitrfoel-dashboard-wrapper.eat-tree-v2 .eat-translation-page .column-title::after {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 2px;
+    background: #e2e7f0;
+    border-radius: 1px;
+}
+.aitrfoel-dashboard-wrapper.eat-tree-v2 .eat-translation-page.eat-group-last .column-title::before {
+    bottom: calc(50% - 1px);
+}
+
+
+
+
+/* СОСТОЯНИЕ УСПЕХА - Яркое свечение + bounce */
+#eat-start-translation.success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 50%, #28a745 100%) !important;
+    background-size: 200% 200% !important;
+    border-color: #1e7e34 !important;
+    color: white !important;
+    font-weight: bold !important;
+    animation: 
+        successShine 2s ease-in-out,
+        successBounce 0.6s ease-out !important;
+    box-shadow: 0 6px 25px rgba(40, 167, 69, 0.6) !important;
+    transform: scale(1.05) !important;
+}
+
+/* Анимация движущихся полос */
+@keyframes movingStripes {
+    0% { 
+        background-position: 0 0; 
+    }
+    100% { 
+        background-position: 30px 30px; 
+    }
+}
+
+/* Пульсация во время загрузки */
+@keyframes pulseGlow {
+    0% { 
+        box-shadow: 0 4px 15px rgba(0, 115, 170, 0.4);
+    }
+    50% { 
+        box-shadow: 0 6px 25px rgba(0, 115, 170, 0.7);
+    }
+    100% { 
+        box-shadow: 0 4px 15px rgba(0, 115, 170, 0.4);
+    }
+}
+
+/* Переливающееся свечение успеха */
+@keyframes successShine {
+    0% { 
+        background-position: 0% 0%;
+        box-shadow: 0 6px 25px rgba(40, 167, 69, 0.6);
+    }
+    50% { 
+        background-position: 100% 100%;
+        box-shadow: 0 8px 35px rgba(40, 167, 69, 0.8);
+    }
+    100% { 
+        background-position: 0% 0%;
+        box-shadow: 0 6px 25px rgba(40, 167, 69, 0.6);
+    }
+}
+
+/* Подпрыгивание при успехе */
+@keyframes successBounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1.05); }
+}
+
+/* ==============================================
+   МОДАЛЬНОЕ ОКНО УСПЕХА  
+   ============================================== */
+
+@keyframes fadeInModal {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideInModal {
+    from { 
+        opacity: 0;
+        transform: translateY(-50px) scale(0.8);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Translation Status Animations */
+.eat-bulk-bar.processing {
+    border-left: 4px solid #ffc107;
+    background: linear-gradient(135deg, #fff3cd 0%, #fffbf0 100%);
+    animation: pulse-processing 2s infinite ease-in-out;
+}
+
+@keyframes pulse-processing {
+    0%, 100% { box-shadow: 0 2px 4px rgba(255, 193, 7, 0.2); }
+    50% { box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4); }
+}
+
+.eat-bulk-bar.completed {
+    border-left: 4px solid #28a745;
+    background: linear-gradient(135deg, #d4edda 0%, #e8f5e8 100%);
+    animation: success-flash 0.6s ease-out;
+}
+
+@keyframes success-flash {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.eat-bulk-bar.error {
+    border-left: 4px solid #dc3545;
+    background: linear-gradient(135deg, #f8d7da 0%, #fde7e9 100%);
+    animation: error-shake 0.6s ease-out;
+}
+
+@keyframes error-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* Table Update Animations */
+.eat-table-updating {
+    position: relative;
+    overflow: hidden;
+}
+
+.eat-table-updating::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(0, 115, 170, 0.1),
+        transparent
+    );
+    animation: table-update 1.5s ease-in-out;
+}
+
+@keyframes table-update {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Row Update Animation */
+.eat-row-updated {
+    animation: row-highlight 1s ease-out;
+}
+
+@keyframes row-highlight {
+    0% { background-color: #e3f2fd; }
+    100% { background-color: transparent; }
+}
+
+/* Highlight animation for completed translation */
+tr.eat-translation.highlight,
+tr.eat-translation-page.eat-translation-highlight {
+    background-color: #d4edda !important;
+    animation: highlightFade 3s ease-out forwards;
+    border-left: 4px solid #28a745 !important;
+}
+
+@keyframes highlightFade {
+    0% { 
+        background-color: #d4edda !important; 
+        border-left-color: #28a745 !important;
+    }
+    100% { 
+        background-color: transparent; 
+        border-left-color: transparent;
+    }
+}
+
+/* Highlight animation for newly created translated pages */
+tr.eat-translation-page.eat-newly-created-highlight {
+    background: linear-gradient(45deg, #28a745, #20c997) !important;
+    animation: newPageHighlight 4s ease-out forwards !important;
+    border-left: 5px solid #ffc107 !important;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3) !important;
+    transform: scale(1.02) !important;
+}
+
+@keyframes newPageHighlight {
+    0% { 
+        background: linear-gradient(45deg, #28a745, #20c997) !important;
+        border-left-color: #ffc107 !important;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3) !important;
+        transform: scale(1.02) !important;
+    }
+    50% {
+        background: linear-gradient(45deg, #20c997, #17a2b8) !important;
+        border-left-color: #fd7e14 !important;
+        box-shadow: 0 6px 20px rgba(32, 201, 151, 0.4) !important;
+        transform: scale(1.03) !important;
+    }
+    100% { 
+        background: transparent !important;
+        border-left-color: transparent !important;
+        box-shadow: none !important;
+        transform: scale(1) !important;
+    }
+}
+
+/* Animated progress with text and dots */
+/* Simple animated dots for estimated words */
+#eat-estimated-words.translating {
+    color: #0073aa !important;
+    font-weight: 500;
+}
+
+#eat-estimated-words .eat-dots {
+    display: inline-block;
+    margin-left: 4px;
+}
+
+#eat-estimated-words .eat-dots .dot {
+    opacity: 0;
+    animation: dotBlink 1.5s infinite;
+}
+
+#eat-estimated-words .eat-dots .dot:nth-child(1) {
+    animation-delay: 0s;
+}
+
+#eat-estimated-words .eat-dots .dot:nth-child(2) {
+    animation-delay: 0.5s;
+}
+
+#eat-estimated-words .eat-dots .dot:nth-child(3) {
+    animation-delay: 1s;
+}
+
+@keyframes dotBlink {
+    0%, 80%, 100% { 
+        opacity: 0;
+    }
+    40% { 
+        opacity: 1;
+    }
+}
+
+/* Bulk Translation States */
+.eat-bulk-bar.processing .eat-bulk-actions button:not(.cancel) {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.eat-bulk-bar.processing {
+    border-left: 4px solid #ffc107;
+    background: #fff3cd;
+}
+
+.eat-bulk-bar.completed {
+    border-left: 4px solid #28a745;
+    background: #d4edda;
+}
+
+.eat-bulk-bar.error {
+    border-left: 4px solid #dc3545;
+    background: #f8d7da;
+}
+
+/* Tooltips */
+.aitrfoel-dashboard-wrapper [title]:hover:after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 50;
+}
+
+/* Status Icons */
+.eat-status-icon {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+.eat-status-pending { color: #ffc107; }
+.eat-status-processing { color: #17a2b8; }
+.eat-status-completed { color: #28a745; }
+.eat-status-failed { color: #dc3545; }
+
+/* Simple Translation Status */
+.eat-translation-status-compact {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #666;
+    margin-left: 15px;
+}
+
+.eat-translation-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 2px solid #0073aa;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Animation */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.eat-processing {
+    animation: pulse 1.5s infinite;
+}
+
+/* Delete Button Styles - Scoped to dashboard */
+.aitrfoel-dashboard-wrapper .eat-delete-page {
+    background: transparent !important;
+    border-color: #dc3545 !important;
+    color: #dc3545 !important;
+    transition: all 0.2s ease;
+    margin-left: 0px !important;
+}
+
+.aitrfoel-dashboard-wrapper .eat-delete-page:hover {
+    background: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: white !important;
+}
+
+.aitrfoel-dashboard-wrapper .eat-delete-page:disabled {
+    background: transparent !important;
+    border-color: #6c757d !important;
+    color: #6c757d !important;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.aitrfoel-dashboard-wrapper .column-actions {
+    white-space: nowrap;
+}
+
+.aitrfoel-dashboard-wrapper .column-actions .button {
+    margin-right: 5px;
+}
+
+.aitrfoel-dashboard-wrapper .column-actions .eat-delete-page {
+    margin-right: 0;
+    margin-left: 10px;
+}
+
+/* ==========================================================================
+   Translation Settings Modal
+   ========================================================================== */
+
+/* Modal Overlay */
+.aitrfoel-settings-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 160000;
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.aitrfoel-settings-modal-overlay.show {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Modal Container */
+.aitrfoel-settings-modal {
+    background: #fff;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease;
+}
+
+/* Modal Header */
+.aitrfoel-settings-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+}
+
+.aitrfoel-settings-modal-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.aitrfoel-settings-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.aitrfoel-settings-modal-close:hover {
+    background: #e9ecef;
+    color: #333;
+}
+
+/* Modal Body */
+.aitrfoel-settings-modal-body {
+    padding: 24px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.aitrfoel-settings-section {
+    margin-bottom: 24px;
+}
+
+.aitrfoel-settings-section:last-child {
+    margin-bottom: 0;
+}
+
+.aitrfoel-settings-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+    font-size: 14px;
+}
+
+.aitrfoel-settings-description {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 12px;
+    line-height: 1.4;
+}
+
+/* Exclude Words Input */
+.eat-exclude-words-container {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px;
+    min-height: 80px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: #fff;
+    cursor: text;
+    transition: border-color 0.2s ease;
+}
+
+.eat-exclude-words-container:focus-within {
+    border-color: #0073aa;
+    box-shadow: 0 0 0 1px #0073aa;
+}
+
+.eat-exclude-words-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.eat-exclude-chip {
+    background: #0073aa;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 16px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 200px;
+}
+
+.eat-exclude-chip-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.eat-exclude-chip-remove {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0;
+    font-size: 14px;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s ease;
+}
+
+.eat-exclude-chip-remove:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.eat-exclude-words-input {
+    border: none;
+    outline: none;
+    font-size: 13px;
+    padding: 4px 0;
+    width: 100%;
+    min-width: 100px;
+}
+
+/* Smart Suggestions */
+.eat-smart-suggestions {
+    margin-top: 16px;
+}
+
+.eat-suggestions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.eat-suggestion-category {
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 12px;
+    background: #f9f9f9;
+}
+
+.eat-suggestion-category-title {
+    font-weight: 600;
+    font-size: 12px;
+    color: #555;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.eat-suggestion-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.eat-suggestion-item {
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #666;
+}
+
+.eat-suggestion-item:hover {
+    border-color: #0073aa;
+    color: #0073aa;
+    background: #f0f8ff;
+}
+
+.eat-suggestion-item.selected {
+    background: #0073aa;
+    color: white;
+    border-color: #0073aa;
+}
+
+/* Modal Footer */
+.aitrfoel-settings-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #ddd;
+    background: #f8f9fa;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.aitrfoel-settings-preview {
+    font-size: 12px;
+    color: #666;
+    max-width: 60%;
+    line-height: 1.3;
+}
+
+.aitrfoel-settings-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.aitrfoel-settings-cancel {
+    background: none;
+    border: 1px solid #ddd;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+.aitrfoel-settings-cancel:hover {
+    border-color: #999;
+    background: #f5f5f5;
+}
+
+.aitrfoel-settings-save {
+    background: #0073aa;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.2s ease;
+}
+
+.aitrfoel-settings-save:hover {
+    background: #005a87;
+}
+
+.aitrfoel-settings-save:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+    from { 
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Stage Progress Indicator */
+.eat-stage-progress {
+    background: #f8f9fa;
+    border: 1px solid #e1e3e6;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    font-size: 13px;
+}
+
+.eat-stage {
+    margin-bottom: 16px;
+}
+
+.eat-stage:last-child {
+    margin-bottom: 0;
+}
+
+.eat-stage-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 8px;
+}
+
+.eat-stage-icon {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+}
+
+.eat-stage-title {
+    font-weight: 600;
+    color: #1d1d1f;
+    flex: 1;
+}
+
+.eat-stage-status {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.eat-stage-status.pending {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.eat-stage-status.active {
+    background: #dbeafe;
+    color: #1d4ed8;
+    animation: eat-pulse 2s infinite;
+}
+
+.eat-stage-status.completed {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.eat-stage-status.error {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.eat-stage-progress-bar {
+    background: #e5e7eb;
+    height: 4px;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+
+.eat-stage-progress-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.eat-stage-1 .eat-stage-progress-fill {
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+}
+
+.eat-stage-2 .eat-stage-progress-fill {
+    background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.eat-stage-description {
+    font-size: 11px;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+@keyframes eat-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/* Hide stage progress by default, show when active */
+.eat-stage-progress.active {
+    display: block;
+}
+
+/* Show one stage at a time - hide pending stages that aren't next */
+.eat-stage-progress .eat-stage.eat-stage-2.pending {
+    display: none;
+}
+
+.eat-stage-progress .eat-stage.eat-stage-2.active,
+.eat-stage-progress .eat-stage.eat-stage-2.completed {
+    display: block;
+}
+
+/* When stage 1 is completed, show stage 2 */
+.eat-stage-progress .eat-stage-1 .eat-stage-status.completed ~ .eat-stage-2 {
+    display: block;
+}
+
+/* Information Card in Dashboard */
+.aitrfoel-dashboard-wrapper .eat-card {
+    margin-top: 30px;
+    margin-bottom: 20px;
+}
+
+.eat-info-content {
+    padding: 0;
+}
+
+.eat-info-content p {
+    margin-bottom: 15px;
+    line-height: 1.6;
+    color: #555;
+}
+
+.eat-info-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.eat-info-buttons .button {
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.eat-info-buttons .button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 480px) {
+    .eat-info-buttons {
+        flex-direction: column;
+    }
+    
+    .eat-info-buttons .button {
+        text-align: center;
+    }
+}
+
+#footer-left {
+    display:none;
+}
+/* Mobile display fixes */
+@media screen and (max-width: 782px) {
+    .wp-list-table tr:not(.inline-edit-row):not(.no-items) td:not(.column-primary)::before {
+        width: 1%;}}
+/* ==========================================================================
+   Pre-Analysis & Error Modals - Phase 2
+   ========================================================================== */
+
+/* Modal Overlay */
+.eat-modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.7) !important;
+    z-index: 999999 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Modal Content */
+.eat-modal-content {
+    background: #fff !important;
+    border-radius: 8px;
+    width: 90% !important;
+    max-width: 700px !important;
+    max-height: 90vh !important;
+    overflow-y: auto;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+    animation: modalSlideIn 0.3s ease;
+    position: relative !important;
+    padding: 24px !important;
+    z-index: 1000000 !important;
+}
+
+/* Close Button */
+.eat-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #666;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+.eat-modal-close:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+/* Analysis Panel */
+.eat-analysis-panel h3 {
+    margin: 0 0 20px 0;
+    font-size: 22px;
+    color: #333;
+}
+
+.eat-analysis-summary {
+    background: #f8f9fa;
+    border: 1px solid #e1e1e1;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.eat-analysis-summary p {
+    margin: 8px 0;
+    font-size: 14px;
+    color: #555;
+}
+
+.eat-analysis-summary strong {
+    color: #2271b1;
+    font-weight: 600;
+}
+
+/* Analysis Status */
+.eat-analysis-status {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.eat-analysis-status.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.eat-analysis-status.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Breakdown Table */
+.eat-breakdown-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.eat-breakdown-table thead th {
+    background: #f8f9fa;
+    padding: 10px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+    font-size: 13px;
+    color: #495057;
+}
+
+.eat-breakdown-table tbody td {
+    padding: 10px;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 14px;
+    color: #555;
+}
+
+.eat-breakdown-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.eat-breakdown-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+/* Error Modal */
+.eat-error-modal h3 {
+    margin: 0 0 20px 0;
+    font-size: 22px;
+    color: #721c24;
+}
+
+.eat-error-message {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+    color: #721c24;
+}
+
+.eat-error-message p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.eat-error-stats {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.eat-error-stats p {
+    margin: 8px 0;
+    font-size: 14px;
+    color: #856404;
+}
+
+.eat-error-stats strong {
+    color: #533f03;
+    font-weight: 600;
+}
+
+.eat-error-stats .eat-progress-bar {
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.eat-error-stats .eat-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #28a745, #20c997);
+    transition: width 0.3s ease;
+}
+
+.eat-error-details {
+    background: #e7f3ff;
+    border: 1px solid #b8daff;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+    color: #004085;
+}
+
+.eat-error-details p {
+    margin: 8px 0;
+    font-size: 14px;
+}
+
+/* Modal Actions */
+.eat-modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #e1e1e1;
+}
+
+.eat-modal-actions .button {
+    padding: 8px 20px;
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.eat-modal-actions .button-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(34, 113, 177, 0.3);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
+    .eat-modal-content {
+        width: 95%;
+        max-height: 95vh;
+        padding: 20px;
+    }
+    
+    .eat-breakdown-table {
+        font-size: 12px;
+    }
+    
+    .eat-breakdown-table thead th,
+    .eat-breakdown-table tbody td {
+        padding: 8px;
+    }
+    
+    .eat-modal-actions {
+        flex-direction: column;
+    }
+    
+    .eat-modal-actions .button {
+        width: 100%;
+    }
+}
+
+/* Dropdown styles */
+.eat-dropdown-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.eat-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.eat-dropdown-item:hover {
+    background: #f5f5f5;
+}
+
+.eat-dropdown-item label {
+    cursor: pointer;
+    margin: 0;
+    display: block;
+}
+
+.eat-dropdown-divider {
+    height: 1px;
+    background: #ddd;
+    margin: 4px 0;
+}
