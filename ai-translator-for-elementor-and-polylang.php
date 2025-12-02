@@ -3,7 +3,7 @@
  * Plugin Name: AI Translator for Elementor and Polylang
  * Plugin URI: https://meeptech.com/products/ai-translator-for-elementor-and-polylang
  * Description: Premium AI-powered translation solution for Elementor with OpenAI integration for Polylang
- * Version: 1.0.7
+ * Version: 1.0.8
  * Author: Meeptech
  * Author URI: https://meeptech.com
  * License: GPL v2 or later
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('AITRFOEL_VERSION', '1.0.7');
+define('AITRFOEL_VERSION', '1.0.8');
 define('AITRFOEL_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AITRFOEL_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AITRFOEL_PLUGIN_BASENAME', plugin_basename(__FILE__));

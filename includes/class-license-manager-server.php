@@ -565,13 +565,13 @@ class AITRFOEL_License_Manager_Server {
     public function on_plan_changed($old_plan, $new_plan) {
         $old_plan_name = isset($old_plan->name) ? $old_plan->name : 'Unknown';
         $new_plan_name = isset($new_plan->name) ? $new_plan->name : 'Unknown';
-        
+
         AITRFOEL_Logger::log(sprintf(
             'Plan changed from %s to %s - updating remote database',
             $old_plan_name,
             $new_plan_name
-        ));
-        
+        ), 'info');
+
         $license_key = null;
         if (function_exists('eatp_fs') && eatp_fs()->is_registered()) {
             try {
@@ -639,7 +639,7 @@ class AITRFOEL_License_Manager_Server {
 
         $result = json_decode(wp_remote_retrieve_body($response), true);
         
-        AITRFOEL_Logger::log('Initialize user response: ' . wp_remote_retrieve_body($response));
+        AITRFOEL_Logger::log('Initialize user response: ' . wp_remote_retrieve_body($response), 'info');
         
         if (isset($result['success']) && $result['success']) {
             AITRFOEL_Logger::log('User initialized successfully in remote database', 'success');
@@ -695,7 +695,7 @@ class AITRFOEL_License_Manager_Server {
 
         $result = json_decode(wp_remote_retrieve_body($response), true);
         
-        AITRFOEL_Logger::log('Update plan response: ' . wp_remote_retrieve_body($response));
+        AITRFOEL_Logger::log('Update plan response: ' . wp_remote_retrieve_body($response), 'info');
         
         if (isset($result['success']) && $result['success']) {
             AITRFOEL_Logger::log('Plan updated successfully in remote database', 'success');

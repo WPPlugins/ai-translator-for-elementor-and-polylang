@@ -5,7 +5,7 @@ Requires at least: 5.8
 Tested up to: 6.8
 Requires PHP: 7.4
 Requires Plugins: elementor, polylang
-Stable tag: 1.0.7
+Stable tag: 1.0.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,30 +18,26 @@ AI Translator for Elementor and Polylang brings AI-powered translation to your W
 – One-click translation for Elementor pages
 – Polylang integration (free and Pro versions supported)
 – OpenAI-powered translations for natural, contextual results
-– Word limit enforcement with pre-translation checks
-– Automatic monthly word count reset
-– Clean admin interface without Elementor interference
+– Automatic weekly word count reset
 – Dashboard with usage tracking
 
 **Free Plan Includes:**
-– 1,800 words per month
+– 1,800 words per week
 – All core translation features
 – Latest OpenAI models
 – Compatible with Elementor Free & Pro
 – Compatible with Polylang Free & Pro
 
-Need more words or priority support? Upgrade to PRO for plans with 11,000 to 89,000 words/month, priority support, and no cooldown periods.
+Need more words or priority support? Upgrade to PRO for plans with 18,000 to 355,000 words, priority support, and no time limitations.
 
 == Installation ==
 1. Upload the plugin folder to `/wp-content/plugins/` or install via the WordPress Plugins screen.
 2. Activate the plugin through the 'Plugins' screen in WordPress.
-3. Go to AI Translator for Elementor and Polylang → Settings to configure.
-4. Add your OpenAI API key (get one at https://platform.openai.com/api-keys).
-5. Start translating your Elementor pages!
+3. Start translating your Elementor pages!
 
 == Frequently Asked Questions ==
 = Do I need an OpenAI API key? =
-Yes. You can get one for free at https://platform.openai.com/api-keys. OpenAI charges separately for API usage.
+No, we handle translation through our server - no key needed.
 
 = Does this require Elementor Pro? =
 No. It works with both Elementor free and Elementor Pro.
@@ -52,14 +48,14 @@ No. It supports both Polylang free and Polylang Pro.
 = Which AI provider do you use? =
 OpenAI via our secure translation API. We handle all API communication to ensure security and reliability.
 
-= How many words can I translate per month? =
-The free version includes 1,800 words per month. Upgrade to PRO for 11,000 to 89,000 words/month.
+= How many words can I translate per week? =
+The free version includes 1,800 words per week. Upgrade to PRO for 18,000 to 355,000 words with no time limitations.
 
 = What happens when I reach my word limit? =
-Translation will be blocked until your limit resets at the beginning of next month, or you can upgrade to PRO for higher limits and no cooldowns.
+Translation will be blocked with a cooldown until your word limit resets after a week, or you can upgrade to PRO for higher limits and no time limitations.
 
 = When does my word count reset? =
-Your word count automatically resets to 0 on the first day of each month.
+Your word count automatically resets to 0 after one week when the limit has been reached.
 
 = How do I check how many words I have left? =
 Visit AI Translator → Dashboard to see your current usage and words remaining.
@@ -68,7 +64,7 @@ Visit AI Translator → Dashboard to see your current usage and words remaining.
 No. Translations are applied to translated copies in the target language. Your original content remains unchanged.
 
 = What's the difference between FREE and PRO? =
-PRO includes higher word limits (11,000-89,000/month), priority support, license management, and no cooldown periods. The free version has 1,800 words/month.
+PRO includes higher word limits (18,000-355,000 words), priority support, license management, and no time limitations. The free version has 1,800 words per week.
 
 == External Services ==
 
@@ -79,7 +75,7 @@ This plugin relies on external third-party services to function. Below is a deta
 **Purpose:** Usage tracking and word count enforcement for translation plans.
 
 **Service Provider:** MeepTech  
-**API Endpoint:** https://meeptech.com/api/translate  
+**API Endpoint:** https://meeptech.com/api/eat/get-usage  
 **Data Transmitted:**
 - Your website URL (for site authentication)
 - Word count usage (number of words translated)
@@ -103,7 +99,6 @@ This plugin relies on external third-party services to function. Below is a deta
 **Data Transmitted:**
 - Text content to be translated (from your Elementor pages)
 - Source and target language codes
-- Your OpenAI API key (configured in settings)
 
 **When Data is Sent:**
 - When you initiate a page translation
@@ -138,7 +133,7 @@ $0
 Perfect for testing the plugin
 
 – 1 Website License
-– 1,800 words/month
+– 1,800 words/week
 – Latest OpenAI Models
 – Polylang Compatible
 – Elementor Support
@@ -146,12 +141,12 @@ Perfect for testing the plugin
 – All core features
 
 **Upgrade to PRO for more:**
-– Higher word limits (11,000-89,000/month)
+– Higher word limits (18,000-355,000)
 – Priority support
 – License management
-– No cooldown periods
+– No time limitations
 
-Upgrade inside WordPress: AI Translator → Pricing
+Upgrade on our website: https://meeptech.com/products/ai-translator-for-elementor-polylang
 
 == Privacy & Data Collection ==
 
