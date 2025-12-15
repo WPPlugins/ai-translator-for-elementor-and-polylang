@@ -1,10 +1,18 @@
-﻿/**
+/**
  * Dashboard JavaScript for Elementor AI Translator
  * Handles bulk translation interface interactions
  */
 
 jQuery(document).ready(function($) {
     'use strict';
+
+    // Helper function to get localized string
+    function __( key, fallback ) {
+        if ( typeof aitrfoelDashboard !== 'undefined' && aitrfoelDashboard.strings && aitrfoelDashboard.strings[key] ) {
+            return aitrfoelDashboard.strings[key];
+        }
+        return fallback || key;
+    }
 
     const Dashboard = {
         init: function() {
@@ -21,17 +29,17 @@ jQuery(document).ready(function($) {
         },
 
         checkForActiveTranslations: function() {
-            // Проверяем localStorage на наличие активного перевода
+            // ????????? localStorage ?? ??????? ????????? ????????
             const activeTranslation = localStorage.getItem('aitrfoel_active_translation');
             
             if (activeTranslation) {
                 try {
                     const translationData = JSON.parse(activeTranslation);
                     const jobId = translationData.jobId;
-                    // ЗАЩИТА: Блокируем UI пока проверяем статус
-                    this.blockTranslationUI('Checking active translation status...');
+                    // ??????: ????????? UI ???? ????????? ??????
+                    this.blockTranslationUI(__('checking_status', 'Checking active translation status...'));
                     
-                    // Проверяем, действительно ли перевод еще активен
+                    // ?????????, ????????????? ?? ??????? ??? ???????
                     this.verifyActiveTranslation(jobId);
                     
                 } catch (e) {                    this.clearActiveTranslation();
@@ -40,7 +48,7 @@ jQuery(document).ready(function($) {
         },
 
         /**
-         * Проверить действительно ли перевод активен в базе данных
+         * ????????? ????????????? ?? ??????? ??????? ? ???? ??????
          */
         verifyActiveTranslation: function(jobId) {
             $.ajax({
@@ -53,11 +61,11 @@ jQuery(document).ready(function($) {
                 },
                 success: (response) => {
                     if (response.success && response.data.status === 'processing') {
-                        // Перевод действительно активен - продолжаем мониторинг
+                        // ??????? ????????????? ??????? - ?????????? ??????????
                         this.showTranslationInProgress(response.data);
                         this.monitorTranslationProgress(jobId);
                     } else {
-                        // Перевод завершен или не найден - очищаем localStorage
+                        // ??????? ???????? ??? ?? ?????? - ??????? localStorage
                         this.clearActiveTranslation();
                         this.unblockTranslationUI();
                     }
@@ -70,7 +78,7 @@ jQuery(document).ready(function($) {
         },
 
         /**
-         * Показать что перевод уже в процессе
+         * ???????? ??? ??????? ??? ? ????????
          */
         showTranslationInProgress: function(statusData) {
             const button = $('#eat-start-translation');
@@ -78,57 +86,57 @@ jQuery(document).ready(function($) {
             // Show "Waiting for AI response..." with dots animation
             $('#eat-estimated-words')
                 .addClass('translating')
-                .html('Translation in Progress<span class="eat-dots"><span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></span>');
+                .html(__('translation_in_progress', 'Translation in Progress') + '<span class="eat-dots"><span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></span>');
             
-            // Блокируем кнопку
+            // ????????? ??????
             button.addClass('loading')
                   .removeClass('button-primary success')
-                  .html('⚡ Translation in Progress...')
+                  .html('? ' + __('translation_in_progress', 'Translation in Progress') + '...')
                   .prop('disabled', true);
             
-            // 🔄 Запускаем flip лоадер!
+            // ?? ????????? flip ??????!
             this.startFlipLoader(statusData.total_items || 0, statusData.completed_items || 0);
             
-            // Показываем прогресс если есть данные
+            // ?????????? ???????? ???? ???? ??????
             if (statusData.progress !== undefined) {
                 $('#eat-progress-container').show();
-                this.updateProgress(statusData.progress, statusData.status_message || 'Translation in progress...', statusData.details || '');
+                this.updateProgress(statusData.progress, statusData.status_message || __('translation_in_progress', 'Translation in progress...'), statusData.details || '');
             }
             
             $('#eat-bulk-bar').addClass('processing');
             
-            // Показываем уведомление
-            this.showNotice('⚠️ Translation is already in progress. Please wait for completion.', 'warning');
+            // ?????????? ???????????
+            this.showNotice('?? ' + __('translation_already_in_progress', 'Translation is already in progress. Please wait for completion.'), 'warning');
         },
 
         /**
-         * Заблокировать UI переводов
+         * ????????????? UI ?????????
          */
         blockTranslationUI: function(message) {
             const button = $('#eat-start-translation');
             button.prop('disabled', true)
-                  .html('🔄 ' + message)
+                  .html('?? ' + message)
                   .addClass('loading');
             
-            // Заблокировать чекбоксы
+            // ????????????? ????????
             $('.eat-page-checkbox, .eat-language-checkbox').prop('disabled', true);
             $('.eat-source-languages, .eat-target-languages').addClass('disabled');
         },
 
         /**
-         * Разблокировать UI переводов
+         * ?????????????? UI ?????????
          */
         unblockTranslationUI: function() {
             const button = $('#eat-start-translation');
             button.removeClass('loading')
                   .addClass('button-primary')
-                  .html('🚀 Start Translation');
+                  .html('?? Start Translation');
             
-            // Разблокировать чекбоксы
+            // ?????????????? ????????
             $('.eat-page-checkbox, .eat-language-checkbox').prop('disabled', false);
             $('.eat-source-languages, .eat-target-languages').removeClass('disabled');
             
-            // Обновить состояние кнопки
+            // ???????? ????????? ??????
             this.updateStartButtonState();
         },
 
@@ -154,13 +162,13 @@ jQuery(document).ready(function($) {
         },
 
         /**
-         * ❌ Reset UI after error
+         * ? Reset UI after error
          */
         resetTranslationUI: function() {
             const button = $('#eat-start-translation');
             button.removeClass('loading non-clickable')
                   .addClass('button-primary')
-                  .html('🚀 Start Translation')
+                  .html('?? Start Translation')
                   .prop('disabled', false);
             
             $('#eat-bulk-bar').removeClass('processing');
@@ -182,7 +190,7 @@ jQuery(document).ready(function($) {
         },
 
         /**
-         * 🎯 STAGE-BASED PROGRESS INDICATOR
+         * ?? STAGE-BASED PROGRESS INDICATOR
          */
         startStageProgress: function(totalJobs = 0, completedJobs = 0) {
             // Hide simple text, show stage progress
@@ -244,8 +252,8 @@ jQuery(document).ready(function($) {
             const statusMap = {
                 'pending': 'Pending',
                 'active': 'In Progress',
-                'completed': 'Completed',
-                'error': 'Error'
+                __('status_completed', 'Completed'): __('status_completed', 'Completed'),
+                'error': __('status_error', 'Error')
             };
             return statusMap[status] || status;
         },
@@ -297,7 +305,7 @@ jQuery(document).ready(function($) {
                 
             } else if (stage === 2) {
                 // Stage 2: Gap-Filler - show stage 2, complete stage 1
-                this.updateStageStatus(1, 'completed', 100);
+                this.updateStageStatus(1, __('status_completed', 'Completed'), 100);
                 this.updateStageStatus(2, 'active', Math.max(0, progress - 80) * 5); // Convert 80-100% to 0-100%
                 this.updateStageDescription(2, stageDescription || 'Fixing missed translations and refining quality');
                 
@@ -306,8 +314,8 @@ jQuery(document).ready(function($) {
                 
             } else if (stage === 3) {
                 // Both stages completed
-                this.updateStageStatus(1, 'completed', 100);
-                this.updateStageStatus(2, 'completed', 100);
+                this.updateStageStatus(1, __('status_completed', 'Completed'), 100);
+                this.updateStageStatus(2, __('status_completed', 'Completed'), 100);
                 $('.eat-stage-2').show();
                 
                 // Highlight completed translation if we have completion info
@@ -535,11 +543,11 @@ jQuery(document).ready(function($) {
             } else if (selectedPages === 0) {
                 startButton.prop('disabled', true)
                           .addClass('button-disabled')
-                          .attr('title', 'Select at least one page to start translation');
+                          .attr('title', __('select_page_tooltip', __('select_page_tooltip', 'Select at least one page to start translation')));
             } else {
                 startButton.prop('disabled', true)
                           .addClass('button-disabled')
-                          .attr('title', 'Select target languages to start translation');
+                          .attr('title', __('select_lang_tooltip', __('select_lang_tooltip', 'Select target languages to start translation')));
             }
         },
 
@@ -687,7 +695,7 @@ jQuery(document).ready(function($) {
             const selectedText = selectedRadio.parent().text().trim();
             
             // Update button text
-            $('#eat-select-source-language').text(selectedText + ' ▼');
+            $('#eat-select-source-language').text(selectedText + ' ?');
             
             // Close dropdown
             $('#eat-source-dropdown').hide();
@@ -717,10 +725,10 @@ jQuery(document).ready(function($) {
         },
 
         startTranslation: function() {
-            // ЗАЩИТА: Проверяем нет ли уже активного перевода
+            // ??????: ????????? ??? ?? ??? ????????? ????????
             const activeTranslation = localStorage.getItem('aitrfoel_active_translation');
             if (activeTranslation) {
-                Dashboard.showNotice('⚠️ Translation is already in progress. Please wait for completion or refresh the page.', 'warning');
+                Dashboard.showNotice('?? Translation is already in progress. Please wait for completion or refresh the page.', 'warning');
                 return;
             }
             
@@ -733,16 +741,16 @@ jQuery(document).ready(function($) {
             }).get();
             
             if (selectedPages.length === 0) {
-                Dashboard.showNotice('Please select at least one page to translate.', 'warning');
+                Dashboard.showNotice(__('select_page_warning', __('select_page_warning', 'Please select at least one page to translate.')), 'warning');
                 return;
             }
             
             if (selectedLanguages.length === 0) {
-                Dashboard.showNotice('Please select at least one target language.', 'warning');
+                Dashboard.showNotice(__('select_language_warning', __('select_language_warning', 'Please select at least one target language.')), 'warning');
                 return;
             }
             
-            // ⚡ IMMEDIATE FEEDBACK: Show animation BEFORE AJAX call
+            // ? IMMEDIATE FEEDBACK: Show animation BEFORE AJAX call
             Dashboard.showTranslationProgress();
             
             // Make AJAX call to start translation
@@ -759,7 +767,7 @@ jQuery(document).ready(function($) {
                 success: function(response) {
                     if (response.success) {
                         // Animation already showing - just continue with monitoring
-                        // Сохраняем активный перевод в localStorage
+                        // ????????? ???????? ??????? ? localStorage
                         Dashboard.saveActiveTranslation(response.data.job_id, 5);
                         Dashboard.monitorTranslationProgress(response.data.job_id);
                     } else {
@@ -769,14 +777,14 @@ jQuery(document).ready(function($) {
                         // Handle translation errors with proper modals
                         Dashboard.handleTranslationError(errorData);
                         
-                        // ❌ Reset UI on error
+                        // ? Reset UI on error
                         Dashboard.resetTranslationUI();
                     }
                 },
                 error: function() {
                     Dashboard.showError('Network error. Please try again.');
                     
-                    // ❌ Reset UI on error
+                    // ? Reset UI on error
                     Dashboard.resetTranslationUI();
                 }
             });
@@ -800,7 +808,7 @@ jQuery(document).ready(function($) {
             // Show animated progress
             this.startAnimatedProgress();
             
-            // ⏱️ Start the elapsed timer
+            // ?? Start the elapsed timer
             this.startElapsedTimer();
             
             // Show "Waiting for AI response..." with dots animation
@@ -808,23 +816,23 @@ jQuery(document).ready(function($) {
                 .addClass('translating')
                 .html('Waiting for AI response<span class="eat-dots"><span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></span>');
             
-            // Обновляем кнопку
+            // ????????? ??????
             const button = $('#eat-start-translation');
             button.addClass('loading')
                   .removeClass('button-primary success')
-                  .html('⚡ Translating...')
+                  .html('? Translating...')
                   .addClass('non-clickable');
             
             $('#eat-bulk-bar').addClass('processing');
         },
 
         /**
-         * 🆕 PRE-ANALYSIS: Анализ слов перед запуском перевода
+         * ?? PRE-ANALYSIS: ?????? ???? ????? ???????? ????????
          */
         runPreAnalysis: function(selectedPages, selectedLanguages) {
             const sourceLanguage = $('input[name="source-language"]:checked').val() || 'auto';
             
-            // Показываем лоадер
+            // ?????????? ??????
             this.showAnalysisLoader();
             
             $.ajax({
@@ -844,65 +852,65 @@ jQuery(document).ready(function($) {
                         const data = response.data;
                         
                         if (data.can_proceed) {
-                            // ✅ Достаточно слов - показываем подтверждение и запускаем
+                            // ? ?????????? ???? - ?????????? ????????????? ? ?????????
                             this.showAnalysisSuccess(data, selectedPages, selectedLanguages, sourceLanguage);
                         } else {
-                            // ❌ Недостаточно слов - показываем ошибку
+                            // ? ???????????? ???? - ?????????? ??????
                             this.showAnalysisError(data);
                         }
                     } else {
-                        // Ошибка анализа
-                        this.showNotice(response.data?.message || 'Pre-analysis failed', 'error');
+                        // ?????? ???????
+                        this.showNotice(response.data?.message || __('pre_analysis_failed', __('pre_analysis_failed', 'Pre-analysis failed')), __('status_error', 'Error'));
                     }
                 },
                 error: () => {
                     this.hideAnalysisLoader();
-                    this.showNotice('Network error during pre-analysis', 'error');
+                    this.showNotice(__('network_error_analysis', __('network_error_analysis', 'Network error during pre-analysis')), __('status_error', 'Error'));
                 }
             });
         },
 
         /**
-         * Показать лоадер анализа
+         * ???????? ?????? ???????
          */
         showAnalysisLoader: function() {
             const $button = $('#eat-start-translation');
             $button.prop('disabled', true)
-                   .html('🔍 Analyzing...')
+                   .html('?? Analyzing...')
                    .addClass('loading');
         },
 
         /**
-         * Скрыть лоадер анализа
+         * ?????? ?????? ???????
          */
         hideAnalysisLoader: function() {
             const $button = $('#eat-start-translation');
             $button.prop('disabled', false)
                    .removeClass('loading')
-                   .html('🚀 Start Translation');
+                   .html('?? Start Translation');
         },
 
         /**
-         * Показать успешный результат анализа с подтверждением
+         * ???????? ???????? ????????? ??????? ? ??????????????
          */
         showAnalysisSuccess: function(data, selectedPages, selectedLanguages, sourceLanguage) {
             const modal = this.createAnalysisModal(data);
             
-            // Показываем модальное окно
+            // ?????????? ????????? ????
             $('body').append(modal);
             
-            // Обработчик кнопки "Start Translation"
+            // ?????????? ?????? "Start Translation"
             $('#eat-analysis-confirm').on('click', () => {
                 $('#eat-analysis-modal').remove();
                 this.proceedWithTranslation(selectedPages, selectedLanguages, sourceLanguage);
             });
             
-            // Обработчик кнопки "Cancel"
+            // ?????????? ?????? "Cancel"
             $('#eat-analysis-cancel').on('click', () => {
                 $('#eat-analysis-modal').remove();
             });
             
-            // Закрытие по клику вне модального окна
+            // ???????? ?? ????? ??? ?????????? ????
             $('#eat-analysis-modal').on('click', function(e) {
                 if ($(e.target).hasClass('eat-modal-overlay')) {
                     $(this).remove();
@@ -911,7 +919,7 @@ jQuery(document).ready(function($) {
         },
 
         /**
-         * Создать HTML модального окна с результатами анализа
+         * ??????? HTML ?????????? ???? ? ???????????? ???????
          */
         createAnalysisModal: function(data) {
             const breakdown = data.breakdown || [];
@@ -933,8 +941,8 @@ jQuery(document).ready(function($) {
                 `;
             });
             
-            const statusClass = data.can_proceed ? 'success' : 'error';
-            const statusIcon = data.can_proceed ? '✅' : '⚠️';
+            const statusClass = data.can_proceed ? 'success' : __('status_error', 'Error');
+            const statusIcon = data.can_proceed ? '?' : '??';
             const statusText = data.can_proceed ? 'Sufficient words available' : 'Not enough words';
             
             const totalWordsNeeded = data.total_words_needed || 0;
@@ -946,12 +954,12 @@ jQuery(document).ready(function($) {
             return `
                 <div id="eat-analysis-modal" class="eat-modal-overlay">
                     <div class="eat-modal-content eat-analysis-panel">
-                        <button class="eat-modal-close" onclick="jQuery('#eat-analysis-modal').remove()">×</button>
+                        <button class="eat-modal-close" onclick="jQuery('#eat-analysis-modal').remove()">�</button>
                         
-                        <h3>📊 Translation Analysis</h3>
+                        <h3>?? Translation Analysis</h3>
                         
                         <div class="eat-analysis-summary">
-                            <p>Selected: <strong>${data.pages_count || 0} pages × ${data.languages_count || 0} languages = ${data.total_jobs || 0} jobs</strong></p>
+                            <p>Selected: <strong>${data.pages_count || 0} pages � ${data.languages_count || 0} languages = ${data.total_jobs || 0} jobs</strong></p>
                             <p>Estimated words: <strong>${totalWordsNeeded.toLocaleString()}</strong></p>
                             <p>Your limit: <strong>${wordLimit.toLocaleString()}</strong></p>
                             <p>Current usage: <strong>${wordsUsed.toLocaleString()}</strong></p>
@@ -979,8 +987,8 @@ jQuery(document).ready(function($) {
                         
                         <div class="eat-modal-actions">
                             ${data.can_proceed ? 
-                                '<button id="eat-analysis-confirm" class="button button-primary">🚀 Start Translation</button>' :
-                                '<button onclick="window.open(\'' + (data.upgrade_url || '') + '\', \'_blank\')" class="button button-primary">⬆️ Upgrade Plan</button>'
+                                '<button id="eat-analysis-confirm" class="button button-primary">?? Start Translation</button>' :
+                                '<button onclick="window.open(\'' + (data.upgrade_url || '') + '\', \'_blank\')" class="button button-primary">?? Upgrade Plan</button>'
                             }
                             <button id="eat-analysis-cancel" class="button">Cancel</button>
                         </div>
@@ -990,18 +998,18 @@ jQuery(document).ready(function($) {
         },
 
         /**
-         * Показать ошибку анализа (недостаточно слов)
+         * ???????? ?????? ??????? (???????????? ????)
          */
         showAnalysisError: function(data) {
             const modal = this.createAnalysisModal(data);
             $('body').append(modal);
             
-            // Обработчик кнопки "Cancel"
+            // ?????????? ?????? "Cancel"
             $('#eat-analysis-cancel').on('click', () => {
                 $('#eat-analysis-modal').remove();
             });
             
-            // Закрытие по клику вне модального окна
+            // ???????? ?? ????? ??? ?????????? ????
             $('#eat-analysis-modal').on('click', function(e) {
                 if ($(e.target).hasClass('eat-modal-overlay')) {
                     $(this).remove();
@@ -1010,10 +1018,10 @@ jQuery(document).ready(function($) {
         },
 
         /**
-         * Продолжить с переводом после подтверждения
+         * ?????????? ? ????????? ????? ?????????????
          */
         proceedWithTranslation: function(selectedPages, selectedLanguages, sourceLanguage) {
-            // Показываем прогресс
+            // ?????????? ????????
             this.showTranslationProgress();
             
             // Make AJAX call to start translation
@@ -1029,7 +1037,7 @@ jQuery(document).ready(function($) {
                 },
                 success: function(response) {
                     if (response.success) {
-                        // Сохраняем активный перевод в localStorage
+                        // ????????? ???????? ??????? ? localStorage
                         Dashboard.saveActiveTranslation(response.data.job_id, 5);
                         Dashboard.monitorTranslationProgress(response.data.job_id);
                     } else {
@@ -1044,7 +1052,7 @@ jQuery(document).ready(function($) {
         },
 
         /**
-         * 🆕 Обработка ошибок с улучшенными модальными окнами
+         * ?? ????????? ?????? ? ??????????? ?????????? ??????
          */
         handleTranslationError: function(errorData) {
             
@@ -1058,7 +1066,7 @@ jQuery(document).ready(function($) {
                 this.showInsufficientWordsModal(errorData);
             } else {
                 // Generic error
-                this.showError(errorData.message || 'Translation failed to start.');
+                this.showError(errorData.message || __('translation_failed_start', __('translation_failed_start', 'Translation failed to start.')));
             }
             
             // Reset estimated words text
@@ -1070,12 +1078,12 @@ jQuery(document).ready(function($) {
             $('#eat-start-translation')
                 .removeClass('loading non-clickable')
                 .addClass('button-primary')
-                .html('🚀 Start Translation');
+                .html('?? Start Translation');
             $('#eat-bulk-bar').removeClass('processing');
         },
 
         /**
-         * Модальное окно: Лимит достигнут
+         * ????????? ????: ????? ?????????
          */
         showLimitReachedModal: function(errorData) {
             const errorInfo = errorData.error_info || {};
@@ -1086,9 +1094,9 @@ jQuery(document).ready(function($) {
             const modal = `
                 <div id="eat-error-modal" class="eat-modal-overlay" style="opacity: 1 !important;">
                     <div class="eat-modal-content eat-error-modal">
-                        <button class="eat-modal-close" onclick="jQuery('#eat-error-modal').remove()">×</button>
+                        <button class="eat-modal-close" onclick="jQuery('#eat-error-modal').remove()">�</button>
                         
-                        <h3>⚠️ Translation Paused: Limit Reached</h3>
+                        <h3>?? Translation Paused: Limit Reached</h3>
                         
                         <div class="eat-error-message">
                             <p>${errorData.message || 'Word limit exceeded during translation.'}</p>
@@ -1109,7 +1117,7 @@ jQuery(document).ready(function($) {
                         </div>
                         
                         <div class="eat-modal-actions">
-                            <button onclick="window.open('${upgradeUrl}', '_blank')" class="button button-primary">⬆️ Upgrade Plan</button>
+                            <button onclick="window.open('${upgradeUrl}', '_blank')" class="button button-primary">?? Upgrade Plan</button>
                             <button onclick="jQuery('#eat-error-modal').remove()" class="button">Close</button>
                         </div>
                     </div>
@@ -1120,7 +1128,7 @@ jQuery(document).ready(function($) {
         },
 
         /**
-         * Модальное окно: Cooldown
+         * ????????? ????: Cooldown
          */
         showCooldownModal: function(errorData) {
             const upgradeUrl = errorData.upgrade_url || '#';
@@ -1128,9 +1136,9 @@ jQuery(document).ready(function($) {
             const modal = `
                 <div id="eat-error-modal" class="eat-modal-overlay" style="opacity: 1 !important;">
                     <div class="eat-modal-content eat-error-modal">
-                        <button class="eat-modal-close" onclick="jQuery('#eat-error-modal').remove()">×</button>
+                        <button class="eat-modal-close" onclick="jQuery('#eat-error-modal').remove()">�</button>
                         
-                        <h3>⏳ Cooldown Period</h3>
+                        <h3>? Cooldown Period</h3>
                         
                         <div class="eat-error-message">
                             <p>${errorData.message || 'You are in cooldown period.'}</p>
@@ -1142,7 +1150,7 @@ jQuery(document).ready(function($) {
                         </div>
                         
                         <div class="eat-modal-actions">
-                            <button onclick="window.open('${upgradeUrl}', '_blank')" class="button button-primary">⬆️ Upgrade Plan</button>
+                            <button onclick="window.open('${upgradeUrl}', '_blank')" class="button button-primary">?? Upgrade Plan</button>
                             <button onclick="jQuery('#eat-error-modal').remove()" class="button">Close</button>
                         </div>
                     </div>
@@ -1153,7 +1161,7 @@ jQuery(document).ready(function($) {
         },
 
         /**
-         * Модальное окно: Недостаточно слов
+         * ????????? ????: ???????????? ????
          */
         showInsufficientWordsModal: function(errorData) {
             const upgradeUrl = errorData.upgrade_url || '#';
@@ -1165,9 +1173,9 @@ jQuery(document).ready(function($) {
             const modal = `
                 <div id="eat-error-modal" class="eat-modal-overlay" style="opacity: 1 !important;">
                     <div class="eat-modal-content eat-error-modal">
-                        <button class="eat-modal-close" onclick="jQuery('#eat-error-modal').remove()">×</button>
+                        <button class="eat-modal-close" onclick="jQuery('#eat-error-modal').remove()">�</button>
                         
-                        <h3>⚠️ Not Enough Words</h3>
+                        <h3>?? Not Enough Words</h3>
                         
                         <div class="eat-error-message">
                             <p>${errorData.message || 'Insufficient words for this translation.'}</p>
@@ -1184,7 +1192,7 @@ jQuery(document).ready(function($) {
                         </div>
                         
                         <div class="eat-modal-actions">
-                            <button onclick="window.open('${upgradeUrl}', '_blank')" class="button button-primary">⬆️ Upgrade Plan</button>
+                            <button onclick="window.open('${upgradeUrl}', '_blank')" class="button button-primary">?? Upgrade Plan</button>
                             <button onclick="jQuery('#eat-error-modal').remove()" class="button">Close</button>
                         </div>
                     </div>
@@ -1236,7 +1244,7 @@ jQuery(document).ready(function($) {
          * Get appropriate icon for current progress stage (kept for compatibility)
          */
         getProgressIcon: function(index) {
-            const icons = ['🤖', '⚙️', '🔍', '📝', '⏳', '🔄', '✨', '🎯', '🚀', '✅'];
+            const icons = ['??', '??', '??', '??', '?', '??', '?', '??', '??', '?'];
             return icons[index % icons.length];
         },
 
@@ -1249,7 +1257,7 @@ jQuery(document).ready(function($) {
                 this.progressInterval = null;
             }
             
-            // ⏱️ Stop the timer too
+            // ?? Stop the timer too
             this.stopElapsedTimer();
             
             // Reset to default state after a delay (if not already showing success/error)
@@ -1262,7 +1270,7 @@ jQuery(document).ready(function($) {
         },
 
         /**
-         * ⏱️ Start elapsed timer
+         * ?? Start elapsed timer
          */
         startElapsedTimer: function() {
             this.timerStartTime = Date.now();
@@ -1279,7 +1287,7 @@ jQuery(document).ready(function($) {
         },
 
         /**
-         * ⏱️ Stop elapsed timer
+         * ?? Stop elapsed timer
          */
         stopElapsedTimer: function() {
             if (this.timerInterval) {
@@ -1293,7 +1301,7 @@ jQuery(document).ready(function($) {
         updateProgress: function(percentage, statusText, detailsText) {
             // Legacy function kept for compatibility
             // In new system, we use animated progress instead
-            this.updateAnimatedProgress(statusText || 'Processing translation', '🔄');
+            this.updateAnimatedProgress(statusText || __('processing_translation', 'Processing translation'), '??');
         },
 
         monitorTranslationProgress: function(jobId) {
@@ -1320,7 +1328,7 @@ jQuery(document).ready(function($) {
                                 const progressPercent = Math.round((completedItems / totalItems) * 100);
                                 
                                 // Update progress message based on current step
-                                let progressMessage = 'Processing translation';
+                                let progressMessage = __('processing_translation', 'Processing translation');
                                 if (status.current_step) {
                                     if (status.current_step.includes('Analyzing')) {
                                         progressMessage = 'Analyzing page content';
@@ -1328,7 +1336,7 @@ jQuery(document).ready(function($) {
                                         progressMessage = 'AI translating content';
                                     } else if (status.current_step.includes('Gap-Filler')) {
                                         progressMessage = 'Refining translation quality';
-                                    } else if (status.current_step.includes('Completed')) {
+                                    } else if (status.current_step.includes(__('status_completed', 'Completed'))) {
                                         progressMessage = 'Finalizing translations';
                                     }
                                 }
@@ -1358,11 +1366,11 @@ jQuery(document).ready(function($) {
                                 // Save progress
                                 self.saveActiveTranslation(jobId, progressPercent);
                                 
-                            } else if (status.status === 'completed') {
+                            } else if (status.status === __('status_completed', 'Completed')) {
                                 clearInterval(pollInterval);
                                 
                                 // Show completion message
-                                self.updateAnimatedProgress('All translations completed successfully!', '🎉');
+                                self.updateAnimatedProgress('All translations completed successfully!', '??');
                                 
                                 // Wait a moment to show completion, then clear
                                 setTimeout(() => {
@@ -1382,15 +1390,15 @@ jQuery(document).ready(function($) {
                                     .removeClass('translating')
                                     .text('Select pages for translation');
                                 
-                                // 🆕 Проверяем error_type для показа правильного модального окна
+                                // ?? ????????? error_type ??? ?????? ??????????? ?????????? ????
                                 const errorType = status.error_type;
                                 const errorInfo = status.error_info || {};
                                 
                                 if (errorType === 'limit_reached_during_process') {
-                                    // Лимит достигнут во время перевода - показываем специальное окно
+                                    // ????? ????????? ?? ????? ???????? - ?????????? ??????????? ????
                                     self.showLimitReachedModal({
                                         type: errorType,
-                                        message: status.error || 'Translation paused: word limit reached',
+                                        message: status.error || __('translation_paused_limit', __('translation_paused_limit', 'Translation paused: word limit reached')),
                                         error_info: errorInfo,
                                         upgrade_url: errorInfo.upgrade_url
                                     });
@@ -1409,11 +1417,11 @@ jQuery(document).ready(function($) {
                                         upgrade_url: errorInfo.upgrade_url
                                     });
                                 } else {
-                                    // Общая ошибка
+                                    // ????? ??????
                                     Dashboard.showError(status.error || 'Translation failed.');
                                 }
                             } else if (status.status === 'pending') {
-                                self.updateAnimatedProgress('Translation queued, waiting to start', '⏳');
+                                self.updateAnimatedProgress(__('translation_queued', __('translation_queued', 'Translation queued, waiting to start')), '?');
                                 self.saveActiveTranslation(jobId, 10);
                             }
                         }
@@ -1438,24 +1446,24 @@ jQuery(document).ready(function($) {
             const details = status.details || '';
             const progress = status.progress || 0;
             
-            if (currentStep.includes('🤖 AI Translating') || currentStep.includes('Analyzing') || currentStep.includes('Processing')) {
+            if (currentStep.includes('?? AI Translating') || currentStep.includes('Analyzing') || currentStep.includes('Processing')) {
                 // Stage 1: AI Translation
                 this.updateStageStatus(1, 'active', Math.min(progress, 80));
                 this.updateStageDescription(1, details || 'Translating with OpenAI...');
                 this.updateStageStatus(2, 'pending', 0);
             } else if (currentStep.includes('Gap-Filler') || currentStep.includes('Refinement') || currentStep.includes('Finalizing')) {
                 // Stage 2: Gap-Filler
-                this.updateStageStatus(1, 'completed', 100);
+                this.updateStageStatus(1, __('status_completed', 'Completed'), 100);
                 this.updateStageStatus(2, 'active', Math.max(0, progress - 80));
                 this.updateStageDescription(2, details || 'Refining translation quality...');
-            } else if (currentStep.includes('Completed') || currentStep.includes('✅')) {
+            } else if (currentStep.includes(__('status_completed', 'Completed')) || currentStep.includes('?')) {
                 // Both stages completed
-                this.updateStageStatus(1, 'completed', 100);
-                this.updateStageStatus(2, 'completed', 100);
-            } else if (currentStep.includes('Error') || currentStep.includes('❌') || currentStep.includes('💥')) {
+                this.updateStageStatus(1, __('status_completed', 'Completed'), 100);
+                this.updateStageStatus(2, __('status_completed', 'Completed'), 100);
+            } else if (currentStep.includes(__('status_error', 'Error')) || currentStep.includes('?') || currentStep.includes('??')) {
                 // Error state
-                this.updateStageStatus(1, 'error', 0);
-                this.updateStageStatus(2, 'error', 0);
+                this.updateStageStatus(1, __('status_error', 'Error'), 0);
+                this.updateStageStatus(2, __('status_error', 'Error'), 0);
             } else {
                 // Default: Stage 1 active
                 this.updateStageStatus(1, 'active', Math.min(progress, 80));
@@ -1469,35 +1477,35 @@ jQuery(document).ready(function($) {
             // Show success message in estimated words
             const $estimatedWords = $('#eat-estimated-words');
             $estimatedWords.removeClass('translating')
-                          .text('Translation completed successfully!')
+                          .text(__('translation_completed', 'Translation completed successfully!'))
                           .css('color', '#46b450');
             
             // Stop the progress interval
             this.stopAnimatedProgress();
             
-            // ЭПИЧНЫЙ зелёный успех с bounce
+            // ??????? ??????? ????? ? bounce
             button.removeClass('loading')
                   .addClass('success')
-                  .html('🎉 Complete!')
+                  .html('?? Complete!')
                   .addClass('non-clickable');
             
-            $('#eat-bulk-bar').removeClass('processing').addClass('completed');
+            $('#eat-bulk-bar').removeClass('processing').addClass(__('status_completed', 'Completed'));
             
             // Refresh word count stats from server
             Dashboard.refreshWordCountStats();
             
-            // Обновляем таблицу и подсвечиваем новые переводы
+            // ????????? ??????? ? ???????????? ????? ????????
             setTimeout(() => {
                 Dashboard.refreshTableData();
                 Dashboard.highlightNewlyCreatedPages(status);
             }, 1500);
             
-            // Автоматический сброс через 4 секунды
+            // ?????????????? ????? ????? 4 ???????
             setTimeout(() => Dashboard.resetUIToInitialState(), 4000);
         },
 
         resetUIToInitialState: function() {
-            // Очищаем активный перевод
+            // ??????? ???????? ???????
             this.clearActiveTranslation();
             
             // Clear translating page IDs
@@ -1511,23 +1519,23 @@ jQuery(document).ready(function($) {
                 .removeClass('translating')
                 .text('Select pages for translation');
             
-            // Полный сброс кнопки
+            // ?????? ????? ??????
             const button = $('#eat-start-translation');
             button.removeClass('loading success non-clickable')
                   .addClass('button-primary')
-                  .text('🚀 Start Translation')
-                  .prop('disabled', true); // Включится автоматически при выборе
+                  .text('?? Start Translation')
+                  .prop('disabled', true); // ????????? ????????????? ??? ??????
             
-            // Сброс всех чекбоксов
+            // ????? ???? ?????????
             $('.eat-page-checkbox, .eat-language-checkbox').prop('checked', false);
             $('.eat-page-checkbox').prop('disabled', false);
             
-            // Сброс UI элементов
-            $('#eat-select-languages').text(aitrfoelDashboard.strings?.select_languages || 'Select Languages ▼');
+            // ????? UI ?????????
+            $('#eat-select-languages').text(aitrfoelDashboard.strings?.select_languages || 'Select Languages ?');
             $('#eat-estimated-words').text('Select pages for translation');
             $('#eat-bulk-bar').removeClass('processing completed error');
             
-            // Обновляем состояния
+            // ????????? ?????????
             this.updateStartButtonState();
             this.updateDropdownsState(false);
         },
@@ -1536,7 +1544,7 @@ jQuery(document).ready(function($) {
          * Refresh word count stats from server
          */
         refreshWordCountStats: function() {
-            console.log('🔄 Refreshing word count stats from server...');
+            console.log('?? Refreshing word count stats from server...');
             
             $.ajax({
                 url: aitrfoelDashboard.ajax_url,
@@ -1548,7 +1556,7 @@ jQuery(document).ready(function($) {
                 success: function(response) {
                     if (response.success && response.data && response.data.data) {
                         const stats = response.data.data;
-                        console.log('✅ Word count stats updated:', stats);
+                        console.log('? Word count stats updated:', stats);
                         
                         // Update Words Translated
                         $('.eat-compact-stat').each(function() {
@@ -1580,11 +1588,11 @@ jQuery(document).ready(function($) {
                             $('.eat-compact-stats-bar').removeClass('eat-stats-updated');
                         }, 1000);
                     } else {
-                        console.warn('⚠️ Could not refresh word count stats');
+                        console.warn('?? Could not refresh word count stats');
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('❌ Error refreshing word count stats:', error);
+                    console.error('? Error refreshing word count stats:', error);
                 }
             });
         },
@@ -1717,7 +1725,7 @@ jQuery(document).ready(function($) {
                     
                     // Show success notification
                     this.showNotice(
-                        `🎉 Successfully created ${newPageIds.length} new translation${newPageIds.length > 1 ? 's' : ''}!`, 
+                        `?? Successfully created ${newPageIds.length} new translation${newPageIds.length > 1 ? 's' : ''}!`, 
                         'success'
                     );
                 }
@@ -1728,30 +1736,30 @@ jQuery(document).ready(function($) {
             // Show error message in estimated words
             const $estimatedWords = $('#eat-estimated-words');
             $estimatedWords.removeClass('translating')
-                          .text('Translation failed. Please try again.')
+                          .text(__('translation_failed', 'Translation failed. Please try again.'))
                           .css('color', '#dc3232');
             
             // Stop the progress interval
             this.stopAnimatedProgress();
             
-            $('#eat-bulk-bar').removeClass('processing').addClass('error');
+            $('#eat-bulk-bar').removeClass('processing').addClass(__('status_error', 'Error'));
             $('.eat-bulk-content').prepend('<div class="notice notice-error"><p>' + message + '</p></div>');
             
-            // Вернуть кнопку в исходное состояние при ошибке
+            // ??????? ?????? ? ???????? ????????? ??? ??????
             $('#eat-start-translation')
                 .removeClass('loading success non-clickable')
                 .addClass('button-primary')
-                .text('🚀 Start Translation')
+                .text('?? Start Translation')
                 .prop('disabled', false);
             
-            // Сбросить UI в исходное состояние при ошибке
+            // ???????? UI ? ???????? ????????? ??? ??????
             setTimeout(() => {
                 Dashboard.resetUIToInitialState();
             }, 1000);
         },
 
         openSettings: function() {
-            Dashboard.showNotice('⚙️ Settings panel coming soon! Currently using default settings.', 'info');
+            Dashboard.showNotice('?? Settings panel coming soon! Currently using default settings.', 'info');
         },
 
         handleDeletePage: function() {
@@ -1759,7 +1767,7 @@ jQuery(document).ready(function($) {
             const pageId = button.data('page-id');
             const pageTitle = button.data('page-title');
             
-            // Показываем подтверждение
+            // ?????????? ?????????????
             const confirmed = confirm(
                 `Are you sure you want to move "${pageTitle}" to trash?\n\n` +
                 `This action can be undone from WordPress trash.`
@@ -1769,10 +1777,10 @@ jQuery(document).ready(function($) {
                 return;
             }
             
-            // Блокируем кнопку
+            // ????????? ??????
             button.prop('disabled', true).text('Deleting...');
             
-            // Отправляем AJAX запрос
+            // ?????????? AJAX ??????
             $.ajax({
                 url: aitrfoelDashboard.ajax_url,
                 type: 'POST',
@@ -1783,26 +1791,26 @@ jQuery(document).ready(function($) {
                 },
                 success: function(response) {
                     if (response.success) {
-                        Dashboard.showNotice(`✅ "${pageTitle}" moved to trash successfully.`, 'success');
+                        Dashboard.showNotice(`? "${pageTitle}" moved to trash successfully.`, 'success');
                         
                         const row = button.closest('tr');
                         
-                        // Проверяем, это основная страница или перевод
+                        // ?????????, ??? ???????? ???????? ??? ???????
                         if (row.hasClass('eat-source-page')) {
-                            // Если это основная страница - удаляем всю группу
+                            // ???? ??? ???????? ???????? - ??????? ??? ??????
                             const sourcePageId = row.data('page-id');
                             const nextRows = row.nextAll('tr').filter(function() {
-                                // Удаляем все следующие строки до следующей основной страницы
+                                // ??????? ??? ????????? ?????? ?? ????????? ???????? ????????
                                 return !$(this).hasClass('eat-source-page');
                             });
                             
-                            // Удаляем основную строку и все связанные переводы
+                            // ??????? ???????? ?????? ? ??? ????????? ????????
                             row.add(nextRows).fadeOut(300, function() {
                                 $(this).remove();
                                 Dashboard.updateStartButtonState();
                             });
                         } else {
-                            // Если это перевод - удаляем только эту строку
+                            // ???? ??? ??????? - ??????? ?????? ??? ??????
                             row.fadeOut(300, function() {
                                 row.remove();
                                 Dashboard.updateStartButtonState();
@@ -1810,12 +1818,12 @@ jQuery(document).ready(function($) {
                         }
                         
                     } else {
-                        Dashboard.showNotice(`❌ Failed to delete "${pageTitle}": ${response.data.message}`, 'error');
+                        Dashboard.showNotice(`? Failed to delete "${pageTitle}": ${response.data.message}`, __('status_error', 'Error'));
                         button.prop('disabled', false).text('Delete');
                     }
                 },
                 error: function() {
-                    Dashboard.showNotice('❌ Network error. Please try again.', 'error');
+                    Dashboard.showNotice('? Network error. Please try again.', __('status_error', 'Error'));
                     button.prop('disabled', false).text('Delete');
                 }
             });
@@ -1838,12 +1846,12 @@ jQuery(document).ready(function($) {
                 <div id="aitrfoel-debug-modal" class="eat-modal-overlay">
                     <div class="eat-modal-content">
                         <div class="eat-modal-header">
-                            <h2>🔍 Translation Engine Debug</h2>
+                            <h2>?? Translation Engine Debug</h2>
                             <button class="eat-modal-close">&times;</button>
                         </div>
                         <div class="eat-modal-body">
                             <div id="aitrfoel-debug-output">
-                                <p>🔄 Running diagnostics...</p>
+                                <p>?? Running diagnostics...</p>
                             </div>
                         </div>
                     </div>
@@ -1919,18 +1927,18 @@ jQuery(document).ready(function($) {
 
         runDiagnostics: function() {
             const output = $('#aitrfoel-debug-output');
-            output.html('<h3>🔄 Running System Diagnostics...</h3>');
+            output.html('<h3>?? Running System Diagnostics...</h3>');
             
             // Test 1: Check selected pages and languages
             const selectedPages = $('.eat-page-checkbox:checked').length;
             const selectedLanguages = $('.eat-language-checkbox:checked').length;
             
-            output.append(`<p><strong>✅ UI State:</strong></p>`);
+            output.append(`<p><strong>? UI State:</strong></p>`);
             output.append(`<p>Selected pages: ${selectedPages}</p>`);
             output.append(`<p>Selected languages: ${selectedLanguages}</p>`);
             
             // Test 2: AJAX connectivity test
-            output.append(`<p><strong>🌐 Testing AJAX connection...</strong></p>`);
+            output.append(`<p><strong>?? Testing AJAX connection...</strong></p>`);
             
             $.ajax({
                 url: aitrfoelDashboard.ajax_url,
@@ -1940,7 +1948,7 @@ jQuery(document).ready(function($) {
                     nonce: aitrfoelDashboard.nonce
                 },
                 success: function(response) {
-                    output.append(`<p>✅ AJAX Connection: OK</p>`);
+                    output.append(`<p>? AJAX Connection: OK</p>`);
                     if (response.data) {
                         output.append(`<pre>${JSON.stringify(response.data, null, 2)}</pre>`);
                     }
@@ -1949,7 +1957,7 @@ jQuery(document).ready(function($) {
                     Dashboard.testTranslationStart();
                 },
                 error: function(xhr, status, error) {
-                    output.append(`<p>❌ AJAX Connection: Failed (${status}: ${error})</p>`);
+                    output.append(`<p>? AJAX Connection: Failed (${status}: ${error})</p>`);
                     output.append(`<p>Response: ${xhr.responseText}</p>`);
                 }
             });
@@ -1957,7 +1965,7 @@ jQuery(document).ready(function($) {
 
         testTranslationStart: function() {
             const output = $('#aitrfoel-debug-output');
-            output.append(`<p><strong>🚀 Testing Translation Start...</strong></p>`);
+            output.append(`<p><strong>?? Testing Translation Start...</strong></p>`);
             
             const selectedPages = $('.eat-page-checkbox:checked').map(function() {
                 return $(this).val();
@@ -1968,7 +1976,7 @@ jQuery(document).ready(function($) {
             }).get();
             
             if (selectedPages.length === 0 || selectedLanguages.length === 0) {
-                output.append(`<p>⚠️ No pages/languages selected for test</p>`);
+                output.append(`<p>?? No pages/languages selected for test</p>`);
                 return;
             }
             
@@ -1983,7 +1991,7 @@ jQuery(document).ready(function($) {
                     source_language: $('input[name="source-language"]:checked').val() || 'auto'
                 },
                 success: function(response) {
-                    output.append(`<p>✅ Translation Start: Success</p>`);
+                    output.append(`<p>? Translation Start: Success</p>`);
                     output.append(`<pre>${JSON.stringify(response, null, 2)}</pre>`);
                     
                     // Monitor job progress if job_id returned
@@ -1992,7 +2000,7 @@ jQuery(document).ready(function($) {
                     }
                 },
                 error: function(xhr, status, error) {
-                    output.append(`<p>❌ Translation Start: Failed (${status})</p>`);
+                    output.append(`<p>? Translation Start: Failed (${status})</p>`);
                     output.append(`<pre>Response: ${xhr.responseText}</pre>`);
                 }
             });
@@ -2000,14 +2008,14 @@ jQuery(document).ready(function($) {
 
         monitorJobProgress: function(jobId) {
             const output = $('#aitrfoel-debug-output');
-            output.append(`<p><strong>📊 Monitoring Job Progress: ${jobId}</strong></p>`);
+            output.append(`<p><strong>?? Monitoring Job Progress: ${jobId}</strong></p>`);
             
             let checkCount = 0;
-            const maxChecks = 30; // 30 проверок = 1 минута при интервале 2 секунды
+            const maxChecks = 30; // 30 ???????? = 1 ?????? ??? ????????? 2 ???????
             
             const checkProgress = function() {
                 checkCount++;
-                output.append(`<p>⏱️ Check ${checkCount}/${maxChecks}: Checking job status...</p>`);
+                output.append(`<p>?? Check ${checkCount}/${maxChecks}: Checking job status...</p>`);
                 
                 $.ajax({
                     url: aitrfoelDashboard.ajax_url,
@@ -2022,10 +2030,10 @@ jQuery(document).ready(function($) {
                             const status = response.data.status;
                             const progress = response.data.progress || 0;
                             
-                            output.append(`<p>📈 Status: ${status}, Progress: ${progress}%</p>`);
+                            output.append(`<p>?? Status: ${status}, Progress: ${progress}%</p>`);
                             
-                            if (status === 'completed' || status === 'failed' || status === 'cancelled') {
-                                output.append(`<p><strong>🏁 Job ${status.toUpperCase()}</strong></p>`);
+                            if (status === __('status_completed', 'Completed') || status === 'failed' || status === 'cancelled') {
+                                output.append(`<p><strong>?? Job ${status.toUpperCase()}</strong></p>`);
                                 output.append(`<pre>${JSON.stringify(response.data, null, 2)}</pre>`);
                                 return; // Stop monitoring
                             }
@@ -2033,14 +2041,14 @@ jQuery(document).ready(function($) {
                             if (checkCount < maxChecks) {
                                 setTimeout(checkProgress, 2000); // Check again in 2 seconds
                             } else {
-                                output.append(`<p>⚠️ Monitoring timeout reached</p>`);
+                                output.append(`<p>?? Monitoring timeout reached</p>`);
                             }
                         } else {
-                            output.append(`<p>❌ Status check failed: ${response.data}</p>`);
+                            output.append(`<p>? Status check failed: ${response.data}</p>`);
                         }
                     },
                     error: function(xhr, status, error) {
-                        output.append(`<p>❌ Status check error: ${status} - ${error}</p>`);
+                        output.append(`<p>? Status check error: ${status} - ${error}</p>`);
                     }
                 });
             };
@@ -2063,16 +2071,16 @@ jQuery(document).ready(function($) {
                 <div id="eat-monitor-modal" class="eat-modal-overlay">
                     <div class="eat-modal-content">
                         <div class="eat-modal-header" style="background: #28a745;">
-                            <h2>📊 Jobs Monitor</h2>
+                            <h2>?? Jobs Monitor</h2>
                             <button class="eat-modal-close">&times;</button>
                         </div>
                         <div class="eat-modal-body">
                             <div id="eat-monitor-output">
-                                <p>🔄 Loading jobs...</p>
+                                <p>?? Loading jobs...</p>
                             </div>
                             <div style="margin-top: 15px;">
-                                <button type="button" class="button" id="eat-refresh-jobs">🔄 Refresh</button>
-                                <button type="button" class="button" id="eat-check-logs">📝 Check Logs</button>
+                                <button type="button" class="button" id="eat-refresh-jobs">?? Refresh</button>
+                                <button type="button" class="button" id="eat-check-logs">?? Check Logs</button>
                             </div>
                         </div>
                     </div>
@@ -2093,7 +2101,7 @@ jQuery(document).ready(function($) {
 
         loadJobsList: function() {
             const output = $('#eat-monitor-output');
-            output.html('<p>🔄 Loading jobs list...</p>');
+            output.html('<p>?? Loading jobs list...</p>');
             
             $.ajax({
                 url: aitrfoelDashboard.ajax_url,
@@ -2104,17 +2112,17 @@ jQuery(document).ready(function($) {
                 },
                 success: function(response) {
                     if (response.success && response.data) {
-                        output.html('<h3>📋 Recent Jobs:</h3>');
+                        output.html('<h3>?? Recent Jobs:</h3>');
                         
                         if (response.data.jobs && response.data.jobs.length > 0) {
                             response.data.jobs.forEach(function(job) {
                                 const statusIcon = {
-                                    'pending': '⏳',
-                                    'processing': '⚙️', 
-                                    'completed': '✅',
-                                    'failed': '❌',
-                                    'cancelled': '🚫'
-                                }[job.status] || '❓';
+                                    'pending': '?',
+                                    'processing': '??', 
+                                    __('status_completed', 'Completed'): '?',
+                                    'failed': '?',
+                                    'cancelled': '??'
+                                }[job.status] || '?';
                                 
                                 output.append(`
                                     <div style="border: 1px solid #ddd; margin: 5px 0; padding: 10px; border-radius: 4px;">
@@ -2132,23 +2140,23 @@ jQuery(document).ready(function($) {
                         }
                         
                         if (response.data.stats) {
-                            output.append('<h3>📊 Statistics:</h3>');
+                            output.append('<h3>?? Statistics:</h3>');
                             output.append(`<pre>${JSON.stringify(response.data.stats, null, 2)}</pre>`);
                         }
                     } else {
-                        output.html(`<p>❌ Failed to load jobs: ${response.data || 'Unknown error'}</p>`);
+                        output.html(`<p>? Failed to load jobs: ${response.data || 'Unknown error'}</p>`);
                     }
                 },
                 error: function(xhr, status, error) {
-                    output.html(`<p>❌ AJAX Error: ${status} - ${error}</p>`);
+                    output.html(`<p>? AJAX Error: ${status} - ${error}</p>`);
                 }
             });
         },
 
         checkSystemLogs: function() {
             const output = $('#eat-monitor-output');
-            output.append('<h3>📝 System Logs:</h3>');
-            output.append('<p>🔍 Checking recent activity...</p>');
+            output.append('<h3>?? System Logs:</h3>');
+            output.append('<p>?? Checking recent activity...</p>');
             
             $.ajax({
                 url: aitrfoelDashboard.ajax_url,
@@ -2172,15 +2180,15 @@ jQuery(document).ready(function($) {
                         output.append('</div>');
                         
                         if (response.data.cron_info) {
-                            output.append('<h4>⏰ Cron Status:</h4>');
+                            output.append('<h4>? Cron Status:</h4>');
                             output.append(`<pre style="font-size: 11px;">${JSON.stringify(response.data.cron_info, null, 2)}</pre>`);
                         }
                     } else {
-                        output.append(`<p>❌ Failed to load logs: ${response.data || 'Unknown error'}</p>`);
+                        output.append(`<p>? Failed to load logs: ${response.data || 'Unknown error'}</p>`);
                     }
                 },
                 error: function(xhr, status, error) {
-                    output.append(`<p>❌ Log AJAX Error: ${status} - ${error}</p>`);
+                    output.append(`<p>? Log AJAX Error: ${status} - ${error}</p>`);
                 }
             });
         },

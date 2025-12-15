@@ -56,16 +56,21 @@ class AITRFOEL_Translation_Engine {
      * @return int|WP_Error New page ID or error
      */
     public function translate_page($page_id, $target_lang, $source_lang = 'auto', $strings_to_translate = []) {
+        // Track translation start time for analytics
+        $translation_start_time = microtime(true);
+        
         // Get Elementor data
         $elementor_data = get_post_meta($page_id, '_elementor_data', true);
         
         if (empty($elementor_data)) {
+            $this->track_translation_failure('no_elementor_data', 'No Elementor data found', $translation_start_time);
             return new WP_Error('no_elementor_data', __('No Elementor data found for this page.', 'ai-translator-for-elementor-and-polylang'));
         }
         
         $elementor_data_array = json_decode($elementor_data, true);
         
         if (json_last_error() !== JSON_ERROR_NONE) {
+            $this->track_translation_failure('json_decode_error', 'Failed to decode Elementor data', $translation_start_time);
             return new WP_Error('json_decode_error', __('Failed to decode Elementor data.', 'ai-translator-for-elementor-and-polylang'));
         }
         
@@ -749,6 +754,21 @@ class AITRFOEL_Translation_Engine {
             } catch (Exception $e) {
                 error_log('EAT: Exception reporting usage: ' . $e->getMessage());
             }
+        }
+        
+        // Track successful translation with PostHog Analytics
+        if (function_exists('aitrfoel_analytics')) {
+            $translation_duration = microtime(true) - $translation_start_time;
+            aitrfoel_analytics()->track_translation_completed([
+                'duration' => round($translation_duration, 2),
+                'word_count' => $this->last_translation_stats['word_count'] ?? 0,
+                'widget_count' => $this->last_translation_stats['strings_count'] ?? 0,
+                'success' => true,
+                'mode' => 'single',
+                'model' => get_option('aitrfoel_ai_model', 'gpt-4o-mini'),
+                'source_lang' => $detected_lang,
+                'target_lang' => $target_lang,
+            ]);
         }
         
         return $new_page_id;
@@ -1598,6 +1618,7 @@ class AITRFOEL_Translation_Engine {
         if (defined('LSCWP_V') && class_exists('LiteSpeed\Purge')) {
             try {
                 // Purge specific page
+                // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Third-party LiteSpeed Cache hook
                 do_action('litespeed_purge_single_post', $page_id);
                 AITRFOEL_Logger::log("LiteSpeed cache purged for page $page_id", 'info', $page_id);
             } catch (Exception $e) {
@@ -1619,9 +1640,11 @@ class AITRFOEL_Translation_Engine {
             AITRFOEL_Logger::log("Triggering LiteSpeed post-processing hooks", 'info', $page_id);
             
             // Trigger LiteSpeed's optimization pipeline
+            // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Third-party LiteSpeed Cache hook
             do_action('litespeed_cache_finalize');
             
             // Force image optimization check
+            // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Third-party LiteSpeed Cache hook
             do_action('litespeed_media_finalize', $page_id);
         }
         
@@ -1817,6 +1840,31 @@ class AITRFOEL_Translation_Engine {
             'translated' => $translated_text,
             'restored' => $restored
         ];
+    }
+
+    /**
+     * Track translation failure with analytics
+     * 
+     * @param string $error_code Error code
+     * @param string $error_message Error message
+     * @param float|null $start_time Translation start time for duration calculation
+     */
+    private function track_translation_failure($error_code, $error_message, $start_time = null) {
+        if (!function_exists('aitrfoel_analytics')) {
+            return;
+        }
+        
+        $duration = $start_time ? round(microtime(true) - $start_time, 2) : 0;
+        
+        aitrfoel_analytics()->track_translation_failed($error_code, $error_message);
+        aitrfoel_analytics()->track_translation_completed([
+            'duration' => $duration,
+            'word_count' => 0,
+            'widget_count' => 0,
+            'success' => false,
+            'error_type' => $error_code,
+            'mode' => 'single',
+        ]);
     }
 
 }

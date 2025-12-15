@@ -60,6 +60,14 @@
     }
 })();
 jQuery(document).ready(function($) {
+    // Helper function to get localized string
+    function __( key, fallback ) {
+        if ( typeof aitrfoel_ajax !== 'undefined' && aitrfoel_ajax.strings && aitrfoel_ajax.strings[key] ) {
+            return aitrfoel_ajax.strings[key];
+        }
+        return fallback || key;
+    }
+
     // Forcefully remove Elementor top bar on plugin pages
     function removeElementorTopBar() {
         const elementorSelectors = [
@@ -191,11 +199,11 @@ jQuery(document).ready(function($) {
     fetchBtn.on('click', function() {
         const pageId = $('#eat-page-select').val();
         if (!pageId) {
-            showStatus('Please select a page.', 'error');
+            showStatus(__('select_page_first', 'Please select a page.'), 'error');
             return;
         }
 
-        setLoadingState(true, 'Fetching content from Elementor...');
+        setLoadingState(true, __('translating', 'Fetching content from Elementor...'));
         resetBtn.hide();
 
         $.ajax({
@@ -217,9 +225,9 @@ jQuery(document).ready(function($) {
                         resetBtn.show();
                         fetchBtn.hide();
                         stringCount.text(fetchedStrings.length);
-                        showStatus(`Found ${fetchedStrings.length} translatable strings.`, 'success');
+                        showStatus(__('found_strings', 'Found') + ` ${fetchedStrings.length} ` + __('translatable_strings', 'translatable strings.'), 'success');
                     } else {
-                        showStatus('No translatable content found on this page.', 'info');
+                        showStatus(__('no_content', 'No translatable content found on this page.'), 'info');
                     }
                 } else {
                     showStatus('Error: ' + (response.data?.message || 'Unknown error'), 'error');
@@ -247,11 +255,11 @@ jQuery(document).ready(function($) {
         });
 
         if (selectedStrings.length === 0) {
-            showStatus('Please select at least one string to translate.', 'error');
+            showStatus(__('select_strings', 'Please select at least one string to translate.'), 'error');
             return;
         }
 
-        if (!confirm(`Translate ${selectedStrings.length} strings to ${targetLang}?`)) {
+        if (!confirm(__('confirm_translate', 'Are you sure you want to translate this content?'))) {
             return;
         }
 
@@ -267,7 +275,7 @@ jQuery(document).ready(function($) {
             );
         }
 
-        setLoadingState(true, 'Starting translation...');
+        setLoadingState(true, __('translating', 'Translating...'));
         showProgress(0);
 
         // Add debug step: AJAX request starting
@@ -363,7 +371,7 @@ jQuery(document).ready(function($) {
                         showStatus(errorData.message, 'error');
                     } else {
                         // Regular error message
-                        showStatus('Translation failed: ' + (errorData.message || response.data?.message || 'Unknown error'), 'error');
+                        showStatus(__('error', 'Translation failed.') + ' ' + (errorData.message || response.data?.message || 'Unknown error'), 'error');
                     }
                 }
             },
@@ -421,7 +429,7 @@ jQuery(document).ready(function($) {
                     }
                 }
                 
-                showStatus('Translation failed: ' + error, 'error');
+                showStatus(__('error', 'Translation failed.') + ' ' + error, 'error');
             },
             complete: function() {
                 if (typeof EAT_DebugMonitor !== 'undefined') {
@@ -440,16 +448,16 @@ jQuery(document).ready(function($) {
     // Reset button
     resetBtn.on('click', function() {
         resetUI();
-        showStatus('Ready to translate another page.', 'info');
+        showStatus(__('ready', 'Ready to translate another page.'), 'info');
     });
 
     // Clear cache button
     $('#aitrfoel-clear-cache-button').on('click', function() {
-        if (!confirm('Are you sure you want to clear the translation cache? This will remove all cached translations and may increase API costs for future translations.')) {
+        if (!confirm(__('confirm_clear_cache', 'Are you sure you want to clear the translation cache?'))) {
             return;
         }
 
-        setLoadingState(true, 'Clearing translation cache...');
+        setLoadingState(true, __('clearing_cache', 'Clearing translation cache...'));
 
         $.ajax({
             url: aitrfoel_ajax.ajax_url,
@@ -466,7 +474,7 @@ jQuery(document).ready(function($) {
                 }
             },
             error: function(xhr, status, error) {
-                showStatus('Failed to clear cache: ' + error, 'error');
+                showStatus(__('cache_error', 'Failed to clear cache:') + ' ' + error, 'error');
             },
             complete: function() {
                 setLoadingState(false);
@@ -476,7 +484,7 @@ jQuery(document).ready(function($) {
 
     // Clear cache button in settings page
     $('#aitrfoel-clear-cache-settings-btn').on('click', function() {
-        if (!confirm('Are you sure you want to clear the translation cache? This will remove all cached translations and may increase API costs for future translations.')) {
+        if (!confirm(__('confirm_clear_cache', 'Are you sure you want to clear the translation cache?'))) {
             return;
         }
 
@@ -795,7 +803,7 @@ jQuery(document).ready(function($) {
         const pageId = $(this).data('page-id');
         const button = $(this);
         
-        if (!confirm('Are you sure you want to publish this translated page? It will be visible to your website visitors.')) {
+        if (!confirm(__('confirm_publish', 'Are you sure you want to publish this page?'))) {
             return;
         }
         
@@ -1087,7 +1095,7 @@ jQuery(document).ready(function($) {
         const targetLang = $('#eat-target-lang').val() || 'Spanish';
         
         if (!pageId) {
-            showStatus('Please select a page first.', 'error');
+            showStatus(__('select_page_first', 'Please select a page first.'), 'error');
             return;
         }
         
@@ -1150,7 +1158,7 @@ jQuery(document).ready(function($) {
         // Add to cost estimation area
         $('#eat-cost-estimation-area').html(costHtml);
         
-        showStatus('Cost estimation completed successfully!', 'success');
+        showStatus(__('cost_complete', 'Cost estimation completed successfully!'), 'success');
     }
     
 
@@ -1175,7 +1183,7 @@ jQuery(document).ready(function($) {
     // Initial check on page load, only if the wrapper exists
     if (themeStatusWrapper.length) {
         // Show ready state instead of auto-checking
-        themeStatusWrapper.html('<p style="color: #666;">Click the button to check theme compatibility.</p>');
+        themeStatusWrapper.html('<p style="color: #666;">' + __('click_to_check_compatibility', 'Click the button to check theme compatibility.') + '</p>');
     }
     
 });

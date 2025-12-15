@@ -125,7 +125,7 @@ class AITRFOEL_Settings {
             <?php 
             // Render plugin header
             $admin_menu = AITRFOEL_Admin_Menu::get_instance();
-            $admin_menu->render_plugin_header('Settings');
+            $admin_menu->render_plugin_header(__('Settings', 'ai-translator-for-elementor-and-polylang'));
             ?>
             
             <?php settings_errors(); ?>

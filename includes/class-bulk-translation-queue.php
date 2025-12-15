@@ -197,6 +197,22 @@ class AITRFOEL_Bulk_Translation_Queue {
         }
 
         AITRFOEL_Logger::log("Bulk translation job created: {$job_id}", 'info', $data);
+        
+        // Track bulk translation feature usage with PostHog
+        if (function_exists('aitrfoel_analytics')) {
+            aitrfoel_analytics()->track_feature_used('bulk_translation', [
+                'page_count' => count($page_ids),
+                'target_language_count' => count($target_languages),
+                'total_items' => $total_items,
+            ]);
+            
+            aitrfoel_analytics()->track_translation_started(
+                count($page_ids),
+                $source_language,
+                $target_languages,
+                'bulk'
+            );
+        }
 
         return $wpdb->insert_id;
     }

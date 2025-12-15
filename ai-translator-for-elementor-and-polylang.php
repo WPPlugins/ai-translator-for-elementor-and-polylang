@@ -3,7 +3,7 @@
  * Plugin Name: AI Translator for Elementor and Polylang
  * Plugin URI: https://meeptech.com/products/ai-translator-for-elementor-and-polylang
  * Description: Premium AI-powered translation solution for Elementor with OpenAI integration for Polylang
- * Version: 1.0.8
+ * Version: 1.0.9
  * Author: Meeptech
  * Author URI: https://meeptech.com
  * License: GPL v2 or later
@@ -12,6 +12,7 @@
  * Domain Path: /languages
  * Requires at least: 5.8
  * Requires PHP: 7.4
+ * Tested up to: 6.9
  * Requires Plugins: elementor
  * Elementor tested up to: 3.18.0
  * Elementor Pro tested up to: 3.18.0
@@ -23,7 +24,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('AITRFOEL_VERSION', '1.0.8');
+define('AITRFOEL_VERSION', '1.0.9');
 define('AITRFOEL_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AITRFOEL_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AITRFOEL_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -49,7 +50,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-/**
+    /**
      * Main Plugin Class
  */
 class AITRFOEL_Main {
@@ -90,8 +91,8 @@ class AITRFOEL_Main {
         register_activation_hook(__FILE__, [$this, 'activate']);
         register_deactivation_hook(__FILE__, [$this, 'deactivate']);
         
-        // Load text domain
-        add_action('init', [$this, 'load_textdomain']);
+        // Note: load_plugin_textdomain() removed - WordPress 4.6+ automatically loads
+        // translations for plugins hosted on WordPress.org
         
         // Enqueue scripts
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_scripts']);
@@ -99,8 +100,31 @@ class AITRFOEL_Main {
         // Hide Elementor admin elements on our plugin pages
         add_action('admin_init', [$this, 'disable_elementor_admin_ui']);
         
+        // Welcome popup (shown once after activation)
+        add_action('admin_footer', [$this, 'render_welcome_popup']);
+        add_action('wp_ajax_aitrfoel_dismiss_welcome', [$this, 'dismiss_welcome_popup']);
+        
+        // Test analytics (for debugging) - add ?test_analytics=1 to plugin URL
+        add_action('admin_init', [$this, 'maybe_test_analytics']);
+        
         // Removed: Background processing (using direct processing now)
         // add_action('aitrfoel_process_bulk_translation', [$this, 'process_bulk_translation_background'], 10, 4);
+    }
+    
+    /**
+     * Test analytics if URL parameter is set
+     */
+    public function maybe_test_analytics() {
+        if (isset($_GET['test_analytics']) && $_GET['test_analytics'] === '1' && current_user_can('manage_options')) {
+            if (function_exists('aitrfoel_analytics')) {
+                $result = aitrfoel_analytics()->send_test_event();
+                add_action('admin_notices', function() use ($result) {
+                    $class = $result ? 'notice-success' : 'notice-error';
+                    $message = $result ? 'PostHog test event sent successfully! Check your PostHog dashboard.' : 'PostHog test event failed. Check wp-content/debug.log for details.';
+                    echo '<div class="notice ' . esc_attr( $class ) . ' is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
+                });
+            }
+        }
     }
     
     /**
@@ -202,6 +226,9 @@ class AITRFOEL_Main {
         // Always load integrations (they handle their own dependency checks)
         require_once AITRFOEL_PLUGIN_DIR . 'includes/class-polylang-integration.php';
         
+        // Load analytics (PostHog integration)
+        require_once AITRFOEL_PLUGIN_DIR . 'includes/class-analytics.php';
+        
         // Debug tools removed - plugin simplified
     }
     
@@ -244,6 +271,9 @@ class AITRFOEL_Main {
             
             // Initialize integrations (they handle their own dependency checks)
             AITRFOEL_Polylang_Integration::get_instance();
+            
+            // Initialize analytics (PostHog)
+            AITRFOEL_Analytics::get_instance();
             
         } catch (Exception $e) {
             error_log('EAT Fatal Error during component initialization: ' . $e->getMessage());
@@ -459,16 +489,6 @@ class AITRFOEL_Main {
     }
 
     /**
-     * Load plugin text domain
-     * Note: Not needed for WordPress.org hosted plugins (handled automatically since WP 4.6)
-     */
-    public function load_textdomain() {
-        // For WordPress.org: Translations are loaded automatically
-        // For development/custom installs: Uncomment the line below if needed
-        // load_plugin_textdomain('ai-translator-for-elementor-and-polylang', false, dirname(AITRFOEL_PLUGIN_BASENAME) . '/languages');
-    }
-    
-    /**
      * Enqueue admin scripts and styles
      */
     public function enqueue_admin_scripts($hook) {
@@ -581,6 +601,16 @@ class AITRFOEL_Main {
                 
                 // Cache management
                 'confirm_clear_cache' => __('Are you sure you want to clear the translation cache?', 'ai-translator-for-elementor-and-polylang'),
+                'clearing_cache' => __('Clearing translation cache...', 'ai-translator-for-elementor-and-polylang'),
+                'cache_error' => __('Failed to clear cache:', 'ai-translator-for-elementor-and-polylang'),
+                
+                // UI messages
+                'found_strings' => __('Found', 'ai-translator-for-elementor-and-polylang'),
+                'translatable_strings' => __('translatable strings.', 'ai-translator-for-elementor-and-polylang'),
+                'no_content' => __('No translatable content found on this page.', 'ai-translator-for-elementor-and-polylang'),
+                'select_strings' => __('Please select at least one string to translate.', 'ai-translator-for-elementor-and-polylang'),
+                'ready' => __('Ready to translate another page.', 'ai-translator-for-elementor-and-polylang'),
+                'cost_complete' => __('Cost estimation completed successfully!', 'ai-translator-for-elementor-and-polylang'),
                 
                 // Usage statistics
                 'pages_translated' => __('Pages Translated', 'ai-translator-for-elementor-and-polylang'),
@@ -603,7 +633,8 @@ class AITRFOEL_Main {
                 'detected_fields' => __('Detected Fields', 'ai-translator-for-elementor-and-polylang'),
                 'copy_all' => __('Copy all fields', 'ai-translator-for-elementor-and-polylang'),
                 'no_fields_found' => __('No fields found', 'ai-translator-for-elementor-and-polylang'),
-                'fields_copied' => __('Fields copied to clipboard', 'ai-translator-for-elementor-and-polylang')
+                'fields_copied' => __('Fields copied to clipboard', 'ai-translator-for-elementor-and-polylang'),
+                'click_to_check_compatibility' => __('Click the button to check theme compatibility.', 'ai-translator-for-elementor-and-polylang'),
             ]
         ]);
         
@@ -911,6 +942,479 @@ class AITRFOEL_Main {
         // This method is kept for compatibility but does nothing
         
         return true;
+    }
+    
+    /**
+     * Render welcome popup (shown once after activation)
+     */
+    public function render_welcome_popup() {
+        // Only show on our plugin pages
+        $screen = get_current_screen();
+        if (!$screen || strpos($screen->id, 'ai-translator-for-elementor-and-polylang') === false) {
+            return;
+        }
+        
+        // Allow forcing welcome popup with URL parameter for testing: ?show_welcome=1
+        $force_show = isset($_GET['show_welcome']) && $_GET['show_welcome'] === '1';
+        
+        // Check if we should show the popup
+        $show_popup = get_option('aitrfoel_show_welcome_popup', 'no');
+        if ($show_popup !== 'yes' && !$force_show) {
+            return;
+        }
+        
+        // URLs
+        $polylang_url = admin_url('admin.php?page=mlang');
+        $docs_url = 'https://meeptech.com/products/ai-translator-for-elementor-polylang/documentation';
+        $video_url = 'https://www.youtube.com/embed/dQw4w9WgXcQ'; // YouTube embed - replace with actual tutorial video ID
+        
+        ?>
+        <div id="aitrfoel-welcome-popup" class="aitrfoel-welcome-fullscreen">
+            <!-- Close button -->
+            <button type="button" class="aitrfoel-welcome-close aitrfoel-welcome-dismiss" aria-label="<?php esc_attr_e('Close', 'ai-translator-for-elementor-and-polylang'); ?>">
+                <span class="dashicons dashicons-no-alt"></span>
+            </button>
+            
+            <div class="aitrfoel-welcome-container">
+                <!-- Header -->
+                <div class="aitrfoel-welcome-header">
+                    <h1>👋 <?php esc_html_e('Welcome to AI Translator!', 'ai-translator-for-elementor-and-polylang'); ?></h1>
+                    <p class="aitrfoel-welcome-subtitle">
+                        <?php esc_html_e('Translate your Elementor pages instantly with AI.', 'ai-translator-for-elementor-and-polylang'); ?>
+                    </p>
+                </div>
+                
+                <!-- Video - Using YouTube embed which is allowed -->
+                <div class="aitrfoel-welcome-video-wrapper">
+                    <iframe 
+                        id="aitrfoel-welcome-video"
+                        class="aitrfoel-welcome-video"
+                        width="100%" 
+                        height="100%" 
+                        src="<?php echo esc_url($video_url); ?>?rel=0&modestbranding=1" 
+                        title="<?php esc_attr_e('AI Translator Tutorial', 'ai-translator-for-elementor-and-polylang'); ?>"
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen
+                    ></iframe>
+                </div>
+                
+                <!-- Quick Steps - Single Line -->
+                <div class="aitrfoel-welcome-steps">
+                    <span class="aitrfoel-step"><span class="aitrfoel-step-number">1</span> <?php esc_html_e('Set up languages in', 'ai-translator-for-elementor-and-polylang'); ?> <a href="<?php echo esc_url($polylang_url); ?>">Polylang</a></span>
+                    <span class="aitrfoel-step-separator">→</span>
+                    <span class="aitrfoel-step"><span class="aitrfoel-step-number">2</span> <?php esc_html_e('Select pages & target languages', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                    <span class="aitrfoel-step-separator">→</span>
+                    <span class="aitrfoel-step"><span class="aitrfoel-step-number">3</span> <?php esc_html_e('Click translate!', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                </div>
+                
+                <!-- Analytics Consent -->
+                <div class="aitrfoel-welcome-consent">
+                    <label class="aitrfoel-consent-label">
+                        <input type="checkbox" id="aitrfoel-analytics-consent" class="aitrfoel-consent-checkbox">
+                        <span class="aitrfoel-consent-text">
+                            <?php esc_html_e('Help us improve by enabling anonymous usage tracking', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </span>
+                        <span class="aitrfoel-consent-tooltip">
+                            <span class="aitrfoel-tooltip-icon">?</span>
+                            <span class="aitrfoel-tooltip-content">
+                                <strong><?php esc_html_e('What we collect:', 'ai-translator-for-elementor-and-polylang'); ?></strong><br>
+                                • <?php esc_html_e('Plugin version & WordPress version', 'ai-translator-for-elementor-and-polylang'); ?><br>
+                                • <?php esc_html_e('Features used (translation, bulk mode)', 'ai-translator-for-elementor-and-polylang'); ?><br>
+                                • <?php esc_html_e('Error reports for debugging', 'ai-translator-for-elementor-and-polylang'); ?><br>
+                                • <?php esc_html_e('AI model usage statistics', 'ai-translator-for-elementor-and-polylang'); ?><br><br>
+                                <strong><?php esc_html_e('We never collect:', 'ai-translator-for-elementor-and-polylang'); ?></strong><br>
+                                • <?php esc_html_e('Personal data or content', 'ai-translator-for-elementor-and-polylang'); ?><br>
+                                • <?php esc_html_e('API keys or credentials', 'ai-translator-for-elementor-and-polylang'); ?><br><br>
+                                <em><?php esc_html_e('Data is never shared with third parties.', 'ai-translator-for-elementor-and-polylang'); ?></em>
+                            </span>
+                        </span>
+                    </label>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="aitrfoel-welcome-actions">
+                    <button type="button" class="aitrfoel-btn-primary aitrfoel-welcome-dismiss">
+                        <?php esc_html_e("Let's Get Started!", 'ai-translator-for-elementor-and-polylang'); ?>
+                    </button>
+                    <a href="<?php echo esc_url($docs_url); ?>" target="_blank" class="aitrfoel-btn-secondary">
+                        <?php esc_html_e('Documentation', 'ai-translator-for-elementor-and-polylang'); ?>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <style>
+            /* Fullscreen Overlay */
+            .aitrfoel-welcome-fullscreen {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(135deg, #1e3a5ff2 0%, #0d1b2a 100%);
+                z-index: 100001;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                animation: aitrfoel-fade-in 0.4s ease;
+                overflow: hidden;
+                padding: 20px;
+                box-sizing: border-box;
+            }
+            
+            @keyframes aitrfoel-fade-in {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            
+            /* Close Button */
+            .aitrfoel-welcome-close {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: rgba(255, 255, 255, 0.1);
+                border: none;
+                color: #fff;
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+                z-index: 100002;
+            }
+            
+            .aitrfoel-welcome-close:hover {
+                background: rgba(255, 255, 255, 0.2);
+                transform: scale(1.1);
+            }
+            
+            .aitrfoel-welcome-close .dashicons {
+                font-size: 24px;
+                width: 24px;
+                height: 24px;
+            }
+            
+            /* Container - Centered Column */
+            .aitrfoel-welcome-container {
+                max-width: 700px;
+                width: 100%;
+                text-align: center;
+                animation: aitrfoel-slide-up 0.5s ease;
+            }
+            
+            @keyframes aitrfoel-slide-up {
+                from { transform: translateY(30px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+            
+            /* Header */
+            .aitrfoel-welcome-header {
+                margin-bottom: 24px;
+            }
+            
+            .aitrfoel-welcome-header h1 {
+                color: #fff;
+                font-size: 32px;
+                font-weight: 700;
+                margin: 0 0 10px 0;
+                line-height: 1.2;
+            }
+            
+            .aitrfoel-welcome-subtitle {
+                color: rgba(255, 255, 255, 0.7);
+                font-size: 16px;
+                margin: 0;
+                line-height: 1.5;
+            }
+            
+            /* Video */
+            .aitrfoel-welcome-video-wrapper {
+                background: #000;
+                border-radius: 16px;
+                overflow: hidden;
+                box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+                width: 100%;
+                aspect-ratio: 16 / 9;
+                margin-bottom: 24px;
+            }
+            
+            .aitrfoel-welcome-video {
+                width: 100%;
+                height: 100%;
+                border: none;
+                background: #000;
+            }
+            
+            /* Steps - Single Line */
+            .aitrfoel-welcome-steps {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 12px;
+                margin-bottom: 24px;
+                flex-wrap: wrap;
+            }
+            
+            .aitrfoel-step {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                color: rgba(255, 255, 255, 0.9);
+                font-size: 14px;
+            }
+            
+            .aitrfoel-step-number {
+                width: 22px;
+                height: 22px;
+                min-width: 22px;
+                background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+                border-radius: 50%;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                color: #fff;
+                font-weight: 700;
+                font-size: 11px;
+            }
+            
+            .aitrfoel-step-separator {
+                color: rgba(255, 255, 255, 0.4);
+                font-size: 14px;
+            }
+            
+            .aitrfoel-step a {
+                color: #60a5fa;
+                text-decoration: none;
+            }
+            
+            .aitrfoel-step a:hover {
+                text-decoration: underline;
+            }
+            
+            /* Analytics Consent */
+            .aitrfoel-welcome-consent {
+                margin-bottom: 20px;
+                display: flex;
+                justify-content: center;
+            }
+            
+            .aitrfoel-consent-label {
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
+                cursor: pointer;
+                color: rgba(255, 255, 255, 0.8);
+                font-size: 13px;
+            }
+            
+            .aitrfoel-consent-checkbox {
+                width: 18px;
+                height: 18px;
+                cursor: pointer;
+                accent-color: #3b82f6;
+            }
+            
+            .aitrfoel-consent-text {
+                user-select: none;
+            }
+            
+            .aitrfoel-consent-tooltip {
+                position: relative;
+                display: inline-flex;
+            }
+            
+            .aitrfoel-tooltip-icon {
+                width: 18px;
+                height: 18px;
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 50%;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 11px;
+                font-weight: 700;
+                color: #fff;
+                cursor: help;
+                transition: background 0.2s;
+            }
+            
+            .aitrfoel-tooltip-icon:hover {
+                background: rgba(255, 255, 255, 0.3);
+            }
+            
+            .aitrfoel-tooltip-content {
+                position: absolute;
+                bottom: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #1a1a2e;
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                border-radius: 8px;
+                padding: 12px 14px;
+                width: 260px;
+                font-size: 12px;
+                line-height: 1.5;
+                color: rgba(255, 255, 255, 0.85);
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.2s ease;
+                margin-bottom: 8px;
+                z-index: 10;
+                text-align: left;
+            }
+            
+            .aitrfoel-tooltip-content::after {
+                content: '';
+                position: absolute;
+                top: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                border: 6px solid transparent;
+                border-top-color: #1a1a2e;
+            }
+            
+            .aitrfoel-consent-tooltip:hover .aitrfoel-tooltip-content {
+                opacity: 1;
+                visibility: visible;
+            }
+            
+            .aitrfoel-tooltip-content strong {
+                color: #fff;
+            }
+            
+            /* Action Buttons */
+            .aitrfoel-welcome-actions {
+                display: flex;
+                gap: 12px;
+                justify-content: center;
+            }
+            
+            .aitrfoel-btn-primary {
+                background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+                color: #fff;
+                border: none;
+                padding: 14px 28px;
+                font-size: 15px;
+                font-weight: 600;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+            }
+            
+            .aitrfoel-btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 30px rgba(59, 130, 246, 0.5);
+            }
+            
+            .aitrfoel-btn-secondary {
+                background: transparent;
+                color: #fff;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                padding: 12px 24px;
+                font-size: 15px;
+                font-weight: 500;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+            }
+            
+            .aitrfoel-btn-secondary:hover {
+                background: rgba(255, 255, 255, 0.1);
+                border-color: rgba(255, 255, 255, 0.5);
+                color: #fff;
+            }
+            
+            /* Responsive */
+            @media (max-width: 600px) {
+                .aitrfoel-welcome-header h1 {
+                    font-size: 26px;
+                }
+                
+                .aitrfoel-welcome-steps {
+                    flex-direction: column;
+                    gap: 8px;
+                }
+                
+                .aitrfoel-step-separator {
+                    display: none;
+                }
+                
+                .aitrfoel-welcome-actions {
+                    flex-direction: column;
+                }
+                
+                .aitrfoel-btn-primary,
+                .aitrfoel-btn-secondary {
+                    width: 100%;
+                    justify-content: center;
+                }
+            }
+        </style>
+        
+        <script>
+            jQuery(document).ready(function($) {
+                // Dismiss welcome popup
+                $('.aitrfoel-welcome-dismiss').on('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Stop YouTube video by removing iframe src
+                    var iframe = $('#aitrfoel-welcome-video');
+                    if (iframe.length) {
+                        iframe.attr('src', '');
+                    }
+                    
+                    $('#aitrfoel-welcome-popup').fadeOut(300, function() {
+                        $(this).remove();
+                    });
+                    
+                    // Get analytics consent status
+                    var analyticsConsent = $('#aitrfoel-analytics-consent').is(':checked') ? '1' : '0';
+                    
+                    // Save dismissal and consent via AJAX
+                    $.ajax({
+                        url: ajaxurl,
+                        type: 'POST',
+                        data: {
+                            action: 'aitrfoel_dismiss_welcome',
+                            nonce: '<?php echo esc_js( wp_create_nonce('aitrfoel_dismiss_welcome') ); ?>',
+                            analytics_consent: analyticsConsent
+                        }
+                    });
+                });
+                
+                // Close on Escape key
+                $(document).on('keyup', function(e) {
+                    if (e.key === 'Escape' && $('#aitrfoel-welcome-popup').length) {
+                        $('.aitrfoel-welcome-dismiss').first().click();
+                    }
+                });
+            });
+        </script>
+        <?php
+    }
+    
+    /**
+     * AJAX handler to dismiss welcome popup
+     */
+    public function dismiss_welcome_popup() {
+        check_ajax_referer('aitrfoel_dismiss_welcome', 'nonce');
+        
+        delete_option('aitrfoel_show_welcome_popup');
+        
+        // Save analytics consent
+        $analytics_consent = isset($_POST['analytics_consent']) && $_POST['analytics_consent'] === '1';
+        update_option('aitrfoel_analytics_enabled', $analytics_consent);
+        
+        wp_send_json_success();
     }
 }
 

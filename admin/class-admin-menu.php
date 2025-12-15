@@ -214,7 +214,7 @@ class AITRFOEL_Admin_Menu {
                         <a href="<?php echo (function_exists('eatp_fs') && eatp_fs()->is_registered()) ? esc_url(eatp_fs()->get_upgrade_url()) : esc_url('https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing'); ?>" class="button button-primary">
                             <?php esc_html_e('Upgrade Plan', 'ai-translator-for-elementor-and-polylang'); ?>
                         </a>
-                        <a href="https://meeptech.com/products/ai-translator-for-elementor-and-polylang/documentation" target="_blank" class="button button-secondary">
+                        <a href="https://meeptech.com/products/ai-translator-for-elementor-polylang/documentation" target="_blank" class="button button-secondary">
                             <?php esc_html_e('Documentation', 'ai-translator-for-elementor-and-polylang'); ?>
                         </a>
                     </div>
@@ -329,7 +329,7 @@ class AITRFOEL_Admin_Menu {
         
     <div class="wrap aitrfoel-dashboard-wrapper eat-tree-v2">
             <?php $this->render_compact_stats_bar(); ?>
-            <?php $this->render_plugin_header('Dashboard'); ?>
+            <?php $this->render_plugin_header(__('Dashboard', 'ai-translator-for-elementor-and-polylang')); ?>
             
             <p class="description"><?php esc_html_e('Manage translations for your pages. Select source pages to create bulk translations.', 'ai-translator-for-elementor-and-polylang'); ?></p>
             
@@ -337,7 +337,8 @@ class AITRFOEL_Admin_Menu {
             <div id="eat-bulk-bar" class="eat-bulk-translation-bar">
                 <div class="eat-bulk-content">
                     <div class="eat-bulk-selection" style="display: none;">
-                        <strong id="eat-selected-count">0 pages selected</strong>
+                        <?php /* translators: %d is the number of pages selected for translation */ ?>
+                        <strong id="eat-selected-count"><?php echo esc_html(sprintf(__('%d pages selected', 'ai-translator-for-elementor-and-polylang'), 0)); ?></strong>
                     </div>
                     
                     <div class="eat-bulk-languages">
@@ -348,7 +349,7 @@ class AITRFOEL_Admin_Menu {
                             </button>
                             <div id="eat-source-dropdown" class="eat-dropdown-content" style="display: none;">
                                 <div class="eat-dropdown-item">
-                                    <label><input type="radio" name="source-language" value="auto" checked> 🌐 Auto-detect</label>
+                                    <label><input type="radio" name="source-language" value="auto" checked> 🌐 <?php esc_html_e('Auto-detect', 'ai-translator-for-elementor-and-polylang'); ?></label>
                                 </div>
                                 <div class="eat-dropdown-divider"></div>
                                 <?php
@@ -385,7 +386,7 @@ class AITRFOEL_Admin_Menu {
                     </div>
                     
                     <div class="eat-bulk-stats">
-                        <span id="eat-estimated-words" style="color: #666; font-size: 12px;">Select pages for translation</span>
+                        <span id="eat-estimated-words" style="color: #666; font-size: 12px;"><?php esc_html_e('Select pages for translation', 'ai-translator-for-elementor-and-polylang'); ?></span>
                         <span id="eat-elapsed-timer" style="color: #666; font-size: 12px; margin-left: 10px; display: none;">⏱️ <span id="eat-timer-value">0:00</span></span>
                     </div>
                     
@@ -781,6 +782,32 @@ class AITRFOEL_Admin_Menu {
                 'select_languages' => __('Select languages ▼', 'ai-translator-for-elementor-and-polylang'),
                 /* translators: %d: Number of languages */
                 'languages_selected' => __('%d languages ▼', 'ai-translator-for-elementor-and-polylang'),
+                
+                // Translation process strings
+                'start_translation' => __('Start Translation', 'ai-translator-for-elementor-and-polylang'),
+                'translation_in_progress' => __('Translation in Progress', 'ai-translator-for-elementor-and-polylang'),
+                'translation_completed' => __('Translation completed successfully!', 'ai-translator-for-elementor-and-polylang'),
+                'translation_failed' => __('Translation failed. Please try again.', 'ai-translator-for-elementor-and-polylang'),
+                'translation_queued' => __('Translation queued, waiting to start', 'ai-translator-for-elementor-and-polylang'),
+                'translation_paused_limit' => __('Translation paused: word limit reached', 'ai-translator-for-elementor-and-polylang'),
+                'translation_failed_start' => __('Translation failed to start.', 'ai-translator-for-elementor-and-polylang'),
+                'translation_already_in_progress' => __('Translation is already in progress. Please wait for completion.', 'ai-translator-for-elementor-and-polylang'),
+                
+                // Status strings
+                'checking_status' => __('Checking active translation status...', 'ai-translator-for-elementor-and-polylang'),
+                'processing_translation' => __('Processing translation', 'ai-translator-for-elementor-and-polylang'),
+                'status_completed' => __('Completed', 'ai-translator-for-elementor-and-polylang'),
+                'status_error' => __('Error', 'ai-translator-for-elementor-and-polylang'),
+                
+                // Warning/validation strings
+                'select_page_warning' => __('Please select at least one page to translate.', 'ai-translator-for-elementor-and-polylang'),
+                'select_language_warning' => __('Please select at least one target language.', 'ai-translator-for-elementor-and-polylang'),
+                'select_page_tooltip' => __('Select at least one page to start translation', 'ai-translator-for-elementor-and-polylang'),
+                'select_lang_tooltip' => __('Select target languages to start translation', 'ai-translator-for-elementor-and-polylang'),
+                
+                // Error strings
+                'network_error_analysis' => __('Network error during pre-analysis', 'ai-translator-for-elementor-and-polylang'),
+                'pre_analysis_failed' => __('Pre-analysis failed', 'ai-translator-for-elementor-and-polylang'),
             ]
         ]);
 
@@ -950,8 +977,8 @@ class AITRFOEL_Admin_Menu {
     public function render_plugin_header($current_page = 'Dashboard') {
         // Dynamic plugin name based on version type
         $plugin_name = (defined('AITRFOEL_VERSION_TYPE') && AITRFOEL_VERSION_TYPE === 'free') 
-            ? 'AI Translator for Elementor and Polylang'
-            : 'AI Translator for Elementor and Polylang PRO';
+            ? __('AI Translator for Elementor and Polylang', 'ai-translator-for-elementor-and-polylang')
+            : __('AI Translator for Elementor and Polylang', 'ai-translator-for-elementor-and-polylang');
         ?>
         <div class="eat-plugin-header">
             <h1 class="eat-plugin-title">
@@ -1003,7 +1030,7 @@ class AITRFOEL_Admin_Menu {
                     <a href="<?php echo (function_exists('eatp_fs') && eatp_fs()->is_registered()) ? esc_url(eatp_fs()->get_upgrade_url()) : esc_url('https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing'); ?>" class="button button-primary">
                         <?php esc_html_e('Upgrade Plan', 'ai-translator-for-elementor-and-polylang'); ?>
                     </a>
-                    <a href="https://meeptech.com/products/ai-translator-for-elementor-and-polylang/documentation" target="_blank" class="button button-secondary">
+                    <a href="https://meeptech.com/products/ai-translator-for-elementor-polylang/documentation" target="_blank" class="button button-secondary">
                         <?php esc_html_e('Documentation', 'ai-translator-for-elementor-and-polylang'); ?>
                     </a>
                 </div>

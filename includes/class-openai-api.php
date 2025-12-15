@@ -309,6 +309,16 @@ class AITRFOEL_OpenAI_API {
         
         if (is_wp_error($response)) {
             AITRFOEL_Logger::log('MeepTech batch failed: ' . $response->get_error_message() . ', falling back to individual', 'warning');
+            
+            // Track API error with PostHog
+            if (function_exists('aitrfoel_analytics')) {
+                aitrfoel_analytics()->capture_llm_generation([
+                    'model' => 'gpt-4o-mini',
+                    'success' => false,
+                    'error' => $response->get_error_message(),
+                ]);
+            }
+            
             // Fallback to individual translations
             return $this->fallback_individual_translation($texts, $target_lang, $source_lang);
         }
@@ -337,6 +347,18 @@ class AITRFOEL_OpenAI_API {
         }
         
         AITRFOEL_Logger::log('MeepTech batch successful - Words used: ' . ($data['words_used'] ?? 'unknown'), 'debug');
+        
+        // Track LLM usage with PostHog Analytics
+        if (function_exists('aitrfoel_analytics')) {
+            $tokens_used = $data['tokens_used'] ?? ($data['words_used'] ?? 0) * 1.3; // Estimate tokens if not provided
+            aitrfoel_analytics()->capture_llm_generation([
+                'model' => $data['model'] ?? 'gpt-4o-mini',
+                'input_tokens' => isset($data['input_tokens']) ? $data['input_tokens'] : round($tokens_used * 0.6),
+                'output_tokens' => isset($data['output_tokens']) ? $data['output_tokens'] : round($tokens_used * 0.4),
+                'latency_ms' => isset($data['latency_ms']) ? $data['latency_ms'] : 0,
+                'success' => true,
+            ]);
+        }
         
         // Server might return 'translations' or 'translated_texts'
         $translated_texts = $data['translations'] ?? $data['translated_texts'] ?? [];
