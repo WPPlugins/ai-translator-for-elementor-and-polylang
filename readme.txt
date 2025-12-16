@@ -5,7 +5,7 @@ Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
 Requires Plugins: elementor, polylang
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,7 +21,6 @@ AI Translator for Elementor and Polylang is an AI translation solution for WordP
 – 1,800 words per week included free
 – Clean admin interface without Elementor interference
 – Dashboard with usage analytics
-– 9 languages supported (DE, ES, FR, IT, NL, PL, PT-BR, RU, UK)
 
 **How it works:**
 1. Select your Elementor page
@@ -126,13 +125,17 @@ This plugin relies on external third-party services to function. Below is a deta
 1. Dashboard with translation stats and usage info.
 
 == Changelog ==
+= 1.1.1 =
+* Added pricing plans to readme
+* Improved PRO build script with automatic readme branding
+* Minor improvements
+
 = 1.1.0 =
 * Fixed plugin name (removed PRO from free version)
 * Updated readme for free version
-* Added 9 language translations (DE, ES, FR, IT, NL, PL, PT-BR, RU, UK)
-* Added optional PostHog analytics with user consent
+* Added admin interface translations for 9 languages
+* Added optional usage analytics with user consent
 * Fixed WordPress plugin checker errors
-* Updated installation instructions
 * Performance improvements
 
 = 1.0.8 =
@@ -147,7 +150,46 @@ This plugin relies on external third-party services to function. Below is a deta
 
 == Upgrade Notice ==
 = 1.1.0 =
-Fixed plugin name, added 9 language translations and optional analytics. Recommended update.
+Fixed plugin name and updated readme. Recommended update.
+
+== Pricing ==
+
+= Free =
+**$0**
+Perfect for testing the plugin
+
+– 1 Website
+– 1,800 words/week
+– Latest OpenAI Models
+– Polylang Compatible
+– Elementor Support
+– 7-day cooldown after limit
+
+= Starter =
+**$49/year**
+For small businesses and landing pages
+
+– 1 Website License
+– ~18K words (~46 pages)
+– 100,000 tokens included
+– Latest OpenAI Models
+– Polylang Pro Compatible
+– Elementor & Elementor Pro Support
+– Email Support
+– 1 Year of Updates
+
+= Agency =
+**$149/year** — Most Popular
+Optimal for studios and agencies
+
+– Up to 10 Website Licenses
+– ~89K words (~232 pages)
+– 500,000 tokens included
+– Latest OpenAI Models
+– Priority Email Support
+– 1 Year of Updates
+
+Upgrade your license inside WordPress: AI Translator → Pricing, or visit [meeptech.com](https://meeptech.com/products/ai-translator-for-elementor-polylang/).
 
 == Privacy & Data Collection ==
 
