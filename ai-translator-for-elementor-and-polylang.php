@@ -3,7 +3,7 @@
  * Plugin Name: AI Translator for Elementor and Polylang
  * Plugin URI: https://meeptech.com/products/ai-translator-for-elementor-and-polylang
  * Description: AI-powered translation for Elementor pages with Polylang using OpenAI
- * Version: 1.1.2
+ * Version: 1.1.3
  * Author: Meeptech
  * Author URI: https://meeptech.com
  * License: GPL v2 or later
@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('AITRFOEL_VERSION', '1.1.2');
+define('AITRFOEL_VERSION', '1.1.3');
 define('AITRFOEL_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AITRFOEL_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AITRFOEL_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -966,7 +966,7 @@ class AITRFOEL_Main {
         // URLs
         $polylang_url = admin_url('admin.php?page=mlang');
         $docs_url = 'https://meeptech.com/products/ai-translator-for-elementor-polylang/documentation';
-        $video_url = 'https://www.youtube.com/embed/dQw4w9WgXcQ'; // YouTube embed - replace with actual tutorial video ID
+        $video_url = 'https://www.youtube.com/embed/RzcxmipDas4'; // YouTube embed tutorial video
         
         ?>
         <div id="aitrfoel-welcome-popup" class="aitrfoel-welcome-fullscreen">

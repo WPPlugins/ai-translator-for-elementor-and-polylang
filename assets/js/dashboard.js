@@ -91,7 +91,7 @@ jQuery(document).ready(function($) {
             // ????????? ??????
             button.addClass('loading')
                   .removeClass('button-primary success')
-                  .html('? ' + __('translation_in_progress', 'Translation in Progress') + '...')
+                  .html('⏳ ' + __('translation_in_progress', 'Translation in Progress') + '...')
                   .prop('disabled', true);
             
             // ?? ????????? flip ??????!
@@ -106,7 +106,7 @@ jQuery(document).ready(function($) {
             $('#eat-bulk-bar').addClass('processing');
             
             // ?????????? ???????????
-            this.showNotice('?? ' + __('translation_already_in_progress', 'Translation is already in progress. Please wait for completion.'), 'warning');
+            this.showNotice('⚠️ ' + __('translation_already_in_progress', 'Translation is already in progress. Please wait for completion.'), 'warning');
         },
 
         /**
@@ -115,7 +115,7 @@ jQuery(document).ready(function($) {
         blockTranslationUI: function(message) {
             const button = $('#eat-start-translation');
             button.prop('disabled', true)
-                  .html('?? ' + message)
+                  .html('⚠️ ' + message)
                   .addClass('loading');
             
             // ????????????? ????????
@@ -130,7 +130,7 @@ jQuery(document).ready(function($) {
             const button = $('#eat-start-translation');
             button.removeClass('loading')
                   .addClass('button-primary')
-                  .html('?? Start Translation');
+                  .html('🚀 Start Translation');
             
             // ?????????????? ????????
             $('.eat-page-checkbox, .eat-language-checkbox').prop('disabled', false);
@@ -168,7 +168,7 @@ jQuery(document).ready(function($) {
             const button = $('#eat-start-translation');
             button.removeClass('loading non-clickable')
                   .addClass('button-primary')
-                  .html('?? Start Translation')
+                  .html('🚀 Start Translation')
                   .prop('disabled', false);
             
             $('#eat-bulk-bar').removeClass('processing');
@@ -252,7 +252,7 @@ jQuery(document).ready(function($) {
             const statusMap = {
                 'pending': 'Pending',
                 'active': 'In Progress',
-                __('status_completed', 'Completed'): __('status_completed', 'Completed'),
+                'completed': __('status_completed', 'Completed'),
                 'error': __('status_error', 'Error')
             };
             return statusMap[status] || status;
@@ -728,7 +728,7 @@ jQuery(document).ready(function($) {
             // ??????: ????????? ??? ?? ??? ????????? ????????
             const activeTranslation = localStorage.getItem('aitrfoel_active_translation');
             if (activeTranslation) {
-                Dashboard.showNotice('?? Translation is already in progress. Please wait for completion or refresh the page.', 'warning');
+                Dashboard.showNotice(' Translation is already in progress. Please wait for completion or refresh the page.', 'warning');
                 return;
             }
             
@@ -820,7 +820,7 @@ jQuery(document).ready(function($) {
             const button = $('#eat-start-translation');
             button.addClass('loading')
                   .removeClass('button-primary success')
-                  .html('? Translating...')
+                  .html('⏳ Translating...')
                   .addClass('non-clickable');
             
             $('#eat-bulk-bar').addClass('processing');
@@ -876,7 +876,7 @@ jQuery(document).ready(function($) {
         showAnalysisLoader: function() {
             const $button = $('#eat-start-translation');
             $button.prop('disabled', true)
-                   .html('?? Analyzing...')
+                   .html('🔍 Analyzing...')
                    .addClass('loading');
         },
 
@@ -887,7 +887,7 @@ jQuery(document).ready(function($) {
             const $button = $('#eat-start-translation');
             $button.prop('disabled', false)
                    .removeClass('loading')
-                   .html('?? Start Translation');
+                   .html('🚀 Start Translation');
         },
 
         /**
@@ -942,7 +942,7 @@ jQuery(document).ready(function($) {
             });
             
             const statusClass = data.can_proceed ? 'success' : __('status_error', 'Error');
-            const statusIcon = data.can_proceed ? '?' : '??';
+            const statusIcon = data.can_proceed ? '✅' : '⚠️';
             const statusText = data.can_proceed ? 'Sufficient words available' : 'Not enough words';
             
             const totalWordsNeeded = data.total_words_needed || 0;
@@ -956,7 +956,7 @@ jQuery(document).ready(function($) {
                     <div class="eat-modal-content eat-analysis-panel">
                         <button class="eat-modal-close" onclick="jQuery('#eat-analysis-modal').remove()">�</button>
                         
-                        <h3>?? Translation Analysis</h3>
+                        <h3>📊 Translation Analysis</h3>
                         
                         <div class="eat-analysis-summary">
                             <p>Selected: <strong>${data.pages_count || 0} pages � ${data.languages_count || 0} languages = ${data.total_jobs || 0} jobs</strong></p>
@@ -987,8 +987,8 @@ jQuery(document).ready(function($) {
                         
                         <div class="eat-modal-actions">
                             ${data.can_proceed ? 
-                                '<button id="eat-analysis-confirm" class="button button-primary">?? Start Translation</button>' :
-                                '<button onclick="window.open(\'' + (data.upgrade_url || '') + '\', \'_blank\')" class="button button-primary">?? Upgrade Plan</button>'
+                                '<button id="eat-analysis-confirm" class="button button-primary">🚀 Start Translation</button>' :
+                                '<button onclick="window.open(\'' + (data.upgrade_url || '') + '\', \'_blank\')" class="button button-primary">⬆️ Upgrade Plan</button>'
                             }
                             <button id="eat-analysis-cancel" class="button">Cancel</button>
                         </div>
@@ -1078,7 +1078,7 @@ jQuery(document).ready(function($) {
             $('#eat-start-translation')
                 .removeClass('loading non-clickable')
                 .addClass('button-primary')
-                .html('?? Start Translation');
+                .html('🚀 Start Translation');
             $('#eat-bulk-bar').removeClass('processing');
         },
 
@@ -1096,7 +1096,7 @@ jQuery(document).ready(function($) {
                     <div class="eat-modal-content eat-error-modal">
                         <button class="eat-modal-close" onclick="jQuery('#eat-error-modal').remove()">�</button>
                         
-                        <h3>?? Translation Paused: Limit Reached</h3>
+                        <h3> Translation Paused: Limit Reached</h3>
                         
                         <div class="eat-error-message">
                             <p>${errorData.message || 'Word limit exceeded during translation.'}</p>
@@ -1117,7 +1117,7 @@ jQuery(document).ready(function($) {
                         </div>
                         
                         <div class="eat-modal-actions">
-                            <button onclick="window.open('${upgradeUrl}', '_blank')" class="button button-primary">?? Upgrade Plan</button>
+                            <button onclick="window.open('${upgradeUrl}', '_blank')" class="button button-primary">⬆️ Upgrade Plan</button>
                             <button onclick="jQuery('#eat-error-modal').remove()" class="button">Close</button>
                         </div>
                     </div>
@@ -1150,7 +1150,7 @@ jQuery(document).ready(function($) {
                         </div>
                         
                         <div class="eat-modal-actions">
-                            <button onclick="window.open('${upgradeUrl}', '_blank')" class="button button-primary">?? Upgrade Plan</button>
+                            <button onclick="window.open('${upgradeUrl}', '_blank')" class="button button-primary">⬆️ Upgrade Plan</button>
                             <button onclick="jQuery('#eat-error-modal').remove()" class="button">Close</button>
                         </div>
                     </div>
@@ -1175,7 +1175,7 @@ jQuery(document).ready(function($) {
                     <div class="eat-modal-content eat-error-modal">
                         <button class="eat-modal-close" onclick="jQuery('#eat-error-modal').remove()">�</button>
                         
-                        <h3>?? Not Enough Words</h3>
+                        <h3>🚨 Not Enough Words</h3>
                         
                         <div class="eat-error-message">
                             <p>${errorData.message || 'Insufficient words for this translation.'}</p>
@@ -1192,7 +1192,7 @@ jQuery(document).ready(function($) {
                         </div>
                         
                         <div class="eat-modal-actions">
-                            <button onclick="window.open('${upgradeUrl}', '_blank')" class="button button-primary">?? Upgrade Plan</button>
+                            <button onclick="window.open('${upgradeUrl}', '_blank')" class="button button-primary">⬆️ Upgrade Plan</button>
                             <button onclick="jQuery('#eat-error-modal').remove()" class="button">Close</button>
                         </div>
                     </div>
@@ -1244,7 +1244,7 @@ jQuery(document).ready(function($) {
          * Get appropriate icon for current progress stage (kept for compatibility)
          */
         getProgressIcon: function(index) {
-            const icons = ['??', '??', '??', '??', '?', '??', '?', '??', '??', '?'];
+            const icons = ['🔄', '⏳', '🌐', '📝', '', '', '', '', '', ''];
             return icons[index % icons.length];
         },
 
@@ -1301,7 +1301,7 @@ jQuery(document).ready(function($) {
         updateProgress: function(percentage, statusText, detailsText) {
             // Legacy function kept for compatibility
             // In new system, we use animated progress instead
-            this.updateAnimatedProgress(statusText || __('processing_translation', 'Processing translation'), '??');
+            this.updateAnimatedProgress(statusText || __('processing_translation', 'Processing translation'), '⏳');
         },
 
         monitorTranslationProgress: function(jobId) {
@@ -1318,8 +1318,10 @@ jQuery(document).ready(function($) {
                         job_id: jobId
                     },
                     success: function(response) {
+                        console.log('Translation status response:', response);
                         if (response.success) {
                             const status = response.data;
+                            console.log('Status value:', status.status, 'Type:', typeof status.status);
                             
                             if (status.status === 'processing') {
                                 // Simple progress tracking without complex stages
@@ -1336,7 +1338,7 @@ jQuery(document).ready(function($) {
                                         progressMessage = 'AI translating content';
                                     } else if (status.current_step.includes('Gap-Filler')) {
                                         progressMessage = 'Refining translation quality';
-                                    } else if (status.current_step.includes(__('status_completed', 'Completed'))) {
+                                    } else if (status.current_step.toLowerCase().includes('completed')) {
                                         progressMessage = 'Finalizing translations';
                                     }
                                 }
@@ -1366,11 +1368,11 @@ jQuery(document).ready(function($) {
                                 // Save progress
                                 self.saveActiveTranslation(jobId, progressPercent);
                                 
-                            } else if (status.status === __('status_completed', 'Completed')) {
+                            } else if (status.status === 'completed') {
                                 clearInterval(pollInterval);
                                 
                                 // Show completion message
-                                self.updateAnimatedProgress('All translations completed successfully!', '??');
+                                self.updateAnimatedProgress('All translations completed successfully!', '🎉');
                                 
                                 // Wait a moment to show completion, then clear
                                 setTimeout(() => {
@@ -1446,24 +1448,24 @@ jQuery(document).ready(function($) {
             const details = status.details || '';
             const progress = status.progress || 0;
             
-            if (currentStep.includes('?? AI Translating') || currentStep.includes('Analyzing') || currentStep.includes('Processing')) {
+            if (currentStep.includes('🌐 AI Translating') || currentStep.includes('Analyzing') || currentStep.includes('Processing')) {
                 // Stage 1: AI Translation
                 this.updateStageStatus(1, 'active', Math.min(progress, 80));
                 this.updateStageDescription(1, details || 'Translating with OpenAI...');
                 this.updateStageStatus(2, 'pending', 0);
             } else if (currentStep.includes('Gap-Filler') || currentStep.includes('Refinement') || currentStep.includes('Finalizing')) {
                 // Stage 2: Gap-Filler
-                this.updateStageStatus(1, __('status_completed', 'Completed'), 100);
+                this.updateStageStatus(1, 'completed', 100);
                 this.updateStageStatus(2, 'active', Math.max(0, progress - 80));
                 this.updateStageDescription(2, details || 'Refining translation quality...');
-            } else if (currentStep.includes(__('status_completed', 'Completed')) || currentStep.includes('?')) {
+            } else if (currentStep.toLowerCase().includes('completed') || currentStep.includes('✅')) {
                 // Both stages completed
-                this.updateStageStatus(1, __('status_completed', 'Completed'), 100);
-                this.updateStageStatus(2, __('status_completed', 'Completed'), 100);
-            } else if (currentStep.includes(__('status_error', 'Error')) || currentStep.includes('?') || currentStep.includes('??')) {
+                this.updateStageStatus(1, 'completed', 100);
+                this.updateStageStatus(2, 'completed', 100);
+            } else if (currentStep.toLowerCase().includes('error') || currentStep.includes('❌') || currentStep.includes('⚠️')) {
                 // Error state
-                this.updateStageStatus(1, __('status_error', 'Error'), 0);
-                this.updateStageStatus(2, __('status_error', 'Error'), 0);
+                this.updateStageStatus(1, 'error', 0);
+                this.updateStageStatus(2, 'error', 0);
             } else {
                 // Default: Stage 1 active
                 this.updateStageStatus(1, 'active', Math.min(progress, 80));
@@ -1486,7 +1488,7 @@ jQuery(document).ready(function($) {
             // ??????? ??????? ????? ? bounce
             button.removeClass('loading')
                   .addClass('success')
-                  .html('?? Complete!')
+                  .html('✅ Complete!')
                   .addClass('non-clickable');
             
             $('#eat-bulk-bar').removeClass('processing').addClass(__('status_completed', 'Completed'));
@@ -1523,7 +1525,7 @@ jQuery(document).ready(function($) {
             const button = $('#eat-start-translation');
             button.removeClass('loading success non-clickable')
                   .addClass('button-primary')
-                  .text('?? Start Translation')
+                  .text('🚀 Start Translation')
                   .prop('disabled', true); // ????????? ????????????? ??? ??????
             
             // ????? ???? ?????????
@@ -1544,7 +1546,7 @@ jQuery(document).ready(function($) {
          * Refresh word count stats from server
          */
         refreshWordCountStats: function() {
-            console.log('?? Refreshing word count stats from server...');
+            console.log('🔄 Refreshing word count stats from server...');
             
             $.ajax({
                 url: aitrfoelDashboard.ajax_url,
@@ -1588,7 +1590,7 @@ jQuery(document).ready(function($) {
                             $('.eat-compact-stats-bar').removeClass('eat-stats-updated');
                         }, 1000);
                     } else {
-                        console.warn('?? Could not refresh word count stats');
+                        console.warn('❌ Could not refresh word count stats');
                     }
                 },
                 error: function(xhr, status, error) {
@@ -1725,7 +1727,7 @@ jQuery(document).ready(function($) {
                     
                     // Show success notification
                     this.showNotice(
-                        `?? Successfully created ${newPageIds.length} new translation${newPageIds.length > 1 ? 's' : ''}!`, 
+                        ` Successfully created ${newPageIds.length} new translation${newPageIds.length > 1 ? 's' : ''}!`, 
                         'success'
                     );
                 }
@@ -1749,7 +1751,7 @@ jQuery(document).ready(function($) {
             $('#eat-start-translation')
                 .removeClass('loading success non-clickable')
                 .addClass('button-primary')
-                .text('?? Start Translation')
+                .text('🚀 Start Translation')
                 .prop('disabled', false);
             
             // ???????? UI ? ???????? ????????? ??? ??????
@@ -1759,7 +1761,7 @@ jQuery(document).ready(function($) {
         },
 
         openSettings: function() {
-            Dashboard.showNotice('?? Settings panel coming soon! Currently using default settings.', 'info');
+            Dashboard.showNotice('⚙️ Settings panel coming soon! Currently using default settings.', 'info');
         },
 
         handleDeletePage: function() {
@@ -1846,12 +1848,12 @@ jQuery(document).ready(function($) {
                 <div id="aitrfoel-debug-modal" class="eat-modal-overlay">
                     <div class="eat-modal-content">
                         <div class="eat-modal-header">
-                            <h2>?? Translation Engine Debug</h2>
+                            <h2>🔧 Translation Engine Debug</h2>
                             <button class="eat-modal-close">&times;</button>
                         </div>
                         <div class="eat-modal-body">
                             <div id="aitrfoel-debug-output">
-                                <p>?? Running diagnostics...</p>
+                                <p>🔎 Running diagnostics...</p>
                             </div>
                         </div>
                     </div>
@@ -1927,7 +1929,7 @@ jQuery(document).ready(function($) {
 
         runDiagnostics: function() {
             const output = $('#aitrfoel-debug-output');
-            output.html('<h3>?? Running System Diagnostics...</h3>');
+            output.html('<h3>🔎 Running System Diagnostics...</h3>');
             
             // Test 1: Check selected pages and languages
             const selectedPages = $('.eat-page-checkbox:checked').length;
@@ -1938,7 +1940,7 @@ jQuery(document).ready(function($) {
             output.append(`<p>Selected languages: ${selectedLanguages}</p>`);
             
             // Test 2: AJAX connectivity test
-            output.append(`<p><strong>?? Testing AJAX connection...</strong></p>`);
+            output.append(`<p><strong> Testing AJAX connection...</strong></p>`);
             
             $.ajax({
                 url: aitrfoelDashboard.ajax_url,
@@ -1965,7 +1967,7 @@ jQuery(document).ready(function($) {
 
         testTranslationStart: function() {
             const output = $('#aitrfoel-debug-output');
-            output.append(`<p><strong>?? Testing Translation Start...</strong></p>`);
+            output.append(`<p><strong> Testing Translation Start...</strong></p>`);
             
             const selectedPages = $('.eat-page-checkbox:checked').map(function() {
                 return $(this).val();
@@ -1976,7 +1978,7 @@ jQuery(document).ready(function($) {
             }).get();
             
             if (selectedPages.length === 0 || selectedLanguages.length === 0) {
-                output.append(`<p>?? No pages/languages selected for test</p>`);
+                output.append(`<p> No pages/languages selected for test</p>`);
                 return;
             }
             
@@ -2008,14 +2010,14 @@ jQuery(document).ready(function($) {
 
         monitorJobProgress: function(jobId) {
             const output = $('#aitrfoel-debug-output');
-            output.append(`<p><strong>?? Monitoring Job Progress: ${jobId}</strong></p>`);
+            output.append(`<p><strong>🕑 Monitoring Job Progress: ${jobId}</strong></p>`);
             
             let checkCount = 0;
             const maxChecks = 30; // 30 ???????? = 1 ?????? ??? ????????? 2 ???????
             
             const checkProgress = function() {
                 checkCount++;
-                output.append(`<p>?? Check ${checkCount}/${maxChecks}: Checking job status...</p>`);
+                output.append(`<p>🔎 Check ${checkCount}/${maxChecks}: Checking job status...</p>`);
                 
                 $.ajax({
                     url: aitrfoelDashboard.ajax_url,
@@ -2030,10 +2032,10 @@ jQuery(document).ready(function($) {
                             const status = response.data.status;
                             const progress = response.data.progress || 0;
                             
-                            output.append(`<p>?? Status: ${status}, Progress: ${progress}%</p>`);
+                            output.append(`<p> Status: ${status}, Progress: ${progress}%</p>`);
                             
                             if (status === __('status_completed', 'Completed') || status === 'failed' || status === 'cancelled') {
-                                output.append(`<p><strong>?? Job ${status.toUpperCase()}</strong></p>`);
+                                output.append(`<p><strong>📋 Job ${status.toUpperCase()}</strong></p>`);
                                 output.append(`<pre>${JSON.stringify(response.data, null, 2)}</pre>`);
                                 return; // Stop monitoring
                             }
@@ -2041,7 +2043,7 @@ jQuery(document).ready(function($) {
                             if (checkCount < maxChecks) {
                                 setTimeout(checkProgress, 2000); // Check again in 2 seconds
                             } else {
-                                output.append(`<p>?? Monitoring timeout reached</p>`);
+                                output.append(`<p>🕑 Monitoring timeout reached</p>`);
                             }
                         } else {
                             output.append(`<p>? Status check failed: ${response.data}</p>`);
@@ -2071,16 +2073,16 @@ jQuery(document).ready(function($) {
                 <div id="eat-monitor-modal" class="eat-modal-overlay">
                     <div class="eat-modal-content">
                         <div class="eat-modal-header" style="background: #28a745;">
-                            <h2>?? Jobs Monitor</h2>
+                            <h2>📋 Jobs Monitor</h2>
                             <button class="eat-modal-close">&times;</button>
                         </div>
                         <div class="eat-modal-body">
                             <div id="eat-monitor-output">
-                                <p>?? Loading jobs...</p>
+                                <p>⏳ Loading jobs...</p>
                             </div>
                             <div style="margin-top: 15px;">
-                                <button type="button" class="button" id="eat-refresh-jobs">?? Refresh</button>
-                                <button type="button" class="button" id="eat-check-logs">?? Check Logs</button>
+                                <button type="button" class="button" id="eat-refresh-jobs">🔄 Refresh</button>
+                                <button type="button" class="button" id="eat-check-logs">🔎 Check Logs</button>
                             </div>
                         </div>
                     </div>
@@ -2101,7 +2103,7 @@ jQuery(document).ready(function($) {
 
         loadJobsList: function() {
             const output = $('#eat-monitor-output');
-            output.html('<p>?? Loading jobs list...</p>');
+            output.html('<p>⏳ Loading jobs list...</p>');
             
             $.ajax({
                 url: aitrfoelDashboard.ajax_url,
@@ -2112,16 +2114,16 @@ jQuery(document).ready(function($) {
                 },
                 success: function(response) {
                     if (response.success && response.data) {
-                        output.html('<h3>?? Recent Jobs:</h3>');
+                        output.html('<h3>📋 Recent Jobs:</h3>');
                         
                         if (response.data.jobs && response.data.jobs.length > 0) {
                             response.data.jobs.forEach(function(job) {
                                 const statusIcon = {
                                     'pending': '?',
-                                    'processing': '??', 
-                                    __('status_completed', 'Completed'): '?',
+                                    'processing': '', 
+                                    'completed': '?',
                                     'failed': '?',
-                                    'cancelled': '??'
+                                    'cancelled': '🚫'
                                 }[job.status] || '?';
                                 
                                 output.append(`
@@ -2140,7 +2142,7 @@ jQuery(document).ready(function($) {
                         }
                         
                         if (response.data.stats) {
-                            output.append('<h3>?? Statistics:</h3>');
+                            output.append('<h3>📈 Statistics:</h3>');
                             output.append(`<pre>${JSON.stringify(response.data.stats, null, 2)}</pre>`);
                         }
                     } else {
@@ -2155,8 +2157,8 @@ jQuery(document).ready(function($) {
 
         checkSystemLogs: function() {
             const output = $('#eat-monitor-output');
-            output.append('<h3>?? System Logs:</h3>');
-            output.append('<p>?? Checking recent activity...</p>');
+            output.append('<h3>📋 System Logs:</h3>');
+            output.append('<p>🔎 Checking recent activity...</p>');
             
             $.ajax({
                 url: aitrfoelDashboard.ajax_url,

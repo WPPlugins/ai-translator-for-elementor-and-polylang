@@ -5,7 +5,7 @@ Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
 Requires Plugins: elementor, polylang
-Stable tag: 1.1.2
+Stable tag: 1.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -125,6 +125,10 @@ This plugin relies on external third-party services to function. Below is a deta
 1. Dashboard with translation stats and usage info.
 
 == Changelog ==
+= 1.1.3 =
+* Fixed JavaScript syntax error causing dropdowns to not work
+* Fixed language selector not responding to clicks
+
 = 1.1.2 =
 * Added server-side Freemius license validation
 * License expired users are now properly downgraded to Free plan
