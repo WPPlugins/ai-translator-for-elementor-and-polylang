@@ -5,7 +5,7 @@ Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
 Requires Plugins: elementor, polylang
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -125,6 +125,15 @@ This plugin relies on external third-party services to function. Below is a deta
 1. Dashboard with translation stats and usage info.
 
 == Changelog ==
+= 1.1.2 =
+* Added server-side Freemius license validation
+* License expired users are now properly downgraded to Free plan
+* Added admin notice for expired licenses
+* Dashboard now shows "Expired" status when license is invalid
+* Updated pricing: Starter $9.99/month, Agency $34.99/month
+* Added translated readme files for 9 languages
+* Improved license status accuracy
+
 = 1.1.1 =
 * Added pricing plans to readme
 * Improved PRO build script with automatic readme branding
@@ -165,29 +174,29 @@ Perfect for testing the plugin
 – Elementor Support
 – 7-day cooldown after limit
 
-= Starter =
-**$49/year**
+= Starter — Most Popular =
+**$9.99/month**
 For small businesses and landing pages
 
 – 1 Website License
-– ~18K words (~46 pages)
+– ~18K words/month (~46 pages)
 – 100,000 tokens included
 – Latest OpenAI Models
 – Polylang Pro Compatible
 – Elementor & Elementor Pro Support
 – Email Support
-– 1 Year of Updates
+– Continuous Updates
 
 = Agency =
-**$149/year** — Most Popular
+**$34.99/month**
 Optimal for studios and agencies
 
 – Up to 10 Website Licenses
-– ~89K words (~232 pages)
+– ~89K words/month (~232 pages)
 – 500,000 tokens included
 – Latest OpenAI Models
 – Priority Email Support
-– 1 Year of Updates
+– Continuous Updates
 
 Upgrade your license inside WordPress: AI Translator → Pricing, or visit [meeptech.com](https://meeptech.com/products/ai-translator-for-elementor-polylang/).
 

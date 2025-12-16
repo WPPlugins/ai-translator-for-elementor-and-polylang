@@ -822,43 +822,24 @@ class AITRFOEL_Admin_Menu {
      * Get license information and word limits
      */
     private function get_license_info() {
-        // Get license status from Freemius (same as settings page)
-        $license_status = 'Free';
-        $word_limit = 1800; // Default free plan
+        // Get license status from server (authoritative source)
+        $license_manager = AITRFOEL_License_Manager_Server::get_instance();
+        $server_status = $license_manager->get_license_status();
         
-        if (function_exists('eatp_fs') && eatp_fs()->is_registered()) {
-            $plan = eatp_fs()->get_plan();
-            if ($plan) {
-                $license_status = $plan->name;
-                
-                // Use the same limits as settings page
-                if (class_exists('AITRFOEL_Settings')) {
-                    $word_limit = AITRFOEL_Settings::get_word_limit_for_plan($license_status);
-                } else {
-                    // Fallback limits matching settings page
-                    $license_limits = [
-                        'Free' => 1800,
-                        'free' => 1800,
-                        'Starter' => 18000,
-                        'starter' => 18000,
-                        'Agency' => 89000,
-                        'agency' => 89000,
-                        'Enterprise' => 355000,
-                        'enterprise' => 355000
-                    ];
-                    $word_limit = isset($license_limits[$license_status]) ? $license_limits[$license_status] : 1800;
-                }
-                
-                // Capitalize for display
-                $license_status = ucfirst(strtolower($license_status));
-            }
-        }
+        $license_status = $server_status['plan'];
+        $word_limit = $server_status['word_limit'];
+        $license_expired = isset($server_status['license_expired']) ? $server_status['license_expired'] : false;
+        
+        // Capitalize for display
+        $license_status = ucfirst(strtolower($license_status));
         
         return [
             'type' => strtolower($license_status),
             'limit' => $word_limit,
             'name' => $license_status,
-            'is_active' => (function_exists('eatp_fs') && eatp_fs()->is_registered())
+            'is_active' => (function_exists('eatp_fs') && eatp_fs()->is_registered()),
+            'license_expired' => $license_expired,
+            'freemius_validated' => isset($server_status['freemius_validated']) ? $server_status['freemius_validated'] : false
         ];
     }
 
@@ -951,20 +932,34 @@ class AITRFOEL_Admin_Menu {
             <div class="eat-compact-stat eat-compact-license">
                 <div class="eat-compact-license-info">
                     <span class="eat-compact-label"><?php esc_html_e('License', 'ai-translator-for-elementor-and-polylang'); ?>:</span>
-                    <span class="eat-compact-value eat-tooltip" 
-                          title="<?php /* translators: 1: Plan name, 2: Word limit */ printf(esc_attr__('%1$s Plan: %2$s words included', 'ai-translator-for-elementor-and-polylang'), 
-                                         esc_html($license_info['name']), 
-                                         number_format($license_info['limit'])); ?>">
-                        <?php echo esc_html($license_info['name']); ?>
-                    </span>
+                    <?php if (!empty($license_info['license_expired'])): ?>
+                        <span class="eat-compact-value eat-license-expired eat-tooltip" 
+                              style="color: #dc3545;"
+                              title="<?php esc_attr_e('Your license has expired. You have been downgraded to the Free plan.', 'ai-translator-for-elementor-and-polylang'); ?>">
+                            ⚠️ <?php esc_html_e('Expired', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </span>
+                    <?php else: ?>
+                        <span class="eat-compact-value eat-tooltip" 
+                              title="<?php /* translators: 1: Plan name, 2: Word limit */ printf(esc_attr__('%1$s Plan: %2$s words included', 'ai-translator-for-elementor-and-polylang'), 
+                                             esc_html($license_info['name']), 
+                                             number_format($license_info['limit'])); ?>">
+                            <?php echo esc_html($license_info['name']); ?>
+                        </span>
+                    <?php endif; ?>
                 </div>
                 <div class="eat-compact-actions">
-                    <a href="<?php echo (function_exists('eatp_fs') && eatp_fs()->is_registered()) ? esc_url(eatp_fs()->get_upgrade_url()) : esc_url('https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing'); ?>" class="eat-compact-buy-btn">
-                        <?php esc_html_e('Buy More Words', 'ai-translator-for-elementor-and-polylang'); ?>
-                    </a>
-                    <a href="<?php echo (function_exists('eatp_fs') && eatp_fs()->is_registered()) ? esc_url(eatp_fs()->get_upgrade_url()) : esc_url('https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing'); ?>" class="eat-compact-upgrade-btn">
-                        <?php esc_html_e('Upgrade Plan', 'ai-translator-for-elementor-and-polylang'); ?>
-                    </a>
+                    <?php if (!empty($license_info['license_expired'])): ?>
+                        <a href="<?php echo (function_exists('eatp_fs') && eatp_fs()->is_registered()) ? esc_url(eatp_fs()->get_upgrade_url()) : esc_url('https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing'); ?>" class="eat-compact-buy-btn" style="background: #dc3545; border-color: #dc3545;">
+                            <?php esc_html_e('Renew License', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </a>
+                    <?php else: ?>
+                        <a href="<?php echo (function_exists('eatp_fs') && eatp_fs()->is_registered()) ? esc_url(eatp_fs()->get_upgrade_url()) : esc_url('https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing'); ?>" class="eat-compact-buy-btn">
+                            <?php esc_html_e('Buy More Words', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </a>
+                        <a href="<?php echo (function_exists('eatp_fs') && eatp_fs()->is_registered()) ? esc_url(eatp_fs()->get_upgrade_url()) : esc_url('https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing'); ?>" class="eat-compact-upgrade-btn">
+                            <?php esc_html_e('Upgrade Plan', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

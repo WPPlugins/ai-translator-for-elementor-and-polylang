@@ -28,6 +28,12 @@ class AITRFOEL_License_Manager_Server {
         // Admin notices for cooldown
         add_action('admin_notices', [$this, 'show_cooldown_notices']);
         
+        // Admin notices for license expired
+        add_action('admin_notices', [$this, 'show_license_expired_notice']);
+        
+        // AJAX handler for dismissing license expired notice
+        add_action('wp_ajax_aitrfoel_dismiss_license_expired', [$this, 'dismiss_license_expired_notice']);
+        
         // Freemius activation hooks (initialize user in remote DB)
         add_action('aitrfoel_fs_loaded', [$this, 'init_freemius_hooks']);
 
@@ -132,7 +138,9 @@ class AITRFOEL_License_Manager_Server {
             'word_limit' => $word_limit,
             'words_used' => $words_used,
             'words_left' => $words_left,
-            'license_key' => $license_key
+            'license_key' => $license_key,
+            'freemius_validated' => isset($server_usage['freemius_validated']) ? $server_usage['freemius_validated'] : false,
+            'license_expired' => isset($server_usage['license_expired']) ? $server_usage['license_expired'] : false
         ];
     }
     
@@ -202,6 +210,26 @@ class AITRFOEL_License_Manager_Server {
                 }
                 if (isset($data['word_limit'])) {
                     $result['word_limit'] = intval($data['word_limit']);
+                }
+                
+                // NEW: Handle Freemius validation fields
+                if (isset($data['freemius_validated'])) {
+                    $result['freemius_validated'] = (bool) $data['freemius_validated'];
+                }
+                if (isset($data['license_expired'])) {
+                    $result['license_expired'] = (bool) $data['license_expired'];
+                    
+                    // If license expired, show admin notice
+                    if ($data['license_expired']) {
+                        set_transient('aitrfoel_license_expired', true, HOUR_IN_SECONDS);
+                        
+                        if (class_exists('AITRFOEL_Logger')) {
+                            AITRFOEL_Logger::log('⚠️ License expired - downgraded to Free plan', 'warning');
+                        }
+                    } else {
+                        // License is valid, clear any expired notice
+                        delete_transient('aitrfoel_license_expired');
+                    }
                 }
                 
                 return $result;
@@ -527,6 +555,107 @@ class AITRFOEL_License_Manager_Server {
                 echo '</div>';
             }
         }
+    }
+    
+    /**
+     * Show license expired admin notice
+     */
+    public function show_license_expired_notice() {
+        // Check if license is expired
+        if (!get_transient('aitrfoel_license_expired')) {
+            return;
+        }
+        
+        // Check if user dismissed the notice recently (24 hours)
+        if (get_transient('aitrfoel_license_expired_dismissed')) {
+            return;
+        }
+        
+        // Only show on plugin pages or dashboard
+        $screen = get_current_screen();
+        if (!$screen) {
+            return;
+        }
+        
+        $show_on_screens = [
+            'dashboard',
+            'toplevel_page_ai-translator-for-elementor-and-polylang',
+            'ai-translator_page_ai-translator-for-elementor-and-polylang-pricing',
+            'ai-translator_page_ai-translator-for-elementor-and-polylang-account'
+        ];
+        
+        if (!in_array($screen->id, $show_on_screens) && strpos($screen->id, 'ai-translator') === false) {
+            return;
+        }
+        
+        $renew_url = function_exists('eatp_fs') && eatp_fs()->is_registered() 
+            ? eatp_fs()->get_upgrade_url() 
+            : 'https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing';
+        
+        ?>
+        <div class="notice notice-warning is-dismissible aitrfoel-license-expired-notice">
+            <h3 style="margin: 0.5em 0; color: #856404;">
+                ⚠️ <?php esc_html_e('AI Translator License Expired', 'ai-translator-for-elementor-and-polylang'); ?>
+            </h3>
+            <p>
+                <?php esc_html_e('Your AI Translator for Elementor & Polylang license has expired or been cancelled.', 'ai-translator-for-elementor-and-polylang'); ?>
+                <br>
+                <?php esc_html_e('You have been downgraded to the', 'ai-translator-for-elementor-and-polylang'); ?>
+                <strong><?php esc_html_e('Free plan (1,800 words/week)', 'ai-translator-for-elementor-and-polylang'); ?></strong>.
+            </p>
+            <p>
+                <a href="<?php echo esc_url($renew_url); ?>" class="button button-primary">
+                    <?php esc_html_e('Renew License', 'ai-translator-for-elementor-and-polylang'); ?>
+                </a>
+                <a href="#" class="button aitrfoel-dismiss-expired-notice" style="margin-left: 10px;">
+                    <?php esc_html_e('Dismiss', 'ai-translator-for-elementor-and-polylang'); ?>
+                </a>
+            </p>
+        </div>
+        <script>
+        jQuery(document).ready(function($) {
+            $('.aitrfoel-dismiss-expired-notice').on('click', function(e) {
+                e.preventDefault();
+                $.post(ajaxurl, {
+                    action: 'aitrfoel_dismiss_license_expired',
+                    nonce: '<?php echo wp_create_nonce('aitrfoel_dismiss_license_expired'); ?>'
+                });
+                $(this).closest('.notice').fadeOut();
+            });
+            
+            // Also handle the X button dismiss
+            $(document).on('click', '.aitrfoel-license-expired-notice .notice-dismiss', function() {
+                $.post(ajaxurl, {
+                    action: 'aitrfoel_dismiss_license_expired',
+                    nonce: '<?php echo wp_create_nonce('aitrfoel_dismiss_license_expired'); ?>'
+                });
+            });
+        });
+        </script>
+        <style>
+            .aitrfoel-license-expired-notice {
+                border-left-color: #f0ad4e;
+                background: #fff9e6;
+                padding: 10px 15px;
+            }
+        </style>
+        <?php
+    }
+    
+    /**
+     * AJAX handler to dismiss license expired notice
+     */
+    public function dismiss_license_expired_notice() {
+        // Verify nonce
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'aitrfoel_dismiss_license_expired')) {
+            wp_send_json_error('Invalid nonce');
+            return;
+        }
+        
+        // Set transient to hide notice for 24 hours
+        set_transient('aitrfoel_license_expired_dismissed', true, DAY_IN_SECONDS);
+        
+        wp_send_json_success();
     }
     
     /**
