@@ -1414,3 +1414,84 @@ msgstr "API ключи или учетные данные"
 
 msgid "Data is never shared with third parties."
 msgstr "Данные никогда не передаются третьим лицам."
+
+# Cooldown and Review strings
+msgid "AI Translator: Cooldown Active"
+msgstr "AI Переводчик: Кулдаун активен"
+
+msgid "Your free plan word limit will reset in %d days. "
+msgstr "Лимит слов вашего бесплатного плана сбросится через %d дней. "
+
+msgid "Upgrade to a paid plan to start translating immediately."
+msgstr "Перейдите на платный план, чтобы начать переводить немедленно."
+
+msgid "Rate Our Plugin"
+msgstr "Оцените наш плагин"
+
+msgid "If you enjoy using AI Translator for Elementor & Polylang, please take a moment to rate us on WordPress.org! Your feedback helps us improve the plugin and reach more users who could benefit from it."
+msgstr "Если вам нравится AI Translator для Elementor и Polylang, пожалуйста, уделите минуту, чтобы оценить нас на WordPress.org! Ваш отзыв помогает нам улучшать плагин и находить новых пользователей, которым он может быть полезен."
+
+msgid "Leave a Review"
+msgstr "Оставить отзыв"
+
+# Progress messages
+msgid "Waiting for AI response"
+msgstr "Ожидание ответа ИИ"
+
+msgid "Sending content for translation"
+msgstr "Отправка контента на перевод"
+
+msgid "Processing the data"
+msgstr "Обработка данных"
+
+msgid "Analyzing page structure"
+msgstr "Анализ структуры страницы"
+
+msgid "Preparing translation request"
+msgstr "Подготовка запроса на перевод"
+
+msgid "Processing translation results"
+msgstr "Обработка результатов перевода"
+
+msgid "Applying translations to content"
+msgstr "Применение переводов к контенту"
+
+msgid "Finalizing page creation"
+msgstr "Завершение создания страницы"
+
+msgid "Optimizing translated content"
+msgstr "Оптимизация переведённого контента"
+
+msgid "Completing translation process"
+msgstr "Завершение процесса перевода"
+
+msgid "Settings"
+msgstr "Настройки"
+
+# Insufficient words modal
+msgid "Not Enough Words"
+msgstr "Недостаточно слов"
+
+msgid "Insufficient words for this translation."
+msgstr "Недостаточно слов для этого перевода."
+
+msgid "Required"
+msgstr "Требуется"
+
+msgid "Available"
+msgstr "Доступно"
+
+msgid "Missing"
+msgstr "Не хватает"
+
+msgid "words"
+msgstr "слов"
+
+msgid "Reduce your selection or upgrade your plan to proceed."
+msgstr "Сократите выбор или обновите план, чтобы продолжить."
+
+msgid "Upgrade Plan"
+msgstr "Обновить план"
+
+msgid "Close"
+msgstr "Закрыть"

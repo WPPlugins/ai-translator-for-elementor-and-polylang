@@ -1985,6 +1985,56 @@ tr.eat-translation-page.eat-newly-created-highlight {
     margin-bottom: 20px;
 }
 
+/* Two-column Information & Review Layout */
+.eat-info-review-card {
+    padding: 0 !important;
+}
+
+.eat-info-review-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+}
+
+.eat-info-column,
+.eat-review-column {
+    padding: 20px 25px;
+}
+
+.eat-info-column {
+    border-right: 1px solid #e0e0e0;
+}
+
+.eat-info-column h3,
+.eat-review-column h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* Review Column Specific Styles */
+.eat-review-column {
+    text-align: left;
+}
+
+.eat-review-content p {
+    margin-bottom: 15px;
+    line-height: 1.6;
+    color: #555;
+}
+
+@media (max-width: 768px) {
+    .eat-info-review-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .eat-info-column {
+        border-right: none;
+        border-bottom: 1px solid #e0e0e0;
+    }
+}
+
 .eat-info-content {
     padding: 0;
 }

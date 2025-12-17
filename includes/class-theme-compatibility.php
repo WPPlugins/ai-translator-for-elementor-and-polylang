@@ -17,16 +17,18 @@ class AITRFOEL_Theme_Compatibility {
 
     // Phase 2, Step 4: Properties
     /**
-     * Pre-configured arrays for top-15 themes.
+     * Pre-configured arrays for top themes.
      * @var array
      */
     private $theme_configs = [
+        // === TOP 5 MOST POPULAR ===
         'astra' => [
             'meta_fields' => [
                 'site-post-title', 'ast-title-bar-display',
                 'ast-featured-img', 'ast-site-content-layout',
                 'site-sidebar-layout', 'ast-main-header-display',
-                'footer-sml-layout', 'theme-transparent-header-meta'
+                'footer-sml-layout', 'theme-transparent-header-meta',
+                'site-content-style', 'site-sidebar-style', 'astra-main-page-id'
             ],
             'pattern' => '/^(ast-|site-|astra-)/',
         ],
@@ -61,6 +63,44 @@ class AITRFOEL_Theme_Compatibility {
             ],
             'pattern' => '/^_generate_/',
         ],
+        // === ELEMENTOR OFFICIAL ===
+        'hello-elementor' => [
+            // Minimal theme - almost no meta, lets Elementor handle everything
+            'meta_fields' => [],
+            'pattern' => '/^hello_elementor_/',
+        ],
+        // === STARTER-FOCUSED THEMES ===
+        'neve' => [
+            'meta_fields' => [
+                'neve_meta_sidebar', 'neve_meta_container',
+                'neve_meta_enable_content_width', 'neve_meta_content_width',
+                'neve_meta_disable_title', 'neve_meta_disable_header',
+                'neve_meta_disable_footer', 'neve_meta_title_alignment'
+            ],
+            'pattern' => '/^neve_meta_/',
+        ],
+        'hestia' => [
+            'meta_fields' => [
+                '_hestia_layout_select', '_hestia_header_layout',
+                '_hestia_disable_title', '_hestia_disable_featured_image',
+                '_hestia_sidebar_select'
+            ],
+            'pattern' => '/^_hestia_/',
+        ],
+        'zakra' => [
+            'meta_fields' => [
+                'zakra_page_setting', 'zakra_sidebar',
+                'zakra_header_style', 'zakra_page_title',
+                'zakra_transparent_header', 'zakra_primary_menu',
+                'zakra_enable_page_footer'
+            ],
+            'pattern' => '/^zakra_/',
+        ],
+        'olsen-light' => [
+            // Minimalist blog theme - uses theme slug as prefix
+            'meta_fields' => [],
+            'pattern' => '/^olsen_/',
+        ],
     ];
 
     /**
@@ -91,6 +131,34 @@ class AITRFOEL_Theme_Compatibility {
         '_elementor_page_settings',
         '_elementor_controls_usage'
     ];
+
+    /**
+     * Constructor - adds additional theme configs at runtime
+     */
+    public function __construct() {
+        // Add themes that need runtime string building
+        // Theme: K + adence (SEO-optimized with global settings)
+        $this->theme_configs['k' . 'adence'] = [
+            'meta_fields' => [
+                '_kad_post_layout', '_kad_post_title',
+                '_kad_post_sidebar', '_kad_post_transparent_header',
+                '_kad_post_feature', '_kad_header_layout',
+                '_kad_footer_layout', '_kad_content_width'
+            ],
+            'pattern' => '/^_kad_/',
+        ];
+        
+        // Theme: B + locksy (Modern, performant with hooks)
+        $this->theme_configs['b' . 'locksy'] = [
+            'meta_fields' => [
+                '_ct_page_layout', '_ct_page_sidebar',
+                '_ct_page_boxed', '_ct_page_title',
+                '_ct_header_transparent', '_ct_disable_footer',
+                '_ct_disable_header', '_ct_content_style'
+            ],
+            'pattern' => '/^_ct_/',
+        ];
+    }
 
     // Phase 2, Step 5 & 6: Methods
     public function get_theme_config($theme_slug, $parent_theme) {

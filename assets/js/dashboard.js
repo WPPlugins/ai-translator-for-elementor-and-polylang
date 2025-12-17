@@ -814,13 +814,13 @@ jQuery(document).ready(function($) {
             // Show "Waiting for AI response..." with dots animation
             $('#eat-estimated-words')
                 .addClass('translating')
-                .html('Waiting for AI response<span class="eat-dots"><span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></span>');
+                .html(__('waiting_for_ai', 'Waiting for AI response') + '<span class="eat-dots"><span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></span>');
             
             // ????????? ??????
             const button = $('#eat-start-translation');
             button.addClass('loading')
                   .removeClass('button-primary success')
-                  .html('⏳ Translating...')
+                  .html('⏳ ' + __('translating', 'Translating...'))
                   .addClass('non-clickable');
             
             $('#eat-bulk-bar').addClass('processing');
@@ -1164,36 +1164,43 @@ jQuery(document).ready(function($) {
          * ????????? ????: ???????????? ????
          */
         showInsufficientWordsModal: function(errorData) {
-            const upgradeUrl = errorData.upgrade_url || '#';
+            // Use localized URL (PRO = Freemius pricing, FREE = external site)
+            const upgradeUrl = aitrfoelDashboard.upgrade_url || 'https://meeptech.com/products/ai-translator-for-elementor-polylang#pricing';
+            const isPro = aitrfoelDashboard.is_pro || false;
             // Support both old and new field names for backward compatibility
             const wordsNeeded = errorData.words_needed || errorData.estimated_words || 0;
             const wordsRemaining = errorData.words_remaining || errorData.words_left || 0;
             const wordsMissing = wordsNeeded - wordsRemaining;
             
+            // PRO: open in same tab (Freemius), FREE: open in new tab (external)
+            const upgradeAction = isPro 
+                ? `window.location.href='${upgradeUrl}'` 
+                : `window.open('${upgradeUrl}', '_blank')`;
+            
             const modal = `
                 <div id="eat-error-modal" class="eat-modal-overlay" style="opacity: 1 !important;">
                     <div class="eat-modal-content eat-error-modal">
-                        <button class="eat-modal-close" onclick="jQuery('#eat-error-modal').remove()">�</button>
+                        <button class="eat-modal-close" onclick="jQuery('#eat-error-modal').remove()">✕</button>
                         
-                        <h3>🚨 Not Enough Words</h3>
+                        <h3>🚨 ${__('not_enough_words', 'Not Enough Words')}</h3>
                         
                         <div class="eat-error-message">
-                            <p>${errorData.message || 'Insufficient words for this translation.'}</p>
+                            <p>${errorData.message || __('insufficient_words_message', 'Insufficient words for this translation.')}</p>
                         </div>
                         
                         <div class="eat-error-stats">
-                            <p>Required: <strong>${wordsNeeded.toLocaleString()} words</strong></p>
-                            <p>Available: <strong>${wordsRemaining.toLocaleString()} words</strong></p>
-                            <p>Missing: <strong>${wordsMissing.toLocaleString()} words</strong></p>
+                            <p>${__('required', 'Required')}: <strong>${wordsNeeded.toLocaleString()} ${__('words', 'words')}</strong></p>
+                            <p>${__('available', 'Available')}: <strong>${wordsRemaining.toLocaleString()} ${__('words', 'words')}</strong></p>
+                            <p>${__('missing', 'Missing')}: <strong>${wordsMissing.toLocaleString()} ${__('words', 'words')}</strong></p>
                         </div>
                         
                         <div class="eat-error-details">
-                            <p>Reduce your selection or upgrade your plan to proceed.</p>
+                            <p>${__('reduce_or_upgrade', 'Reduce your selection or upgrade your plan to proceed.')}</p>
                         </div>
                         
                         <div class="eat-modal-actions">
-                            <button onclick="window.open('${upgradeUrl}', '_blank')" class="button button-primary">⬆️ Upgrade Plan</button>
-                            <button onclick="jQuery('#eat-error-modal').remove()" class="button">Close</button>
+                            <button onclick="${upgradeAction}" class="button button-primary">⬆️ ${__('upgrade_plan', 'Upgrade Plan')}</button>
+                            <button onclick="jQuery('#eat-error-modal').remove()" class="button">${__('close', 'Close')}</button>
                         </div>
                     </div>
                 </div>
@@ -1207,16 +1214,16 @@ jQuery(document).ready(function($) {
          */
         startAnimatedProgress: function() {
             const messages = [
-                "Sending content for translation",
-                "Processing the data",
-                "Analyzing page structure", 
-                "Preparing translation request",
-                "Waiting for AI response",
-                "Processing translation results",
-                "Applying translations to content",
-                "Finalizing page creation",
-                "Optimizing translated content",
-                "Completing translation process"
+                __('sending_content', 'Sending content for translation'),
+                __('processing_data', 'Processing the data'),
+                __('analyzing_structure', 'Analyzing page structure'),
+                __('preparing_request', 'Preparing translation request'),
+                __('waiting_for_ai', 'Waiting for AI response'),
+                __('processing_results', 'Processing translation results'),
+                __('applying_translations', 'Applying translations to content'),
+                __('finalizing_creation', 'Finalizing page creation'),
+                __('optimizing_content', 'Optimizing translated content'),
+                __('completing_process', 'Completing translation process')
             ];
             
             let currentIndex = 0;

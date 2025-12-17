@@ -3,7 +3,7 @@
  * Plugin Name: AI Translator for Elementor and Polylang
  * Plugin URI: https://meeptech.com/products/ai-translator-for-elementor-and-polylang
  * Description: AI-powered translation for Elementor pages with Polylang using OpenAI
- * Version: 1.1.3
+ * Version: 1.1.4
  * Author: Meeptech
  * Author URI: https://meeptech.com
  * License: GPL v2 or later
@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('AITRFOEL_VERSION', '1.1.3');
+define('AITRFOEL_VERSION', '1.1.4');
 define('AITRFOEL_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AITRFOEL_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AITRFOEL_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -966,7 +966,9 @@ class AITRFOEL_Main {
         // URLs
         $polylang_url = admin_url('admin.php?page=mlang');
         $docs_url = 'https://meeptech.com/products/ai-translator-for-elementor-polylang/documentation';
-        $video_url = 'https://www.youtube.com/embed/RzcxmipDas4'; // YouTube embed tutorial video
+        $video_id = 'RzcxmipDas4';
+        $video_url = 'https://www.youtube.com/watch?v=' . $video_id;
+        $video_thumbnail = 'https://img.youtube.com/vi/' . $video_id . '/maxresdefault.jpg';
         
         ?>
         <div id="aitrfoel-welcome-popup" class="aitrfoel-welcome-fullscreen">
@@ -984,19 +986,22 @@ class AITRFOEL_Main {
                     </p>
                 </div>
                 
-                <!-- Video - Using YouTube embed which is allowed -->
+                <!-- Video - Click to open on YouTube -->
                 <div class="aitrfoel-welcome-video-wrapper">
-                    <iframe 
-                        id="aitrfoel-welcome-video"
-                        class="aitrfoel-welcome-video"
-                        width="100%" 
-                        height="100%" 
-                        src="<?php echo esc_url($video_url); ?>?rel=0&modestbranding=1" 
-                        title="<?php esc_attr_e('AI Translator Tutorial', 'ai-translator-for-elementor-and-polylang'); ?>"
-                        frameborder="0" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen
-                    ></iframe>
+                    <a href="<?php echo esc_url($video_url); ?>" target="_blank" rel="noopener noreferrer" class="aitrfoel-video-link">
+                        <img 
+                            src="<?php echo esc_url($video_thumbnail); ?>" 
+                            alt="<?php esc_attr_e('AI Translator Tutorial', 'ai-translator-for-elementor-and-polylang'); ?>"
+                            class="aitrfoel-welcome-video-thumb"
+                        />
+                        <div class="aitrfoel-play-button">
+                            <svg viewBox="0 0 68 48" width="68" height="48">
+                                <path class="aitrfoel-play-bg" d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"></path>
+                                <path d="M 45,24 27,14 27,34" fill="#fff"></path>
+                            </svg>
+                        </div>
+                        <span class="aitrfoel-video-label"><?php esc_html_e('▶ Watch Tutorial on YouTube', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                    </a>
                 </div>
                 
                 <!-- Quick Steps - Single Line -->
@@ -1140,6 +1145,49 @@ class AITRFOEL_Main {
                 width: 100%;
                 aspect-ratio: 16 / 9;
                 margin-bottom: 24px;
+                position: relative;
+            }
+            
+            .aitrfoel-video-link {
+                display: block;
+                width: 100%;
+                height: 100%;
+                position: relative;
+                text-decoration: none;
+            }
+            
+            .aitrfoel-welcome-video-thumb {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+            }
+            
+            .aitrfoel-play-button {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                opacity: 0.9;
+                transition: opacity 0.2s, transform 0.2s;
+            }
+            
+            .aitrfoel-video-link:hover .aitrfoel-play-button {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+            
+            .aitrfoel-video-label {
+                position: absolute;
+                bottom: 16px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: #fff;
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-size: 14px;
+                font-weight: 500;
             }
             
             .aitrfoel-welcome-video {
@@ -1365,12 +1413,6 @@ class AITRFOEL_Main {
                 // Dismiss welcome popup
                 $('.aitrfoel-welcome-dismiss').on('click', function(e) {
                     e.preventDefault();
-                    
-                    // Stop YouTube video by removing iframe src
-                    var iframe = $('#aitrfoel-welcome-video');
-                    if (iframe.length) {
-                        iframe.attr('src', '');
-                    }
                     
                     $('#aitrfoel-welcome-popup').fadeOut(300, function() {
                         $(this).remove();

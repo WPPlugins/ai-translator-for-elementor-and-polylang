@@ -202,21 +202,37 @@ class AITRFOEL_Admin_Menu {
                 <div id="eat-status"></div>
             </div>
             
-            <!-- Information -->
-            <div class="eat-card">
-                <h3><?php esc_html_e('Information', 'ai-translator-for-elementor-and-polylang'); ?></h3>
-                <div class="eat-info-content">
-                    <p><?php esc_html_e('Translation engine is not ideal - errors can be spotted in translated pages. We are constantly updating algorithm to provide you with the best experience. If you spot a bug in translation contact us via feedback form.', 'ai-translator-for-elementor-and-polylang'); ?></p>
-                    <div class="eat-info-buttons">
-                        <a href="https://meeptech.com/contact" target="_blank" class="button button-secondary">
-                            <?php esc_html_e('Feedback Form', 'ai-translator-for-elementor-and-polylang'); ?>
-                        </a>
-                        <a href="<?php echo (function_exists('eatp_fs') && eatp_fs()->is_registered()) ? esc_url(eatp_fs()->get_upgrade_url()) : esc_url('https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing'); ?>" class="button button-primary">
-                            <?php esc_html_e('Upgrade Plan', 'ai-translator-for-elementor-and-polylang'); ?>
-                        </a>
-                        <a href="https://meeptech.com/products/ai-translator-for-elementor-polylang/documentation" target="_blank" class="button button-secondary">
-                            <?php esc_html_e('Documentation', 'ai-translator-for-elementor-and-polylang'); ?>
-                        </a>
+            <!-- Information & Review Section -->
+            <div class="eat-card eat-info-review-card">
+                <div class="eat-info-review-grid">
+                    <!-- Left Column: Information -->
+                    <div class="eat-info-column">
+                        <h3><?php esc_html_e('Information', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                        <div class="eat-info-content">
+                            <p><?php esc_html_e('Translation engine is not ideal - errors can be spotted in translated pages. We are constantly updating algorithm to provide you with the best experience. If you spot a bug in translation contact us via feedback form.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                            <div class="eat-info-buttons">
+                                <a href="https://meeptech.com/contact" target="_blank" class="button button-secondary">
+                                    <?php esc_html_e('Feedback Form', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </a>
+                                <a href="<?php echo (function_exists('eatp_fs') && eatp_fs()->is_registered()) ? esc_url(eatp_fs()->get_upgrade_url()) : esc_url('https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing'); ?>" class="button button-primary">
+                                    <?php esc_html_e('Upgrade Plan', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </a>
+                                <a href="https://meeptech.com/products/ai-translator-for-elementor-polylang/documentation" target="_blank" class="button button-secondary">
+                                    <?php esc_html_e('Documentation', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column: Review Request -->
+                    <div class="eat-review-column">
+                        <h3><?php esc_html_e('Rate Our Plugin', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                        <div class="eat-review-content">
+                            <p><?php esc_html_e('If you enjoy using AI Translator for Elementor & Polylang, please take a moment to rate us on WordPress.org! Your feedback helps us improve the plugin and reach more users who could benefit from it.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                            <a href="https://wordpress.org/support/plugin/ai-translator-for-elementor-and-polylang/reviews/#new-post" target="_blank" class="button button-primary">
+                                <?php esc_html_e('Leave a Review', 'ai-translator-for-elementor-and-polylang'); ?>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -766,9 +782,16 @@ class AITRFOEL_Admin_Menu {
             true
         );
 
+        // Determine upgrade URL based on version type (PRO uses Freemius, FREE uses external)
+        $upgrade_url = (defined('AITRFOEL_VERSION_TYPE') && AITRFOEL_VERSION_TYPE === 'pro')
+            ? 'https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing'
+            : 'https://meeptech.com/products/ai-translator-for-elementor-polylang#pricing';
+
         wp_localize_script('aitrfoel-dashboard', 'aitrfoelDashboard', [
             'ajax_url' => esc_url(admin_url('admin-ajax.php')),
             'nonce' => wp_create_nonce('aitrfoel_ajax_nonce'),
+            'upgrade_url' => esc_url($upgrade_url),
+            'is_pro' => (defined('AITRFOEL_VERSION_TYPE') && AITRFOEL_VERSION_TYPE === 'pro'),
             'languages' => function_exists('pll_languages_list') ? 
                 array_combine(
                     pll_languages_list(), 
@@ -792,6 +815,7 @@ class AITRFOEL_Admin_Menu {
                 'translation_paused_limit' => __('Translation paused: word limit reached', 'ai-translator-for-elementor-and-polylang'),
                 'translation_failed_start' => __('Translation failed to start.', 'ai-translator-for-elementor-and-polylang'),
                 'translation_already_in_progress' => __('Translation is already in progress. Please wait for completion.', 'ai-translator-for-elementor-and-polylang'),
+                'translating' => __('Translating...', 'ai-translator-for-elementor-and-polylang'),
                 
                 // Status strings
                 'checking_status' => __('Checking active translation status...', 'ai-translator-for-elementor-and-polylang'),
@@ -808,6 +832,32 @@ class AITRFOEL_Admin_Menu {
                 // Error strings
                 'network_error_analysis' => __('Network error during pre-analysis', 'ai-translator-for-elementor-and-polylang'),
                 'pre_analysis_failed' => __('Pre-analysis failed', 'ai-translator-for-elementor-and-polylang'),
+                
+                // Progress messages
+                'waiting_for_ai' => __('Waiting for AI response', 'ai-translator-for-elementor-and-polylang'),
+                'sending_content' => __('Sending content for translation', 'ai-translator-for-elementor-and-polylang'),
+                'processing_data' => __('Processing the data', 'ai-translator-for-elementor-and-polylang'),
+                'analyzing_structure' => __('Analyzing page structure', 'ai-translator-for-elementor-and-polylang'),
+                'preparing_request' => __('Preparing translation request', 'ai-translator-for-elementor-and-polylang'),
+                'processing_results' => __('Processing translation results', 'ai-translator-for-elementor-and-polylang'),
+                'applying_translations' => __('Applying translations to content', 'ai-translator-for-elementor-and-polylang'),
+                'finalizing_creation' => __('Finalizing page creation', 'ai-translator-for-elementor-and-polylang'),
+                'optimizing_content' => __('Optimizing translated content', 'ai-translator-for-elementor-and-polylang'),
+                'completing_process' => __('Completing translation process', 'ai-translator-for-elementor-and-polylang'),
+                
+                // Settings
+                'settings' => __('Settings', 'ai-translator-for-elementor-and-polylang'),
+                
+                // Insufficient words modal
+                'not_enough_words' => __('Not Enough Words', 'ai-translator-for-elementor-and-polylang'),
+                'insufficient_words_message' => __('Insufficient words for this translation.', 'ai-translator-for-elementor-and-polylang'),
+                'required' => __('Required', 'ai-translator-for-elementor-and-polylang'),
+                'available' => __('Available', 'ai-translator-for-elementor-and-polylang'),
+                'missing' => __('Missing', 'ai-translator-for-elementor-and-polylang'),
+                'words' => __('words', 'ai-translator-for-elementor-and-polylang'),
+                'reduce_or_upgrade' => __('Reduce your selection or upgrade your plan to proceed.', 'ai-translator-for-elementor-and-polylang'),
+                'upgrade_plan' => __('Upgrade Plan', 'ai-translator-for-elementor-and-polylang'),
+                'close' => __('Close', 'ai-translator-for-elementor-and-polylang'),
             ]
         ]);
 
@@ -1013,21 +1063,37 @@ class AITRFOEL_Admin_Menu {
      */
     private function render_quick_tips() {
         ?>
-        <!-- Information -->
-        <div class="eat-card">
-            <h3><?php esc_html_e('Information', 'ai-translator-for-elementor-and-polylang'); ?></h3>
-            <div class="eat-info-content">
-                <p><?php esc_html_e('Translation engine is not ideal - errors can be spotted in translated pages. We are constantly updating algorithm to provide you with the best experience. If you spot a bug in translation contact us via feedback form.', 'ai-translator-for-elementor-and-polylang'); ?></p>
-                <div class="eat-info-buttons">
-                    <a href="https://meeptech.com/contact" target="_blank" class="button button-secondary">
-                        <?php esc_html_e('Feedback Form', 'ai-translator-for-elementor-and-polylang'); ?>
-                    </a>
-                    <a href="<?php echo (function_exists('eatp_fs') && eatp_fs()->is_registered()) ? esc_url(eatp_fs()->get_upgrade_url()) : esc_url('https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing'); ?>" class="button button-primary">
-                        <?php esc_html_e('Upgrade Plan', 'ai-translator-for-elementor-and-polylang'); ?>
-                    </a>
-                    <a href="https://meeptech.com/products/ai-translator-for-elementor-polylang/documentation" target="_blank" class="button button-secondary">
-                        <?php esc_html_e('Documentation', 'ai-translator-for-elementor-and-polylang'); ?>
-                    </a>
+        <!-- Information & Review Section -->
+        <div class="eat-card eat-info-review-card">
+            <div class="eat-info-review-grid">
+                <!-- Left Column: Information -->
+                <div class="eat-info-column">
+                    <h3><?php esc_html_e('Information', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                    <div class="eat-info-content">
+                        <p><?php esc_html_e('Translation engine is not ideal - errors can be spotted in translated pages. We are constantly updating algorithm to provide you with the best experience. If you spot a bug in translation contact us via feedback form.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                        <div class="eat-info-buttons">
+                            <a href="https://meeptech.com/contact" target="_blank" class="button button-secondary">
+                                <?php esc_html_e('Feedback Form', 'ai-translator-for-elementor-and-polylang'); ?>
+                            </a>
+                            <a href="<?php echo (function_exists('eatp_fs') && eatp_fs()->is_registered()) ? esc_url(eatp_fs()->get_upgrade_url()) : esc_url('https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing'); ?>" class="button button-primary">
+                                <?php esc_html_e('Upgrade Plan', 'ai-translator-for-elementor-and-polylang'); ?>
+                            </a>
+                            <a href="https://meeptech.com/products/ai-translator-for-elementor-polylang/documentation" target="_blank" class="button button-secondary">
+                                <?php esc_html_e('Documentation', 'ai-translator-for-elementor-and-polylang'); ?>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column: Review Request -->
+                <div class="eat-review-column">
+                    <h3><?php esc_html_e('Rate Our Plugin', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                    <div class="eat-review-content">
+                        <p><?php esc_html_e('If you enjoy using AI Translator for Elementor & Polylang, please take a moment to rate us on WordPress.org! Your feedback helps us improve the plugin and reach more users who could benefit from it.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                        <a href="https://wordpress.org/support/plugin/ai-translator-for-elementor-and-polylang/reviews/#new-post" target="_blank" class="button button-primary">
+                            <?php esc_html_e('Leave a Review', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
