@@ -44,7 +44,139 @@ class AITRFOEL_Admin_Menu {
             ['AITRFOEL_Settings', 'render_page']
         );
         
+        // Add "Activate License" submenu for PRO version (always visible, even before opt-in)
+        if (defined('AITRFOEL_VERSION_TYPE') && AITRFOEL_VERSION_TYPE === 'pro') {
+            add_submenu_page(
+                'ai-translator-for-elementor-and-polylang',
+                __('Activate License', 'ai-translator-for-elementor-and-polylang'),
+                __('Activate License', 'ai-translator-for-elementor-and-polylang'),
+                'manage_options',
+                'ai-translator-for-elementor-and-polylang-activate-license',
+                [$this, 'render_activate_license_page']
+            );
+        }
+        
         // Freemius will automatically add its Account, Pricing, etc. submenus after this
+    }
+    
+    /**
+     * Render license activation page
+     * This provides a way to enter license key without reactivating the plugin
+     */
+    public function render_activate_license_page() {
+        // Handle license activation form submission
+        if (isset($_POST['aitrfoel_activate_license']) && isset($_POST['license_key'])) {
+            check_admin_referer('aitrfoel_activate_license_nonce');
+            $license_key = sanitize_text_field($_POST['license_key']);
+            
+            if (!empty($license_key) && function_exists('eatp_fs')) {
+                // Try to activate the license using Freemius
+                try {
+                    $result = eatp_fs()->activate_migrated_license($license_key);
+                    if (is_object($result) && isset($result->error)) {
+                        $error_message = $result->error->message ?? __('License activation failed.', 'ai-translator-for-elementor-and-polylang');
+                    } else {
+                        // Success - redirect to account page
+                        wp_redirect(admin_url('admin.php?page=ai-translator-for-elementor-and-polylang-account&activated=true'));
+                        exit;
+                    }
+                } catch (Exception $e) {
+                    $error_message = $e->getMessage();
+                }
+            } else {
+                $error_message = __('Please enter a valid license key.', 'ai-translator-for-elementor-and-polylang');
+            }
+        }
+        
+        // Check current license status
+        $current_license = null;
+        $is_paying = false;
+        if (function_exists('eatp_fs')) {
+            $current_license = eatp_fs()->_get_license();
+            $is_paying = eatp_fs()->is_paying();
+        }
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e('Activate License', 'ai-translator-for-elementor-and-polylang'); ?></h1>
+            
+            <?php if (isset($error_message)): ?>
+                <div class="notice notice-error is-dismissible">
+                    <p><?php echo esc_html($error_message); ?></p>
+                </div>
+            <?php endif; ?>
+            
+            <?php if (is_object($current_license) && !$current_license->is_expired()): ?>
+                <div class="notice notice-success">
+                    <p><strong><?php esc_html_e('License Status: Active', 'ai-translator-for-elementor-and-polylang'); ?></strong></p>
+                    <?php if (!empty($current_license->expiration)): ?>
+                    <p><?php esc_html_e('Expires:', 'ai-translator-for-elementor-and-polylang'); ?> 
+                    <?php echo esc_html(date_i18n(get_option('date_format'), strtotime($current_license->expiration))); ?></p>
+                    <?php endif; ?>
+                </div>
+            <?php elseif (is_object($current_license) && $current_license->is_expired()): ?>
+                <div class="notice notice-warning">
+                    <p><strong><?php esc_html_e('License Status: Expired', 'ai-translator-for-elementor-and-polylang'); ?></strong></p>
+                    <p><?php esc_html_e('Please renew your license or enter a new license key below.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                </div>
+            <?php endif; ?>
+            
+            <div class="card" style="max-width: 600px; padding: 20px;">
+                <h2><?php esc_html_e('Enter Your License Key', 'ai-translator-for-elementor-and-polylang'); ?></h2>
+                <p><?php esc_html_e('Enter the license key you received after purchasing the PRO version:', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                
+                <form method="post" action="">
+                    <?php wp_nonce_field('aitrfoel_activate_license_nonce'); ?>
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">
+                                <label for="license_key"><?php esc_html_e('License Key', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <input type="text" name="license_key" id="license_key" class="regular-text" 
+                                       placeholder="sk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" 
+                                       style="width: 100%; max-width: 400px; font-family: monospace;">
+                                <p class="description">
+                                    <?php esc_html_e('Your license key was sent to your email after purchase.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                    <p class="submit">
+                        <input type="submit" name="aitrfoel_activate_license" class="button button-primary" 
+                               value="<?php esc_attr_e('Activate License', 'ai-translator-for-elementor-and-polylang'); ?>">
+                        
+                        <?php if (function_exists('eatp_fs') && eatp_fs()->is_registered()): ?>
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=ai-translator-for-elementor-and-polylang-account')); ?>" class="button">
+                            <?php esc_html_e('Go to Account', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </a>
+                        <?php endif; ?>
+                    </p>
+                </form>
+            </div>
+            
+            <div class="card" style="max-width: 600px; padding: 20px; margin-top: 20px;">
+                <h3><?php esc_html_e('Need Help?', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                <ul style="list-style: disc; margin-left: 20px;">
+                    <li><?php esc_html_e('Check your email for the license key (it was sent after purchase)', 'ai-translator-for-elementor-and-polylang'); ?></li>
+                    <li><?php esc_html_e('Make sure you\'re using the PRO version of the plugin', 'ai-translator-for-elementor-and-polylang'); ?></li>
+                    <li><?php esc_html_e('The license key starts with "sk_" followed by 32 characters', 'ai-translator-for-elementor-and-polylang'); ?></li>
+                    <li><a href="https://meeptech.com/support/" target="_blank"><?php esc_html_e('Contact support if you need assistance', 'ai-translator-for-elementor-and-polylang'); ?></a></li>
+                </ul>
+            </div>
+            
+            <?php if (!function_exists('eatp_fs') || !eatp_fs()->is_registered()): ?>
+            <div class="card" style="max-width: 600px; padding: 20px; margin-top: 20px; background: #fff3cd;">
+                <h3><?php esc_html_e('Alternative Method', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                <p><?php esc_html_e('If direct activation doesn\'t work, you can also:', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                <ol>
+                    <li><?php esc_html_e('Go to Plugins → Installed Plugins', 'ai-translator-for-elementor-and-polylang'); ?></li>
+                    <li><?php esc_html_e('Deactivate "AI Translator for Elementor and Polylang"', 'ai-translator-for-elementor-and-polylang'); ?></li>
+                    <li><?php esc_html_e('Activate it again - the license activation dialog will appear', 'ai-translator-for-elementor-and-polylang'); ?></li>
+                </ol>
+            </div>
+            <?php endif; ?>
+        </div>
+        <?php
     }
 
     public function render_main_page() {
@@ -326,13 +458,52 @@ class AITRFOEL_Admin_Menu {
      * Render Dashboard page for bulk translations
      */
     public function render_dashboard_page() {
-        // Check if Polylang is active
-        if (!function_exists('pll_get_post_language')) {
+        // Check for missing dependencies first
+        $deps_status = get_option('aitrfoel_dependencies_status', ['status' => true, 'missing' => []]);
+        
+        if (!$deps_status['status'] && !empty($deps_status['missing'])) {
+            ?>
+            <div class="wrap">
+                <h1><?php esc_html_e('AI Translator Dashboard', 'ai-translator-for-elementor-and-polylang'); ?></h1>
+                <div class="notice notice-warning" style="padding: 15px;">
+                    <h3 style="margin-top: 0;"><?php esc_html_e('Required Plugins Missing', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                    <p><?php esc_html_e('The AI Translator plugin requires the following plugins to be installed and activated:', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                    <ul style="list-style: disc; margin-left: 20px;">
+                        <?php if (in_array('elementor', $deps_status['missing'])): ?>
+                            <li><strong>Elementor</strong> - <a href="<?php echo esc_url(admin_url('plugin-install.php?s=elementor&tab=search&type=term')); ?>"><?php esc_html_e('Install now', 'ai-translator-for-elementor-and-polylang'); ?></a></li>
+                        <?php endif; ?>
+                        <?php if (in_array('elementor_version', $deps_status['missing'])): ?>
+                            <li><strong>Elementor 3.0+</strong> - <?php esc_html_e('Please update Elementor to version 3.0 or higher', 'ai-translator-for-elementor-and-polylang'); ?></li>
+                        <?php endif; ?>
+                        <?php if (in_array('multilingual', $deps_status['missing'])): ?>
+                            <li>
+                                <strong><?php esc_html_e('Multilingual Plugin', 'ai-translator-for-elementor-and-polylang'); ?></strong> - 
+                                <?php esc_html_e('Install one of the following:', 'ai-translator-for-elementor-and-polylang'); ?>
+                                <ul style="list-style: circle; margin-left: 20px; margin-top: 5px;">
+                                    <li><a href="<?php echo esc_url(admin_url('plugin-install.php?s=polylang&tab=search&type=term')); ?>">Polylang</a> (<?php esc_html_e('free', 'ai-translator-for-elementor-and-polylang'); ?>)</li>
+                                    <li><a href="https://wpml.org/" target="_blank">WPML</a> (<?php esc_html_e('premium', 'ai-translator-for-elementor-and-polylang'); ?>)</li>
+                                </ul>
+                            </li>
+                        <?php endif; ?>
+                        <?php if (in_array('php_version', $deps_status['missing'])): ?>
+                            <li><strong>PHP 7.4+</strong> - <?php esc_html_e('Please contact your hosting provider to upgrade PHP', 'ai-translator-for-elementor-and-polylang'); ?></li>
+                        <?php endif; ?>
+                    </ul>
+                    <p style="margin-bottom: 0;"><em><?php esc_html_e('After installing the required plugins, please refresh this page.', 'ai-translator-for-elementor-and-polylang'); ?></em></p>
+                </div>
+            </div>
+            <?php
+            return;
+        }
+        
+        // Check if multilingual plugin is active
+        $multilingual = class_exists('AITRFOEL_Multilingual_Manager') ? AITRFOEL_Multilingual_Manager::get_instance() : null;
+        if (!$multilingual || !$multilingual->is_active()) {
             ?>
             <div class="wrap">
                 <h1><?php esc_html_e('Translation Dashboard', 'ai-translator-for-elementor-and-polylang'); ?></h1>
                 <div class="notice notice-error">
-                    <p><?php esc_html_e('Polylang plugin is required for the Dashboard functionality.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                    <p><?php esc_html_e('A multilingual plugin (Polylang or WPML) is required for the Dashboard functionality.', 'ai-translator-for-elementor-and-polylang'); ?></p>
                 </div>
             </div>
             <?php
@@ -369,14 +540,14 @@ class AITRFOEL_Admin_Menu {
                                 </div>
                                 <div class="eat-dropdown-divider"></div>
                                 <?php
-                                // Add Polylang languages to source selection
-                                if (function_exists('pll_languages_list')) {
-                                    $languages = pll_languages_list(['fields' => 'name']);
-                                    $language_codes = pll_languages_list();
+                                // Add multilingual languages to source selection
+                                $multilingual = class_exists('AITRFOEL_Multilingual_Manager') ? AITRFOEL_Multilingual_Manager::get_instance() : null;
+                                if ($multilingual && $multilingual->is_active()) {
+                                    $languages = $multilingual->get_available_languages();
                                     
                                     if (!empty($languages)) {
-                                        foreach ($language_codes as $index => $code) {
-                                            $name = isset($languages[$index]) ? $languages[$index] : strtoupper($code);
+                                        foreach ($languages as $code => $lang) {
+                                            $name = is_object($lang) ? ($lang->name ?? strtoupper($code)) : (is_array($lang) ? ($lang['name'] ?? strtoupper($code)) : strtoupper($code));
                                             printf(
                                                 '<div class="eat-dropdown-item"><label><input type="radio" name="source-language" value="%s"> %s (%s)</label></div>',
                                                 esc_attr($code),
@@ -463,7 +634,8 @@ class AITRFOEL_Admin_Menu {
      * Get pages with their translations
      */
     public function get_pages_with_translations() {
-        if (!function_exists('pll_get_post_language')) {
+        $multilingual = class_exists('AITRFOEL_Multilingual_Manager') ? AITRFOEL_Multilingual_Manager::get_instance() : null;
+        if (!$multilingual || !$multilingual->is_active()) {
             return [];
         }
 
@@ -473,7 +645,8 @@ class AITRFOEL_Admin_Menu {
             'post_status' => ['publish', 'draft'],
             'numberposts' => -1,
             'orderby' => 'title',
-            'order' => 'ASC'
+            'order' => 'ASC',
+            'suppress_filters' => true // Get posts in all languages for WPML
         ]);
 
         $translation_groups = [];
@@ -485,11 +658,11 @@ class AITRFOEL_Admin_Menu {
                 continue;
             }
 
-            $page_lang = pll_get_post_language($page->ID);
-            $translations = pll_get_post_translations($page->ID);
+            $page_lang = $multilingual->get_post_language($page->ID);
+            $translations = $multilingual->get_post_translations($page->ID);
             
             // Find the source page - proper logic for parent determination
-            $default_lang = pll_default_language();
+            $default_lang = $multilingual->get_default_language();
             $source_page = null;
             
             // First priority: default language version
@@ -562,13 +735,54 @@ class AITRFOEL_Admin_Menu {
      * Get page type (Elementor or Standard)
      */
     private function get_page_type($page_id) {
+        // Use content detector if available
+        if (class_exists('AITRFOEL_Content_Detector')) {
+            $detector = AITRFOEL_Content_Detector::get_instance();
+            $content_type = $detector->detect($page_id);
+            
+            switch ($content_type) {
+                case AITRFOEL_Content_Detector::TYPE_ELEMENTOR:
+                    return [
+                        'type' => 'elementor',
+                        'label' => '🎨 ' . __('Elementor', 'ai-translator-for-elementor-and-polylang'),
+                        'class' => 'eat-page-elementor',
+                        'tooltip' => __('Built with Elementor - full translation support', 'ai-translator-for-elementor-and-polylang')
+                    ];
+                    
+                case AITRFOEL_Content_Detector::TYPE_GUTENBERG:
+                    return [
+                        'type' => 'gutenberg',
+                        'label' => '📦 ' . __('Gutenberg', 'ai-translator-for-elementor-and-polylang'),
+                        'class' => 'eat-page-gutenberg',
+                        'tooltip' => __('Built with Block Editor - can be translated', 'ai-translator-for-elementor-and-polylang')
+                    ];
+                    
+                case AITRFOEL_Content_Detector::TYPE_CLASSIC:
+                    return [
+                        'type' => 'classic',
+                        'label' => '📝 ' . __('Classic', 'ai-translator-for-elementor-and-polylang'),
+                        'class' => 'eat-page-classic',
+                        'tooltip' => __('Classic Editor content - can be translated', 'ai-translator-for-elementor-and-polylang')
+                    ];
+                    
+                default:
+                    return [
+                        'type' => 'unknown',
+                        'label' => '❓ ' . __('Unknown', 'ai-translator-for-elementor-and-polylang'),
+                        'class' => 'eat-page-unknown',
+                        'tooltip' => __('No translatable content detected', 'ai-translator-for-elementor-and-polylang')
+                    ];
+            }
+        }
+        
+        // Fallback to original Elementor-only detection
         $elementor_data = get_post_meta($page_id, '_elementor_data', true);
         $elementor_edit_mode = get_post_meta($page_id, '_elementor_edit_mode', true);
         
         if (!empty($elementor_data) || $elementor_edit_mode === 'builder') {
             return [
                 'type' => 'elementor',
-                'label' => __('Elementor', 'ai-translator-for-elementor-and-polylang'),
+                'label' => '🎨 ' . __('Elementor', 'ai-translator-for-elementor-and-polylang'),
                 'class' => 'eat-page-elementor',
                 'tooltip' => __('Built with Elementor - can be translated', 'ai-translator-for-elementor-and-polylang')
             ];
@@ -590,24 +804,31 @@ class AITRFOEL_Admin_Menu {
             echo '<tr><td colspan="6">' . esc_html__('No pages found.', 'ai-translator-for-elementor-and-polylang') . '</td></tr>';
             return;
         }
+        
+        // Get multilingual manager instance
+        $multilingual = class_exists('AITRFOEL_Multilingual_Manager') ? AITRFOEL_Multilingual_Manager::get_instance() : null;
+        if (!$multilingual || !$multilingual->is_active()) {
+            echo '<tr><td colspan="6">' . esc_html__('Multilingual plugin not active.', 'ai-translator-for-elementor-and-polylang') . '</td></tr>';
+            return;
+        }
 
         foreach ($pages_data as $group) {
             $source = $group['source'];
             $translations = $group['translations'];
             $translation_count = count($translations);
-            $available_languages = pll_languages_list();
+            $available_languages = $multilingual->get_available_languages();
+            $available_lang_codes = array_keys($available_languages);
             $total_languages = count($available_languages);
             
             // Render source page row
             $is_source = true;
             $checkbox_disabled = false;
             // Calculate missing languages for this page
-            $available_languages = pll_languages_list();
-            $source_lang = pll_get_post_language($source->ID);
+            $source_lang = $multilingual->get_post_language($source->ID);
             $missing_languages = [];
             $existing_languages = [];
             
-            foreach ($available_languages as $lang_code) {
+            foreach ($available_lang_codes as $lang_code) {
                 if ($lang_code === $source_lang) {
                     $existing_languages[] = $lang_code; // Source language exists
                 } elseif (isset($translations[$lang_code])) {
@@ -632,7 +853,7 @@ class AITRFOEL_Admin_Menu {
                     <strong>
                         <a class="eat-page-title-link" href="<?php echo esc_url(get_permalink($source->ID)); ?>" target="_blank" rel="noopener">
                             🏠 <?php echo esc_html($source->post_title); ?>
-                            <span class="eat-page-lang">(<?php echo esc_html(strtoupper(pll_get_post_language($source->ID))); ?>)</span>
+                            <span class="eat-page-lang">(<?php echo esc_html(strtoupper($multilingual->get_post_language($source->ID) ?: '?')); ?>)</span>
                         </a>
                     </strong>
                     <div class="eat-page-status">
@@ -641,8 +862,8 @@ class AITRFOEL_Admin_Menu {
                 </td>
                 <td class="column-languages">
                     <?php 
-                    $available_langs = pll_languages_list();
-                    $source_lang = pll_get_post_language($source->ID);
+                    $available_langs = $available_lang_codes;
+                    $source_lang = $multilingual->get_post_language($source->ID);
                     
                     if (!empty($available_langs)) {
                         foreach ($available_langs as $lang_code) {
@@ -787,16 +1008,24 @@ class AITRFOEL_Admin_Menu {
             ? 'https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing'
             : 'https://meeptech.com/products/ai-translator-for-elementor-polylang#pricing';
 
+        // Get languages from multilingual manager
+        $multilingual_languages = [];
+        $multilingual_manager = class_exists('AITRFOEL_Multilingual_Manager') ? AITRFOEL_Multilingual_Manager::get_instance() : null;
+        if ($multilingual_manager && $multilingual_manager->is_active()) {
+            $available_langs = $multilingual_manager->get_available_languages();
+            foreach ($available_langs as $code => $lang) {
+                $name = is_object($lang) ? ($lang->name ?? strtoupper($code)) : (is_array($lang) ? ($lang['name'] ?? strtoupper($code)) : strtoupper($code));
+                $multilingual_languages[$code] = $name;
+            }
+        }
+
         wp_localize_script('aitrfoel-dashboard', 'aitrfoelDashboard', [
             'ajax_url' => esc_url(admin_url('admin-ajax.php')),
             'nonce' => wp_create_nonce('aitrfoel_ajax_nonce'),
             'upgrade_url' => esc_url($upgrade_url),
             'is_pro' => (defined('AITRFOEL_VERSION_TYPE') && AITRFOEL_VERSION_TYPE === 'pro'),
-            'languages' => function_exists('pll_languages_list') ? 
-                array_combine(
-                    pll_languages_list(), 
-                    pll_languages_list(['fields' => 'name'])
-                ) : [],
+            'languages' => $multilingual_languages,
+            'multilingual_plugin' => $multilingual_manager ? $multilingual_manager->get_plugin_display_name() : 'None',
             'strings' => [
                 /* translators: %d: Number of pages */
                 'pages_selected' => __('%d pages selected', 'ai-translator-for-elementor-and-polylang'),
@@ -948,12 +1177,13 @@ class AITRFOEL_Admin_Menu {
         $total_words = $license_info['limit'];
         $words_left = max(0, $total_words - $words_translated);
         
-        // Calculate pages left to translate
+        // Calculate pages left to translate using multilingual manager
         $pages_left = 0;
         if (!empty($pages)) {
-            $available_languages = function_exists('pll_languages_list') ? pll_languages_list() : [];
+            $multilingual = class_exists('AITRFOEL_Multilingual_Manager') ? AITRFOEL_Multilingual_Manager::get_instance() : null;
+            $available_languages = ($multilingual && $multilingual->is_active()) ? $multilingual->get_available_languages() : [];
             foreach ($pages as $page) {
-                $translations = function_exists('pll_get_post_translations') ? pll_get_post_translations($page->ID) : [];
+                $translations = ($multilingual && $multilingual->is_active()) ? $multilingual->get_post_translations($page->ID) : [];
                 $possible_translations = count($available_languages);
                 $translations_count = count($translations);
                 $missing_translations = max(0, $possible_translations - $translations_count);

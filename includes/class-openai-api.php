@@ -372,7 +372,16 @@ class AITRFOEL_OpenAI_API {
             }
         }
         
-        return $translated_texts;
+        // Map translations back to original texts
+        // Server returns numeric array, but we need original => translated mapping
+        $result = [];
+        foreach ($texts as $index => $original_text) {
+            if (isset($translated_texts[$index])) {
+                $result[$original_text] = $translated_texts[$index];
+            }
+        }
+        
+        return $result;
     }
     
     /**
@@ -814,10 +823,10 @@ Return ONLY valid JSON (no code fences, no comments), exactly: {\"t\":[\"...\", 
             $translation = $this->translate_text($text, $target_lang, $source_lang);
             
             if (is_wp_error($translation)) {
-                $translations[] = $text;
+                $translations[$text] = $text; // Keep original on error
                 AITRFOEL_Logger::log('Individual translation failed: ' . $translation->get_error_message(), 'error');
             } else {
-                $translations[] = $translation;
+                $translations[$text] = $translation; // Map original => translated
             }
             
             // PERFORMANCE: Reduced delay from 200ms to 50ms for faster batch processing

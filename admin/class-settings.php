@@ -178,6 +178,106 @@ class AITRFOEL_Settings {
                     </table>
                 </div>
                 
+                <!-- Multilingual Plugin Info -->
+                <div class="aitrfoel-settings-section">
+                    <h3><?php esc_html_e('🌐 Multilingual Plugin', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                    
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">
+                                <label><?php esc_html_e('Active Plugin', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <?php
+                                try {
+                                    $has_plugin = false;
+                                    $plugin_name = '';
+                                    $default_lang = '';
+                                    $lang_codes = [];
+                                    $is_polylang = false;
+                                    
+                                    // Check for Polylang directly
+                                    if (function_exists('pll_languages_list') && function_exists('pll_default_language')) {
+                                        $has_plugin = true;
+                                        $plugin_name = 'Polylang';
+                                        $is_polylang = true;
+                                        $default_lang = pll_default_language('slug');
+                                        $lang_codes = pll_languages_list(['fields' => 'slug']);
+                                    }
+                                    // Check for WPML directly
+                                    elseif (defined('ICL_SITEPRESS_VERSION')) {
+                                        global $sitepress;
+                                        if (isset($sitepress) && is_object($sitepress) && method_exists($sitepress, 'get_default_language')) {
+                                            $has_plugin = true;
+                                            $plugin_name = 'WPML';
+                                            $default_lang = $sitepress->get_default_language();
+                                            $active_langs = $sitepress->get_active_languages();
+                                            $lang_codes = is_array($active_langs) ? array_keys($active_langs) : [];
+                                        }
+                                    }
+                                    
+                                    if ($has_plugin && !empty($plugin_name)) {
+                                        $icon = $is_polylang ? '🦜' : '🌍';
+                                        $lang_count = is_array($lang_codes) ? count($lang_codes) : 0;
+                                        
+                                        // Get the language settings URL for the active plugin
+                                        $manage_languages_url = '';
+                                        if ($is_polylang) {
+                                            $manage_languages_url = admin_url('admin.php?page=mlang');
+                                        } else {
+                                            // WPML languages page
+                                            $manage_languages_url = admin_url('admin.php?page=sitepress-multilingual-cms/menu/languages.php');
+                                        }
+                                        ?>
+                                        <div class="aitrfoel-multilingual-info">
+                                            <span class="aitrfoel-plugin-badge aitrfoel-plugin-active">
+                                                <?php echo $icon; ?> <?php echo esc_html($plugin_name); ?>
+                                            </span>
+                                            <p class="description" style="margin-top: 8px;">
+                                                <strong><?php esc_html_e('Default Language:', 'ai-translator-for-elementor-and-polylang'); ?></strong> 
+                                                <?php echo esc_html(strtoupper($default_lang)); ?>
+                                                <br>
+                                                <strong><?php esc_html_e('Available Languages:', 'ai-translator-for-elementor-and-polylang'); ?></strong> 
+                                                <?php echo esc_html($lang_count); ?> 
+                                                (<?php echo esc_html(implode(', ', array_map('strtoupper', $lang_codes))); ?>)
+                                            </p>
+                                            <p style="margin-top: 10px;">
+                                                <a href="<?php echo esc_url($manage_languages_url); ?>" class="button button-secondary">
+                                                    <?php esc_html_e('Manage Languages', 'ai-translator-for-elementor-and-polylang'); ?>
+                                                </a>
+                                            </p>
+                                        </div>
+                                        <?php
+                                    } else {
+                                        ?>
+                                        <div class="aitrfoel-multilingual-info">
+                                            <span class="aitrfoel-plugin-badge aitrfoel-plugin-missing">
+                                                ⚠️ <?php esc_html_e('No multilingual plugin detected', 'ai-translator-for-elementor-and-polylang'); ?>
+                                            </span>
+                                            <p class="description" style="margin-top: 8px;">
+                                                <?php esc_html_e('Please install and activate either Polylang or WPML to use translation features.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                                <br>
+                                                <a href="https://wordpress.org/plugins/polylang/" target="_blank">Polylang</a> | 
+                                                <a href="https://wpml.org/" target="_blank">WPML</a>
+                                            </p>
+                                        </div>
+                                        <?php
+                                    }
+                                } catch (Exception $e) {
+                                    ?>
+                                    <div class="aitrfoel-multilingual-info">
+                                        <span class="aitrfoel-plugin-badge aitrfoel-plugin-missing">
+                                            ⚠️ <?php esc_html_e('Error detecting multilingual plugin', 'ai-translator-for-elementor-and-polylang'); ?>
+                                        </span>
+                                    </div>
+                                    <?php
+                                }
+                                ?>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
                 <!-- Cache Settings -->
                 <div class="aitrfoel-settings-section">
                     <h3><?php esc_html_e('💾 Cache Settings', 'ai-translator-for-elementor-and-polylang'); ?></h3>

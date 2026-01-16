@@ -778,3 +778,32 @@ table.form-table .eat-usage-progress {
 #wpfooter {
     display:none!important;
 }
+
+/* Multilingual Plugin Badge Styles */
+.aitrfoel-multilingual-info {
+    background: #f8f9fa !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 6px !important;
+    padding: 15px !important;
+    display: block !important;
+}
+
+.aitrfoel-plugin-badge {
+    display: inline-block !important;
+    padding: 6px 12px !important;
+    border-radius: 4px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+}
+
+.aitrfoel-plugin-badge.aitrfoel-plugin-active {
+    background: #d4edda !important;
+    color: #155724 !important;
+    border: 1px solid #c3e6cb !important;
+}
+
+.aitrfoel-plugin-badge.aitrfoel-plugin-missing {
+    background: #fff3cd !important;
+    color: #856404 !important;
+    border: 1px solid #ffeeba !important;
+}

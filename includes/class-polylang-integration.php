@@ -2,42 +2,13 @@
 /**
  * Polylang Integration Class
  * Handles linking translations with Polylang plugin
+ * Extends the Multilingual Interface for compatibility with the abstraction layer
  */
 
 if (!defined('ABSPATH')) exit;
 
-class AITRFOEL_Polylang_Integration {
+class AITRFOEL_Polylang_Integration extends AITRFOEL_Multilingual_Interface {
     private static $instance = null;
-    
-    /**
-     * Language code mapping from our format to Polylang format
-     */
-    private $language_map = [
-        'English' => 'en',
-        'Russian' => 'ru', 
-        'Spanish' => 'es',
-        'French' => 'fr',
-        'German' => 'de',
-        'Italian' => 'it',
-        'Portuguese' => 'pt',
-        'Ukrainian' => 'uk',
-        'Belarusian' => 'be',
-        'Czech' => 'cs',
-        'Polish' => 'pl',
-        'Vietnamese' => 'vi',
-        'Chinese' => 'zh',
-        'Japanese' => 'ja',
-        'Korean' => 'ko',
-        'Arabic' => 'ar',
-        'Hebrew' => 'he',
-        'Hindi' => 'hi',
-        'Turkish' => 'tr',
-        'Dutch' => 'nl',
-        'Swedish' => 'sv',
-        'Norwegian' => 'no',
-        'Danish' => 'da',
-        'Finnish' => 'fi'
-    ];
 
     public static function get_instance() {
         if (null === self::$instance) {
@@ -54,6 +25,15 @@ class AITRFOEL_Polylang_Integration {
     }
     
     /**
+     * Get the name of the multilingual plugin
+     * 
+     * @return string
+     */
+    public function get_plugin_name() {
+        return 'Polylang';
+    }
+    
+    /**
      * Initialize Polylang hooks
      */
     public function init_polylang_hooks() {
@@ -63,10 +43,11 @@ class AITRFOEL_Polylang_Integration {
     
     /**
      * Check if Polylang is active and functional
+     * Implements AITRFOEL_Multilingual_Interface::is_active()
      * 
      * @return bool
      */
-    public function is_polylang_active() {
+    public function is_active() {
         return function_exists('pll_set_post_language') && 
                function_exists('pll_get_post_translations') &&
                function_exists('pll_save_post_translations') &&
@@ -74,12 +55,99 @@ class AITRFOEL_Polylang_Integration {
     }
     
     /**
+     * Backward compatibility alias for is_active()
+     * 
+     * @return bool
+     */
+    public function is_polylang_active() {
+        return $this->is_active();
+    }
+    
+    /**
+     * Get the default language code
+     * Implements AITRFOEL_Multilingual_Interface::get_default_language()
+     * 
+     * @return string|null
+     */
+    public function get_default_language() {
+        if (!$this->is_active()) {
+            return null;
+        }
+        
+        if (function_exists('pll_default_language')) {
+            return pll_default_language();
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Get the language of a specific post
+     * Implements AITRFOEL_Multilingual_Interface::get_post_language()
+     * 
+     * @param int $post_id Post ID
+     * @return string|null Language code or null
+     */
+    public function get_post_language($post_id) {
+        if (!$this->is_active()) {
+            return null;
+        }
+        
+        if (function_exists('pll_get_post_language')) {
+            return pll_get_post_language($post_id);
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Set the language for a post
+     * Implements AITRFOEL_Multilingual_Interface::set_post_language()
+     * 
+     * @param int $post_id Post ID
+     * @param string $lang_code Language code
+     * @return bool Success
+     */
+    public function set_post_language($post_id, $lang_code) {
+        if (!$this->is_active()) {
+            return false;
+        }
+        
+        if (function_exists('pll_set_post_language')) {
+            pll_set_post_language($post_id, $lang_code);
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Get all translations of a post
+     * Implements AITRFOEL_Multilingual_Interface::get_post_translations()
+     * 
+     * @param int $post_id Post ID
+     * @return array Associative array of language_code => post_id
+     */
+    public function get_post_translations($post_id) {
+        if (!$this->is_active()) {
+            return [];
+        }
+        
+        if (function_exists('pll_get_post_translations')) {
+            return pll_get_post_translations($post_id);
+        }
+        
+        return [];
+    }
+    
+    /**
      * Get available Polylang languages
+     * Implements AITRFOEL_Multilingual_Interface::get_available_languages()
      * 
      * @return array Array of language objects
      */
     public function get_available_languages() {
-        if (!$this->is_polylang_active()) {
+        if (!$this->is_active()) {
             return [];
         }
         
@@ -101,22 +169,34 @@ class AITRFOEL_Polylang_Integration {
     
     /**
      * Convert our language name to Polylang language code
+     * Implements AITRFOEL_Multilingual_Interface::get_language_code()
      * 
      * @param string $our_language Our language name (e.g., 'Russian')
      * @return string|null Polylang language code (e.g., 'ru') or null if not found
      */
+    public function get_language_code($our_language) {
+        return $this->get_code_from_name($our_language);
+    }
+    
+    /**
+     * Backward compatibility alias for get_language_code()
+     * 
+     * @param string $our_language Our language name
+     * @return string|null Language code or null
+     */
     public function get_polylang_language_code($our_language) {
-        return $this->language_map[$our_language] ?? null;
+        return $this->get_language_code($our_language);
     }
     
     /**
      * Check if language code exists in Polylang
+     * Implements AITRFOEL_Multilingual_Interface::language_exists()
      * 
      * @param string $lang_code Polylang language code
      * @return bool
      */
     public function language_exists($lang_code) {
-        if (!$this->is_polylang_active()) {
+        if (!$this->is_active()) {
             return false;
         }
         
@@ -132,6 +212,7 @@ class AITRFOEL_Polylang_Integration {
     
     /**
      * Setup translation relationship between original and translated post
+     * Implements AITRFOEL_Multilingual_Interface::setup_translation_relationship()
      * 
      * @param int $original_post_id Original post ID
      * @param int $translated_post_id Translated post ID  
@@ -139,28 +220,28 @@ class AITRFOEL_Polylang_Integration {
      * @return bool|WP_Error Success or error
      */
     public function setup_translation_relationship($original_post_id, $translated_post_id, $target_language) {
-        if (!$this->is_polylang_active()) {
+        if (!$this->is_active()) {
             AITRFOEL_Logger::log('Polylang is not active', 'error', $original_post_id);
             return new WP_Error('polylang_inactive', 'Polylang is not active.');
         }
 
-        // Получаем код языка (например, 'ru', 'es')
-        $pll_lang_code = (strlen($target_language) > 2) ? $this->get_polylang_language_code($target_language) : $target_language;
+        // Get language code (e.g., 'ru', 'es') using the parent interface method
+        $pll_lang_code = $this->normalize_language_code($target_language);
 
         if (!$pll_lang_code || !$this->language_exists($pll_lang_code)) {
             AITRFOEL_Logger::log("Language '{$target_language}' not found in Polylang.", 'error', $original_post_id);
             return new WP_Error('language_not_found', "Language '{$target_language}' not found in Polylang.");
         }
 
-        // Получаем язык исходного поста
-        $original_lang_code = pll_get_post_language($original_post_id);
+        // Get original post language
+        $original_lang_code = $this->get_post_language($original_post_id);
         
-        // ВАЖНО: Если у оригинала нет языка, УСТАНАВЛИВАЕМ его!
+        // IMPORTANT: If original has no language, SET it!
         if (!$original_lang_code) {
-            // Устанавливаем язык по умолчанию для оригинала
-            $default_lang = pll_default_language();
+            // Set default language for original
+            $default_lang = $this->get_default_language();
             if (!$default_lang) {
-                // Если нет языка по умолчанию, берем первый доступный
+                // If no default language, take the first available
                 $available = $this->get_available_languages();
                 if (!empty($available)) {
                     $default_lang = reset($available)->slug;
@@ -168,7 +249,7 @@ class AITRFOEL_Polylang_Integration {
             }
             
             if ($default_lang) {
-                pll_set_post_language($original_post_id, $default_lang);
+                $this->set_post_language($original_post_id, $default_lang);
                 $original_lang_code = $default_lang;
                 AITRFOEL_Logger::log("Set default language '{$default_lang}' for original post {$original_post_id}", 'info', $original_post_id);
             } else {
@@ -177,34 +258,36 @@ class AITRFOEL_Polylang_Integration {
             }
         }
 
-        // Устанавливаем язык для переведенного поста
-        pll_set_post_language($translated_post_id, $pll_lang_code);
+        // Set language for translated post
+        $this->set_post_language($translated_post_id, $pll_lang_code);
         AITRFOEL_Logger::log("Set language '{$pll_lang_code}' for translated post {$translated_post_id}", 'info', $translated_post_id);
 
-        // 1. ВАЖНО: Проверяем, есть ли уже страница на целевом языке
-        $existing_translation = pll_get_post($original_post_id, $pll_lang_code);
+        // 1. IMPORTANT: Check if there's already a page in target language
+        $existing_translation = function_exists('pll_get_post') ? pll_get_post($original_post_id, $pll_lang_code) : null;
         if ($existing_translation && $existing_translation != $translated_post_id) {
-            // Нашли существующий перевод - добавляем к его группе!
+            // Found existing translation - add to its group!
             AITRFOEL_Logger::log("Found existing translation {$existing_translation} for language {$pll_lang_code}, merging groups", 'info', $original_post_id);
-            $translations = pll_get_post_translations($existing_translation);
+            $translations = $this->get_post_translations($existing_translation);
         } else {
-            // Нет существующего перевода - берем группу оригинала
-            $translations = pll_get_post_translations($original_post_id);
+            // No existing translation - take original's group
+            $translations = $this->get_post_translations($original_post_id);
         }
         
-        // Если массив пустой, добавляем сам оригинал
+        // If array is empty, add original itself
         if (empty($translations)) {
             $translations[$original_lang_code] = $original_post_id;
         }
 
-        // 2. Добавляем наш новый перевод в группу
+        // 2. Add our new translation to group
         $translations[$pll_lang_code] = $translated_post_id;
 
-        // 3. Сохраняем всю группу
-        pll_save_post_translations($translations);
+        // 3. Save the entire group
+        if (function_exists('pll_save_post_translations')) {
+            pll_save_post_translations($translations);
+        }
         
-        // 4. Проверяем, что связь создана
-        $verify = pll_get_post_translations($translated_post_id);
+        // 4. Verify relationship was created
+        $verify = $this->get_post_translations($translated_post_id);
         if (isset($verify[$pll_lang_code]) && $verify[$pll_lang_code] == $translated_post_id) {
             AITRFOEL_Logger::log(
                 sprintf('✅ Polylang relationship created successfully! Group: %s', json_encode($translations)),
@@ -251,7 +334,7 @@ class AITRFOEL_Polylang_Integration {
         $languages = $this->get_available_languages();
         if (!empty($languages)) {
             $first_lang = reset($languages);
-            pll_set_post_language($post_id, $first_lang->slug);
+            $this->set_post_language($post_id, $first_lang->slug);
             AITRFOEL_Logger::log(
                 sprintf('Set first available language "%s" for original post %d', $first_lang->slug, $post_id),
                 'info',
@@ -265,17 +348,18 @@ class AITRFOEL_Polylang_Integration {
     
     /**
      * Get translation status for a post across all languages
+     * Implements AITRFOEL_Multilingual_Interface::get_translation_status()
      * 
      * @param int $post_id Post ID
      * @return array Translation status array
      */
     public function get_translation_status($post_id) {
-        if (!$this->is_polylang_active()) {
+        if (!$this->is_active()) {
             return [];
         }
         
         $status = [];
-        $translations = pll_get_post_translations($post_id);
+        $translations = $this->get_post_translations($post_id);
         $available_languages = $this->get_available_languages();
         
         foreach ($available_languages as $lang) {
@@ -295,11 +379,12 @@ class AITRFOEL_Polylang_Integration {
     
     /**
      * Get all pages with their translation status
+     * Implements AITRFOEL_Multilingual_Interface::get_pages_translation_status()
      * 
      * @return array Array of pages with translation status
      */
     public function get_pages_translation_status() {
-        if (!$this->is_polylang_active()) {
+        if (!$this->is_active()) {
             return [];
         }
         
@@ -354,32 +439,33 @@ class AITRFOEL_Polylang_Integration {
     
     /**
      * Remove translation relationship
+     * Implements AITRFOEL_Multilingual_Interface::remove_translation_relationship()
      * 
      * @param int $post_id Post ID to remove from translations
      * @return bool Success
      */
     public function remove_translation_relationship($post_id) {
-        if (!$this->is_polylang_active()) {
+        if (!$this->is_active()) {
             return false;
         }
         
         try {
             // Get current translations
-            $translations = pll_get_post_translations($post_id);
+            $translations = $this->get_post_translations($post_id);
             
             // Remove this post from translations
-            $post_lang = pll_get_post_language($post_id);
+            $post_lang = $this->get_post_language($post_id);
             if ($post_lang && isset($translations[$post_lang])) {
                 unset($translations[$post_lang]);
                 
                 // If there are remaining translations, update them
-                if (!empty($translations)) {
+                if (!empty($translations) && function_exists('pll_save_post_translations')) {
                     pll_save_post_translations($translations);
                 }
             }
             
             // Remove language from the post
-            pll_set_post_language($post_id, '');
+            $this->set_post_language($post_id, '');
             
             return true;
             
@@ -395,15 +481,17 @@ class AITRFOEL_Polylang_Integration {
     
     /**
      * Get Polylang language switcher data for admin
+     * Implements AITRFOEL_Multilingual_Interface::get_language_switcher_data()
      * 
      * @return array Language switcher data
      */
     public function get_language_switcher_data() {
-        if (!$this->is_polylang_active()) {
+        if (!$this->is_active()) {
             return [];
         }
         
         $languages = $this->get_available_languages();
+        $default_lang = $this->get_default_language();
         $switcher_data = [];
         
         foreach ($languages as $lang) {
@@ -411,7 +499,7 @@ class AITRFOEL_Polylang_Integration {
                 'code' => $lang->slug,
                 'name' => $lang->name,
                 'flag' => $lang->flag ?? '',
-                'is_default' => $lang->slug === pll_default_language()
+                'is_default' => $lang->slug === $default_lang
             ];
         }
         

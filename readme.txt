@@ -5,7 +5,7 @@ Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
 Requires Plugins: elementor, polylang
-Stable tag: 1.1.4
+Stable tag: 1.1.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -125,6 +125,11 @@ This plugin relies on external third-party services to function. Below is a deta
 1. Dashboard with translation stats and usage info.
 
 == Changelog ==
+= 1.1.5 =
+* Added "Activate License" submenu for PRO version
+* Users can now enter license key without reactivating plugin
+* Improved license activation flow
+
 = 1.1.4 =
 * Fixed YouTube video error 153 in welcome popup
 * Video now opens on YouTube instead of embed (more compatible)

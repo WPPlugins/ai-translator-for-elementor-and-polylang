@@ -233,23 +233,67 @@ class AITRFOEL_Ajax_Handler {
                 throw new Exception(__('Invalid page ID.', 'ai-translator-for-elementor-and-polylang'));
             }
             
-            // If no strings provided, fetch content
+            // If no strings provided, fetch content based on content type
             if (empty($strings_to_translate)) {
-                $parser_class = class_exists('aitrfoel_Widget_Parser_Fixed') ? 'aitrfoel_Widget_Parser_Fixed' : 'AITRFOEL_Widget_Parser';
-                $parser = $parser_class::get_instance();
-                $elementor_data = get_post_meta($page_id, '_elementor_data', true);
+                // Detect content type
+                $content_detector = AITRFOEL_Content_Detector::get_instance();
+                $content_type = $content_detector->detect($page_id);
                 
-                if (empty($elementor_data)) {
-                    throw new Exception(__('No Elementor data found.', 'ai-translator-for-elementor-and-polylang'));
+                $translation_map = [];
+                
+                try {
+                    switch ($content_type) {
+                        case AITRFOEL_Content_Detector::TYPE_ELEMENTOR:
+                            // Elementor pages
+                            $parser_class = class_exists('aitrfoel_Widget_Parser_Fixed') ? 'aitrfoel_Widget_Parser_Fixed' : 'AITRFOEL_Widget_Parser';
+                            if (!class_exists($parser_class)) {
+                                throw new Exception(__('Widget parser not available.', 'ai-translator-for-elementor-and-polylang'));
+                            }
+                            $parser = $parser_class::get_instance();
+                            $elementor_data = get_post_meta($page_id, '_elementor_data', true);
+                            
+                            if (empty($elementor_data)) {
+                                throw new Exception(__('No Elementor data found.', 'ai-translator-for-elementor-and-polylang'));
+                            }
+                            
+                            $elementor_data_array = json_decode($elementor_data, true);
+                            if (json_last_error() !== JSON_ERROR_NONE) {
+                                throw new Exception(__('Failed to decode Elementor data.', 'ai-translator-for-elementor-and-polylang'));
+                            }
+                            
+                            $translation_map = $parser->parse_for_translation($elementor_data_array);
+                            break;
+                            
+                        case AITRFOEL_Content_Detector::TYPE_GUTENBERG:
+                            // Gutenberg (Block Editor) pages
+                            if (!class_exists('AITRFOEL_Gutenberg_Parser')) {
+                                throw new Exception(__('Gutenberg parser not available.', 'ai-translator-for-elementor-and-polylang'));
+                            }
+                            $gutenberg_parser = AITRFOEL_Gutenberg_Parser::get_instance();
+                            $translation_map = $gutenberg_parser->parse_for_translation($page_id);
+                            break;
+                            
+                        case AITRFOEL_Content_Detector::TYPE_CLASSIC:
+                            // Classic Editor pages
+                            if (!class_exists('AITRFOEL_Classic_Parser')) {
+                                throw new Exception(__('Classic parser not available.', 'ai-translator-for-elementor-and-polylang'));
+                            }
+                            $classic_parser = AITRFOEL_Classic_Parser::get_instance();
+                            $translation_map = $classic_parser->parse_for_translation($page_id);
+                            break;
+                            
+                        default:
+                            throw new Exception(__('This page does not contain any translatable content. Please ensure the page has content created with Elementor, Gutenberg (Block Editor), or Classic Editor.', 'ai-translator-for-elementor-and-polylang'));
+                    }
+                } catch (Exception $parse_error) {
+                    throw new Exception($parse_error->getMessage());
                 }
                 
-                $elementor_data_array = json_decode($elementor_data, true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    throw new Exception(__('Failed to decode Elementor data.', 'ai-translator-for-elementor-and-polylang'));
+                if (empty($translation_map)) {
+                    throw new Exception(__('No translatable content found on this page.', 'ai-translator-for-elementor-and-polylang'));
                 }
                 
-                $translation_map = $parser->parse_for_translation($elementor_data_array);
-                wp_send_json_success(['strings' => array_values($translation_map)]);
+                wp_send_json_success(['strings' => array_values($translation_map), 'content_type' => $content_type]);
                 return;
             }
             
@@ -658,13 +702,13 @@ class AITRFOEL_Ajax_Handler {
                 throw new Exception(__('Pages and languages are required.', 'ai-translator-for-elementor-and-polylang'));
             }
 
-            // Check if parser class exists
-            if (!class_exists('AITRFOEL_Widget_Parser')) {
-                throw new Exception(__('Widget parser class not loaded. Please refresh the page.', 'ai-translator-for-elementor-and-polylang'));
+            // Check if parser classes exist
+            if (!class_exists('AITRFOEL_Content_Detector')) {
+                throw new Exception(__('Content detector class not loaded. Please refresh the page.', 'ai-translator-for-elementor-and-polylang'));
             }
 
-            // Get parser instance
-            $parser = AITRFOEL_Widget_Parser::get_instance();
+            // Get content detector
+            $content_detector = AITRFOEL_Content_Detector::get_instance();
             
             // Analyze each page
             $breakdown = [];
@@ -680,24 +724,58 @@ class AITRFOEL_Ajax_Handler {
                     throw new Exception(sprintf(__('Page ID %d not found.', 'ai-translator-for-elementor-and-polylang'), $page_id));
                 }
                 
-                // Get Elementor data
-                $elementor_data = get_post_meta($page_id, '_elementor_data', true);
+                // Detect content type and get appropriate parser
+                $content_type = $content_detector->detect($page_id);
+                $translation_map = [];
                 
-                if (empty($elementor_data)) {
-                    // Skip pages without Elementor data
+                try {
+                    switch ($content_type) {
+                        case AITRFOEL_Content_Detector::TYPE_ELEMENTOR:
+                            if (class_exists('AITRFOEL_Widget_Parser')) {
+                                $parser = AITRFOEL_Widget_Parser::get_instance();
+                                $elementor_data = get_post_meta($page_id, '_elementor_data', true);
+                                
+                                if (!empty($elementor_data)) {
+                                    $elementor_data_array = json_decode($elementor_data, true);
+                                    
+                                    if (json_last_error() === JSON_ERROR_NONE) {
+                                        $translation_map = $parser->parse_for_translation($elementor_data_array);
+                                    } else {
+                                        AITRFOEL_Logger::log("Failed to decode Elementor data for page {$page_id}: " . json_last_error_msg(), 'warning');
+                                    }
+                                }
+                            }
+                            break;
+                            
+                        case AITRFOEL_Content_Detector::TYPE_GUTENBERG:
+                            if (class_exists('AITRFOEL_Gutenberg_Parser')) {
+                                $gutenberg_parser = AITRFOEL_Gutenberg_Parser::get_instance();
+                                $translation_map = $gutenberg_parser->parse_for_translation($page_id);
+                            }
+                            break;
+                            
+                        case AITRFOEL_Content_Detector::TYPE_CLASSIC:
+                            if (class_exists('AITRFOEL_Classic_Parser')) {
+                                $classic_parser = AITRFOEL_Classic_Parser::get_instance();
+                                $translation_map = $classic_parser->parse_for_translation($page_id);
+                            }
+                            break;
+                            
+                        default:
+                            // Skip unsupported content types
+                            AITRFOEL_Logger::log("Skipping page {$page_id}: unsupported content type {$content_type}", 'info');
+                            continue 2; // Continue to next page
+                    }
+                } catch (Exception $e) {
+                    AITRFOEL_Logger::log("Error parsing page {$page_id}: " . $e->getMessage(), 'warning', $page_id);
                     continue;
                 }
                 
-                // Parse and decode
-                $elementor_data_array = json_decode($elementor_data, true);
-                
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    AITRFOEL_Logger::log("Failed to decode Elementor data for page {$page_id}: " . json_last_error_msg(), 'warning');
+                if (empty($translation_map)) {
+                    // Skip pages with no translatable content
+                    AITRFOEL_Logger::log("Skipping page {$page_id}: no translatable content found", 'info');
                     continue;
                 }
-                
-                // Parse for translation using REAL parser
-                $translation_map = $parser->parse_for_translation($elementor_data_array);
                 
                 // Count words accurately
                 $page_word_count = 0;
@@ -844,24 +922,53 @@ class AITRFOEL_Ajax_Handler {
                 }
             }
 
-            // ENHANCED: Accurate word count using parser (same as pre-analyze)
-            $parser = AITRFOEL_Widget_Parser::get_instance();
+            // ENHANCED: Accurate word count using appropriate parser for each content type
+            $content_detector = AITRFOEL_Content_Detector::get_instance();
             $total_estimated_words = 0;
             
             foreach ($page_ids as $page_id) {
-                $elementor_data = get_post_meta($page_id, '_elementor_data', true);
+                $content_type = $content_detector->detect($page_id);
+                $translation_map = [];
                 
-                if (!empty($elementor_data)) {
-                    $elementor_data_array = json_decode($elementor_data, true);
-                    
-                    if (json_last_error() === JSON_ERROR_NONE) {
-                        $translation_map = $parser->parse_for_translation($elementor_data_array);
-                        
-                        foreach ($translation_map as $item) {
-                            if (isset($item['original']) && is_string($item['original'])) {
-                                $total_estimated_words += str_word_count(wp_strip_all_tags($item['original']));
+                try {
+                    switch ($content_type) {
+                        case AITRFOEL_Content_Detector::TYPE_ELEMENTOR:
+                            if (class_exists('AITRFOEL_Widget_Parser')) {
+                                $parser = AITRFOEL_Widget_Parser::get_instance();
+                                $elementor_data = get_post_meta($page_id, '_elementor_data', true);
+                                
+                                if (!empty($elementor_data)) {
+                                    $elementor_data_array = json_decode($elementor_data, true);
+                                    
+                                    if (json_last_error() === JSON_ERROR_NONE) {
+                                        $translation_map = $parser->parse_for_translation($elementor_data_array);
+                                    }
+                                }
                             }
-                        }
+                            break;
+                            
+                        case AITRFOEL_Content_Detector::TYPE_GUTENBERG:
+                            if (class_exists('AITRFOEL_Gutenberg_Parser')) {
+                                $gutenberg_parser = AITRFOEL_Gutenberg_Parser::get_instance();
+                                $translation_map = $gutenberg_parser->parse_for_translation($page_id);
+                            }
+                            break;
+                            
+                        case AITRFOEL_Content_Detector::TYPE_CLASSIC:
+                            if (class_exists('AITRFOEL_Classic_Parser')) {
+                                $classic_parser = AITRFOEL_Classic_Parser::get_instance();
+                                $translation_map = $classic_parser->parse_for_translation($page_id);
+                            }
+                            break;
+                    }
+                } catch (Exception $e) {
+                    AITRFOEL_Logger::log("Error parsing page {$page_id}: " . $e->getMessage(), 'warning', $page_id);
+                    continue;
+                }
+                
+                foreach ($translation_map as $item) {
+                    if (isset($item['original']) && is_string($item['original'])) {
+                        $total_estimated_words += str_word_count(wp_strip_all_tags($item['original']));
                     }
                 }
             }

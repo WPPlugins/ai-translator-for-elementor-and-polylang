@@ -899,6 +899,21 @@ tr.eat-translation-page.eat-translation-expanded {
     color: #0073aa;
 }
 
+.eat-page-gutenberg {
+    background: #f3e8ff;
+    color: #7c3aed;
+}
+
+.eat-page-classic {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.eat-page-unknown {
+    background: #f3f4f6;
+    color: #666;
+}
+
 .eat-page-standard {
     background: #f3f4f6;
     color: #666;

@@ -48,6 +48,7 @@ class AITRFOEL_Translation_Engine {
 
     /**
      * Main translation function
+     * Supports Elementor, Gutenberg, and Classic Editor content
      * 
      * @param int $page_id Original page ID
      * @param string $target_lang Target language
@@ -58,6 +59,51 @@ class AITRFOEL_Translation_Engine {
     public function translate_page($page_id, $target_lang, $source_lang = 'auto', $strings_to_translate = []) {
         // Track translation start time for analytics
         $translation_start_time = microtime(true);
+        
+        // Detect content type
+        $content_detector = AITRFOEL_Content_Detector::get_instance();
+        $content_type = $content_detector->detect($page_id);
+        
+        AITRFOEL_Logger::log(
+            sprintf('Content type detected: %s for page %d', $content_type, $page_id),
+            'info',
+            $page_id
+        );
+        
+        // Route to appropriate translation method based on content type
+        switch ($content_type) {
+            case AITRFOEL_Content_Detector::TYPE_ELEMENTOR:
+                return $this->translate_elementor_page($page_id, $target_lang, $source_lang, $strings_to_translate, $translation_start_time);
+                
+            case AITRFOEL_Content_Detector::TYPE_GUTENBERG:
+                return $this->translate_gutenberg_page($page_id, $target_lang, $source_lang, $translation_start_time);
+                
+            case AITRFOEL_Content_Detector::TYPE_CLASSIC:
+                return $this->translate_classic_page($page_id, $target_lang, $source_lang, $translation_start_time);
+                
+            default:
+                $this->track_translation_failure('unsupported_content', 'Unsupported content type', $translation_start_time);
+                return new WP_Error(
+                    'unsupported_content',
+                    __('This page does not contain any translatable content. Please ensure the page has content created with Elementor, Gutenberg (Block Editor), or Classic Editor.', 'ai-translator-for-elementor-and-polylang')
+                );
+        }
+    }
+    
+    /**
+     * Translate Elementor page (original functionality preserved)
+     * 
+     * @param int $page_id Original page ID
+     * @param string $target_lang Target language
+     * @param string $source_lang Source language
+     * @param array $strings_to_translate Selected strings for translation (optional)
+     * @param float $translation_start_time Start time for analytics
+     * @return int|WP_Error New page ID or error
+     */
+    private function translate_elementor_page($page_id, $target_lang, $source_lang = 'auto', $strings_to_translate = [], $translation_start_time = null) {
+        if (!$translation_start_time) {
+            $translation_start_time = microtime(true);
+        }
         
         // Get Elementor data
         $elementor_data = get_post_meta($page_id, '_elementor_data', true);
@@ -775,6 +821,550 @@ class AITRFOEL_Translation_Engine {
     }
     
     /**
+     * Translate Gutenberg (Block Editor) page
+     * 
+     * @param int $page_id Original page ID
+     * @param string $target_lang Target language
+     * @param string $source_lang Source language
+     * @param float $translation_start_time Start time for analytics
+     * @return int|WP_Error New page ID or error
+     */
+    private function translate_gutenberg_page($page_id, $target_lang, $source_lang = 'auto', $translation_start_time = null) {
+        if (!$translation_start_time) {
+            $translation_start_time = microtime(true);
+        }
+        
+        AITRFOEL_Logger::log(
+            sprintf('Starting Gutenberg translation for page %d to %s', $page_id, $target_lang),
+            'info',
+            $page_id
+        );
+        
+        $post = get_post($page_id);
+        if (!$post || empty($post->post_content)) {
+            $this->track_translation_failure('no_content', 'No content found in Gutenberg page', $translation_start_time);
+            return new WP_Error('no_content', __('No content found in this page.', 'ai-translator-for-elementor-and-polylang'));
+        }
+        
+        AITRFOEL_Logger::log(
+            sprintf('Gutenberg page %d has %d characters of content', $page_id, strlen($post->post_content)),
+            'info',
+            $page_id
+        );
+        
+        // Parse Gutenberg blocks
+        $parser = AITRFOEL_Gutenberg_Parser::get_instance();
+        $translation_map = $parser->parse_for_translation($page_id);
+        
+        AITRFOEL_Logger::log(
+            sprintf('Gutenberg parser found %d translatable items', count($translation_map)),
+            'info',
+            $page_id
+        );
+        
+        if (empty($translation_map)) {
+            $this->track_translation_failure('no_translatable_content', 'No translatable content found in Gutenberg blocks', $translation_start_time);
+            return new WP_Error('no_translatable_content', __('No translatable content found in this page.', 'ai-translator-for-elementor-and-polylang'));
+        }
+        
+        // Convert to strings array for word limit check
+        $strings_to_translate = [];
+        foreach ($translation_map as $key => $data) {
+            $strings_to_translate[] = $data;
+        }
+        
+        // Word limit check (reuse existing logic)
+        $word_limit_check = $this->check_word_limit($strings_to_translate, $page_id);
+        if (is_wp_error($word_limit_check)) {
+            AITRFOEL_Logger::log(
+                'Word limit check failed: ' . $word_limit_check->get_error_message(),
+                'warning',
+                $page_id
+            );
+            return $word_limit_check;
+        }
+        
+        // Detect source language
+        $detected_lang = $this->detect_source_language_from_content($strings_to_translate, $source_lang, $page_id);
+        
+        AITRFOEL_Logger::log(
+            sprintf('Gutenberg translation: Page %d, %s → %s, %d strings', 
+                $page_id, $detected_lang, $target_lang, count($strings_to_translate)),
+            'info',
+            $page_id
+        );
+        
+        // Translate strings
+        $translations = $this->batch_translate_strings($strings_to_translate, $target_lang, $detected_lang, $page_id);
+        
+        if (is_wp_error($translations)) {
+            AITRFOEL_Logger::log(
+                'Batch translation failed: ' . $translations->get_error_message(),
+                'error',
+                $page_id
+            );
+            return $translations;
+        }
+        
+        AITRFOEL_Logger::log(
+            sprintf('Received %d translations from API', count($translations)),
+            'info',
+            $page_id
+        );
+        
+        // Apply translations to content
+        $original_content = $post->post_content;
+        $translated_content = $parser->apply_translations($original_content, $translations);
+        
+        // Create translated page
+        $new_page_id = $this->create_translated_page_generic($page_id, $translated_content, $target_lang, $detected_lang, 'gutenberg');
+        
+        if (is_wp_error($new_page_id)) {
+            AITRFOEL_Logger::log(
+                'Failed to create translated page: ' . $new_page_id->get_error_message(),
+                'error',
+                $page_id
+            );
+            return $new_page_id;
+        }
+        
+        // Track success
+        $this->track_translation_success($page_id, $new_page_id, $target_lang, $detected_lang, $translation_start_time, 'gutenberg');
+        
+        AITRFOEL_Logger::log(
+            sprintf('Gutenberg translation complete: Page %d -> %d', $page_id, $new_page_id),
+            'success',
+            $page_id
+        );
+        
+        return $new_page_id;
+    }
+    
+    /**
+     * Translate Classic Editor page
+     * 
+     * @param int $page_id Original page ID
+     * @param string $target_lang Target language
+     * @param string $source_lang Source language
+     * @param float $translation_start_time Start time for analytics
+     * @return int|WP_Error New page ID or error
+     */
+    private function translate_classic_page($page_id, $target_lang, $source_lang = 'auto', $translation_start_time = null) {
+        if (!$translation_start_time) {
+            $translation_start_time = microtime(true);
+        }
+        
+        $post = get_post($page_id);
+        if (!$post || empty($post->post_content)) {
+            $this->track_translation_failure('no_content', 'No content found in Classic page', $translation_start_time);
+            return new WP_Error('no_content', __('No content found in this page.', 'ai-translator-for-elementor-and-polylang'));
+        }
+        
+        // Parse Classic Editor content
+        $parser = AITRFOEL_Classic_Parser::get_instance();
+        $translation_map = $parser->parse_for_translation($page_id);
+        
+        if (empty($translation_map)) {
+            $this->track_translation_failure('no_translatable_content', 'No translatable content found in Classic Editor', $translation_start_time);
+            return new WP_Error('no_translatable_content', __('No translatable content found in this page.', 'ai-translator-for-elementor-and-polylang'));
+        }
+        
+        // Convert to strings array for word limit check
+        $strings_to_translate = [];
+        foreach ($translation_map as $key => $data) {
+            $strings_to_translate[] = $data;
+        }
+        
+        // Word limit check (reuse existing logic)
+        $word_limit_check = $this->check_word_limit($strings_to_translate, $page_id);
+        if (is_wp_error($word_limit_check)) {
+            return $word_limit_check;
+        }
+        
+        // Detect source language
+        $detected_lang = $this->detect_source_language_from_content($strings_to_translate, $source_lang, $page_id);
+        
+        AITRFOEL_Logger::log(
+            sprintf('Classic translation: Page %d, %s → %s, %d strings', 
+                $page_id, $detected_lang, $target_lang, count($strings_to_translate)),
+            'info',
+            $page_id
+        );
+        
+        // Translate strings
+        $translations = $this->batch_translate_strings($strings_to_translate, $target_lang, $detected_lang, $page_id);
+        
+        if (is_wp_error($translations)) {
+            return $translations;
+        }
+        
+        // Apply translations to content
+        $original_content = $post->post_content;
+        $translated_content = $parser->apply_translations($original_content, $translations);
+        
+        // Create translated page
+        $new_page_id = $this->create_translated_page_generic($page_id, $translated_content, $target_lang, $detected_lang, 'classic');
+        
+        if (is_wp_error($new_page_id)) {
+            return $new_page_id;
+        }
+        
+        // Track success
+        $this->track_translation_success($page_id, $new_page_id, $target_lang, $detected_lang, $translation_start_time, 'classic');
+        
+        return $new_page_id;
+    }
+    
+    /**
+     * Check word limit for translation
+     * 
+     * @param array $strings_to_translate Strings to translate
+     * @param int $page_id Page ID for logging
+     * @return true|WP_Error True if within limit, error otherwise
+     */
+    private function check_word_limit($strings_to_translate, $page_id) {
+        $license_manager = AITRFOEL_License_Manager_Server::get_instance();
+        $license_status = $license_manager->get_license_status();
+        
+        $plan = $license_status['plan'];
+        $word_limit = $license_status['word_limit'];
+        $words_left = $license_status['words_left'];
+        
+        // Calculate estimated word count
+        $estimated_words = 0;
+        foreach ($strings_to_translate as $string_data) {
+            if (isset($string_data['original'])) {
+                $estimated_words += str_word_count(wp_strip_all_tags($string_data['original']));
+            }
+        }
+        
+        if ($word_limit !== -1 && $estimated_words > $words_left) {
+            // Check cooldown for free plan
+            if (strtolower($plan) === 'free') {
+                $cooldown_end = get_option('aitrfoel_cooldown_end_date', 0);
+                if ($cooldown_end > time()) {
+                    $days_left = ceil(($cooldown_end - time()) / DAY_IN_SECONDS);
+                    return new WP_Error(
+                        'cooldown_active',
+                        sprintf(
+                            __('You have reached your monthly limit. Free plan users must wait %d more days for the limit to reset.', 'ai-translator-for-elementor-and-polylang'),
+                            $days_left
+                        )
+                    );
+                }
+            }
+            
+            return new WP_Error(
+                'insufficient_words',
+                sprintf(
+                    __('This translation requires approximately %s words, but you only have %s words remaining.', 'ai-translator-for-elementor-and-polylang'),
+                    number_format($estimated_words),
+                    number_format($words_left)
+                )
+            );
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Detect source language from content
+     * 
+     * @param array $strings_to_translate Strings to analyze
+     * @param string $source_lang Provided source language (or 'auto')
+     * @param int $page_id Page ID for logging
+     * @return string Detected language code
+     */
+    private function detect_source_language_from_content($strings_to_translate, $source_lang, $page_id) {
+        if ($source_lang !== 'auto') {
+            return $source_lang;
+        }
+        
+        $detected = $this->detect_source_language($strings_to_translate, $page_id);
+        return $detected ? $detected : 'en';
+    }
+    
+    /**
+     * Batch translate strings using the OpenAI API
+     * 
+     * @param array $strings_to_translate Array of string data with 'original' key
+     * @param string $target_lang Target language
+     * @param string $source_lang Source language
+     * @param int $page_id Page ID for logging
+     * @return array|WP_Error Array of original => translated, or error
+     */
+    private function batch_translate_strings($strings_to_translate, $target_lang, $source_lang, $page_id) {
+        $api = AITRFOEL_OpenAI_API::get_instance();
+        $cache = AITRFOEL_Cache_Manager::get_instance();
+        
+        $translations = [];
+        $uncached_strings = [];
+        
+        AITRFOEL_Logger::log(
+            sprintf('batch_translate_strings: Processing %d strings for translation', count($strings_to_translate)),
+            'info',
+            $page_id
+        );
+        
+        // Check cache first
+        foreach ($strings_to_translate as $data) {
+            $original = isset($data['original']) ? $data['original'] : '';
+            if (empty(trim($original))) {
+                continue;
+            }
+            
+            $cached = null;
+            if ($this->cache_enabled) {
+                $cached = $cache->get_from_cache($original, $target_lang, $source_lang);
+            }
+            
+            if ($cached) {
+                $translations[$original] = $cached;
+            } else {
+                $uncached_strings[] = $original;
+            }
+        }
+        
+        AITRFOEL_Logger::log(
+            sprintf('batch_translate_strings: %d cached, %d need translation', 
+                count($translations), count($uncached_strings)),
+            'info',
+            $page_id
+        );
+        
+        // Batch translate uncached strings
+        if (!empty($uncached_strings)) {
+            $batches = array_chunk($uncached_strings, $this->batch_size);
+            
+            AITRFOEL_Logger::log(
+                sprintf('batch_translate_strings: Sending %d batches to API', count($batches)),
+                'info',
+                $page_id
+            );
+            
+            foreach ($batches as $batch_index => $batch) {
+                AITRFOEL_Logger::log(
+                    sprintf('batch_translate_strings: Processing batch %d with %d strings', $batch_index + 1, count($batch)),
+                    'info',
+                    $page_id
+                );
+                
+                $result = $api->translate_batch($batch, $target_lang, $source_lang);
+                
+                if (is_wp_error($result)) {
+                    AITRFOEL_Logger::log('Batch translation error: ' . $result->get_error_message(), 'error', $page_id);
+                    continue;
+                }
+                
+                // Process results
+                foreach ($result as $original => $translated) {
+                    $translations[$original] = $translated;
+                    
+                    // Save to cache
+                    if ($this->cache_enabled && !empty($translated)) {
+                        $cache->set_to_cache($original, $translated, $target_lang, $source_lang, 'gpt-4o-mini');
+                    }
+                }
+                
+                // Rate limiting
+                usleep($this->rate_limit_delay * 1000);
+            }
+        }
+        
+        // Track word count
+        $word_count = 0;
+        foreach ($translations as $original => $translated) {
+            $word_count += str_word_count(wp_strip_all_tags($original));
+        }
+        $this->last_translation_stats['word_count'] = $word_count;
+        $this->last_translation_stats['strings_count'] = count($translations);
+        
+        AITRFOEL_Logger::log(
+            sprintf('batch_translate_strings: Complete. %d translations, %d words', 
+                count($translations), $word_count),
+            'info',
+            $page_id
+        );
+        
+        return $translations;
+    }
+    
+    /**
+     * Create translated page for Gutenberg/Classic content
+     * 
+     * @param int $original_page_id Original page ID
+     * @param string $translated_content Translated post content
+     * @param string $target_lang Target language
+     * @param string $source_lang Source language
+     * @param string $content_type Content type (gutenberg/classic)
+     * @return int|WP_Error New page ID or error
+     */
+    private function create_translated_page_generic($original_page_id, $translated_content, $target_lang, $source_lang, $content_type) {
+        $original_page = get_post($original_page_id);
+        
+        if (!$original_page) {
+            return new WP_Error('page_not_found', __('Original page not found.', 'ai-translator-for-elementor-and-polylang'));
+        }
+        
+        // Translate title
+        $api = AITRFOEL_OpenAI_API::get_instance();
+        $translated_title = $api->translate_title($original_page->post_title, $target_lang, $source_lang);
+        
+        if (is_wp_error($translated_title)) {
+            $translated_title = $original_page->post_title . ' (' . strtoupper($target_lang) . ')';
+        }
+        
+        // Create new page
+        $target_status = get_option('aitrfoel_translated_page_status', 'draft');
+        
+        $new_page_args = [
+            'post_title' => $translated_title,
+            'post_content' => $translated_content,
+            'post_status' => $target_status,
+            'post_type' => $original_page->post_type,
+            'post_parent' => $original_page->post_parent,
+            'menu_order' => $original_page->menu_order,
+            'post_excerpt' => $original_page->post_excerpt,
+        ];
+        
+        $new_page_id = wp_insert_post($new_page_args);
+        
+        if (is_wp_error($new_page_id)) {
+            return $new_page_id;
+        }
+        
+        // Copy relevant meta
+        $meta_keys_to_copy = [
+            '_wp_page_template',
+            'site-post-title',
+            'ast-title-bar-display',
+            'ast-featured-img',
+            'ast-site-content-layout',
+            'site-sidebar-layout',
+        ];
+        
+        foreach ($meta_keys_to_copy as $meta_key) {
+            $meta_value = get_post_meta($original_page_id, $meta_key, true);
+            if ($meta_value !== '') {
+                update_post_meta($new_page_id, $meta_key, $meta_value);
+            }
+        }
+        
+        // Store content type for reference
+        update_post_meta($new_page_id, '_aitrfoel_content_type', $content_type);
+        update_post_meta($new_page_id, '_aitrfoel_source_page', $original_page_id);
+        
+        // Setup multilingual relationship
+        $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
+        if ($multilingual->is_active()) {
+            $result = $multilingual->setup_translation_relationship($original_page_id, $new_page_id, $target_lang);
+            
+            if (is_wp_error($result)) {
+                AITRFOEL_Logger::log(
+                    'Multilingual setup failed: ' . $result->get_error_message(),
+                    'warning',
+                    $original_page_id,
+                    $new_page_id
+                );
+            }
+        }
+        
+        AITRFOEL_Logger::log(
+            sprintf('Created %s translated page: %d -> %d (%s)', $content_type, $original_page_id, $new_page_id, $target_lang),
+            'success',
+            $original_page_id,
+            $new_page_id
+        );
+        
+        return $new_page_id;
+    }
+    
+    /**
+     * Track translation success with analytics
+     * 
+     * @param int $page_id Original page ID
+     * @param int $new_page_id New page ID
+     * @param string $target_lang Target language
+     * @param string $source_lang Source language
+     * @param float $translation_start_time Start time
+     * @param string $content_type Content type
+     */
+    private function track_translation_success($page_id, $new_page_id, $target_lang, $source_lang, $translation_start_time, $content_type) {
+        AITRFOEL_Logger::log(
+            sprintf('Successfully translated page %d to %s. New page ID: %d (type: %s)', $page_id, $target_lang, $new_page_id, $content_type),
+            'success',
+            $page_id,
+            $new_page_id
+        );
+        
+        // Report usage to server
+        if (isset($this->last_translation_stats['word_count']) && $this->last_translation_stats['word_count'] > 0) {
+            $this->report_usage_to_server($this->last_translation_stats['word_count'], $target_lang);
+        }
+        
+        // Track with PostHog Analytics
+        if (function_exists('aitrfoel_analytics')) {
+            $translation_duration = microtime(true) - $translation_start_time;
+            aitrfoel_analytics()->track_translation_completed([
+                'duration' => round($translation_duration, 2),
+                'word_count' => $this->last_translation_stats['word_count'] ?? 0,
+                'widget_count' => $this->last_translation_stats['strings_count'] ?? 0,
+                'success' => true,
+                'mode' => 'single',
+                'content_type' => $content_type,
+                'source_lang' => $source_lang,
+                'target_lang' => $target_lang,
+            ]);
+        }
+    }
+    
+    /**
+     * Report usage to server API
+     * 
+     * @param int $word_count Words translated
+     * @param string $target_lang Target language
+     */
+    private function report_usage_to_server($word_count, $target_lang) {
+        try {
+            $response = wp_remote_post('https://meeptech.com/api/eat/report-usage', [
+                'timeout' => 10,
+                'body' => json_encode([
+                    'site_url' => home_url(),
+                    'license_key' => null,
+                    'words_used' => $word_count,
+                    'target_lang' => $target_lang
+                ]),
+                'headers' => [
+                    'Content-Type' => 'application/json'
+                ]
+            ]);
+            
+            if (!is_wp_error($response)) {
+                $body = wp_remote_retrieve_body($response);
+                $data = json_decode($body, true);
+                
+                if (isset($data['total_words_used'])) {
+                    update_option('aitrfoel_words_used_this_month', $data['total_words_used']);
+                    
+                    // Check cooldown for free plan
+                    $license_manager = AITRFOEL_License_Manager_Server::get_instance();
+                    $license_status = $license_manager->get_license_status();
+                    $plan = $license_status['plan'];
+                    $word_limit = $license_status['word_limit'];
+                    
+                    if (strtolower($plan) === 'free' && $word_limit !== -1 && $data['total_words_used'] >= $word_limit) {
+                        $cooldown_end = time() + (7 * DAY_IN_SECONDS);
+                        update_option('aitrfoel_cooldown_end_date', $cooldown_end);
+                        set_transient('aitrfoel_cooldown_activated', true, 60);
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            error_log('EAT: Exception reporting usage: ' . $e->getMessage());
+        }
+    }
+    
+    /**
      * Clean text for translation (remove HTML but preserve structure)
      * 
      * @param string $text Original text with HTML
@@ -1186,13 +1776,13 @@ class AITRFOEL_Translation_Engine {
     }
 
     /**
-     * Normalize a language value (name or code) to Polylang language code.
+     * Normalize a language value (name or code) to multilingual plugin language code.
      */
     private function normalize_lang_code($lang) {
         $code = $lang;
-        if (is_string($lang) && strlen($lang) > 2 && class_exists('AITRFOEL_Polylang_Integration')) {
-            $pll = AITRFOEL_Polylang_Integration::get_instance();
-            $mapped = $pll->get_polylang_language_code($lang);
+        if (is_string($lang) && strlen($lang) > 2 && class_exists('AITRFOEL_Multilingual_Manager')) {
+            $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
+            $mapped = $multilingual->get_language_code($lang);
             if ($mapped) { $code = $mapped; }
         }
         return $code;
@@ -1264,12 +1854,22 @@ class AITRFOEL_Translation_Engine {
         }
 
         // 2) Fallback: swap language home base, keep path
-        $home_default = function_exists('pll_default_language') && function_exists('pll_home_url')
-            ? pll_home_url(pll_default_language())
-            : home_url('/');
-        $home_target = function_exists('pll_home_url') && $target_code
-            ? pll_home_url($target_code)
-            : home_url('/');
+        // Use multilingual manager if available, fallback to Polylang functions for backward compatibility
+        $multilingual = class_exists('AITRFOEL_Multilingual_Manager') ? AITRFOEL_Multilingual_Manager::get_instance() : null;
+        $default_lang = $multilingual ? $multilingual->get_default_language() : (function_exists('pll_default_language') ? pll_default_language() : null);
+        
+        // Get home URLs - Polylang has pll_home_url, WPML uses filters
+        if (function_exists('pll_home_url')) {
+            $home_default = pll_home_url($default_lang) ?: home_url('/');
+            $home_target = pll_home_url($target_code) ?: home_url('/');
+        } elseif (function_exists('icl_get_home_url')) {
+            // WPML home URL function
+            $home_default = icl_get_home_url() ?: home_url('/');
+            $home_target = $target_code ? apply_filters('wpml_home_url', home_url('/'), $target_code) : home_url('/');
+        } else {
+            $home_default = home_url('/');
+            $home_target = home_url('/');
+        }
 
         // Normalize trailing slashes
         $home_default = trailingslashit($home_default);
@@ -1517,35 +2117,36 @@ class AITRFOEL_Translation_Engine {
             }
         }
         
-        // Handle Polylang if available
-        $polylang = AITRFOEL_Polylang_Integration::get_instance();
-        if ($polylang->is_polylang_active()) {
+        // Handle multilingual plugin (Polylang or WPML) via abstraction layer
+        $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
+        if ($multilingual->is_active()) {
+            $plugin_name = $multilingual->get_plugin_display_name();
             AITRFOEL_Logger::log(
-                sprintf('Calling Polylang integration for %d -> %d, target lang: %s', $original_page_id, $new_page_id, $target_lang),
+                sprintf('Calling %s integration for %d -> %d, target lang: %s', $plugin_name, $original_page_id, $new_page_id, $target_lang),
                 'debug',
                 $original_page_id
             );
             
             // Pass the 2-letter language code directly
-            $result = $polylang->setup_translation_relationship($original_page_id, $new_page_id, $target_lang);
+            $result = $multilingual->setup_translation_relationship($original_page_id, $new_page_id, $target_lang);
             
             if (is_wp_error($result)) {
                 AITRFOEL_Logger::log(
-                    'Polylang setup FAILED: ' . $result->get_error_message() . ' (Code: ' . $result->get_error_code() . ')',
+                    $plugin_name . ' setup FAILED: ' . $result->get_error_message() . ' (Code: ' . $result->get_error_code() . ')',
                     'error',
                     $original_page_id,
                     $new_page_id
                 );
             } else {
                 AITRFOEL_Logger::log(
-                    sprintf('✓ Polylang integration successful for pages %d -> %d', $original_page_id, $new_page_id),
+                    sprintf('✓ %s integration successful for pages %d -> %d', $plugin_name, $original_page_id, $new_page_id),
                     'success',
                     $original_page_id,
                     $new_page_id
                 );
             }
         } else {
-            AITRFOEL_Logger::log('Polylang is not active, skipping translation relationship setup', 'info', $original_page_id);
+            AITRFOEL_Logger::log('No multilingual plugin is active, skipping translation relationship setup', 'info', $original_page_id);
         }
         
         // Clear Elementor cache
@@ -1553,7 +2154,7 @@ class AITRFOEL_Translation_Engine {
             \Elementor\Plugin::$instance->files_manager->clear_cache();
         }
         
-        // ЕДИНЫЙ ПРОЦЕСС: Post-creation processing для правильной работы с LiteSpeed
+        // Post-creation processing for proper LiteSpeed integration
         $this->post_creation_processing($new_page_id);
         
         return $new_page_id;

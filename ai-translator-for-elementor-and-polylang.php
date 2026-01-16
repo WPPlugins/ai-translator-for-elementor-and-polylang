@@ -2,8 +2,8 @@
 /**
  * Plugin Name: AI Translator for Elementor and Polylang
  * Plugin URI: https://meeptech.com/products/ai-translator-for-elementor-and-polylang
- * Description: AI-powered translation for Elementor pages with Polylang using OpenAI
- * Version: 1.1.4
+ * Description: AI-powered translation for Elementor, Gutenberg, and Classic Editor pages with Polylang or WPML using OpenAI
+ * Version: 1.2.0
  * Author: Meeptech
  * Author URI: https://meeptech.com
  * License: GPL v2 or later
@@ -13,7 +13,6 @@
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Tested up to: 6.9
- * Requires Plugins: elementor
  * Elementor tested up to: 3.18.0
  * Elementor Pro tested up to: 3.18.0
  */
@@ -24,7 +23,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('AITRFOEL_VERSION', '1.1.4');
+define('AITRFOEL_VERSION', '1.2.0');
 define('AITRFOEL_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AITRFOEL_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AITRFOEL_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -129,40 +128,73 @@ class AITRFOEL_Main {
     
     /**
      * Check plugin dependencies
+     * @param bool $show_notices Whether to show admin notices
+     * @return array Array with 'status' (bool) and 'missing' (array of missing dependencies)
      */
-    public function check_dependencies() {
+    public function check_dependencies($show_notices = true) {
+        $missing = [];
+        
         // Check if Elementor is active
         if (!did_action('elementor/loaded')) {
-            add_action('admin_notices', [$this, 'admin_notice_elementor_missing']);
-            return false;
+            $missing[] = 'elementor';
+            if ($show_notices) {
+                add_action('admin_notices', [$this, 'admin_notice_elementor_missing']);
+            }
         }
         
-        // Check Elementor version
-        if (!version_compare(ELEMENTOR_VERSION, '3.0.0', '>=')) {
-            add_action('admin_notices', [$this, 'admin_notice_elementor_version']);
-            return false;
+        // Check Elementor version (only if Elementor is loaded)
+        if (did_action('elementor/loaded') && !version_compare(ELEMENTOR_VERSION, '3.0.0', '>=')) {
+            $missing[] = 'elementor_version';
+            if ($show_notices) {
+                add_action('admin_notices', [$this, 'admin_notice_elementor_version']);
+            }
         }
         
-        // Check if Polylang or Polylang Pro is active
-        if (!function_exists('pll_get_post_language')) {
-            add_action('admin_notices', [$this, 'admin_notice_polylang_missing']);
-            return false;
+        // Check if a multilingual plugin (Polylang or WPML) is active
+        $has_polylang = function_exists('pll_get_post_language');
+        $has_wpml = defined('ICL_SITEPRESS_VERSION') || class_exists('SitePress');
+        
+        if (!$has_polylang && !$has_wpml) {
+            $missing[] = 'multilingual';
+            if ($show_notices) {
+                add_action('admin_notices', [$this, 'admin_notice_multilingual_missing']);
+            }
         }
         
         // Check PHP version
         if (version_compare(PHP_VERSION, '7.4', '<')) {
-            add_action('admin_notices', [$this, 'admin_notice_php_version']);
-            return false;
+            $missing[] = 'php_version';
+            if ($show_notices) {
+                add_action('admin_notices', [$this, 'admin_notice_php_version']);
+            }
         }
         
-        return true;
+        return [
+            'status' => empty($missing),
+            'missing' => $missing
+        ];
     }
     
     /**
      * Load plugin components
      */
     public function load_plugin() {
-        if (!$this->check_dependencies()) {
+        $deps = $this->check_dependencies(true);
+        
+        // Store dependencies status early for the dashboard
+        update_option('aitrfoel_dependencies_status', $deps);
+        
+        // Always load admin menu so plugin is visible, even when dependencies aren't met
+        if (is_admin()) {
+            require_once AITRFOEL_PLUGIN_DIR . 'admin/class-admin-menu.php';
+            require_once AITRFOEL_PLUGIN_DIR . 'admin/class-settings.php';
+            
+            // Initialize admin menu directly (not in a hook since we're already in plugins_loaded)
+            AITRFOEL_Admin_Menu::get_instance();
+        }
+        
+        // If dependencies are not met, don't load the rest of the plugin
+        if (!$deps['status']) {
             return;
         }
         
@@ -203,6 +235,11 @@ class AITRFOEL_Main {
         require_once AITRFOEL_PLUGIN_DIR . 'includes/class-theme-compatibility.php';
         require_once AITRFOEL_PLUGIN_DIR . 'includes/class-cache-manager.php';
         
+        // Content type detection and parsers for different editors
+        require_once AITRFOEL_PLUGIN_DIR . 'includes/class-content-detector.php';
+        require_once AITRFOEL_PLUGIN_DIR . 'includes/class-classic-parser.php';
+        require_once AITRFOEL_PLUGIN_DIR . 'includes/class-gutenberg-parser.php';
+        
         // Load debug logger if it exists
         if (file_exists(AITRFOEL_PLUGIN_DIR . 'includes/class-debug-logger.php')) {
             require_once AITRFOEL_PLUGIN_DIR . 'includes/class-debug-logger.php';
@@ -214,17 +251,24 @@ class AITRFOEL_Main {
         require_once AITRFOEL_PLUGIN_DIR . 'includes/class-license-manager.php'; // Backward compatibility alias
         require_once AITRFOEL_PLUGIN_DIR . 'includes/class-api-client.php';
         
-        // Admin includes
+        // Admin includes (may already be loaded in load_plugin for dependency-failed cases)
         if (is_admin()) {
-            require_once AITRFOEL_PLUGIN_DIR . 'admin/class-admin-menu.php';
-            require_once AITRFOEL_PLUGIN_DIR . 'admin/class-settings.php';
+            if (!class_exists('AITRFOEL_Admin_Menu')) {
+                require_once AITRFOEL_PLUGIN_DIR . 'admin/class-admin-menu.php';
+            }
+            if (!class_exists('AITRFOEL_Settings')) {
+                require_once AITRFOEL_PLUGIN_DIR . 'admin/class-settings.php';
+            }
         }
         
         // AJAX handler must be loaded for both admin and frontend AJAX requests
         require_once AITRFOEL_PLUGIN_DIR . 'admin/class-ajax-handler.php';
         
-        // Always load integrations (they handle their own dependency checks)
+        // Load multilingual integrations (abstract interface, manager, and implementations)
+        require_once AITRFOEL_PLUGIN_DIR . 'includes/class-multilingual-interface.php';
         require_once AITRFOEL_PLUGIN_DIR . 'includes/class-polylang-integration.php';
+        require_once AITRFOEL_PLUGIN_DIR . 'includes/class-wpml-integration.php';
+        require_once AITRFOEL_PLUGIN_DIR . 'includes/class-multilingual-manager.php';
         
         // Load analytics (PostHog integration)
         require_once AITRFOEL_PLUGIN_DIR . 'includes/class-analytics.php';
@@ -269,8 +313,8 @@ class AITRFOEL_Main {
                 error_log('EAT Error: AITRFOEL_Ajax_Handler class not found - using fallback');
             }
             
-            // Initialize integrations (they handle their own dependency checks)
-            AITRFOEL_Polylang_Integration::get_instance();
+            // Initialize multilingual integration manager (auto-detects Polylang or WPML)
+            AITRFOEL_Multilingual_Manager::get_instance();
             
             // Initialize analytics (PostHog)
             AITRFOEL_Analytics::get_instance();
@@ -278,12 +322,12 @@ class AITRFOEL_Main {
         } catch (Exception $e) {
             error_log('EAT Fatal Error during component initialization: ' . $e->getMessage());
             add_action('admin_notices', function() use ($e) {
-                echo '<div class="notice notice-error"><p><strong>Elementor AI Translator Error:</strong> ' . esc_html($e->getMessage()) . '</p></div>';
+                echo '<div class="notice notice-error"><p><strong>AI Translator for Elementor Error:</strong> ' . esc_html($e->getMessage()) . '</p></div>';
             });
         } catch (Error $e) {
             error_log('EAT Fatal PHP Error during component initialization: ' . $e->getMessage());
             add_action('admin_notices', function() use ($e) {
-                echo '<div class="notice notice-error"><p><strong>Elementor AI Translator Fatal Error:</strong> ' . esc_html($e->getMessage()) . '</p></div>';
+                echo '<div class="notice notice-error"><p><strong>AI Translator for Elementor Fatal Error:</strong> ' . esc_html($e->getMessage()) . '</p></div>';
             });
         }
     }
@@ -859,7 +903,7 @@ class AITRFOEL_Main {
     public function admin_notice_elementor_missing() {
         ?>
         <div class="notice notice-warning is-dismissible">
-            <p><?php esc_html_e('Elementor AI Translator requires Elementor to be installed and activated.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+            <p><?php esc_html_e('AI Translator for Elementor requires Elementor to be installed and activated.', 'ai-translator-for-elementor-and-polylang'); ?></p>
         </div>
         <?php
     }
@@ -870,18 +914,33 @@ class AITRFOEL_Main {
     public function admin_notice_elementor_version() {
         ?>
         <div class="notice notice-warning is-dismissible">
-            <p><?php esc_html_e('Elementor AI Translator requires Elementor version 3.0.0 or higher.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+            <p><?php esc_html_e('AI Translator for Elementor requires Elementor version 3.0.0 or higher.', 'ai-translator-for-elementor-and-polylang'); ?></p>
         </div>
         <?php
     }
     
     /**
-     * Admin notice - Polylang missing
+     * Admin notice - Polylang missing (legacy, kept for backward compatibility)
      */
     public function admin_notice_polylang_missing() {
+        $this->admin_notice_multilingual_missing();
+    }
+    
+    /**
+     * Admin notice - No multilingual plugin (Polylang or WPML)
+     */
+    public function admin_notice_multilingual_missing() {
         ?>
         <div class="notice notice-warning is-dismissible">
-            <p><?php esc_html_e('Elementor AI Translator requires Polylang or Polylang Pro to be installed and activated.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+            <p>
+                <strong><?php esc_html_e('AI Translator for Elementor', 'ai-translator-for-elementor-and-polylang'); ?></strong>: 
+                <?php esc_html_e('This plugin requires a multilingual plugin to be installed and activated.', 'ai-translator-for-elementor-and-polylang'); ?>
+            </p>
+            <p>
+                <?php esc_html_e('Supported plugins:', 'ai-translator-for-elementor-and-polylang'); ?>
+                <a href="https://wordpress.org/plugins/polylang/" target="_blank">Polylang</a> <?php esc_html_e('or', 'ai-translator-for-elementor-and-polylang'); ?>
+                <a href="https://wpml.org/" target="_blank">WPML</a>
+            </p>
         </div>
         <?php
     }
@@ -892,7 +951,7 @@ class AITRFOEL_Main {
     public function admin_notice_php_version() {
         ?>
         <div class="notice notice-warning is-dismissible">
-            <p><?php esc_html_e('Elementor AI Translator requires PHP version 7.4 or higher.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+            <p><?php esc_html_e('AI Translator for Elementor requires PHP version 7.4 or higher.', 'ai-translator-for-elementor-and-polylang'); ?></p>
         </div>
         <?php
     }
