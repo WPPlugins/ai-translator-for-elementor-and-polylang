@@ -5,7 +5,7 @@ Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
 Requires Plugins: elementor, polylang
-Stable tag: 1.1.5
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -125,6 +125,20 @@ This plugin relies on external third-party services to function. Below is a deta
 1. Dashboard with translation stats and usage info.
 
 == Changelog ==
+= 1.2.1 =
+* Added basic WPML support
+
+= 1.2.0 =
+* Added Gutenberg/Block Editor translation support
+* Added "Manage Languages" button in settings for quick access to Polylang/WPML
+* Plugin now visible in menu even when dependencies are missing (with setup guide)
+* Fixed translation not being applied to Gutenberg content
+* Fixed HTML tag corruption during translation
+* Fixed API response mapping for translations
+* Fixed HTML entity handling during text replacement
+* Improved error messages with direct links to install required plugins
+* Renamed plugin references to "AI Translator for Elementor" for consistency
+
 = 1.1.5 =
 * Added "Activate License" submenu for PRO version
 * Users can now enter license key without reactivating plugin
