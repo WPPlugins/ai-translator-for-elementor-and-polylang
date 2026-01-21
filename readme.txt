@@ -5,29 +5,46 @@ Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
 Requires Plugins: elementor, polylang
-Stable tag: 1.2.2
+Stable tag: 1.2.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 AI-powered translation for Elementor pages with Polylang. Translate your content instantly using OpenAI.
 
 == Description ==
-AI Translator for Elementor and Polylang is an AI translation solution for WordPress. Translate your Elementor-powered pages seamlessly with Polylang using OpenAI's advanced translation engine.
+
+AI Translator for Elementor and Polylang is an AI-powered translation solution for WordPress.
+
+**No APIs and no complicated setup required.**
+Translate your Elementor-powered pages seamlessly using OpenAI's advanced translation engine. The newest version also adds support for Gutenberg blocks and the WPML translation engine.
 
 **Features:**
-– One-click translation for Elementor pages
-– Polylang integration (free and Pro versions supported)
-– OpenAI-powered translations for natural, contextual results
-– 1,800 words per week included free
-– Clean admin interface without Elementor interference
-– Dashboard with usage analytics
+
+* One-click translation for Elementor pages (single page or bulk)
+* Polylang integration (Free and Pro versions supported)
+* WPML support added
+* Gutenberg block-based pages supported
+* OpenAI-powered translations for natural, contextual results
+* No API setup needed – we do the rest!
+* 1,800 words per week included for free
 
 **How it works:**
-1. Select your Elementor page
-2. Choose target language(s)
-3. Click translate - AI does the rest!
 
-A PRO version with higher word limits is available at [meeptech.com](https://meeptech.com/products/ai-translator-for-elementor-polylang/).
+1. Add the required site languages in Polylang or WPML
+2. Go to the AI Translator for Elementor and Polylang plugin page
+3. Select your Elementor page
+4. Choose target language(s)
+5. Click Translate – the AI does the rest!
+
+**Want a higher word limit?**
+
+We offer affordable plans to fit your needs:
+
+* **Starter – $9.99/month** – Perfect for landing pages, portfolios, and small business sites. 1 site, ~18,000 words per month.
+* **Agency – $34.99/month** – Best for agencies, freelancers, and managing client sites. Up to 10 sites.
+* **Enterprise – $53.99/month** – Scalable solution for large businesses and white-label use. Unlimited sites.
+
+👉 [Upgrade your license here](https://meeptech.com/products/ai-translator-for-elementor-polylang#pricing)
 
 == Installation ==
 1. Upload the plugin folder to `/wp-content/plugins/` or install via the WordPress Plugins screen.
@@ -58,73 +75,13 @@ You'll need to wait for the weekly reset, or upgrade to a PRO plan for higher li
 = How do I check how many words I have left? =
 Visit AI Translator → Dashboard to see your current usage and words remaining.
 
-== External Services ==
-
-This plugin relies on external third-party services to function. Below is a detailed disclosure of what services are used, what data is transmitted, and when.
-
-= MeepTech License & Usage API =
-
-**Purpose:** Usage tracking and word count enforcement for translation plans.
-
-**Service Provider:** MeepTech  
-**API Endpoint:** https://meeptech.com/api/eat/get-usage  
-**Data Transmitted:**
-- Your website URL (for site authentication)
-- Word count usage (number of words translated)
-- Translation timestamps
-
-**When Data is Sent:**
-- When tracking word usage after each translation
-- When checking remaining word limits before translation
-
-**Privacy & Terms:**
-- Privacy Policy: https://meeptech.com/privacy-policy
-- Terms of Service: https://meeptech.com/terms
-- Contact: sales@meeptech.com
-
-= OpenAI Translation API =
-
-**Purpose:** AI-powered translation of your content using OpenAI's language models.
-
-**Service Provider:** OpenAI  
-**API Endpoint:** https://api.openai.com/v1/chat/completions  
-**Data Transmitted:**
-- Text content to be translated (from your Elementor pages)
-- Source and target language codes
-
-**When Data is Sent:**
-- When you initiate a page translation
-
-**Privacy & Terms:**
-- Privacy Policy: https://openai.com/policies/privacy-policy
-- Terms of Service: https://openai.com/policies/terms-of-use
-- API Terms: https://openai.com/policies/api-terms
-
-**Important:** Your content is sent to OpenAI for processing. Please review OpenAI's data usage policies to ensure compliance with your content policies.
-
-= PostHog Analytics (Optional) =
-
-**Purpose:** Anonymous usage analytics to help improve the plugin (opt-in only).
-
-**Service Provider:** PostHog  
-**Data Transmitted (if opted in):**
-- Plugin version, WordPress version, PHP version
-- Features used (translation, bulk mode)
-- Error reports for debugging
-
-**When Data is Sent:**
-- Only if you enable analytics in the welcome popup
-- Never collects personal data, content, or API keys
-
-**Privacy & Terms:**
-- Privacy Policy: https://posthog.com/privacy
-
-**Note:** Analytics is disabled by default and requires explicit user consent to enable.
-
 == Screenshots ==
 1. Dashboard with translation stats and usage info.
 
 == Changelog ==
+= 1.2.3 =
+* Minor bug fixes
+
 = 1.2.2 =
 * Fixed license plan sync issue - Enterprise/Agency plans now correctly sync from Freemius
 * Added auto-sync for plan mismatches (checks hourly)
@@ -132,15 +89,6 @@ This plugin relies on external third-party services to function. Below is a deta
 * Improved Luxembourgish translation support with language-specific instructions
 * Fixed HTML structure corruption during translation (SVG elements, nested tags)
 * Fixed issue where original text was appearing above translation
-* Added language instructions for rare languages (Frisian, Breton, Occitan, Corsican, Romansh)
-* Plugin now sends language-specific instructions to translation server for better accuracy
-* Improved license activation to properly extract plan from Freemius license
-
-= 1.2.1 =
-* Fixed license plan sync issue - Enterprise/Agency plans now correctly sync from Freemius
-* Added auto-sync for plan mismatches (checks hourly)
-* Added "Sync Plan" button in settings for manual plan synchronization
-* Improved Luxembourgish translation support with language-specific instructions
 * Added language instructions for rare languages (Frisian, Breton, Occitan, Corsican, Romansh)
 * Plugin now sends language-specific instructions to translation server for better accuracy
 * Improved license activation to properly extract plan from Freemius license
@@ -249,36 +197,41 @@ Optimal for studios and agencies
 
 Upgrade your license inside WordPress: AI Translator → Pricing, or visit [meeptech.com](https://meeptech.com/products/ai-translator-for-elementor-polylang/).
 
-== Privacy & Data Collection ==
+== External Services & Privacy ==
 
-This plugin connects to our translation API at meeptech.com to process translations and track usage.
+This plugin connects to external services to provide AI-powered translations.
 
-= What data is collected: =
+= Services Used =
 
-✅ Your website URL (for service authentication and usage tracking)
-✅ Word counts and language pairs (for plan limit enforcement)
+**MeepTech API** (meeptech.com)
+* Handles usage tracking and word count enforcement
+* Receives: Website URL, word counts, language pairs
+* Does NOT store your translated content
 
-= What data is NOT collected: =
+**OpenAI** (openai.com)
+* Processes translation requests using AI language models
+* Receives: Text content to be translated
+* Content is sent for processing only, not stored by us
 
-❌ Your actual translated content is not stored (only sent to OpenAI for processing)
+**PostHog** (posthog.com) - Optional
+* Anonymous usage analytics (opt-in only)
+* Disabled by default, requires explicit consent
+
+= What We Collect =
+
+✅ Website URL (for authentication)
+✅ Word counts and language pairs (for plan limits)
+
+= What We Do NOT Collect =
+
+❌ Your translated content is not stored
 ❌ Personal information or email addresses
 ❌ User or visitor data
 
-= Third-party services: =
+= Privacy & Security =
 
-• MeepTech API (meeptech.com) - Handles usage tracking
-• OpenAI - Processes translation requests (content is sent to OpenAI for translation only)
-• PostHog - Optional anonymous analytics (opt-in only)
+For data deletion, export, or GDPR/CCPA inquiries, contact sales@meeptech.com with your website URL.
 
-= Your privacy rights: =
-
-You can request data deletion or export by contacting privacy@meeptech.com. 
-For GDPR/CCPA inquiries, please contact us with your website URL.
-
-For more information, see our policies:
-– MeepTech Privacy Policy: https://meeptech.com/privacy-policy
-– MeepTech Terms of Service: https://meeptech.com/terms
-– OpenAI Privacy Policy: https://openai.com/policies/privacy-policy
-
-== Security ==
-If you discover a security vulnerability, please email security@meeptech.com with steps to reproduce. Do not disclose publicly until a fix is available.
+* [MeepTech Privacy Policy](https://meeptech.com/privacy-policy)
+* [MeepTech Terms of Service](https://meeptech.com/terms)
+* [OpenAI Privacy Policy](https://openai.com/policies/privacy-policy)
