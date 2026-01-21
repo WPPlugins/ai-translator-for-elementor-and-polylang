@@ -5,7 +5,7 @@ Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
 Requires Plugins: elementor, polylang
-Stable tag: 1.2.1
+Stable tag: 1.2.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -125,6 +125,26 @@ This plugin relies on external third-party services to function. Below is a deta
 1. Dashboard with translation stats and usage info.
 
 == Changelog ==
+= 1.2.2 =
+* Fixed license plan sync issue - Enterprise/Agency plans now correctly sync from Freemius
+* Added auto-sync for plan mismatches (checks hourly)
+* Added "Sync Plan" button in settings for manual plan synchronization
+* Improved Luxembourgish translation support with language-specific instructions
+* Fixed HTML structure corruption during translation (SVG elements, nested tags)
+* Fixed issue where original text was appearing above translation
+* Added language instructions for rare languages (Frisian, Breton, Occitan, Corsican, Romansh)
+* Plugin now sends language-specific instructions to translation server for better accuracy
+* Improved license activation to properly extract plan from Freemius license
+
+= 1.2.1 =
+* Fixed license plan sync issue - Enterprise/Agency plans now correctly sync from Freemius
+* Added auto-sync for plan mismatches (checks hourly)
+* Added "Sync Plan" button in settings for manual plan synchronization
+* Improved Luxembourgish translation support with language-specific instructions
+* Added language instructions for rare languages (Frisian, Breton, Occitan, Corsican, Romansh)
+* Plugin now sends language-specific instructions to translation server for better accuracy
+* Improved license activation to properly extract plan from Freemius license
+
 = 1.2.1 =
 * Added basic WPML support
 

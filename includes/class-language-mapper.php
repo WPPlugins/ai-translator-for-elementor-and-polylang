@@ -134,6 +134,8 @@ class AITRFOEL_Language_Mapper {
         
         // Additional European languages  
         'lb' => 'Luxembourgish',       // Luxembourg language
+        'lb-lu' => 'Luxembourgish',    // Luxembourg language (regional variant)
+        'lb_lu' => 'Luxembourgish',    // Luxembourg language (locale format)
         'li' => 'Limburgish',          // Netherlands/Belgium
         'fy' => 'Frisian',             // Netherlands/Germany
         'nn' => 'Norwegian Nynorsk',   // Norway variant
@@ -284,6 +286,26 @@ class AITRFOEL_Language_Mapper {
                 break;
             case 'hy':
                 $instructions[] = "Target language is Armenian, written in Armenian script (not Latin or Cyrillic).";
+                break;
+            case 'lb':
+            case 'lb-lu':
+            case 'lb_lu':
+                $instructions[] = "CRITICAL LUXEMBOURGISH TRANSLATION RULES:\n1. Target language is Luxembourgish (Lëtzebuergesch).\n2. ONLY translate text content - NEVER modify HTML tags, SVG elements, or tag structure.\n3. If input is '<span>The Goal</span>', output MUST be '<span>D'Zil</span>' - same tags, translated text only.\n4. NEVER add new tags like <div>, <h1>, <h2> that don't exist in original.\n5. NEVER close tags early or restructure HTML. Keep EXACT same tag structure.\n6. SVG elements and their attributes must remain 100% unchanged.\n7. REPLACE original text completely - do NOT append translation after original.\n8. Use Luxembourgish: Moien (Hello), Merci (Thanks), d'USA, ronderëm (around), Zil (Goal).";
+                break;
+            case 'fy':
+                $instructions[] = "Target language is West Frisian, a language spoken in the province of Friesland in the Netherlands. It is distinct from Dutch.";
+                break;
+            case 'br':
+                $instructions[] = "Target language is Breton, a Celtic language spoken in Brittany, France. It is related to Welsh and Cornish.";
+                break;
+            case 'oc':
+                $instructions[] = "Target language is Occitan, a Romance language spoken in southern France. It is distinct from French.";
+                break;
+            case 'co':
+                $instructions[] = "Target language is Corsican, a Romance language spoken on the island of Corsica. It is related to Italian but distinct.";
+                break;
+            case 'rm':
+                $instructions[] = "Target language is Romansh, a Romance language spoken in Switzerland. It is one of the four national languages of Switzerland.";
                 break;
         }
         

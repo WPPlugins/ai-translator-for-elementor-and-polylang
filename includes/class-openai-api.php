@@ -190,15 +190,23 @@ class AITRFOEL_OpenAI_API {
         $source_language = ($source_lang === 'auto') ? 'auto' : AITRFOEL_Language_Mapper::get_language_name($source_lang);
         $target_language = AITRFOEL_Language_Mapper::get_language_name($target_lang);
         
+        // Get language-specific instructions for rare/problematic languages
+        $lang_instructions = AITRFOEL_Language_Mapper::get_language_specific_instructions($target_lang);
+        
         // Log what we're sending
         if (class_exists('AITRFOEL_Logger')) {
             AITRFOEL_Logger::log('Sending to MeepTech server - Text length: ' . strlen($text) . ' chars, ' . $source_language . ' → ' . $target_language, 'debug');
+            if (!empty($lang_instructions)) {
+                AITRFOEL_Logger::log('Including language-specific instructions for: ' . $target_lang, 'debug');
+            }
         }
         
         $body = [
             'text' => $text,
             'source_language' => $source_language,
             'target_language' => $target_language,
+            'target_lang_code' => $target_lang, // Include original code for server-side handling
+            'language_instructions' => $lang_instructions, // Special instructions for rare languages
             'site_url' => $site_url,
             'plan' => $plan,
             'license_key' => $license_key
@@ -286,17 +294,22 @@ class AITRFOEL_OpenAI_API {
         $source_language = ($source_lang === 'auto') ? 'auto' : AITRFOEL_Language_Mapper::get_language_name($source_lang);
         $target_language = AITRFOEL_Language_Mapper::get_language_name($target_lang);
         
+        // Get language-specific instructions for rare/problematic languages
+        $lang_instructions = AITRFOEL_Language_Mapper::get_language_specific_instructions($target_lang);
+        
         // Send batch request to MeepTech
         $body = [
             'texts' => $texts,
             'source_language' => $source_language,
             'target_language' => $target_language,
+            'target_lang_code' => $target_lang, // Include original code for server-side handling
+            'language_instructions' => $lang_instructions, // Special instructions for rare languages
             'site_url' => $site_url,
             'plan' => $plan,
             'license_key' => $license_key
         ];
         
-        AITRFOEL_Logger::log('Sending batch to MeepTech server - ' . count($texts) . ' texts, ' . $source_language . ' → ' . $target_language, 'debug');
+        AITRFOEL_Logger::log('Sending batch to MeepTech server - ' . count($texts) . ' texts, ' . $source_language . ' → ' . $target_language . (!empty($lang_instructions) ? ' (with special instructions)' : ''), 'debug');
         
         $args = [
             'method' => 'POST',

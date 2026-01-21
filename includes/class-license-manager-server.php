@@ -41,6 +41,12 @@ class AITRFOEL_License_Manager_Server {
         if (defined('AITRFOEL_VERSION_TYPE') && AITRFOEL_VERSION_TYPE === 'free') {
             add_action('admin_init', [$this, 'maybe_auto_register_free_user']);
         }
+        
+        // Auto-sync plan on admin pages (checks once per hour)
+        add_action('admin_init', [$this, 'maybe_sync_plan']);
+        
+        // AJAX handler for manual plan sync
+        add_action('wp_ajax_aitrfoel_sync_plan', [$this, 'ajax_sync_plan']);
     }
     
     /**
@@ -672,17 +678,56 @@ class AITRFOEL_License_Manager_Server {
      * Called when user activates a paid license key
      */
     public function on_license_activated($license) {
-        AITRFOEL_Logger::log('License activated - initializing paid user in remote database', 'info');
+        AITRFOEL_Logger::log('License activated - initializing paid user in remote database', 'info', [
+            'license_id' => isset($license->id) ? $license->id : 'unknown',
+            'plan_id' => isset($license->plan_id) ? $license->plan_id : 'unknown',
+        ]);
         
         $plan = 'Starter'; // Default to Starter if can't determine
+        $license_key = isset($license->secret_key) ? $license->secret_key : null;
+        
         if (function_exists('eatp_fs') && eatp_fs()->is_registered()) {
-            $plan_obj = eatp_fs()->get_plan();
-            if ($plan_obj && isset($plan_obj->name)) {
-                $plan = $plan_obj->name;
+            // Method 1: Get plan directly from license's plan_id (most reliable)
+            if (isset($license->plan_id) && !empty($license->plan_id)) {
+                try {
+                    $plan_obj = eatp_fs()->_get_plan_by_id($license->plan_id);
+                    if ($plan_obj && isset($plan_obj->name)) {
+                        $plan = $plan_obj->name;
+                        AITRFOEL_Logger::log('Got plan from license plan_id: ' . $plan, 'info');
+                    }
+                } catch (Exception $e) {
+                    AITRFOEL_Logger::log('Could not get plan by id: ' . $e->getMessage(), 'warning');
+                }
+            }
+            
+            // Method 2: Fallback to get_plan_name() if method 1 failed
+            if ($plan === 'Starter') {
+                try {
+                    $plan_name = eatp_fs()->get_plan_name();
+                    if ($plan_name && $plan_name !== 'PLAN_NAME' && $plan_name !== 'free') {
+                        $plan = $plan_name;
+                        AITRFOEL_Logger::log('Got plan from get_plan_name(): ' . $plan, 'info');
+                    }
+                } catch (Exception $e) {
+                    AITRFOEL_Logger::log('Could not get plan name: ' . $e->getMessage(), 'warning');
+                }
+            }
+            
+            // Method 3: Fallback to get_plan() if method 2 failed
+            if ($plan === 'Starter') {
+                try {
+                    $plan_obj = eatp_fs()->get_plan();
+                    if ($plan_obj && isset($plan_obj->name)) {
+                        $plan = $plan_obj->name;
+                        AITRFOEL_Logger::log('Got plan from get_plan(): ' . $plan, 'info');
+                    }
+                } catch (Exception $e) {
+                    AITRFOEL_Logger::log('Could not get plan: ' . $e->getMessage(), 'warning');
+                }
             }
         }
         
-        $license_key = isset($license->secret_key) ? $license->secret_key : null;
+        AITRFOEL_Logger::log('Final plan determined: ' . $plan . ' for license key: ' . ($license_key ? substr($license_key, 0, 10) . '...' : 'null'), 'info');
         
         $this->initialize_user_in_remote_db($plan, $license_key);
     }
@@ -856,5 +901,177 @@ class AITRFOEL_License_Manager_Server {
             update_option('aitrfoel_current_plan', sanitize_text_field($data['plan']));
         }
     }
+    
+    /**
+     * Sync the current Freemius plan to the remote server
+     * This can be called manually or automatically to fix plan mismatches
+     * 
+     * @return array Result with success status and message
+     */
+    public function sync_plan_to_server() {
+        if (!function_exists('eatp_fs') || !eatp_fs()->is_registered()) {
+            AITRFOEL_Logger::log('Cannot sync plan - Freemius not registered', 'warning');
+            return [
+                'success' => false,
+                'message' => 'Freemius not registered'
+            ];
+        }
+        
+        $license_key = $this->get_license_key();
+        if (empty($license_key)) {
+            AITRFOEL_Logger::log('Cannot sync plan - no license key found', 'warning');
+            return [
+                'success' => false,
+                'message' => 'No license key found'
+            ];
+        }
+        
+        // Get the current plan from Freemius using multiple methods
+        $plan = 'Free';
+        
+        // Method 1: Try to get plan from license's plan_id
+        try {
+            $license = eatp_fs()->_get_license();
+            if ($license && isset($license->plan_id) && !empty($license->plan_id)) {
+                $plan_obj = eatp_fs()->_get_plan_by_id($license->plan_id);
+                if ($plan_obj && isset($plan_obj->name)) {
+                    $plan = $plan_obj->name;
+                    AITRFOEL_Logger::log('sync_plan_to_server: Got plan from license plan_id: ' . $plan, 'info');
+                }
+            }
+        } catch (Exception $e) {
+            AITRFOEL_Logger::log('sync_plan_to_server: Could not get plan from license: ' . $e->getMessage(), 'warning');
+        }
+        
+        // Method 2: Fallback to get_plan_name()
+        if ($plan === 'Free') {
+            try {
+                $plan_name = eatp_fs()->get_plan_name();
+                if ($plan_name && $plan_name !== 'PLAN_NAME' && $plan_name !== 'free') {
+                    $plan = $plan_name;
+                    AITRFOEL_Logger::log('sync_plan_to_server: Got plan from get_plan_name(): ' . $plan, 'info');
+                }
+            } catch (Exception $e) {
+                AITRFOEL_Logger::log('sync_plan_to_server: Could not get plan name: ' . $e->getMessage(), 'warning');
+            }
+        }
+        
+        // Method 3: Fallback to get_plan()
+        if ($plan === 'Free') {
+            try {
+                $plan_obj = eatp_fs()->get_plan();
+                if ($plan_obj && isset($plan_obj->name) && $plan_obj->name !== 'free') {
+                    $plan = $plan_obj->name;
+                    AITRFOEL_Logger::log('sync_plan_to_server: Got plan from get_plan(): ' . $plan, 'info');
+                }
+            } catch (Exception $e) {
+                AITRFOEL_Logger::log('sync_plan_to_server: Could not get plan: ' . $e->getMessage(), 'warning');
+            }
+        }
+        
+        AITRFOEL_Logger::log('sync_plan_to_server: Syncing plan "' . $plan . '" to server', 'info');
+        
+        // Update the plan on the server
+        $result = $this->update_plan_in_remote_db($plan, $license_key);
+        
+        if ($result) {
+            return [
+                'success' => true,
+                'message' => 'Plan synced successfully: ' . $plan,
+                'plan' => $plan
+            ];
+        } else {
+            return [
+                'success' => false,
+                'message' => 'Failed to sync plan to server'
+            ];
+        }
+    }
+    
+    /**
+     * Check if plan needs to be synced and sync if necessary
+     * Called on admin page loads to auto-fix plan mismatches
+     */
+    public function maybe_sync_plan() {
+        // Only run in admin context, not during AJAX
+        if (!is_admin() || (defined('DOING_AJAX') && DOING_AJAX)) {
+            return;
+        }
+        
+        // Only run if Freemius is available and registered with a paid license
+        if (!function_exists('eatp_fs') || !eatp_fs()->is_registered()) {
+            return;
+        }
+        
+        $license_key = $this->get_license_key();
+        if (empty($license_key)) {
+            return;
+        }
+        
+        // Only check once per hour to avoid excessive API calls
+        $last_sync_check = get_transient('aitrfoel_last_plan_sync_check');
+        if ($last_sync_check) {
+            return;
+        }
+        set_transient('aitrfoel_last_plan_sync_check', time(), HOUR_IN_SECONDS);
+        
+        // Get current plan from Freemius
+        $freemius_plan = 'Free';
+        try {
+            $license = eatp_fs()->_get_license();
+            if ($license && isset($license->plan_id) && !empty($license->plan_id)) {
+                $plan_obj = eatp_fs()->_get_plan_by_id($license->plan_id);
+                if ($plan_obj && isset($plan_obj->name)) {
+                    $freemius_plan = $plan_obj->name;
+                }
+            }
+            
+            if ($freemius_plan === 'Free') {
+                $plan_name = eatp_fs()->get_plan_name();
+                if ($plan_name && $plan_name !== 'PLAN_NAME' && $plan_name !== 'free') {
+                    $freemius_plan = $plan_name;
+                }
+            }
+        } catch (Exception $e) {
+            return; // Don't try to sync if we can't get the plan
+        }
+        
+        // Get current plan from server
+        $server_usage = $this->get_usage_from_server($license_key);
+        $server_plan = isset($server_usage['plan']) ? $server_usage['plan'] : 'Unknown';
+        
+        // If plans don't match and Freemius has a valid paid plan, sync it
+        if ($freemius_plan !== 'Free' && $freemius_plan !== $server_plan) {
+            AITRFOEL_Logger::log(sprintf(
+                'Plan mismatch detected! Freemius: %s, Server: %s - Auto-syncing...',
+                $freemius_plan,
+                $server_plan
+            ), 'warning');
+            
+            $this->update_plan_in_remote_db($freemius_plan, $license_key);
+        }
+    }
+    
+    /**
+     * AJAX handler for manual plan sync
+     */
+    public function ajax_sync_plan() {
+        // Security check
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Unauthorized']);
+        }
+        
+        check_ajax_referer('aitrfoel_nonce', 'nonce');
+        
+        // Clear the sync check transient to force a fresh sync
+        delete_transient('aitrfoel_last_plan_sync_check');
+        
+        $result = $this->sync_plan_to_server();
+        
+        if ($result['success']) {
+            wp_send_json_success($result);
+        } else {
+            wp_send_json_error($result);
+        }
+    }
 }
-

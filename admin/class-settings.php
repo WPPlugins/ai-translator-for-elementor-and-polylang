@@ -169,6 +169,48 @@ class AITRFOEL_Settings {
                                 <?php elseif (!function_exists('eatp_fs')): ?>
                                     <a href="https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing" target="_blank" class="button button-primary"><?php esc_html_e('Get License', 'ai-translator-for-elementor-and-polylang'); ?></a>
                                 <?php endif; ?>
+                                
+                                <?php if (function_exists('eatp_fs') && eatp_fs()->is_registered() && !eatp_fs()->is_free_plan()): ?>
+                                    <button type="button" id="aitrfoel-sync-plan" class="button button-secondary" style="margin-left: 10px;">
+                                        <?php esc_html_e('Sync Plan', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </button>
+                                    <span id="aitrfoel-sync-plan-status" style="margin-left: 10px; display: none;"></span>
+                                    <script>
+                                    jQuery(document).ready(function($) {
+                                        $('#aitrfoel-sync-plan').on('click', function() {
+                                            var $btn = $(this);
+                                            var $status = $('#aitrfoel-sync-plan-status');
+                                            var originalText = $btn.text();
+                                            
+                                            $btn.prop('disabled', true).text('<?php echo esc_js(__('Syncing...', 'ai-translator-for-elementor-and-polylang')); ?>');
+                                            $status.hide();
+                                            
+                                            $.ajax({
+                                                url: ajaxurl,
+                                                type: 'POST',
+                                                data: {
+                                                    action: 'aitrfoel_sync_plan',
+                                                    nonce: '<?php echo wp_create_nonce('aitrfoel_nonce'); ?>'
+                                                },
+                                                success: function(response) {
+                                                    $btn.prop('disabled', false).text(originalText);
+                                                    if (response.success) {
+                                                        $status.css('color', 'green').text('✓ ' + response.data.message).show();
+                                                        // Reload page after 1.5 seconds to show updated plan
+                                                        setTimeout(function() { location.reload(); }, 1500);
+                                                    } else {
+                                                        $status.css('color', 'red').text('✗ ' + (response.data.message || 'Sync failed')).show();
+                                                    }
+                                                },
+                                                error: function() {
+                                                    $btn.prop('disabled', false).text(originalText);
+                                                    $status.css('color', 'red').text('✗ <?php echo esc_js(__('Connection error', 'ai-translator-for-elementor-and-polylang')); ?>').show();
+                                                }
+                                            });
+                                        });
+                                    });
+                                    </script>
+                                <?php endif; ?>
                             </td>
                         </tr>
                         
