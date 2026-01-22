@@ -1774,22 +1774,37 @@ jQuery(document).ready(function($) {
         handleDeletePage: function() {
             const button = $(this);
             const pageId = button.data('page-id');
-            const pageTitle = button.data('page-title');
+            const pageTitle = button.data('page-title') || 'this page';
+            const row = button.closest('tr');
             
-            // ?????????? ?????????????
-            const confirmed = confirm(
-                `Are you sure you want to move "${pageTitle}" to trash?\n\n` +
-                `This action can be undone from WordPress trash.`
-            );
+            // Check if this is a translation using multiple methods
+            // 1. Check explicit data attribute (most reliable)
+            // 2. Check if row has translation class
+            // 3. Check if row does NOT have source-page class
+            let isTranslation = false;
+            const dataAttr = button.attr('data-is-translation');
+            if (dataAttr !== undefined) {
+                isTranslation = (dataAttr === 'true' || dataAttr === true);
+            } else {
+                // Fallback: check CSS classes
+                isTranslation = row.hasClass('eat-translation-page') || !row.hasClass('eat-source-page');
+            }
+            
+            // Different confirmation message for translations vs originals
+            const confirmMessage = isTranslation 
+                ? `Are you sure you want to permanently delete the translation "${pageTitle}"?\n\n⚠️ This action CANNOT be undone.`
+                : `Are you sure you want to move "${pageTitle}" to trash?\n\nThis action can be undone from WordPress trash.`;
+            
+            const confirmed = confirm(confirmMessage);
             
             if (!confirmed) {
                 return;
             }
             
-            // ????????? ??????
+            // Show loading state
             button.prop('disabled', true).text('Deleting...');
             
-            // ?????????? AJAX ??????
+            // Send AJAX request
             $.ajax({
                 url: aitrfoelDashboard.ajax_url,
                 type: 'POST',
@@ -1800,34 +1815,44 @@ jQuery(document).ready(function($) {
                 },
                 success: function(response) {
                     if (response.success) {
-                        Dashboard.showNotice(`? "${pageTitle}" moved to trash successfully.`, 'success');
+                        const wasPermanentlyDeleted = response.data && response.data.permanently_deleted;
+                        const actionText = wasPermanentlyDeleted 
+                            ? 'permanently deleted' 
+                            : 'moved to trash';
+                        Dashboard.showNotice(`🗑️ "${pageTitle}" ${actionText} successfully.`, 'success');
                         
-                        const row = button.closest('tr');
-                        
-                        // ?????????, ??? ???????? ???????? ??? ???????
+                        // Check if this is a source page or translation
                         if (row.hasClass('eat-source-page')) {
-                            // ???? ??? ???????? ???????? - ??????? ??? ??????
+                            // This is a source page - remove all child rows
                             const sourcePageId = row.data('page-id');
                             const nextRows = row.nextAll('tr').filter(function() {
-                                // ??????? ??? ????????? ?????? ?? ????????? ???????? ????????
+                                // Find all translation rows until next source page
                                 return !$(this).hasClass('eat-source-page');
                             });
                             
-                            // ??????? ???????? ?????? ? ??? ????????? ????????
+                            // Remove source row and all its translation rows
                             row.add(nextRows).fadeOut(300, function() {
                                 $(this).remove();
                                 Dashboard.updateStartButtonState();
                             });
                         } else {
-                            // ???? ??? ??????? - ??????? ?????? ??? ??????
+                            // This is a translation - remove only this row
                             row.fadeOut(300, function() {
                                 row.remove();
                                 Dashboard.updateStartButtonState();
                             });
                         }
                         
+                        // If translation was permanently deleted, reload page to update available languages
+                        if (wasPermanentlyDeleted) {
+                            Dashboard.showNotice(`🔄 Refreshing to update available languages...`, 'info');
+                            setTimeout(function() {
+                                window.location.reload(true);
+                            }, 1500);
+                        }
+                        
                     } else {
-                        Dashboard.showNotice(`? Failed to delete "${pageTitle}": ${response.data.message}`, __('status_error', 'Error'));
+                        Dashboard.showNotice(`❌ Failed to delete "${pageTitle}": ${response.data.message}`, __('status_error', 'Error'));
                         button.prop('disabled', false).text('Delete');
                     }
                 },

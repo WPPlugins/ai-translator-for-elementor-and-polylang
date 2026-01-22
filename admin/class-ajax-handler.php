@@ -1864,19 +1864,39 @@ class AITRFOEL_Ajax_Handler {
                 throw new Exception('Only pages can be deleted through this interface');
             }
 
-            // Move to trash
-            $result = wp_trash_post($page_id);
+            // Check if this is a translated page (not an original)
+            $is_translation = false;
+            $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
+            
+            if ($multilingual && method_exists($multilingual, 'get_original_post_id')) {
+                $original_id = $multilingual->get_original_post_id($page_id);
+                // If original_id is different from page_id, this is a translation
+                $is_translation = ($original_id && $original_id !== $page_id);
+            }
+            
+            // For translated pages, permanently delete (skip trash)
+            // For original pages, move to trash (safer)
+            if ($is_translation) {
+                // Permanently delete translated page
+                $result = wp_delete_post($page_id, true); // true = force delete, skip trash
+                $action_msg = 'permanently deleted';
+            } else {
+                // Move to trash for original pages
+                $result = wp_trash_post($page_id);
+                $action_msg = 'moved to trash';
+            }
             
             if (!$result) {
-                throw new Exception('Failed to move page to trash');
+                throw new Exception('Failed to delete page');
             }
 
             // Log the action
-            AITRFOEL_Logger::log("Page '{$page->post_title}' moved to trash by user " . get_current_user_id(), 'info', $page_id);
+            AITRFOEL_Logger::log("Page '{$page->post_title}' {$action_msg} by user " . get_current_user_id() . ($is_translation ? ' (translation)' : ' (original)'), 'info', $page_id);
 
             wp_send_json_success([
-                'message' => sprintf('Page "%s" moved to trash successfully', $page->post_title),
-                'page_id' => $page_id
+                'message' => sprintf('Page "%s" %s successfully', $page->post_title, $action_msg),
+                'page_id' => $page_id,
+                'permanently_deleted' => $is_translation
             ]);
 
         } catch (Exception $e) {

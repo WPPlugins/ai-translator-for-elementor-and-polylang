@@ -838,6 +838,8 @@ class AITRFOEL_Admin_Menu {
                 }
             }
             
+            // Get the correct permalink using the multilingual manager
+            $source_permalink = $multilingual->get_post_permalink($source->ID);
             ?>
             <tr class="eat-source-page" data-page-id="<?php echo absint($source->ID); ?>">
                 <th scope="row" class="check-column">
@@ -851,7 +853,7 @@ class AITRFOEL_Admin_Menu {
                 </th>
                 <td class="column-title">
                     <strong>
-                        <a class="eat-page-title-link" href="<?php echo esc_url(get_permalink($source->ID)); ?>" target="_blank" rel="noopener">
+                        <a class="eat-page-title-link" href="<?php echo esc_url($source_permalink); ?>" target="_blank" rel="noopener">
                             🏠 <?php echo esc_html($source->post_title); ?>
                             <span class="eat-page-lang">(<?php echo esc_html(strtoupper($multilingual->get_post_language($source->ID) ?: '?')); ?>)</span>
                         </a>
@@ -892,14 +894,15 @@ class AITRFOEL_Admin_Menu {
                     <a href="<?php echo esc_url(get_edit_post_link($source->ID)); ?>" class="button button-small">
                         <?php esc_html_e('Edit', 'ai-translator-for-elementor-and-polylang'); ?>
                     </a>
-                    <a href="<?php echo esc_url(get_permalink($source->ID)); ?>" class="button button-small" target="_blank">
+                    <a href="<?php echo esc_url($source_permalink); ?>" class="button button-small" target="_blank">
                         <?php esc_html_e('View', 'ai-translator-for-elementor-and-polylang'); ?>
                     </a>
                     <button type="button" 
                             class="button button-small eat-delete-page" 
                             data-page-id="<?php echo absint($source->ID); ?>"
                             data-page-title="<?php echo esc_attr($source->post_title); ?>"
-                            title="Move to trash">
+                            data-is-translation="false"
+                            title="<?php esc_attr_e('Move to trash (can be restored)', 'ai-translator-for-elementor-and-polylang'); ?>">
                         <?php esc_html_e('Delete', 'ai-translator-for-elementor-and-polylang'); ?>
                     </button>
                 </td>
@@ -919,17 +922,20 @@ class AITRFOEL_Admin_Menu {
             <?php
             // Render translation rows (indented) - initially hidden
             foreach ($translations as $lang_code => $translation) {
+                // Get the correct permalink using the multilingual manager
+                $translation_permalink = $multilingual->get_post_permalink($translation->ID);
                 ?>
                 <tr class="eat-translation-page eat-translation-collapsed" 
                     data-parent-id="<?php echo absint($source->ID); ?>" 
                     data-page-id="<?php echo absint($translation->ID); ?>"
+                    data-language="<?php echo esc_attr($lang_code); ?>"
                     style="display: none;">
                     <th scope="row" class="check-column">
                         <!-- No checkbox for translations -->
                     </th>
                     <td class="column-title">
                         <strong class="eat-translation-indent">
-                            <a class="eat-page-title-link" href="<?php echo esc_url(get_permalink($translation->ID)); ?>" target="_blank" rel="noopener">
+                            <a class="eat-page-title-link" href="<?php echo esc_url($translation_permalink); ?>" target="_blank" rel="noopener">
                                 <?php echo esc_html($translation->post_title); ?> 
                                 <span class="eat-page-lang">(<?php echo esc_html(strtoupper($lang_code)); ?>)</span>
                             </a>
@@ -956,14 +962,15 @@ class AITRFOEL_Admin_Menu {
                         <a href="<?php echo esc_url(get_edit_post_link($translation->ID)); ?>" class="button button-small">
                             <?php esc_html_e('Edit', 'ai-translator-for-elementor-and-polylang'); ?>
                         </a>
-                        <a href="<?php echo esc_url(get_permalink($translation->ID)); ?>" class="button button-small" target="_blank">
+                        <a href="<?php echo esc_url($translation_permalink); ?>" class="button button-small" target="_blank">
                             <?php esc_html_e('View', 'ai-translator-for-elementor-and-polylang'); ?>
                         </a>
                         <button type="button" 
                                 class="button button-small eat-delete-page" 
                                 data-page-id="<?php echo absint($translation->ID); ?>"
                                 data-page-title="<?php echo esc_attr($translation->post_title); ?>"
-                                title="Move to trash">
+                                data-is-translation="true"
+                                title="<?php esc_attr_e('Permanently delete (cannot be undone)', 'ai-translator-for-elementor-and-polylang'); ?>">
                             <?php esc_html_e('Delete', 'ai-translator-for-elementor-and-polylang'); ?>
                         </button>
                     </td>

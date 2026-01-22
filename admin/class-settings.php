@@ -102,6 +102,12 @@ class AITRFOEL_Settings {
             'sanitize_callback' => 'sanitize_textarea_field',
             'default' => ''
         ]);
+        
+        // Debug Settings
+        register_setting('aitrfoel_settings_group', 'aitrfoel_debug_mode', [
+            'sanitize_callback' => 'boolval',
+            'default' => false
+        ]);
     }
     
     public static function render_page() {
@@ -438,6 +444,35 @@ class AITRFOEL_Settings {
                                 ?></textarea>
                                 <p class="description">
                                     <?php esc_html_e('Advanced setting. Add comma-separated meta field keys here if the auto-detection misses something for your theme.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Advanced / Debug Settings -->
+                <div class="aitrfoel-settings-section">
+                    <h3><?php esc_html_e('🔧 Advanced Settings', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                    
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_debug_mode"><?php esc_html_e('Debug Mode', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <input type="checkbox" 
+                                       id="aitrfoel_debug_mode" 
+                                       name="aitrfoel_debug_mode" 
+                                       value="1" 
+                                       <?php checked(get_option('aitrfoel_debug_mode', false)); ?> />
+                                <label for="aitrfoel_debug_mode"><?php esc_html_e('Enable debug logging', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                                <p class="description">
+                                    <?php esc_html_e('When enabled, detailed debug information will be written to the WordPress debug.log file.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    <br>
+                                    <strong><?php esc_html_e('Note:', 'ai-translator-for-elementor-and-polylang'); ?></strong> 
+                                    <?php esc_html_e('WP_DEBUG and WP_DEBUG_LOG must be enabled in wp-config.php for logging to work.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    <br>
+                                    <code>define('WP_DEBUG', true);<br>define('WP_DEBUG_LOG', true);</code>
                                 </p>
                             </td>
                         </tr>

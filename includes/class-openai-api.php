@@ -251,7 +251,44 @@ class AITRFOEL_OpenAI_API {
             AITRFOEL_Logger::log('MeepTech translation successful - Words used: ' . ($data['words_used'] ?? 'unknown'), 'debug');
         }
         
-        return $data['translated_text'];
+        $translated = $data['translated_text'];
+        
+        // Clean up AI artifacts that sometimes appear in translations
+        $translated = $this->cleanup_ai_artifacts($translated);
+        
+        return $translated;
+    }
+    
+    /**
+     * Clean up AI artifacts from translation responses
+     * Removes instruction text, wrapper tags, etc.
+     */
+    private function cleanup_ai_artifacts($text) {
+        if (!is_string($text) || $text === '') return $text;
+        
+        // Remove AI instruction artifacts that sometimes appear
+        $ai_artifacts = [
+            '/^Translating\s+the\s+text\s+while\s+preserving[^:]*:\s*/iu',
+            '/^Here\s+is\s+the\s+translation[^:]*:\s*/iu',
+            '/^Translation[^:]*:\s*/iu',
+            '/^Translated\s+text[^:]*:\s*/iu',
+            '/^The\s+translation[^:]*:\s*/iu',
+            '/^Below\s+is\s+the\s+translation[^:]*:\s*/iu',
+            '/^Here\'s\s+the\s+translation[^:]*:\s*/iu',
+        ];
+        foreach ($ai_artifacts as $pattern) {
+            $text = preg_replace($pattern, '', $text);
+        }
+        
+        // Strip <translation>...</translation> wrapper tags
+        $text = preg_replace('#<translation[^>]*>\s*#iu', '', $text);
+        $text = preg_replace('#\s*</translation>#iu', '', $text);
+        
+        // Strip markdown code blocks
+        $text = preg_replace('/^```[a-z]*\s*/i', '', $text);
+        $text = preg_replace('/\s*```$/i', '', $text);
+        
+        return trim($text);
     }
     
     /**

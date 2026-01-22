@@ -329,6 +329,22 @@ class AITRFOEL_WPML_Integration extends AITRFOEL_Multilingual_Interface {
             'source_language_code' => $original_lang_code
         ]);
         
+        // Clear WordPress post cache to ensure get_permalink() returns correct URL
+        clean_post_cache($translated_post_id);
+        clean_post_cache($original_post_id);
+        
+        // Clear WPML caches if available
+        global $wpml_post_translations;
+        if (isset($wpml_post_translations) && is_object($wpml_post_translations) && method_exists($wpml_post_translations, 'reload')) {
+            $wpml_post_translations->reload();
+        }
+        
+        // Also try to clear WPML's element translations cache
+        if (class_exists('WPML_TM_Translation_Status')) {
+            // Force WPML to refresh its internal caches
+            do_action('wpml_cache_clear');
+        }
+        
         AITRFOEL_Logger::log(
             sprintf('WPML: Linked translation %d (lang: %s) to original %d (lang: %s, trid: %s)',
                 $translated_post_id,
@@ -591,5 +607,46 @@ class AITRFOEL_WPML_Integration extends AITRFOEL_Multilingual_Interface {
         $translated_id = apply_filters('wpml_object_id', $post_id, $post_type, false, $lang_code);
         
         return $translated_id ?: null;
+    }
+    
+    /**
+     * Get the correct permalink for a post in its assigned language
+     * This ensures WPML returns the URL with the correct language parameter
+     * 
+     * @param int $post_id Post ID
+     * @return string The permalink with correct language
+     */
+    public function get_post_permalink($post_id) {
+        if (!$this->is_active()) {
+            return get_permalink($post_id);
+        }
+        
+        // Get the post's language
+        $post_lang = $this->get_post_language($post_id);
+        
+        if (!$post_lang) {
+            return get_permalink($post_id);
+        }
+        
+        // Store current language
+        $current_lang = apply_filters('wpml_current_language', null);
+        
+        // Switch to the post's language temporarily
+        do_action('wpml_switch_language', $post_lang);
+        
+        // Get the permalink in the correct language context
+        $permalink = get_permalink($post_id);
+        
+        // Also try the wpml_permalink filter for additional processing
+        $permalink = apply_filters('wpml_permalink', $permalink, $post_lang);
+        
+        // Switch back to original language
+        if ($current_lang) {
+            do_action('wpml_switch_language', $current_lang);
+        } else {
+            do_action('wpml_switch_language', null); // Reset to default
+        }
+        
+        return $permalink;
     }
 }

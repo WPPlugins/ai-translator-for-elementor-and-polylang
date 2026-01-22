@@ -5,7 +5,7 @@ Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
 Requires Plugins: elementor, polylang
-Stable tag: 1.2.3
+Stable tag: 1.2.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -77,8 +77,24 @@ Visit AI Translator → Dashboard to see your current usage and words remaining.
 
 == Screenshots ==
 1. Dashboard with translation stats and usage info.
+2. Translation in progress with real-time progress indicator.
+3. Page list with language status and quick translate buttons.
+4. Settings page with cache management and advanced options.
 
 == Changelog ==
+= 1.2.4 =
+* Fixed critical batch translation bug - translations now apply correctly in first pass
+* Fixed permanent deletion for translated pages (skips trash for cleaner workflow)
+* Added auto-refresh after deleting translations to update available languages
+* Fixed AI instruction artifacts appearing in translations (e.g., "Translating the text...")
+* Fixed PHP warning for levenshtein() with strings over 255 characters
+* Added proper noun and acronym detection (names like "John Smith" and "CEO" no longer mistranslated)
+* Improved translation quality for less common languages (Romanian, Bulgarian, Croatian, etc.)
+* Added language-specific retry boost for rare languages
+* Fixed WPML permalink caching issue - translation links now show correct language immediately
+* Added Debug Mode toggle in settings to control verbose logging
+* Improved delete confirmation messages for translations vs original pages
+
 = 1.2.3 =
 * Minor bug fixes
 
@@ -157,45 +173,6 @@ Visit AI Translator → Dashboard to see your current usage and words remaining.
 == Upgrade Notice ==
 = 1.1.0 =
 Fixed plugin name and updated readme. Recommended update.
-
-== Pricing ==
-
-= Free =
-**$0**
-Perfect for testing the plugin
-
-– 1 Website
-– 1,800 words/week
-– Latest OpenAI Models
-– Polylang Compatible
-– Elementor Support
-– 7-day cooldown after limit
-
-= Starter — Most Popular =
-**$9.99/month**
-For small businesses and landing pages
-
-– 1 Website License
-– ~18K words/month (~46 pages)
-– 100,000 tokens included
-– Latest OpenAI Models
-– Polylang Pro Compatible
-– Elementor & Elementor Pro Support
-– Email Support
-– Continuous Updates
-
-= Agency =
-**$34.99/month**
-Optimal for studios and agencies
-
-– Up to 10 Website Licenses
-– ~89K words/month (~232 pages)
-– 500,000 tokens included
-– Latest OpenAI Models
-– Priority Email Support
-– Continuous Updates
-
-Upgrade your license inside WordPress: AI Translator → Pricing, or visit [meeptech.com](https://meeptech.com/products/ai-translator-for-elementor-polylang/).
 
 == External Services & Privacy ==
 

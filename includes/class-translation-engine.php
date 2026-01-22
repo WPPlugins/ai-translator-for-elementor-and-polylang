@@ -431,10 +431,18 @@ class AITRFOEL_Translation_Engine {
                     }
                 } else {
                     // Process successful batch results
+                    // NOTE: batch_results is keyed by SOURCE TEXT, not numeric index
                     foreach ($batch_items as $index => $item) {
                         $text = $item['src'];
-                        if (isset($batch_results[$index])) {
-                            $translated = $batch_results[$index];
+                        // Check if translation exists by source text key OR numeric index (for compatibility)
+                        $translated = null;
+                        if (isset($batch_results[$text])) {
+                            $translated = $batch_results[$text]; // Keyed by source text
+                        } elseif (isset($batch_results[$index])) {
+                            $translated = $batch_results[$index]; // Fallback to numeric index
+                        }
+                        
+                        if ($translated !== null) {
                             // Guard: if batch returned non-string or empty, fallback to individual to avoid applying raw/empty
                             if (!is_string($translated) || trim($translated) === '') {
                                 AITRFOEL_Logger::log('Empty/non-string batch item detected, using individual fallback for path: ' . ($item['path'] ?? 'n/a'), 'warning', $page_id);
@@ -478,6 +486,25 @@ class AITRFOEL_Translation_Engine {
                                 $final = $parser->i18n_cleanup_artifacts($final);
                             }
                             $translations[$path] = $final;
+                        } else {
+                            // No translation found in batch results - fallback to individual
+                            AITRFOEL_Logger::log('Batch result missing for text (fallback to individual): ' . substr($text, 0, 50) . '...', 'warning', $page_id);
+                            $translated = $api->translate_text($text, $target_lang, $detected_lang);
+                            if (!is_wp_error($translated) && is_string($translated) && trim($translated) !== '') {
+                                $path = $item['path'];
+                                $original = $item['original'];
+                                $ph_map = $item['ph_map'];
+                                
+                                if (!empty($ph_map) && method_exists($parser, 'i18n_restore_placeholders')) {
+                                    $final = $parser->i18n_restore_placeholders($translated, $ph_map);
+                                } else {
+                                    $final = $this->restore_html_formatting($translated, $original);
+                                }
+                                if (method_exists($parser, 'i18n_cleanup_artifacts')) {
+                                    $final = $parser->i18n_cleanup_artifacts($final);
+                                }
+                                $translations[$path] = $final;
+                            }
                         }
                         
                         $processed++;

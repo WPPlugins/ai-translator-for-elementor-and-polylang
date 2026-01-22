@@ -780,9 +780,34 @@ class AITRFOEL_Widget_Parser {
      * - Normalize <ph id="n"></ph> → <ph id="n"/>
      * - Remove any remaining orphan <ph> or </ph>
      * - Drop guillemet placeholder markers ≪PGR_x≫, ≪/PGR_x≫, etc.
+     * - Strip AI instruction artifacts and wrapper tags
      */
     public function i18n_cleanup_artifacts($text) {
         if (!is_string($text) || $text === '') return $text;
+        
+        // 0) Remove AI instruction artifacts that sometimes appear in translations
+        // Examples: "Translating the text while preserving HTML tags and formatting:"
+        // "Here is the translation:", "Translation:", etc.
+        $ai_artifacts = [
+            '/^Translating\s+the\s+text\s+while\s+preserving[^:]*:\s*/iu',
+            '/^Here\s+is\s+the\s+translation[^:]*:\s*/iu',
+            '/^Translation[^:]*:\s*/iu',
+            '/^Translated\s+text[^:]*:\s*/iu',
+            '/^The\s+translation[^:]*:\s*/iu',
+            '/^Below\s+is\s+the\s+translation[^:]*:\s*/iu',
+        ];
+        foreach ($ai_artifacts as $pattern) {
+            $text = preg_replace($pattern, '', $text);
+        }
+        
+        // 0b) Strip <translation>...</translation> wrapper tags (keep inner content)
+        $text = preg_replace('#<translation[^>]*>\s*#iu', '', $text);
+        $text = preg_replace('#\s*</translation>#iu', '', $text);
+        
+        // 0c) Strip markdown-style code blocks that AI sometimes adds
+        $text = preg_replace('/^```[a-z]*\s*/i', '', $text);
+        $text = preg_replace('/\s*```$/i', '', $text);
+        
         // 1) Fix JSON-escaped closing tags for common inline/block tags, allowing spaces and optional backslash before '/'
         $tags = '(ph|p|a|strong|em|span|b|i|u|small|sup|sub|mark|code|kbd|h1|h2|h3|h4|h5|h6|div|li|ul|ol)';
         // Matches variants like: </p>, < /p>, <\/p>, < \/ p >

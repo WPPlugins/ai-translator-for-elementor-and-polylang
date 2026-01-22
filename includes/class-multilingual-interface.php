@@ -215,4 +215,17 @@ abstract class AITRFOEL_Multilingual_Interface {
         // Otherwise, try to map from full name
         return $this->get_code_from_name($language);
     }
+    
+    /**
+     * Get the correct permalink for a post in its assigned language
+     * This ensures the multilingual plugin returns the URL with the correct language
+     * Default implementation just uses WordPress get_permalink()
+     * WPML overrides this to use wpml_permalink filter
+     * 
+     * @param int $post_id Post ID
+     * @return string The permalink with correct language
+     */
+    public function get_post_permalink($post_id) {
+        return get_permalink($post_id);
+    }
 }

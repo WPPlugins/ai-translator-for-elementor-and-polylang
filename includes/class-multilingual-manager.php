@@ -315,6 +315,62 @@ class AITRFOEL_Multilingual_Manager {
         }
         return $this->integration->get_language_switcher_data();
     }
+    
+    /**
+     * Get the correct permalink for a post in its assigned language
+     * This ensures the multilingual plugin returns the URL with the correct language
+     * 
+     * @param int $post_id Post ID
+     * @return string The permalink with correct language
+     */
+    public function get_post_permalink($post_id) {
+        if (!$this->integration) {
+            return get_permalink($post_id);
+        }
+        return $this->integration->get_post_permalink($post_id);
+    }
+    
+    /**
+     * Get the original post ID for a translation
+     * Returns the post ID of the source/original post in the default language
+     * 
+     * @param int $post_id Post ID to check
+     * @return int|null Original post ID, or null if not a translation (or is the original)
+     */
+    public function get_original_post_id($post_id) {
+        if (!$this->integration) {
+            return null;
+        }
+        
+        // Get all translations for this post
+        $translations = $this->integration->get_post_translations($post_id);
+        if (empty($translations)) {
+            return null;
+        }
+        
+        // Get the default language
+        $default_lang = $this->get_default_language();
+        
+        // If the post's language is the default language, it's the original
+        $post_lang = $this->get_post_language($post_id);
+        if ($post_lang === $default_lang) {
+            return $post_id; // This IS the original
+        }
+        
+        // Return the original (default language) post ID
+        if (isset($translations[$default_lang])) {
+            return intval($translations[$default_lang]);
+        }
+        
+        // Fallback: find any post in the group that isn't this one
+        foreach ($translations as $lang => $tid) {
+            if (intval($tid) !== intval($post_id)) {
+                return intval($tid);
+            }
+        }
+        
+        return null;
+    }
 }
 
 /**
