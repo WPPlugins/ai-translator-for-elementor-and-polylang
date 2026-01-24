@@ -118,10 +118,14 @@ class AITRFOEL_Settings {
             $license_status = $plan ? $plan->name : 'Free';
         }
         // Get usage from server (not local cache)
-        $license_manager = AITRFOEL_License_Manager_Server::get_instance();
-        $license_info = $license_manager->get_license_status();
-        $words_used = $license_info['words_used'];
-        $word_limit = $license_info['word_limit'];
+        $words_used = 0;
+        $word_limit = 1800; // Default free limit
+        if (class_exists('AITRFOEL_License_Manager_Server')) {
+            $license_manager = AITRFOEL_License_Manager_Server::get_instance();
+            $license_info = $license_manager->get_license_status();
+            $words_used = $license_info['words_used'];
+            $word_limit = $license_info['word_limit'];
+        }
         $cache_enabled = get_option('aitrfoel_cache_enabled', true);
         $cache_duration = get_option('aitrfoel_cache_duration', 30);
         $translated_page_status = get_option('aitrfoel_translated_page_status', 'draft');

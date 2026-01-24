@@ -238,6 +238,26 @@ class AITRFOEL_License_Manager_Server {
                     }
                 }
                 
+                // Handle cooldown status from server (syncs when admin resets usage)
+                if (isset($data['cooldown_active'])) {
+                    if ($data['cooldown_active'] === true && isset($data['cooldown_ends_at'])) {
+                        // Server says cooldown is active - sync to local
+                        $cooldown_end = strtotime($data['cooldown_ends_at']);
+                        if ($cooldown_end && $cooldown_end > time()) {
+                            update_option('aitrfoel_cooldown_end_date', $cooldown_end);
+                        }
+                    } elseif ($data['cooldown_active'] === false) {
+                        // Server says NO cooldown - clear local (admin reset usage)
+                        $local_cooldown = get_option('aitrfoel_cooldown_end_date', 0);
+                        if ($local_cooldown > 0) {
+                            delete_option('aitrfoel_cooldown_end_date');
+                            if (class_exists('AITRFOEL_Logger')) {
+                                AITRFOEL_Logger::log('✅ Cooldown cleared - server confirmed no active cooldown', 'info');
+                            }
+                        }
+                    }
+                }
+                
                 return $result;
             }
             
@@ -507,6 +527,14 @@ class AITRFOEL_License_Manager_Server {
             
             if (!is_wp_error($response)) {
                 $status_code = wp_remote_retrieve_response_code($response);
+                $body = wp_remote_retrieve_body($response);
+                $data = json_decode($body, true);
+                
+                // Handle server response - clear cooldown when server confirms reset
+                if (isset($data['success']) && $data['success'] && isset($data['words_used']) && $data['words_used'] === 0) {
+                    delete_option('aitrfoel_cooldown_end_date');
+                    update_option('aitrfoel_words_used_this_month', 0);
+                }
             } else {
                 error_log('EAT: Failed to notify server of reset: ' . $response->get_error_message());
             }
@@ -540,12 +568,23 @@ class AITRFOEL_License_Manager_Server {
             echo '</div>';
         }
         
-        // Check if user is currently in cooldown
+        // Check if user is currently in cooldown (only on plugin pages to avoid extra API calls)
         $cooldown_end = get_option('aitrfoel_cooldown_end_date', 0);
         if ($cooldown_end > time()) {
             // Only show on plugin pages
             $screen = get_current_screen();
             if ($screen && strpos($screen->id, 'ai-translator') !== false) {
+                // Sync with server to check if cooldown was reset by admin
+                // This call will clear local cooldown if server says cooldown_active === false
+                $this->get_license_status();
+                
+                // Re-check after server sync
+                $cooldown_end = get_option('aitrfoel_cooldown_end_date', 0);
+                if ($cooldown_end <= time()) {
+                    // Cooldown was cleared by server sync, don't show notice
+                    return;
+                }
+                
                 $days_left = ceil(($cooldown_end - time()) / DAY_IN_SECONDS);
                 $upgrade_url = 'https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing';
                 
@@ -604,7 +643,7 @@ class AITRFOEL_License_Manager_Server {
                 ⚠️ <?php esc_html_e('AI Translator License Expired', 'ai-translator-for-elementor-and-polylang'); ?>
             </h3>
             <p>
-                <?php esc_html_e('Your AI Translator for Elementor & Polylang license has expired or been cancelled.', 'ai-translator-for-elementor-and-polylang'); ?>
+                <?php esc_html_e('Your AI Translator for Elementor license has expired or been cancelled.', 'ai-translator-for-elementor-and-polylang'); ?>
                 <br>
                 <?php esc_html_e('You have been downgraded to the', 'ai-translator-for-elementor-and-polylang'); ?>
                 <strong><?php esc_html_e('Free plan (1,800 words/week)', 'ai-translator-for-elementor-and-polylang'); ?></strong>.

@@ -187,6 +187,31 @@ class AITRFOEL_Multilingual_Manager {
     }
     
     /**
+     * Check if languages are configured (at least 2 languages for translation)
+     * 
+     * @return bool
+     */
+    public function has_languages_configured() {
+        if (!$this->integration) {
+            return false;
+        }
+        $languages = $this->integration->get_available_languages();
+        return count($languages) >= 2;
+    }
+    
+    /**
+     * Get the number of configured languages
+     * 
+     * @return int
+     */
+    public function get_language_count() {
+        if (!$this->integration) {
+            return 0;
+        }
+        return count($this->integration->get_available_languages());
+    }
+    
+    /**
      * Get default language
      * 
      * @return string|null

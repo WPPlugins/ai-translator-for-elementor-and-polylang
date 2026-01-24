@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name: AI Translator for Elementor and Polylang
+ * Plugin Name: AI Translator for Elementor
  * Plugin URI: https://meeptech.com/products/ai-translator-for-elementor-and-polylang
  * Description: AI-powered translation for Elementor, Gutenberg, and Classic Editor pages with Polylang or WPML using OpenAI
- * Version: 1.2.4
+ * Version: 1.2.5
  * Author: Meep Tech
  * Author URI: https://meeptech.com
  * License: GPL v2 or later
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('AITRFOEL_VERSION', '1.2.4');
+define('AITRFOEL_VERSION', '1.2.5');
 define('AITRFOEL_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AITRFOEL_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AITRFOEL_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -186,6 +186,9 @@ class AITRFOEL_Main {
         
         // Always load admin menu so plugin is visible, even when dependencies aren't met
         if (is_admin()) {
+            // Load classes required for admin pages to work
+            require_once AITRFOEL_PLUGIN_DIR . 'includes/class-license-manager-server.php';
+            require_once AITRFOEL_PLUGIN_DIR . 'includes/class-license-manager.php';
             require_once AITRFOEL_PLUGIN_DIR . 'admin/class-admin-menu.php';
             require_once AITRFOEL_PLUGIN_DIR . 'admin/class-settings.php';
             
@@ -589,7 +592,7 @@ class AITRFOEL_Main {
             'debug' => true, // Add debug flag
             'strings' => [
                 // Basic translations
-                'plugin_title' => __('AI Translator for Elementor and Polylang', 'ai-translator-for-elementor-and-polylang'),
+                'plugin_title' => __('AI Translator for Elementor', 'ai-translator-for-elementor-and-polylang'),
                 'translating' => __('Translating...', 'ai-translator-for-elementor-and-polylang'),
                 'success' => __('Translation completed successfully!', 'ai-translator-for-elementor-and-polylang'),
                 'error' => __('Translation failed. Please try again.', 'ai-translator-for-elementor-and-polylang'),
@@ -1024,10 +1027,20 @@ class AITRFOEL_Main {
         
         // URLs
         $polylang_url = admin_url('admin.php?page=mlang');
+        $wpml_url = admin_url('admin.php?page=sitepress-multilingual-cms/menu/languages.php');
+        $polylang_install_url = admin_url('plugin-install.php?s=polylang&tab=search&type=term');
         $docs_url = 'https://meeptech.com/products/ai-translator-for-elementor-polylang/documentation';
         $video_id = 'RzcxmipDas4';
         $video_url = 'https://www.youtube.com/watch?v=' . $video_id;
         $video_thumbnail = 'https://img.youtube.com/vi/' . $video_id . '/maxresdefault.jpg';
+        
+        // Detect multilingual plugin status
+        $multilingual = class_exists('AITRFOEL_Multilingual_Manager') ? AITRFOEL_Multilingual_Manager::get_instance() : null;
+        $has_multilingual = $multilingual && $multilingual->has_multilingual_plugin();
+        $has_languages = $multilingual && method_exists($multilingual, 'has_languages_configured') && $multilingual->has_languages_configured();
+        $language_count = $multilingual && method_exists($multilingual, 'get_language_count') ? $multilingual->get_language_count() : 0;
+        $detected_plugin = $multilingual ? $multilingual->get_detected_plugin() : null;
+        $plugin_display_name = $multilingual && $has_multilingual ? $multilingual->get_plugin_display_name() : null;
         
         ?>
         <div id="aitrfoel-welcome-popup" class="aitrfoel-welcome-fullscreen">
@@ -1065,7 +1078,17 @@ class AITRFOEL_Main {
                 
                 <!-- Quick Steps - Single Line -->
                 <div class="aitrfoel-welcome-steps">
-                    <span class="aitrfoel-step"><span class="aitrfoel-step-number">1</span> <?php esc_html_e('Set up languages in', 'ai-translator-for-elementor-and-polylang'); ?> <a href="<?php echo esc_url($polylang_url); ?>">Polylang</a></span>
+                    <span class="aitrfoel-step">
+                        <span class="aitrfoel-step-number">1</span>
+                        <?php esc_html_e('Set up languages in', 'ai-translator-for-elementor-and-polylang'); ?>
+                        <?php if ($detected_plugin === 'polylang'): ?>
+                            <a href="<?php echo esc_url($polylang_url); ?>">Polylang</a>
+                        <?php elseif ($detected_plugin === 'wpml'): ?>
+                            <a href="<?php echo esc_url($wpml_url); ?>">WPML</a>
+                        <?php else: ?>
+                            <a href="<?php echo esc_url($polylang_install_url); ?>">Polylang</a> <?php esc_html_e('or', 'ai-translator-for-elementor-and-polylang'); ?> <a href="https://wpml.org/" target="_blank">WPML</a>
+                        <?php endif; ?>
+                    </span>
                     <span class="aitrfoel-step-separator">→</span>
                     <span class="aitrfoel-step"><span class="aitrfoel-step-number">2</span> <?php esc_html_e('Select pages & target languages', 'ai-translator-for-elementor-and-polylang'); ?></span>
                     <span class="aitrfoel-step-separator">→</span>
@@ -1096,14 +1119,49 @@ class AITRFOEL_Main {
                     </label>
                 </div>
                 
-                <!-- Action Buttons -->
-                <div class="aitrfoel-welcome-actions">
+                <!-- Action Buttons with Status -->
+                <div class="aitrfoel-welcome-actions" style="display: flex; align-items: center; justify-content: center; gap: 15px; flex-wrap: wrap;">
                     <button type="button" class="aitrfoel-btn-primary aitrfoel-welcome-dismiss">
                         <?php esc_html_e("Let's Get Started!", 'ai-translator-for-elementor-and-polylang'); ?>
                     </button>
                     <a href="<?php echo esc_url($docs_url); ?>" target="_blank" class="aitrfoel-btn-secondary">
                         <?php esc_html_e('Documentation', 'ai-translator-for-elementor-and-polylang'); ?>
                     </a>
+                    
+                    <!-- Multilingual Plugin Status -->
+                    <?php 
+                    // Determine status: ready (plugin + languages), needs languages (plugin but < 2 langs), or no plugin
+                    $status_ready = $has_multilingual && $has_languages;
+                    $status_needs_languages = $has_multilingual && !$has_languages;
+                    $status_bg = $status_ready ? 'rgba(76, 175, 80, 0.15)' : 'rgba(255, 152, 0, 0.15)';
+                    $lang_setup_url = $detected_plugin === 'wpml' ? $wpml_url : $polylang_url;
+                    ?>
+                    <div class="aitrfoel-welcome-status-inline" style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 6px; background: <?php echo $status_bg; ?>; font-size: 14px;">
+                        <?php if ($status_ready): ?>
+                            <span style="font-size: 16px;">✅</span>
+                            <span style="color: #2e7d32; font-weight: 500;">
+                                <?php echo esc_html(sprintf(__('%s is active (%d languages)', 'ai-translator-for-elementor-and-polylang'), $plugin_display_name, $language_count)); ?>
+                            </span>
+                        <?php elseif ($status_needs_languages): ?>
+                            <span style="font-size: 16px;">⚠️</span>
+                            <span style="color: #e65100; font-weight: 500;">
+                                <?php echo esc_html(sprintf(__('%s active - set up languages', 'ai-translator-for-elementor-and-polylang'), $plugin_display_name)); ?>
+                            </span>
+                            <a href="<?php echo esc_url($lang_setup_url); ?>" style="color: #1976d2; font-size: 12px;">
+                                <?php esc_html_e('Configure', 'ai-translator-for-elementor-and-polylang'); ?> →
+                            </a>
+                        <?php else: ?>
+                            <span style="font-size: 16px;">⚠️</span>
+                            <span style="color: #e65100; font-weight: 500;">
+                                <?php esc_html_e('No multilingual plugin', 'ai-translator-for-elementor-and-polylang'); ?>
+                            </span>
+                            <span style="color: #666; font-size: 12px;">
+                                <a href="<?php echo esc_url($polylang_install_url); ?>" style="color: #1976d2;">Polylang</a>
+                                <?php esc_html_e('or', 'ai-translator-for-elementor-and-polylang'); ?>
+                                <a href="https://wpml.org/" target="_blank" style="color: #1976d2;">WPML</a>
+                            </span>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>

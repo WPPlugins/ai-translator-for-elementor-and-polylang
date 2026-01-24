@@ -1,11 +1,11 @@
-=== AI Translator for Elementor and Polylang ===
+=== AI Translator for Elementor ===
 Contributors: meeptechdev
 Tags: elementor, polylang, translation, ai, openai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
 Requires Plugins: elementor, polylang
-Stable tag: 1.2.4
+Stable tag: 1.2.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -13,7 +13,7 @@ AI-powered translation for Elementor pages with Polylang. Translate your content
 
 == Description ==
 
-AI Translator for Elementor and Polylang is an AI-powered translation solution for WordPress.
+AI Translator for Elementor is an AI-powered translation solution for WordPress.
 
 **No APIs and no complicated setup required.**
 Translate your Elementor-powered pages seamlessly using OpenAI's advanced translation engine. The newest version also adds support for Gutenberg blocks and the WPML translation engine.
@@ -31,8 +31,8 @@ Translate your Elementor-powered pages seamlessly using OpenAI's advanced transl
 **How it works:**
 
 1. Add the required site languages in Polylang or WPML
-2. Go to the AI Translator for Elementor and Polylang plugin page
-3. Select your Elementor page
+2. Go to the AI Translator for Elementor plugin page
+3. Select your Elementor, Gutenberg, or Classic Editor page
 4. Choose target language(s)
 5. Click Translate – the AI does the rest!
 
@@ -42,16 +42,18 @@ We offer affordable plans to fit your needs:
 
 * **Starter – $9.99/month** – Perfect for landing pages, portfolios, and small business sites. 1 site, ~18,000 words per month.
 * **Agency – $34.99/month** – Best for agencies, freelancers, and managing client sites. Up to 10 sites.
-* **Enterprise – $53.99/month** – Scalable solution for large businesses and white-label use. Unlimited sites.
+* **Enterprise – $53.99/month** – Scalable solution for large businesses. Up to 50 sites.
 
 👉 [Upgrade your license here](https://meeptech.com/products/ai-translator-for-elementor-polylang#pricing)
 
 == Installation ==
 1. Upload the plugin folder to `/wp-content/plugins/` or install via the WordPress Plugins screen.
 2. Activate the plugin through the 'Plugins' screen in WordPress.
-3. Add the languages you need in Polylang Settings (Languages → Languages tab).
+3. Set up your languages:
+   - **Polylang:** Go to Languages → Languages tab → Add your languages
+   - **WPML:** Go to WPML → Languages → Add languages and configure
 4. Navigate to AI Translator plugin page.
-5. Start translating your Elementor pages!
+5. Start translating your Elementor, Gutenberg, and Classic Editor pages!
 
 == Frequently Asked Questions ==
 = How many words can I translate for free? =
@@ -82,6 +84,15 @@ Visit AI Translator → Dashboard to see your current usage and words remaining.
 4. Settings page with cache management and advanced options.
 
 == Changelog ==
+= 1.2.5 =
+* Improved onboarding experience when no multilingual plugin is installed
+* Added friendly welcome screen with step-by-step setup guide
+* Added language configuration detection - shows warning when languages not set up
+* Updated installation instructions with Polylang and WPML setup details
+* Updated "How it works" to include Gutenberg and Classic Editor support
+* Fixed critical error on settings page when no multilingual plugin active
+* Updated Enterprise plan to 50 sites limit
+
 = 1.2.4 =
 * Fixed critical batch translation bug - translations now apply correctly in first pass
 * Fixed permanent deletion for translated pages (skips trash for cleaner workflow)

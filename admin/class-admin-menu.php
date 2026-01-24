@@ -170,7 +170,7 @@ class AITRFOEL_Admin_Menu {
                 <p><?php esc_html_e('If direct activation doesn\'t work, you can also:', 'ai-translator-for-elementor-and-polylang'); ?></p>
                 <ol>
                     <li><?php esc_html_e('Go to Plugins → Installed Plugins', 'ai-translator-for-elementor-and-polylang'); ?></li>
-                    <li><?php esc_html_e('Deactivate "AI Translator for Elementor and Polylang"', 'ai-translator-for-elementor-and-polylang'); ?></li>
+                    <li><?php esc_html_e('Deactivate "AI Translator for Elementor"', 'ai-translator-for-elementor-and-polylang'); ?></li>
                     <li><?php esc_html_e('Activate it again - the license activation dialog will appear', 'ai-translator-for-elementor-and-polylang'); ?></li>
                 </ol>
             </div>
@@ -198,7 +198,7 @@ class AITRFOEL_Admin_Menu {
         ?>
         
         <div class="wrap aitrfoel-admin-wrapper">
-            <h1><?php esc_html_e('AI Translator for Elementor and Polylang', 'ai-translator-for-elementor-and-polylang'); ?></h1>
+            <h1><?php esc_html_e('AI Translator for Elementor', 'ai-translator-for-elementor-and-polylang'); ?></h1>
             
             <!-- Stats Dashboard -->
             <div class="eat-stats-grid">
@@ -360,7 +360,7 @@ class AITRFOEL_Admin_Menu {
                     <div class="eat-review-column">
                         <h3><?php esc_html_e('Rate Our Plugin', 'ai-translator-for-elementor-and-polylang'); ?></h3>
                         <div class="eat-review-content">
-                            <p><?php esc_html_e('If you enjoy using AI Translator for Elementor & Polylang, please take a moment to rate us on WordPress.org! Your feedback helps us improve the plugin and reach more users who could benefit from it.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                            <p><?php esc_html_e('If you enjoy using AI Translator for Elementor, please take a moment to rate us on WordPress.org! Your feedback helps us improve the plugin and reach more users who could benefit from it.', 'ai-translator-for-elementor-and-polylang'); ?></p>
                             <a href="https://wordpress.org/support/plugin/ai-translator-for-elementor-and-polylang/reviews/#new-post" target="_blank" class="button button-primary">
                                 <?php esc_html_e('Leave a Review', 'ai-translator-for-elementor-and-polylang'); ?>
                             </a>
@@ -453,6 +453,97 @@ class AITRFOEL_Admin_Menu {
             'Finnish' => __('Finnish', 'ai-translator-for-elementor-and-polylang'),
         ];
     }
+    
+    /**
+     * Render friendly onboarding screen when no multilingual plugin is installed
+     */
+    private function render_multilingual_onboarding_screen() {
+        $polylang_install_url = admin_url('plugin-install.php?s=polylang&tab=search&type=term');
+        ?>
+        <div class="wrap">
+            <div class="aitrfoel-onboarding-container" style="max-width: 800px; margin: 40px auto; text-align: center;">
+                
+                <!-- Logo/Icon -->
+                <div style="font-size: 64px; margin-bottom: 20px;">🌐</div>
+                
+                <!-- Welcome Title -->
+                <h1 style="font-size: 32px; margin-bottom: 10px; color: #1d2327;">
+                    <?php esc_html_e('Welcome to AI Translator for Elementor!', 'ai-translator-for-elementor-and-polylang'); ?>
+                </h1>
+                
+                <!-- Thank you message -->
+                <p style="font-size: 18px; color: #50575e; margin-bottom: 30px; line-height: 1.6;">
+                    <?php esc_html_e('Thank you for installing AI Translator! This plugin uses artificial intelligence to automatically translate your Elementor, Gutenberg, and Classic Editor pages while preserving all your layouts, styling, and design elements.', 'ai-translator-for-elementor-and-polylang'); ?>
+                </p>
+                
+                <!-- What you need section -->
+                <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 30px; margin-bottom: 30px; text-align: left;">
+                    <h2 style="margin-top: 0; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 24px;">📋</span>
+                        <?php esc_html_e('What You Need', 'ai-translator-for-elementor-and-polylang'); ?>
+                    </h2>
+                    <p style="color: #50575e; font-size: 15px;">
+                        <?php esc_html_e("To use AI Translator, you'll need a multilingual plugin to manage your site's languages. We support:", 'ai-translator-for-elementor-and-polylang'); ?>
+                    </p>
+                    <div style="display: flex; gap: 20px; margin-top: 20px;">
+                        <div style="flex: 1; padding: 20px; background: #f0f6fc; border-radius: 6px; border-left: 4px solid #2271b1;">
+                            <strong style="font-size: 16px;">Polylang</strong>
+                            <span style="background: #00a32a; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 3px; margin-left: 8px;"><?php esc_html_e('FREE', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                            <p style="margin: 10px 0 0; color: #50575e; font-size: 13px;"><?php esc_html_e('Simple and lightweight. Perfect for most websites.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                        </div>
+                        <div style="flex: 1; padding: 20px; background: #fef8ee; border-radius: 6px; border-left: 4px solid #dba617;">
+                            <strong style="font-size: 16px;">WPML</strong>
+                            <span style="background: #dba617; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 3px; margin-left: 8px;"><?php esc_html_e('PREMIUM', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                            <p style="margin: 10px 0 0; color: #50575e; font-size: 13px;"><?php esc_html_e('Full-featured solution for enterprise sites.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- How it works section -->
+                <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 30px; margin-bottom: 30px; text-align: left;">
+                    <h2 style="margin-top: 0; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 24px;">🚀</span>
+                        <?php esc_html_e('How It Works', 'ai-translator-for-elementor-and-polylang'); ?>
+                    </h2>
+                    <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 20px;">
+                        <div style="flex: 1; min-width: 200px; padding: 15px; background: #f6f7f7; border-radius: 6px; text-align: center;">
+                            <div style="width: 36px; height: 36px; background: #2271b1; color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-bottom: 10px;">1</div>
+                            <p style="margin: 0; font-size: 14px; color: #1d2327;"><?php esc_html_e('Install & configure a multilingual plugin', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                        </div>
+                        <div style="flex: 1; min-width: 200px; padding: 15px; background: #f6f7f7; border-radius: 6px; text-align: center;">
+                            <div style="width: 36px; height: 36px; background: #2271b1; color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-bottom: 10px;">2</div>
+                            <p style="margin: 0; font-size: 14px; color: #1d2327;"><?php esc_html_e('Set up your site languages (e.g., English, German, French)', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                        </div>
+                        <div style="flex: 1; min-width: 200px; padding: 15px; background: #f6f7f7; border-radius: 6px; text-align: center;">
+                            <div style="width: 36px; height: 36px; background: #2271b1; color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-bottom: 10px;">3</div>
+                            <p style="margin: 0; font-size: 14px; color: #1d2327;"><?php esc_html_e('Go to AI Translator for Elementor plugin page', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                        </div>
+                        <div style="flex: 1; min-width: 200px; padding: 15px; background: #e7f5e8; border-radius: 6px; text-align: center;">
+                            <div style="width: 36px; height: 36px; background: #00a32a; color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-bottom: 10px;">4</div>
+                            <p style="margin: 0; font-size: 14px; color: #1d2327;"><?php esc_html_e('Select pages and click "Translate" — AI does the rest!', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action buttons -->
+                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                    <a href="<?php echo esc_url($polylang_install_url); ?>" class="button button-primary button-hero" style="font-size: 16px; padding: 10px 30px; height: auto;">
+                        <?php esc_html_e('Install Polylang (Free)', 'ai-translator-for-elementor-and-polylang'); ?>
+                    </a>
+                    <a href="https://wpml.org/" target="_blank" class="button button-secondary button-hero" style="font-size: 16px; padding: 10px 30px; height: auto;">
+                        <?php esc_html_e('Get WPML', 'ai-translator-for-elementor-and-polylang'); ?> →
+                    </a>
+                </div>
+                
+                <!-- Footer note -->
+                <p style="margin-top: 30px; color: #787c82; font-size: 13px; font-style: italic;">
+                    <?php esc_html_e('After installing and configuring your multilingual plugin, this page will show your translation dashboard.', 'ai-translator-for-elementor-and-polylang'); ?>
+                </p>
+                
+            </div>
+        </div>
+        <?php
+    }
 
     /**
      * Render Dashboard page for bulk translations
@@ -460,6 +551,16 @@ class AITRFOEL_Admin_Menu {
     public function render_dashboard_page() {
         // Check for missing dependencies first
         $deps_status = get_option('aitrfoel_dependencies_status', ['status' => true, 'missing' => []]);
+        
+        // Check if only multilingual plugin is missing (show friendly onboarding screen)
+        $only_multilingual_missing = !empty($deps_status['missing']) && 
+                                     count($deps_status['missing']) === 1 && 
+                                     in_array('multilingual', $deps_status['missing']);
+        
+        if ($only_multilingual_missing) {
+            $this->render_multilingual_onboarding_screen();
+            return;
+        }
         
         if (!$deps_status['status'] && !empty($deps_status['missing'])) {
             ?>
@@ -489,7 +590,7 @@ class AITRFOEL_Admin_Menu {
                             <li><strong>PHP 7.4+</strong> - <?php esc_html_e('Please contact your hosting provider to upgrade PHP', 'ai-translator-for-elementor-and-polylang'); ?></li>
                         <?php endif; ?>
                     </ul>
-                    <p style="margin-bottom: 0;"><em><?php esc_html_e('After installing the required plugins, please refresh this page.', 'ai-translator-for-elementor-and-polylang'); ?></em></p>
+                    <p style="margin-bottom: 0;"><em><?php esc_html_e('After installing the required plugins and setting up the languages, please refresh this page.', 'ai-translator-for-elementor-and-polylang'); ?></em></p>
                 </div>
             </div>
             <?php
@@ -504,6 +605,44 @@ class AITRFOEL_Admin_Menu {
                 <h1><?php esc_html_e('Translation Dashboard', 'ai-translator-for-elementor-and-polylang'); ?></h1>
                 <div class="notice notice-error">
                     <p><?php esc_html_e('A multilingual plugin (Polylang or WPML) is required for the Dashboard functionality.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                </div>
+            </div>
+            <?php
+            return;
+        }
+        
+        // Check if languages are configured (need at least 2 for translation)
+        $has_languages = method_exists($multilingual, 'has_languages_configured') && $multilingual->has_languages_configured();
+        $language_count = method_exists($multilingual, 'get_language_count') ? $multilingual->get_language_count() : 0;
+        $plugin_display_name = $multilingual->get_plugin_display_name();
+        $detected_plugin = $multilingual->get_detected_plugin();
+        
+        if (!$has_languages) {
+            $polylang_url = admin_url('admin.php?page=mlang');
+            $wpml_url = admin_url('admin.php?page=sitepress-multilingual-cms/menu/languages.php');
+            $lang_setup_url = $detected_plugin === 'wpml' ? $wpml_url : $polylang_url;
+            ?>
+            <div class="wrap">
+                <h1><?php esc_html_e('Translation Dashboard', 'ai-translator-for-elementor-and-polylang'); ?></h1>
+                <div class="notice notice-warning" style="padding: 15px;">
+                    <h3 style="margin-top: 0;">
+                        <?php echo esc_html(sprintf(__('%s is installed - Languages needed', 'ai-translator-for-elementor-and-polylang'), $plugin_display_name)); ?>
+                    </h3>
+                    <p>
+                        <?php 
+                        if ($language_count === 0) {
+                            esc_html_e('No languages have been configured yet. You need at least 2 languages to use the translation feature.', 'ai-translator-for-elementor-and-polylang');
+                        } elseif ($language_count === 1) {
+                            esc_html_e('Only 1 language is configured. You need at least 2 languages to translate between.', 'ai-translator-for-elementor-and-polylang');
+                        }
+                        ?>
+                    </p>
+                    <p>
+                        <a href="<?php echo esc_url($lang_setup_url); ?>" class="button button-primary">
+                            <?php echo esc_html(sprintf(__('Set up languages in %s', 'ai-translator-for-elementor-and-polylang'), $plugin_display_name)); ?>
+                        </a>
+                    </p>
+                    <p style="margin-bottom: 0;"><em><?php esc_html_e('After setting up the languages, please refresh this page.', 'ai-translator-for-elementor-and-polylang'); ?></em></p>
                 </div>
             </div>
             <?php
@@ -1259,8 +1398,8 @@ class AITRFOEL_Admin_Menu {
     public function render_plugin_header($current_page = 'Dashboard') {
         // Dynamic plugin name based on version type
         $plugin_name = (defined('AITRFOEL_VERSION_TYPE') && AITRFOEL_VERSION_TYPE === 'free') 
-            ? __('AI Translator for Elementor and Polylang', 'ai-translator-for-elementor-and-polylang')
-            : __('AI Translator for Elementor and Polylang', 'ai-translator-for-elementor-and-polylang');
+            ? __('AI Translator for Elementor', 'ai-translator-for-elementor-and-polylang')
+            : __('AI Translator for Elementor', 'ai-translator-for-elementor-and-polylang');
         ?>
         <div class="eat-plugin-header">
             <h1 class="eat-plugin-title">
@@ -1326,7 +1465,7 @@ class AITRFOEL_Admin_Menu {
                 <div class="eat-review-column">
                     <h3><?php esc_html_e('Rate Our Plugin', 'ai-translator-for-elementor-and-polylang'); ?></h3>
                     <div class="eat-review-content">
-                        <p><?php esc_html_e('If you enjoy using AI Translator for Elementor & Polylang, please take a moment to rate us on WordPress.org! Your feedback helps us improve the plugin and reach more users who could benefit from it.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                        <p><?php esc_html_e('If you enjoy using AI Translator for Elementor, please take a moment to rate us on WordPress.org! Your feedback helps us improve the plugin and reach more users who could benefit from it.', 'ai-translator-for-elementor-and-polylang'); ?></p>
                         <a href="https://wordpress.org/support/plugin/ai-translator-for-elementor-and-polylang/reviews/#new-post" target="_blank" class="button button-primary">
                             <?php esc_html_e('Leave a Review', 'ai-translator-for-elementor-and-polylang'); ?>
                         </a>

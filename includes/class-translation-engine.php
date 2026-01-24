@@ -801,25 +801,23 @@ class AITRFOEL_Translation_Engine {
                     $status_code = wp_remote_retrieve_response_code($response);
                     $body = wp_remote_retrieve_body($response);
                     
-                    // Update local cache
+                    // Update local cache from server response
                     $data = json_decode($body, true);
                     if (isset($data['total_words_used'])) {
                         update_option('aitrfoel_words_used_this_month', $data['total_words_used']);
+                    }
+                    
+                    // Handle server-side cooldown state (source of truth)
+                    if (isset($data['cooldown_active']) && $data['cooldown_active'] === true) {
+                        // Server says cooldown is active - use server's end date
+                        $cooldown_end = strtotime($data['cooldown_ends_at']);
+                        update_option('aitrfoel_cooldown_end_date', $cooldown_end);
                         
-                        // Check if free user hit limit - activate cooldown
-                        $license_status = $license_manager->get_license_status();
-                        $plan = $license_status['plan'];
-                        $word_limit = $license_status['word_limit'];
-                        $words_used_after = $data['total_words_used'];
-                        
-                        if (strtolower($plan) === 'free' && $word_limit !== -1 && $words_used_after >= $word_limit) {
-                            // User just hit the limit - activate 7-day cooldown
-                            $cooldown_end = time() + (7 * DAY_IN_SECONDS);
-                            update_option('aitrfoel_cooldown_end_date', $cooldown_end);
-                            
-                            // Set a transient to show admin notice
-                            set_transient('aitrfoel_cooldown_activated', true, 60);
-                        }
+                        // Set a transient to show admin notice
+                        set_transient('aitrfoel_cooldown_activated', true, 60);
+                    } elseif (isset($data['cooldown_active']) && $data['cooldown_active'] === false) {
+                        // Server says no cooldown - clear local cooldown if exists
+                        delete_option('aitrfoel_cooldown_end_date');
                     }
                 } else {
                     error_log('EAT: Failed to report usage: ' . $response->get_error_message());
@@ -1372,18 +1370,17 @@ class AITRFOEL_Translation_Engine {
                 
                 if (isset($data['total_words_used'])) {
                     update_option('aitrfoel_words_used_this_month', $data['total_words_used']);
-                    
-                    // Check cooldown for free plan
-                    $license_manager = AITRFOEL_License_Manager_Server::get_instance();
-                    $license_status = $license_manager->get_license_status();
-                    $plan = $license_status['plan'];
-                    $word_limit = $license_status['word_limit'];
-                    
-                    if (strtolower($plan) === 'free' && $word_limit !== -1 && $data['total_words_used'] >= $word_limit) {
-                        $cooldown_end = time() + (7 * DAY_IN_SECONDS);
-                        update_option('aitrfoel_cooldown_end_date', $cooldown_end);
-                        set_transient('aitrfoel_cooldown_activated', true, 60);
-                    }
+                }
+                
+                // Handle server-side cooldown state (source of truth)
+                if (isset($data['cooldown_active']) && $data['cooldown_active'] === true) {
+                    // Server says cooldown is active - use server's end date
+                    $cooldown_end = strtotime($data['cooldown_ends_at']);
+                    update_option('aitrfoel_cooldown_end_date', $cooldown_end);
+                    set_transient('aitrfoel_cooldown_activated', true, 60);
+                } elseif (isset($data['cooldown_active']) && $data['cooldown_active'] === false) {
+                    // Server says no cooldown - clear local cooldown if exists
+                    delete_option('aitrfoel_cooldown_end_date');
                 }
             }
         } catch (Exception $e) {
