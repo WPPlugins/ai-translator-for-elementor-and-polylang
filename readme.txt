@@ -5,11 +5,11 @@ Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
 Requires Plugins: elementor, polylang
-Stable tag: 1.2.5
+Stable tag: 1.2.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI-powered translation for Elementor pages with Polylang. Translate your content instantly using OpenAI.
+AI-powered translation for Elementor, Gutenberg, and Classic pages and posts. Supports Polylang and WPML. Translate instantly using OpenAI.
 
 == Description ==
 
@@ -84,6 +84,13 @@ Visit AI Translator → Dashboard to see your current usage and words remaining.
 4. Settings page with cache management and advanced options.
 
 == Changelog ==
+= 1.2.6 =
+* Dashboard now separates Pages and Posts into dedicated tabs for cleaner navigation
+* Modernized dashboard UI with refined styling, card-based stats, and improved visual hierarchy
+* Added "Go to Source Post" link on translation posts metabox for quick access to translate
+* Improved tab navigation with animated transitions and item counts
+* Updated language flags, page type badges, and table headers with modern design
+
 = 1.2.5 =
 * Improved onboarding experience when no multilingual plugin is installed
 * Added friendly welcome screen with step-by-step setup guide

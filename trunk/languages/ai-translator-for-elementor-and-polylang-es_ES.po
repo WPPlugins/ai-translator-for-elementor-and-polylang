@@ -1,0 +1,858 @@
+# Spanish (Spain) translation for WP AI Translator for Elementor and Polylang
+# Copyright (C) 2025 Meeptech
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: WP AI Translator for Elementor and Polylang 1.0.9\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-ai-translator-for-elementor-polylang\n"
+"POT-Creation-Date: 2025-01-10 00:00:00+00:00\n"
+"PO-Revision-Date: 2025-12-09 12:00:00+00:00\n"
+"Last-Translator: Meeptech <support@meeptech.com>\n"
+"Language-Team: Spanish <es@li.org>\n"
+"Language: es_ES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ai-translator-for-elementor-polylang.php:180
+msgid "Translating..."
+msgstr "Traduciendo..."
+
+#: ai-translator-for-elementor-polylang.php:181
+msgid "Translation completed successfully!"
+msgstr "¡Traducción completada con éxito!"
+
+#: ai-translator-for-elementor-polylang.php:182
+msgid "Translation failed. Please try again."
+msgstr "La traducción falló. Por favor, inténtalo de nuevo."
+
+#: ai-translator-for-elementor-polylang.php:183
+msgid "Are you sure you want to translate this content?"
+msgstr "¿Estás seguro de que quieres traducir este contenido?"
+
+#: ai-translator-for-elementor-polylang.php:235
+msgid "Loading pages..."
+msgstr "Cargando páginas..."
+
+#: ai-translator-for-elementor-polylang.php:236
+msgid "Select a page to translate"
+msgstr "Selecciona una página para traducir"
+
+#: ai-translator-for-elementor-polylang.php:237
+msgid "Error loading pages"
+msgstr "Error al cargar páginas"
+
+#: ai-translator-for-elementor-polylang.php:238
+msgid "Please select a page first"
+msgstr "Por favor, selecciona primero una página"
+
+#: ai-translator-for-elementor-polylang.php:241
+msgid "Calculating..."
+msgstr "Calculando..."
+
+#: ai-translator-for-elementor-polylang.php:242
+msgid "Estimated Cost"
+msgstr "Costo Estimado"
+
+#: ai-translator-for-elementor-polylang.php:243
+msgid "Words"
+msgstr "Palabras"
+
+#: ai-translator-for-elementor-polylang.php:244
+msgid "Tokens"
+msgstr "Tokens"
+
+#: ai-translator-for-elementor-polylang.php:245
+msgid "Provider"
+msgstr "Proveedor"
+
+#: ai-translator-for-elementor-polylang.php:246
+msgid "Model"
+msgstr "Modelo"
+
+#: ai-translator-for-elementor-polylang.php:247
+msgid "This page contains a lot of content and may take longer to translate."
+msgstr "Esta página contiene mucho contenido y puede tardar más en traducirse."
+
+#: ai-translator-for-elementor-polylang.php:248
+msgid "Error calculating cost"
+msgstr "Error al calcular el costo"
+
+#: ai-translator-for-elementor-polylang.php:249
+msgid "Estimate Cost"
+msgstr "Estimar Costo"
+
+#: ai-translator-for-elementor-polylang.php:252
+msgid "Please select a target language"
+msgstr "Por favor, selecciona un idioma de destino"
+
+#: ai-translator-for-elementor-polylang.php:253
+msgid "Time taken"
+msgstr "Tiempo transcurrido"
+
+#: ai-translator-for-elementor-polylang.php:254
+msgid "Words translated"
+msgstr "Palabras traducidas"
+
+#: ai-translator-for-elementor-polylang.php:255
+msgid "Actual cost"
+msgstr "Costo real"
+
+#: ai-translator-for-elementor-polylang.php:256
+msgid "Preview Translation"
+msgstr "Vista previa de la traducción"
+
+#: ai-translator-for-elementor-polylang.php:257
+msgid "Edit Translation"
+msgstr "Editar traducción"
+
+#: ai-translator-for-elementor-polylang.php:258
+msgid "Publish Now"
+msgstr "Publicar ahora"
+
+#: ai-translator-for-elementor-polylang.php:259
+msgid "Translate Page"
+msgstr "Traducir página"
+
+#: ai-translator-for-elementor-polylang.php:260
+msgid "Are you sure you want to publish this page?"
+msgstr "¿Estás seguro de que quieres publicar esta página?"
+
+#: ai-translator-for-elementor-polylang.php:261
+msgid "Page published successfully!"
+msgstr "¡Página publicada con éxito!"
+
+#: ai-translator-for-elementor-polylang.php:264
+msgid "Request timed out. Please try again."
+msgstr "La solicitud ha expirado. Por favor, inténtalo de nuevo."
+
+#: ai-translator-for-elementor-polylang.php:265
+msgid "Network error:"
+msgstr "Error de red:"
+
+#: ai-translator-for-elementor-polylang.php:268
+msgid "Are you sure you want to clear the translation cache?"
+msgstr "¿Estás seguro de que quieres borrar la caché de traducción?"
+
+#: ai-translator-for-elementor-polylang.php:271
+msgid "Pages Translated"
+msgstr "Páginas traducidas"
+
+#: ai-translator-for-elementor-polylang.php:272
+msgid "Words Processed"
+msgstr "Palabras procesadas"
+
+#: ai-translator-for-elementor-polylang.php:273
+msgid "Total Cost"
+msgstr "Costo total"
+
+#: ai-translator-for-elementor-polylang.php:274
+msgid "Daily Average"
+msgstr "Promedio diario"
+
+#: ai-translator-for-elementor-polylang.php:275
+msgid "Breakdown by Provider"
+msgstr "Desglose por proveedor"
+
+#: ai-translator-for-elementor-polylang.php:276
+msgid "Uses"
+msgstr "Usos"
+
+#: ai-translator-for-elementor-polylang.php:277
+msgid "Cost"
+msgstr "Costo"
+
+#: ai-translator-for-elementor-polylang.php:278
+msgid "Error loading statistics"
+msgstr "Error al cargar estadísticas"
+
+#: ai-translator-for-elementor-polylang.php:281
+msgid "Checking..."
+msgstr "Comprobando..."
+
+#: ai-translator-for-elementor-polylang.php:282
+msgid "Theme check complete"
+msgstr "Comprobación del tema completada"
+
+#: ai-translator-for-elementor-polylang.php:283
+msgid "Re-check Compatibility"
+msgstr "Volver a comprobar compatibilidad"
+
+#: ai-translator-for-elementor-polylang.php:284
+msgid "Theme"
+msgstr "Tema"
+
+#: ai-translator-for-elementor-polylang.php:285
+msgid "Status"
+msgstr "Estado"
+
+#: ai-translator-for-elementor-polylang.php:286
+msgid "Fields found"
+msgstr "Campos encontrados"
+
+#: ai-translator-for-elementor-polylang.php:287
+msgid "View fields"
+msgstr "Ver campos"
+
+#: ai-translator-for-elementor-polylang.php:288
+msgid "Detected Fields"
+msgstr "Campos detectados"
+
+#: ai-translator-for-elementor-polylang.php:289
+msgid "Copy all fields"
+msgstr "Copiar todos los campos"
+
+#: ai-translator-for-elementor-polylang.php:290
+msgid "No fields found"
+msgstr "No se encontraron campos"
+
+#: ai-translator-for-elementor-polylang.php:291
+msgid "Fields copied to clipboard"
+msgstr "Campos copiados al portapapeles"
+
+#: ai-translator-for-elementor-polylang.php:318
+msgid "Elementor AI Translator requires Elementor to be installed and activated."
+msgstr "Elementor AI Translator requiere que Elementor esté instalado y activado."
+
+#: ai-translator-for-elementor-polylang.php:328
+msgid "Elementor AI Translator requires Elementor version 3.0.0 or higher."
+msgstr "Elementor AI Translator requiere Elementor versión 3.0.0 o superior."
+
+#: ai-translator-for-elementor-polylang.php:338
+msgid "Elementor AI Translator requires PHP version 7.4 or higher."
+msgstr "Elementor AI Translator requiere PHP versión 7.4 o superior."
+
+#: admin/class-admin-menu.php
+msgid "AI Translator"
+msgstr "Traductor IA"
+
+#: admin/class-admin-menu.php
+msgid "Settings"
+msgstr "Configuración"
+
+#: admin/class-admin-menu.php
+msgid "Dashboard"
+msgstr "Panel de control"
+
+#: admin/class-admin-menu.php
+msgid "Source Language"
+msgstr "Idioma de origen"
+
+#: admin/class-admin-menu.php
+msgid "Target Language"
+msgstr "Idioma de destino"
+
+#: admin/class-admin-menu.php
+msgid "Select Page"
+msgstr "Seleccionar página"
+
+#: admin/class-admin-menu.php
+msgid "Fetch Content"
+msgstr "Obtener contenido"
+
+#: admin/class-admin-menu.php
+msgid "Translate"
+msgstr "Traducir"
+
+#: admin/class-admin-menu.php
+msgid "Reset"
+msgstr "Restablecer"
+
+#: admin/class-admin-menu.php
+msgid "Select All"
+msgstr "Seleccionar todo"
+
+#: admin/class-admin-menu.php
+msgid "API Configuration"
+msgstr "Configuración de API"
+
+#: admin/class-admin-menu.php
+msgid "API Key"
+msgstr "Clave API"
+
+#: admin/class-admin-menu.php
+msgid "Save Settings"
+msgstr "Guardar configuración"
+
+#: admin/class-admin-menu.php
+msgid "Clear Cache"
+msgstr "Limpiar caché"
+
+#: admin/class-admin-menu.php
+msgid "Translation Options"
+msgstr "Opciones de traducción"
+
+#: admin/class-admin-menu.php
+msgid "Preserve formatting"
+msgstr "Preservar formato"
+
+#: admin/class-admin-menu.php
+msgid "Create as draft"
+msgstr "Crear como borrador"
+
+#: admin/class-admin-menu.php
+msgid "Documentation"
+msgstr "Documentación"
+
+#: admin/class-admin-menu.php
+msgid "Support"
+msgstr "Soporte"
+
+#: admin/class-admin-menu.php
+msgid "Upgrade to Pro"
+msgstr "Actualizar a Pro"
+
+#: includes/class-translation-engine.php
+msgid "Translation in progress..."
+msgstr "Traducción en progreso..."
+
+#: includes/class-translation-engine.php
+msgid "Processing widgets..."
+msgstr "Procesando widgets..."
+
+#: includes/class-translation-engine.php
+msgid "Saving translation..."
+msgstr "Guardando traducción..."
+
+#: includes/class-usage-tracker.php
+msgid "Daily limit reached"
+msgstr "Límite diario alcanzado"
+
+#: includes/class-usage-tracker.php
+msgid "Please wait before trying again"
+msgstr "Por favor, espera antes de intentar de nuevo"
+
+#: includes/class-license-manager.php
+msgid "License activated successfully"
+msgstr "Licencia activada con éxito"
+
+#: includes/class-license-manager.php
+msgid "Invalid license key"
+msgstr "Clave de licencia inválida"
+
+#: includes/class-license-manager.php
+msgid "License expired"
+msgstr "Licencia expirada"
+
+msgid "AI Translator for Elementor and Polylang"
+msgstr "AI Translator for Elementor and Polylang"
+
+msgid "Total Pages"
+msgstr "Total de páginas"
+
+msgid "Words Translated"
+msgstr "Palabras traducidas"
+
+msgid "Words Left"
+msgstr "Palabras restantes"
+
+msgid "License"
+msgstr "Licencia"
+
+msgid "Free"
+msgstr "Gratis"
+
+msgid "Buy More Words"
+msgstr "Comprar más palabras"
+
+msgid "Upgrade Plan"
+msgstr "Mejorar plan"
+
+msgid "Manage translations for your pages. Select source pages to create bulk translations."
+msgstr "Gestiona las traducciones de tus páginas. Selecciona páginas de origen para crear traducciones masivas."
+
+msgid "From:"
+msgstr "De:"
+
+msgid "To:"
+msgstr "A:"
+
+msgid "🌐 Auto-detect ▼"
+msgstr "🌐 Auto-detectar ▼"
+
+msgid "Auto-detect"
+msgstr "Auto-detectar"
+
+msgid "Select languages ▼"
+msgstr "Seleccionar idiomas ▼"
+
+msgid "Select pages for translation"
+msgstr "Seleccionar páginas para traducir"
+
+msgid "Start Translation"
+msgstr "Iniciar traducción"
+
+msgid "Page"
+msgstr "Página"
+
+msgid "Languages"
+msgstr "Idiomas"
+
+msgid "Translation Status"
+msgstr "Estado de traducción"
+
+msgid "Page Type"
+msgstr "Tipo de página"
+
+msgid "Actions"
+msgstr "Acciones"
+
+msgid "Published"
+msgstr "Publicado"
+
+msgid "Draft"
+msgstr "Borrador"
+
+msgid "translated"
+msgstr "traducido"
+
+msgid "Edit"
+msgstr "Editar"
+
+msgid "View"
+msgstr "Ver"
+
+msgid "Delete"
+msgstr "Eliminar"
+
+msgid "Information"
+msgstr "Información"
+
+msgid "Feedback Form"
+msgstr "Formulario de comentarios"
+
+msgid "🔑 License Configuration"
+msgstr "🔑 Configuración de licencia"
+
+msgid "💾 Cache Settings"
+msgstr "💾 Configuración de caché"
+
+msgid "📄 Page Creation Settings"
+msgstr "📄 Configuración de creación de páginas"
+
+msgid "🎨 Theme Compatibility"
+msgstr "🎨 Compatibilidad con tema"
+
+msgid "Current Plan:"
+msgstr "Plan actual:"
+
+msgid "Words Translated:"
+msgstr "Palabras traducidas:"
+
+msgid "Get License"
+msgstr "Obtener licencia"
+
+msgid "Enable Cache"
+msgstr "Habilitar caché"
+
+msgid "Cache translations to avoid duplicate API calls"
+msgstr "Almacenar traducciones en caché para evitar llamadas API duplicadas"
+
+msgid "Cache Duration (days)"
+msgstr "Duración del caché (días)"
+
+msgid "Clear Translation Cache"
+msgstr "Limpiar caché de traducciones"
+
+msgid "🗑️ Clear Translation Cache"
+msgstr "🗑️ Limpiar caché de traducciones"
+
+msgid "Translated Page Status"
+msgstr "Estado de página traducida"
+
+msgid "Draft (Recommended)"
+msgstr "Borrador (Recomendado)"
+
+msgid "Click the button to check theme compatibility."
+msgstr "Haga clic en el botón para verificar la compatibilidad del tema."
+
+msgid "Privacy & Data Collection"
+msgstr "Privacidad y recopilación de datos"
+
+msgid "Privacy Policy"
+msgstr "Política de privacidad"
+
+msgid "Terms of Service"
+msgstr "Términos de servicio"
+
+msgid "Translation in Progress"
+msgstr "Traducción en progreso"
+
+msgid "%d pages selected"
+msgstr "%d páginas seleccionadas"
+
+msgid "Translating..."
+msgstr "Traduciendo..."
+
+msgid "Translation completed successfully!"
+msgstr "¡Traducción completada con éxito!"
+
+msgid "Translation failed. Please try again."
+msgstr "La traducción falló. Por favor, inténtelo de nuevo."
+
+msgid "Are you sure you want to translate this content?"
+msgstr "¿Está seguro de que desea traducir este contenido?"
+
+msgid "Loading pages..."
+msgstr "Cargando páginas..."
+
+msgid "Select a page to translate"
+msgstr "Seleccionar una página para traducir"
+
+msgid "Error loading pages"
+msgstr "Error al cargar páginas"
+
+msgid "Please select a page first"
+msgstr "Por favor, seleccione una página primero"
+
+msgid "Calculating..."
+msgstr "Calculando..."
+
+msgid "Estimated Cost"
+msgstr "Costo estimado"
+
+msgid "Words"
+msgstr "Palabras"
+
+msgid "Tokens"
+msgstr "Tokens"
+
+msgid "Provider"
+msgstr "Proveedor"
+
+msgid "Model"
+msgstr "Modelo"
+
+msgid "Error calculating cost"
+msgstr "Error al calcular el costo"
+
+msgid "Estimate Cost"
+msgstr "Estimar costo"
+
+msgid "Please select a target language"
+msgstr "Por favor seleccione un idioma de destino"
+
+msgid "Time taken"
+msgstr "Tiempo empleado"
+
+msgid "Words translated"
+msgstr "Palabras traducidas"
+
+msgid "Actual cost"
+msgstr "Costo real"
+
+msgid "Dashboard"
+msgstr "Panel de control"
+
+msgid "Settings"
+msgstr "Configuración"
+
+msgid "AI Translator"
+msgstr "AI Translator"
+
+msgid "Documentation"
+msgstr "Documentación"
+
+msgid "Clear Cache"
+msgstr "Limpiar caché"
+
+msgid "Re-check Compatibility"
+msgstr "Verificar compatibilidad de nuevo"
+
+msgid "Save Settings"
+msgstr "Guardar configuración"
+
+msgid "Select All"
+msgstr "Seleccionar todo"
+
+msgid "Setup"
+msgstr "Configuración"
+
+msgid "Elementor"
+msgstr "Elementor"
+
+msgid "Standard"
+msgstr "Estándar"
+
+msgid "Cancel"
+msgstr "Cancelar"
+
+msgid "Close"
+msgstr "Cerrar"
+
+msgid "Confirm"
+msgstr "Confirmar"
+
+msgid "Loading..."
+msgstr "Cargando..."
+
+msgid "Error"
+msgstr "Error"
+
+msgid "Success"
+msgstr "Éxito"
+
+msgid "Warning"
+msgstr "Advertencia"
+
+msgid "Yes"
+msgstr "Sí"
+
+msgid "No"
+msgstr "No"
+
+msgid "Save"
+msgstr "Guardar"
+
+msgid "Saving..."
+msgstr "Guardando..."
+
+msgid "Settings saved successfully!"
+msgstr "¡Configuración guardada con éxito!"
+
+msgid "Error saving settings"
+msgstr "Error al guardar la configuración"
+
+msgid "Please wait..."
+msgstr "Por favor espere..."
+
+msgid "Select"
+msgstr "Seleccionar"
+
+msgid "Deselect"
+msgstr "Deseleccionar"
+
+msgid "All"
+msgstr "Todo"
+
+msgid "None"
+msgstr "Ninguno"
+
+msgid "Next"
+msgstr "Siguiente"
+
+msgid "Previous"
+msgstr "Anterior"
+
+msgid "Search"
+msgstr "Buscar"
+
+msgid "Filter"
+msgstr "Filtrar"
+
+msgid "Refresh"
+msgstr "Actualizar"
+
+msgid "No pages found"
+msgstr "No se encontraron páginas"
+
+msgid "Processing..."
+msgstr "Procesando..."
+
+msgid "Complete"
+msgstr "Completado"
+
+msgid "Pending"
+msgstr "Pendiente"
+
+msgid "Failed"
+msgstr "Fallido"
+
+msgid "Translation Queue"
+msgstr "Cola de traducción"
+
+msgid "Bulk Translation"
+msgstr "Traducción masiva"
+
+msgid "Language"
+msgstr "Idioma"
+
+msgid "Progress"
+msgstr "Progreso"
+
+msgid "Time"
+msgstr "Tiempo"
+
+msgid "Date"
+msgstr "Fecha"
+
+msgid "Title"
+msgstr "Título"
+
+msgid "Description"
+msgstr "Descripción"
+
+msgid "Content"
+msgstr "Contenido"
+
+msgid "Checking theme compatibility..."
+msgstr "Verificando compatibilidad del tema..."
+
+msgid "Premium"
+msgstr "Premium"
+
+msgid "Pro"
+msgstr "Pro"
+
+msgid "Basic"
+msgstr "Básico"
+
+msgid "Unlimited"
+msgstr "Ilimitado"
+
+msgid "Used"
+msgstr "Usado"
+
+msgid "Remaining"
+msgstr "Restante"
+
+msgid "per month"
+msgstr "por mes"
+
+msgid "per year"
+msgstr "por año"
+
+msgid "Help"
+msgstr "Ayuda"
+
+msgid "Contact"
+msgstr "Contacto"
+
+msgid "About"
+msgstr "Acerca de"
+
+msgid "Version"
+msgstr "Versión"
+
+msgid "Update"
+msgstr "Actualizar"
+
+msgid "Check for updates"
+msgstr "Buscar actualizaciones"
+
+msgid "No updates available"
+msgstr "No hay actualizaciones disponibles"
+
+msgid "An error occurred"
+msgstr "Ocurrió un error"
+
+msgid "Please try again later"
+msgstr "Por favor, inténtelo más tarde"
+
+msgid "Something went wrong"
+msgstr "Algo salió mal"
+
+msgid "Welcome to AI Translator!"
+msgstr "¡Bienvenido a AI Translator!"
+
+msgid "Translate your Elementor pages instantly with AI. Watch the quick tutorial below to get started."
+msgstr "Traduce tus páginas de Elementor instantáneamente con IA. Mira el tutorial rápido a continuación para comenzar."
+
+msgid "How to Use AI Translator"
+msgstr "Cómo usar AI Translator"
+
+msgid "Quick tutorial"
+msgstr "Tutorial rápido"
+
+msgid "AI Translation"
+msgstr "Traducción con IA"
+
+msgid "Translate pages with one click using advanced AI"
+msgstr "Traduce páginas con un clic usando IA avanzada"
+
+msgid "Bulk Mode"
+msgstr "Modo masivo"
+
+msgid "Translate multiple pages at once to save time"
+msgstr "Traduce varias páginas a la vez para ahorrar tiempo"
+
+msgid "Elementor Ready"
+msgstr "Listo para Elementor"
+
+msgid "Works seamlessly with all Elementor widgets"
+msgstr "Funciona perfectamente con todos los widgets de Elementor"
+
+msgid "Quick Start Guide:"
+msgstr "Guía de inicio rápido:"
+
+msgid "Set up languages"
+msgstr "Configura los idiomas"
+
+msgid "Go to %s to add the languages you need."
+msgstr "Ve a %s para agregar los idiomas que necesitas."
+
+msgid "Select pages to translate"
+msgstr "Selecciona páginas para traducir"
+
+msgid "Choose your Elementor pages and target languages."
+msgstr "Elige tus páginas de Elementor e idiomas de destino."
+
+msgid "Start translating!"
+msgstr "¡Empieza a traducir!"
+
+msgid "Click translate and let AI do the work for you."
+msgstr "Haz clic en traducir y deja que la IA haga el trabajo por ti."
+
+msgid "Let's Get Started!"
+msgstr "¡Empecemos!"
+
+msgid "View Documentation"
+msgstr "Ver documentación"
+
+msgid "Press ESC or click anywhere outside to close"
+msgstr "Presiona ESC o haz clic afuera para cerrar"
+
+msgid "Your browser does not support the video tag."
+msgstr "Tu navegador no soporta la etiqueta de video."
+
+msgid "Translate your Elementor pages instantly with AI."
+msgstr "Traduce tus páginas de Elementor instantáneamente con IA."
+
+msgid "One-click translation with advanced AI"
+msgstr "Traducción con un clic usando IA avanzada"
+
+msgid "Translate multiple pages at once"
+msgstr "Traduce varias páginas a la vez"
+
+msgid "Works with all Elementor widgets"
+msgstr "Funciona con todos los widgets de Elementor"
+
+msgid "Set up languages in"
+msgstr "Configura los idiomas en"
+
+msgid "Select pages & target languages"
+msgstr "Selecciona páginas e idiomas de destino"
+
+msgid "Click translate!"
+msgstr "¡Haz clic en traducir!"
+
+msgid "Help us improve by enabling anonymous usage tracking"
+msgstr "Ayúdanos a mejorar habilitando el seguimiento anónimo de uso"
+
+msgid "What we collect:"
+msgstr "Qué recopilamos:"
+
+msgid "Plugin version & WordPress version"
+msgstr "Versión del plugin y WordPress"
+
+msgid "Features used (translation, bulk mode)"
+msgstr "Funciones utilizadas (traducción, modo masivo)"
+
+msgid "Error reports for debugging"
+msgstr "Informes de errores para depuración"
+
+msgid "AI model usage statistics"
+msgstr "Estadísticas de uso del modelo de IA"
+
+msgid "We never collect:"
+msgstr "Nunca recopilamos:"
+
+msgid "Personal data or content"
+msgstr "Datos personales o contenido"
+
+msgid "API keys or credentials"
+msgstr "Claves API o credenciales"
+
+msgid "Data is never shared with third parties."
+msgstr "Los datos nunca se comparten con terceros."

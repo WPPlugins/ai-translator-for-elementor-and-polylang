@@ -15,9 +15,12 @@ jQuery(document).ready(function($) {
     }
 
     const Dashboard = {
+        activeTab: 'pages', // Track current active tab
+
         init: function() {
             this.bindEvents();
             this.setupLanguageDropdown();
+            this.initContentTabs(); // Initialize pages/posts tab switching
             this.updateStartButtonState(); // Initialize button state
             this.updateDropdownsState(false); // Initially disable dropdowns
             this.checkForActiveTranslations(); // Check for ongoing translations on page load
@@ -26,6 +29,44 @@ jQuery(document).ready(function($) {
             
             // Initialize progress tracking
             this.progressInterval = null;
+        },
+
+        /**
+         * Initialize content type tabs (Pages / Posts)
+         */
+        initContentTabs: function() {
+            const self = this;
+            
+            $(document).on('click', '.eat-tab-btn', function(e) {
+                e.preventDefault();
+                const $btn = $(this);
+                const tab = $btn.data('tab');
+                
+                if (tab === self.activeTab) return;
+                
+                // Update active tab
+                self.activeTab = tab;
+                
+                // Update tab button states
+                $('.eat-tab-btn').removeClass('active').attr('aria-selected', 'false');
+                $btn.addClass('active').attr('aria-selected', 'true');
+                
+                // Show/hide tab panels
+                $('.eat-tab-panel').hide();
+                $('#eat-tab-' + tab).show();
+                
+                // Reset select-all checkboxes
+                $('#cb-select-all, #cb-select-all-posts').prop('checked', false);
+                
+                // Uncheck any selected items in hidden tab, keep visible tab's selection
+                // (Don't uncheck the active tab's items)
+                
+                // Re-initialize accordion for newly visible tab
+                self.initTableAccordion();
+                
+                // Update button state
+                self.updateStartButtonState();
+            });
         },
 
         checkForActiveTranslations: function() {
@@ -447,7 +488,7 @@ jQuery(document).ready(function($) {
         bindEvents: function() {
             // Checkbox selection events
             $(document).on('change', '.eat-page-checkbox', this.handlePageSelection);
-            $(document).on('change', '#cb-select-all', this.handleSelectAll);
+            $(document).on('change', '#cb-select-all, #cb-select-all-posts', this.handleSelectAll);
             
             // Language selection events
             $(document).on('click', '#eat-select-languages', this.toggleLanguageDropdown);
@@ -512,7 +553,13 @@ jQuery(document).ready(function($) {
 
         handleSelectAll: function() {
             const isChecked = $(this).is(':checked');
-            $('.eat-page-checkbox:not(:disabled)').prop('checked', isChecked);
+            // Only affect checkboxes in the active tab panel
+            const $activePanel = $('.eat-tab-panel.active');
+            if ($activePanel.length) {
+                $activePanel.find('.eat-page-checkbox:not(:disabled)').prop('checked', isChecked);
+            } else {
+                $('.eat-page-checkbox:not(:disabled)').prop('checked', isChecked);
+            }
             Dashboard.handlePageSelection();
         },
 

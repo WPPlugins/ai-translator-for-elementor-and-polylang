@@ -406,7 +406,7 @@ class AITRFOEL_Admin_Menu {
      */
     private function get_elementor_pages() {
         $args = [
-            'post_type' => 'page',
+            'post_type' => ['page', 'post'],
             'posts_per_page' => -1,
             'post_status' => 'publish',
             'meta_query' => [
@@ -657,7 +657,7 @@ class AITRFOEL_Admin_Menu {
             <?php $this->render_compact_stats_bar(); ?>
             <?php $this->render_plugin_header(__('Dashboard', 'ai-translator-for-elementor-and-polylang')); ?>
             
-            <p class="description"><?php esc_html_e('Manage translations for your pages. Select source pages to create bulk translations.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+            <p class="description"><?php esc_html_e('Manage translations for your pages and posts. Select source content to create bulk translations.', 'ai-translator-for-elementor-and-polylang'); ?></p>
             
             <!-- Bulk Translation Bar (always visible) -->
             <div id="eat-bulk-bar" class="eat-bulk-translation-bar">
@@ -727,38 +727,107 @@ class AITRFOEL_Admin_Menu {
                 </div>
             </div>
             
-            <!-- Pages Table -->
-            <div class="aitrfoel-dashboard-table">
-                <table class="wp-list-table widefat fixed">
-                    <thead>
-                        <tr>
-                            <td id="cb" class="manage-column column-cb check-column">
-                                <input id="cb-select-all" type="checkbox">
-                            </td>
-                            <th scope="col" class="manage-column column-title">
-                                <?php esc_html_e('Page', 'ai-translator-for-elementor-and-polylang'); ?>
-                            </th>
-                            <th scope="col" class="manage-column column-languages">
-                                <?php esc_html_e('Languages', 'ai-translator-for-elementor-and-polylang'); ?>
-                            </th>
-                            <th scope="col" class="manage-column column-status">
-                                <?php esc_html_e('Translation Status', 'ai-translator-for-elementor-and-polylang'); ?>
-                            </th>
-                            <th scope="col" class="manage-column column-page-type">
-                                <?php esc_html_e('Page Type', 'ai-translator-for-elementor-and-polylang'); ?>
-                            </th>
-                            <th scope="col" class="manage-column column-actions">
-                                <?php esc_html_e('Actions', 'ai-translator-for-elementor-and-polylang'); ?>
-                            </th>
-                            <th scope="col" class="manage-column column-expand">
-                                <span class="dashicons dashicons-list-view" title="<?php esc_html_e('Expand/Collapse', 'ai-translator-for-elementor-and-polylang'); ?>"></span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php $this->render_pages_rows($pages_data); ?>
-                    </tbody>
-                </table>
+            <?php
+            // Separate pages_data into pages and posts
+            $pages_only = [];
+            $posts_only = [];
+            foreach ($pages_data as $group) {
+                if ($group['source']->post_type === 'page') {
+                    $pages_only[] = $group;
+                } else {
+                    $posts_only[] = $group;
+                }
+            }
+            $pages_count = count($pages_only);
+            $posts_count = count($posts_only);
+            ?>
+
+            <!-- Content Type Tabs -->
+            <div class="eat-content-tabs">
+                <nav class="eat-tab-nav" role="tablist">
+                    <button type="button" class="eat-tab-btn active" data-tab="pages" role="tab" aria-selected="true" aria-controls="eat-tab-pages">
+                        <span class="dashicons dashicons-admin-page"></span>
+                        <?php esc_html_e('Pages', 'ai-translator-for-elementor-and-polylang'); ?>
+                        <span class="eat-tab-count"><?php echo absint($pages_count); ?></span>
+                    </button>
+                    <button type="button" class="eat-tab-btn" data-tab="posts" role="tab" aria-selected="false" aria-controls="eat-tab-posts">
+                        <span class="dashicons dashicons-admin-post"></span>
+                        <?php esc_html_e('Posts', 'ai-translator-for-elementor-and-polylang'); ?>
+                        <span class="eat-tab-count"><?php echo absint($posts_count); ?></span>
+                    </button>
+                </nav>
+
+                <!-- Pages Tab -->
+                <div id="eat-tab-pages" class="eat-tab-panel active" role="tabpanel" data-tab="pages">
+                    <div class="aitrfoel-dashboard-table">
+                        <table class="wp-list-table widefat fixed">
+                            <thead>
+                                <tr>
+                                    <td id="cb" class="manage-column column-cb check-column">
+                                        <input id="cb-select-all" type="checkbox" data-tab="pages">
+                                    </td>
+                                    <th scope="col" class="manage-column column-title">
+                                        <?php esc_html_e('Page', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </th>
+                                    <th scope="col" class="manage-column column-languages">
+                                        <?php esc_html_e('Languages', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </th>
+                                    <th scope="col" class="manage-column column-status">
+                                        <?php esc_html_e('Translation Status', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </th>
+                                    <th scope="col" class="manage-column column-page-type">
+                                        <?php esc_html_e('Page Type', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </th>
+                                    <th scope="col" class="manage-column column-actions">
+                                        <?php esc_html_e('Actions', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </th>
+                                    <th scope="col" class="manage-column column-expand">
+                                        <span class="dashicons dashicons-list-view" title="<?php esc_html_e('Expand/Collapse', 'ai-translator-for-elementor-and-polylang'); ?>"></span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $this->render_pages_rows($pages_only); ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Posts Tab -->
+                <div id="eat-tab-posts" class="eat-tab-panel" role="tabpanel" data-tab="posts" style="display: none;">
+                    <div class="aitrfoel-dashboard-table">
+                        <table class="wp-list-table widefat fixed">
+                            <thead>
+                                <tr>
+                                    <td class="manage-column column-cb check-column">
+                                        <input id="cb-select-all-posts" type="checkbox" data-tab="posts">
+                                    </td>
+                                    <th scope="col" class="manage-column column-title">
+                                        <?php esc_html_e('Post', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </th>
+                                    <th scope="col" class="manage-column column-languages">
+                                        <?php esc_html_e('Languages', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </th>
+                                    <th scope="col" class="manage-column column-status">
+                                        <?php esc_html_e('Translation Status', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </th>
+                                    <th scope="col" class="manage-column column-page-type">
+                                        <?php esc_html_e('Page Type', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </th>
+                                    <th scope="col" class="manage-column column-actions">
+                                        <?php esc_html_e('Actions', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </th>
+                                    <th scope="col" class="manage-column column-expand">
+                                        <span class="dashicons dashicons-list-view" title="<?php esc_html_e('Expand/Collapse', 'ai-translator-for-elementor-and-polylang'); ?>"></span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $this->render_pages_rows($posts_only); ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
             
             <?php $this->render_quick_tips(); ?>
@@ -778,9 +847,9 @@ class AITRFOEL_Admin_Menu {
             return [];
         }
 
-        // Get all pages
+        // Get all pages and posts
         $all_pages = get_posts([
-            'post_type' => 'page',
+            'post_type' => ['page', 'post'],
             'post_status' => ['publish', 'draft'],
             'numberposts' => -1,
             'orderby' => 'title',
@@ -940,7 +1009,7 @@ class AITRFOEL_Admin_Menu {
      */
     public function render_pages_rows($pages_data) {
         if (empty($pages_data)) {
-            echo '<tr><td colspan="6">' . esc_html__('No pages found.', 'ai-translator-for-elementor-and-polylang') . '</td></tr>';
+            echo '<tr><td colspan="6">' . esc_html__('No pages or posts found.', 'ai-translator-for-elementor-and-polylang') . '</td></tr>';
             return;
         }
         
@@ -979,6 +1048,8 @@ class AITRFOEL_Admin_Menu {
             
             // Get the correct permalink using the multilingual manager
             $source_permalink = $multilingual->get_post_permalink($source->ID);
+            $post_type_icon = ($source->post_type === 'post') ? '📄' : '🏠';
+            $post_type_label = ($source->post_type === 'post') ? __('Post', 'ai-translator-for-elementor-and-polylang') : __('Page', 'ai-translator-for-elementor-and-polylang');
             ?>
             <tr class="eat-source-page" data-page-id="<?php echo absint($source->ID); ?>">
                 <th scope="row" class="check-column">
@@ -993,7 +1064,7 @@ class AITRFOEL_Admin_Menu {
                 <td class="column-title">
                     <strong>
                         <a class="eat-page-title-link" href="<?php echo esc_url($source_permalink); ?>" target="_blank" rel="noopener">
-                            🏠 <?php echo esc_html($source->post_title); ?>
+                            <?php echo esc_html($post_type_icon); ?> <?php echo esc_html($source->post_title); ?>
                             <span class="eat-page-lang">(<?php echo esc_html(strtoupper($multilingual->get_post_language($source->ID) ?: '?')); ?>)</span>
                         </a>
                     </strong>

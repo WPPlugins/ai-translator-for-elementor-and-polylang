@@ -388,9 +388,9 @@ class AITRFOEL_Polylang_Integration extends AITRFOEL_Multilingual_Interface {
             return [];
         }
         
-        // Get all pages with Elementor data
+        // Get all pages and posts with Elementor data
         $pages = get_posts([
-            'post_type' => 'page',
+            'post_type' => ['page', 'post'],
             'posts_per_page' => -1,
             'post_status' => ['publish', 'draft'],
             'meta_query' => [

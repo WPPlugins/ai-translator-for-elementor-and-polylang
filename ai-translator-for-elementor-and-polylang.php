@@ -2,8 +2,8 @@
 /**
  * Plugin Name: AI Translator for Elementor
  * Plugin URI: https://meeptech.com/products/ai-translator-for-elementor-and-polylang
- * Description: AI-powered translation for Elementor, Gutenberg, and Classic Editor pages with Polylang or WPML using OpenAI
- * Version: 1.2.5
+ * Description: AI-powered translation for Elementor, Gutenberg, and Classic Editor pages and posts with Polylang or WPML using OpenAI
+ * Version: 1.2.6
  * Author: Meep Tech
  * Author URI: https://meeptech.com
  * License: GPL v2 or later
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('AITRFOEL_VERSION', '1.2.5');
+define('AITRFOEL_VERSION', '1.2.6');
 define('AITRFOEL_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AITRFOEL_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AITRFOEL_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -262,6 +262,9 @@ class AITRFOEL_Main {
             if (!class_exists('AITRFOEL_Settings')) {
                 require_once AITRFOEL_PLUGIN_DIR . 'admin/class-settings.php';
             }
+            if (!class_exists('AITRFOEL_Translation_Metabox')) {
+                require_once AITRFOEL_PLUGIN_DIR . 'admin/class-translation-metabox.php';
+            }
         }
         
         // AJAX handler must be loaded for both admin and frontend AJAX requests
@@ -307,6 +310,11 @@ class AITRFOEL_Main {
             if (is_admin()) {
                 AITRFOEL_Admin_Menu::get_instance();
                 AITRFOEL_Settings::init();
+                
+                // Initialize translation metabox for post/page edit screens
+                if (class_exists('AITRFOEL_Translation_Metabox')) {
+                    AITRFOEL_Translation_Metabox::get_instance();
+                }
             }
             
             // Initialize AJAX handler (needed for both admin and frontend AJAX requests)

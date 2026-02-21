@@ -73,12 +73,12 @@ class AITRFOEL_Ajax_Handler {
         try {
             check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
             
-            if (!current_user_can('edit_pages')) {
+            if (!current_user_can('edit_pages') && !current_user_can('edit_posts')) {
                 throw new Exception(__('You do not have permission to perform this action.', 'ai-translator-for-elementor-and-polylang'));
             }
             
             $args = [
-                'post_type' => 'page',
+                'post_type' => ['page', 'post'],
                 'post_status' => 'publish',
                 'posts_per_page' => -1,
                 'orderby' => 'title',
@@ -90,7 +90,7 @@ class AITRFOEL_Ajax_Handler {
             $pages = get_posts($args);
             
             if (empty($pages)) {
-                wp_send_json_error(__('No Elementor pages found.', 'ai-translator-for-elementor-and-polylang'));
+                wp_send_json_error(__('No Elementor pages or posts found.', 'ai-translator-for-elementor-and-polylang'));
                 return;
             }
             
@@ -210,7 +210,7 @@ class AITRFOEL_Ajax_Handler {
         try {
             check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
             
-            if (!current_user_can('edit_pages')) {
+            if (!current_user_can('edit_pages') && !current_user_can('edit_posts')) {
                 throw new Exception(__('You do not have permission to perform this action.', 'ai-translator-for-elementor-and-polylang'));
             }
             
@@ -1844,8 +1844,8 @@ class AITRFOEL_Ajax_Handler {
             }
 
             // Check permissions
-            if (!current_user_can('delete_pages')) {
-                throw new Exception('Insufficient permissions to delete pages');
+            if (!current_user_can('delete_pages') && !current_user_can('delete_posts')) {
+                throw new Exception('Insufficient permissions to delete content');
             }
 
             $page_id = intval($_POST['page_id']);
@@ -1860,8 +1860,8 @@ class AITRFOEL_Ajax_Handler {
                 throw new Exception('Page not found');
             }
 
-            if ($page->post_type !== 'page') {
-                throw new Exception('Only pages can be deleted through this interface');
+            if (!in_array($page->post_type, ['page', 'post'])) {
+                throw new Exception('Only pages and posts can be deleted through this interface');
             }
 
             // Check if this is a translated page (not an original)
