@@ -73,11 +73,26 @@ class AITRFOEL_Admin_Menu {
                 // Try to activate the license using Freemius
                 try {
                     $result = eatp_fs()->activate_migrated_license($license_key);
-                    if (is_object($result) && isset($result->error)) {
-                        $error_message = $result->error->message ?? __('License activation failed.', 'ai-translator-for-elementor-and-polylang');
+                    
+                    // activate_migrated_license returns an array, not an object
+                    if (is_array($result) && isset($result['error'])) {
+                        $error_message = is_string($result['error']) ? $result['error'] : __('License activation failed.', 'ai-translator-for-elementor-and-polylang');
+                    } elseif (is_object($result) && isset($result->error)) {
+                        $error_message = isset($result->error->message) ? $result->error->message : __('License activation failed.', 'ai-translator-for-elementor-and-polylang');
                     } else {
-                        // Success - redirect to account page
-                        wp_redirect(admin_url('admin.php?page=ai-translator-for-elementor-and-polylang-account&activated=true'));
+                        // Check if pending email confirmation
+                        if (function_exists('eatp_fs') && method_exists(eatp_fs(), 'is_pending_activation') && eatp_fs()->is_pending_activation()) {
+                            // Redirect to main page with pending notice
+                            wp_redirect(admin_url('admin.php?page=ai-translator-for-elementor-and-polylang&license_pending=true'));
+                            exit;
+                        }
+                        
+                        // Success - use Freemius-provided next_page URL if available, otherwise redirect to main plugin page
+                        $redirect_url = admin_url('admin.php?page=ai-translator-for-elementor-and-polylang&activated=true');
+                        if (is_array($result) && !empty($result['next_page'])) {
+                            $redirect_url = $result['next_page'];
+                        }
+                        wp_redirect($redirect_url);
                         exit;
                     }
                 } catch (Exception $e) {
@@ -460,83 +475,95 @@ class AITRFOEL_Admin_Menu {
     private function render_multilingual_onboarding_screen() {
         $polylang_install_url = admin_url('plugin-install.php?s=polylang&tab=search&type=term');
         ?>
+        <!-- Hide all WP admin notices on the onboarding screen -->
+        <style>
+            .wrap > .notice, .wrap > .error, .wrap > .updated,
+            #wpbody-content > .notice, #wpbody-content > .error, #wpbody-content > .updated,
+            #wpbody-content > div.notice, .notice:not(.aitrfoel-onboarding-container .notice),
+            div.error, div.updated {
+                display: none !important;
+            }
+            .aitrfoel-onboarding-container { display: block !important; }
+        </style>
         <div class="wrap">
-            <div class="aitrfoel-onboarding-container" style="max-width: 800px; margin: 40px auto; text-align: center;">
-                
-                <!-- Logo/Icon -->
-                <div style="font-size: 64px; margin-bottom: 20px;">🌐</div>
+            <div class="aitrfoel-onboarding-container" style="max-width: 860px; margin: 15px auto 0; text-align: center;">
                 
                 <!-- Welcome Title -->
-                <h1 style="font-size: 32px; margin-bottom: 10px; color: #1d2327;">
-                    <?php esc_html_e('Welcome to AI Translator for Elementor!', 'ai-translator-for-elementor-and-polylang'); ?>
+                <h1 style="font-size: 22px; margin: 0 0 6px; color: #1d2327;">
+                    🌐 <?php esc_html_e('Welcome to AI Translator for Elementor!', 'ai-translator-for-elementor-and-polylang'); ?>
                 </h1>
                 
                 <!-- Thank you message -->
-                <p style="font-size: 18px; color: #50575e; margin-bottom: 30px; line-height: 1.6;">
-                    <?php esc_html_e('Thank you for installing AI Translator! This plugin uses artificial intelligence to automatically translate your Elementor, Gutenberg, and Classic Editor pages while preserving all your layouts, styling, and design elements.', 'ai-translator-for-elementor-and-polylang'); ?>
+                <p style="font-size: 14px; color: #50575e; margin: 0 0 16px; line-height: 1.5;">
+                    <?php esc_html_e('AI-powered translation for your Elementor, Gutenberg, and Classic Editor pages — preserving all layouts and design elements.', 'ai-translator-for-elementor-and-polylang'); ?>
                 </p>
                 
-                <!-- What you need section -->
-                <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 30px; margin-bottom: 30px; text-align: left;">
-                    <h2 style="margin-top: 0; display: flex; align-items: center; gap: 10px;">
-                        <span style="font-size: 24px;">📋</span>
-                        <?php esc_html_e('What You Need', 'ai-translator-for-elementor-and-polylang'); ?>
-                    </h2>
-                    <p style="color: #50575e; font-size: 15px;">
-                        <?php esc_html_e("To use AI Translator, you'll need a multilingual plugin to manage your site's languages. We support:", 'ai-translator-for-elementor-and-polylang'); ?>
-                    </p>
-                    <div style="display: flex; gap: 20px; margin-top: 20px;">
-                        <div style="flex: 1; padding: 20px; background: #f0f6fc; border-radius: 6px; border-left: 4px solid #2271b1;">
-                            <strong style="font-size: 16px;">Polylang</strong>
-                            <span style="background: #00a32a; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 3px; margin-left: 8px;"><?php esc_html_e('FREE', 'ai-translator-for-elementor-and-polylang'); ?></span>
-                            <p style="margin: 10px 0 0; color: #50575e; font-size: 13px;"><?php esc_html_e('Simple and lightweight. Perfect for most websites.', 'ai-translator-for-elementor-and-polylang'); ?></p>
-                        </div>
-                        <div style="flex: 1; padding: 20px; background: #fef8ee; border-radius: 6px; border-left: 4px solid #dba617;">
-                            <strong style="font-size: 16px;">WPML</strong>
-                            <span style="background: #dba617; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 3px; margin-left: 8px;"><?php esc_html_e('PREMIUM', 'ai-translator-for-elementor-and-polylang'); ?></span>
-                            <p style="margin: 10px 0 0; color: #50575e; font-size: 13px;"><?php esc_html_e('Full-featured solution for enterprise sites.', 'ai-translator-for-elementor-and-polylang'); ?></p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- How it works section -->
-                <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 30px; margin-bottom: 30px; text-align: left;">
-                    <h2 style="margin-top: 0; display: flex; align-items: center; gap: 10px;">
-                        <span style="font-size: 24px;">🚀</span>
-                        <?php esc_html_e('How It Works', 'ai-translator-for-elementor-and-polylang'); ?>
-                    </h2>
-                    <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 20px;">
-                        <div style="flex: 1; min-width: 200px; padding: 15px; background: #f6f7f7; border-radius: 6px; text-align: center;">
-                            <div style="width: 36px; height: 36px; background: #2271b1; color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-bottom: 10px;">1</div>
-                            <p style="margin: 0; font-size: 14px; color: #1d2327;"><?php esc_html_e('Install & configure a multilingual plugin', 'ai-translator-for-elementor-and-polylang'); ?></p>
-                        </div>
-                        <div style="flex: 1; min-width: 200px; padding: 15px; background: #f6f7f7; border-radius: 6px; text-align: center;">
-                            <div style="width: 36px; height: 36px; background: #2271b1; color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-bottom: 10px;">2</div>
-                            <p style="margin: 0; font-size: 14px; color: #1d2327;"><?php esc_html_e('Set up your site languages (e.g., English, German, French)', 'ai-translator-for-elementor-and-polylang'); ?></p>
-                        </div>
-                        <div style="flex: 1; min-width: 200px; padding: 15px; background: #f6f7f7; border-radius: 6px; text-align: center;">
-                            <div style="width: 36px; height: 36px; background: #2271b1; color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-bottom: 10px;">3</div>
-                            <p style="margin: 0; font-size: 14px; color: #1d2327;"><?php esc_html_e('Go to AI Translator for Elementor plugin page', 'ai-translator-for-elementor-and-polylang'); ?></p>
-                        </div>
-                        <div style="flex: 1; min-width: 200px; padding: 15px; background: #e7f5e8; border-radius: 6px; text-align: center;">
-                            <div style="width: 36px; height: 36px; background: #00a32a; color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-bottom: 10px;">4</div>
-                            <p style="margin: 0; font-size: 14px; color: #1d2327;"><?php esc_html_e('Select pages and click "Translate" — AI does the rest!', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                <!-- Two columns: What you need + How it works -->
+                <div style="display: flex; gap: 16px; margin-bottom: 16px; align-items: stretch;">
+                    
+                    <!-- What you need section -->
+                    <div style="flex: 1; background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 16px 18px; text-align: left;">
+                        <h3 style="margin: 0 0 8px; font-size: 15px; display: flex; align-items: center; gap: 8px;">
+                            <span>📋</span>
+                            <?php esc_html_e('What You Need', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </h3>
+                        <p style="color: #50575e; font-size: 13px; margin: 0 0 12px;">
+                            <?php esc_html_e('Install a multilingual plugin to manage your site languages:', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </p>
+                        <div style="display: flex; gap: 12px;">
+                            <div style="flex: 1; padding: 12px; background: #f0f6fc; border-radius: 6px; border-left: 3px solid #2271b1;">
+                                <strong style="font-size: 14px;">Polylang</strong>
+                                <span style="background: #00a32a; color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 3px; margin-left: 6px;"><?php esc_html_e('FREE', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                                <p style="margin: 6px 0 0; color: #50575e; font-size: 12px;"><?php esc_html_e('Simple and lightweight. Perfect for most websites.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                            </div>
+                            <div style="flex: 1; padding: 12px; background: #fef8ee; border-radius: 6px; border-left: 3px solid #dba617;">
+                                <strong style="font-size: 14px;">WPML</strong>
+                                <span style="background: #dba617; color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 3px; margin-left: 6px;"><?php esc_html_e('PREMIUM', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                                <p style="margin: 6px 0 0; color: #50575e; font-size: 12px;"><?php esc_html_e('Full-featured solution for enterprise sites.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                            </div>
                         </div>
                     </div>
+                    
+                    <!-- How it works section -->
+                    <div style="flex: 1; background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 16px 18px; text-align: left;">
+                        <h3 style="margin: 0 0 10px; font-size: 15px; display: flex; align-items: center; gap: 8px;">
+                            <span>🚀</span>
+                            <?php esc_html_e('How It Works', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </h3>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #f6f7f7; border-radius: 5px;">
+                                <div style="width: 26px; height: 26px; min-width: 26px; background: #2271b1; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px;">1</div>
+                                <span style="font-size: 13px; color: #1d2327;"><?php esc_html_e('Install & configure a multilingual plugin', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #f6f7f7; border-radius: 5px;">
+                                <div style="width: 26px; height: 26px; min-width: 26px; background: #2271b1; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px;">2</div>
+                                <span style="font-size: 13px; color: #1d2327;"><?php esc_html_e('Set up your site languages', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #f6f7f7; border-radius: 5px;">
+                                <div style="width: 26px; height: 26px; min-width: 26px; background: #2271b1; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px;">3</div>
+                                <span style="font-size: 13px; color: #1d2327;"><?php esc_html_e('Go to the AI Translator plugin page', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #e7f5e8; border-radius: 5px;">
+                                <div style="width: 26px; height: 26px; min-width: 26px; background: #00a32a; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px;">4</div>
+                                <span style="font-size: 13px; color: #1d2327;"><?php esc_html_e('Select pages and click "Translate" — done!', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
                 
                 <!-- Action buttons -->
-                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                    <a href="<?php echo esc_url($polylang_install_url); ?>" class="button button-primary button-hero" style="font-size: 16px; padding: 10px 30px; height: auto;">
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                    <a href="<?php echo esc_url($polylang_install_url); ?>" class="button button-primary" style="font-size: 14px; padding: 6px 24px; height: auto;">
                         <?php esc_html_e('Install Polylang (Free)', 'ai-translator-for-elementor-and-polylang'); ?>
                     </a>
-                    <a href="https://wpml.org/" target="_blank" class="button button-secondary button-hero" style="font-size: 16px; padding: 10px 30px; height: auto;">
+                    <a href="https://wpml.org/" target="_blank" class="button button-secondary" style="font-size: 14px; padding: 6px 24px; height: auto;">
                         <?php esc_html_e('Get WPML', 'ai-translator-for-elementor-and-polylang'); ?> →
                     </a>
                 </div>
                 
                 <!-- Footer note -->
-                <p style="margin-top: 30px; color: #787c82; font-size: 13px; font-style: italic;">
+                <p style="margin-top: 14px; color: #787c82; font-size: 12px; font-style: italic;">
                     <?php esc_html_e('After installing and configuring your multilingual plugin, this page will show your translation dashboard.', 'ai-translator-for-elementor-and-polylang'); ?>
                 </p>
                 
@@ -549,6 +576,14 @@ class AITRFOEL_Admin_Menu {
      * Render Dashboard page for bulk translations
      */
     public function render_dashboard_page() {
+        // Show license activation notices
+        if (isset($_GET['activated']) && $_GET['activated'] === 'true') {
+            echo '<div class="notice notice-success is-dismissible"><p><strong>' . esc_html__('License activated successfully!', 'ai-translator-for-elementor-and-polylang') . '</strong> ' . esc_html__('Your plan has been upgraded.', 'ai-translator-for-elementor-and-polylang') . '</p></div>';
+        }
+        if (isset($_GET['license_pending']) && $_GET['license_pending'] === 'true') {
+            echo '<div class="notice notice-warning is-dismissible"><p><strong>' . esc_html__('Almost there!', 'ai-translator-for-elementor-and-polylang') . '</strong> ' . esc_html__('Please check your email and click the confirmation link to complete the license activation.', 'ai-translator-for-elementor-and-polylang') . '</p></div>';
+        }
+        
         // Check for missing dependencies first
         $deps_status = get_option('aitrfoel_dependencies_status', ['status' => true, 'missing' => []]);
         
@@ -1326,8 +1361,8 @@ class AITRFOEL_Admin_Menu {
         $word_limit = $server_status['word_limit'];
         $license_expired = isset($server_status['license_expired']) ? $server_status['license_expired'] : false;
         
-        // Capitalize for display
-        $license_status = ucfirst(strtolower($license_status));
+        // Capitalize for display (preserve multi-word plan names like 'Agency Lifetime')
+        $license_status = ucwords(strtolower($license_status));
         
         return [
             'type' => strtolower($license_status),
@@ -1392,7 +1427,8 @@ class AITRFOEL_Admin_Menu {
         
         // Use the correct word limit from Freemius, not from server cache
         $total_words = $license_info['limit'];
-        $words_left = max(0, $total_words - $words_translated);
+        $is_unlimited = ($total_words === -1);
+        $words_left = $is_unlimited ? -1 : max(0, $total_words - $words_translated);
         
         // Calculate pages left to translate using multilingual manager
         $pages_left = 0;
@@ -1419,11 +1455,11 @@ class AITRFOEL_Admin_Menu {
             </div>
             <div class="eat-compact-stat eat-words-left-stat">
                 <span class="eat-compact-label eat-words-left-label"><?php esc_html_e('Words Left', 'ai-translator-for-elementor-and-polylang'); ?>:</span>
-                <span class="eat-compact-value eat-words-left-value eat-tooltip <?php echo $words_left <= 0 ? 'eat-compact-limit-reached' : ''; ?>" 
+                <span class="eat-compact-value eat-words-left-value eat-tooltip <?php echo (!$is_unlimited && $words_left <= 0) ? 'eat-compact-limit-reached' : ''; ?>" 
                       title="<?php /* translators: 1: Words translated, 2: Word limit */ printf(esc_attr__('Used: %1$s of %2$s words', 'ai-translator-for-elementor-and-polylang'), 
                                      number_format($words_translated),
-                                     number_format($license_info['limit'])); ?>">
-                    <?php echo number_format($words_left); ?><?php if ($words_left <= 0) echo ' ⚠️'; ?>
+                                     $is_unlimited ? esc_attr__('Unlimited', 'ai-translator-for-elementor-and-polylang') : number_format($license_info['limit'])); ?>">
+                    <?php echo $is_unlimited ? esc_html__('Unlimited', 'ai-translator-for-elementor-and-polylang') : number_format($words_left); ?><?php if (!$is_unlimited && $words_left <= 0) echo ' ⚠️'; ?>
                 </span>
             </div>
             <div class="eat-compact-stat eat-compact-license">
@@ -1439,7 +1475,7 @@ class AITRFOEL_Admin_Menu {
                         <span class="eat-compact-value eat-tooltip" 
                               title="<?php /* translators: 1: Plan name, 2: Word limit */ printf(esc_attr__('%1$s Plan: %2$s words included', 'ai-translator-for-elementor-and-polylang'), 
                                              esc_html($license_info['name']), 
-                                             number_format($license_info['limit'])); ?>">
+                                             $is_unlimited ? esc_attr__('Unlimited', 'ai-translator-for-elementor-and-polylang') : number_format($license_info['limit'])); ?>">
                             <?php echo esc_html($license_info['name']); ?>
                         </span>
                     <?php endif; ?>

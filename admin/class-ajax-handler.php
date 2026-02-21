@@ -815,11 +815,11 @@ class AITRFOEL_Ajax_Handler {
             
             $words_used = $license_status['words_used'];
             $word_limit = $license_status['word_limit'];
-            $words_left = max(0, $word_limit - $words_used);
+            $words_left = $word_limit === -1 ? -1 : max(0, $word_limit - $words_used);
             $plan_name = $license_status['plan'];
             
-            // Check if can proceed
-            $can_proceed = $total_words <= $words_left;
+            // Check if can proceed (unlimited plans always proceed)
+            $can_proceed = ($word_limit === -1) || ($total_words <= $words_left);
             
             // Prepare response
             $response = [
@@ -1048,9 +1048,9 @@ class AITRFOEL_Ajax_Handler {
                         // CONTINUOUS LIMIT CHECK: Before each translation
                         $license_manager = AITRFOEL_License_Manager_Server::get_instance();
                         $license_status = $license_manager->get_license_status();
-                        $words_left = max(0, $license_status['word_limit'] - $license_status['words_used']);
+                        $words_left = $license_status['word_limit'] === -1 ? -1 : max(0, $license_status['word_limit'] - $license_status['words_used']);
                         
-                        if ($words_left <= 0) {
+                        if ($license_status['word_limit'] !== -1 && $words_left <= 0) {
                             AITRFOEL_Logger::log(sprintf(
                                 'Word limit reached during bulk translation at job %d/%d',
                                 $current_job,
@@ -2075,7 +2075,7 @@ class AITRFOEL_Ajax_Handler {
         // Get current usage and limits
         $words_used = $license_status['words_used'];
         $word_limit = $license_status['word_limit'];
-        $words_left = max(0, $word_limit - $words_used);
+        $words_left = $word_limit === -1 ? -1 : max(0, $word_limit - $words_used);
         
         AITRFOEL_Logger::log(sprintf(
             'Word limit validation: Plan=%s, Used=%d, Limit=%d, Left=%d, Estimated=%d',
@@ -2110,8 +2110,8 @@ class AITRFOEL_Ajax_Handler {
                 'plan' => $license_status['plan'],
                 'upgrade_url' => (function_exists('eatp_fs') && eatp_fs()->is_registered()) ? eatp_fs()->get_upgrade_url() : 'https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing'
             ]));
-        }        // Check if estimated words exceed remaining
-        if ($estimated_words > 0 && $estimated_words > $words_left) {
+        }        // Check if estimated words exceed remaining (excluding unlimited plans)
+        if ($word_limit !== -1 && $estimated_words > 0 && $estimated_words > $words_left) {
             
             
             throw new Exception(json_encode([

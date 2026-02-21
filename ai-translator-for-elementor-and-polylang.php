@@ -1,9 +1,9 @@
 <?php
 /**
  * Plugin Name: AI Translator for Elementor
- * Plugin URI: https://meeptech.com/products/ai-translator-for-elementor-and-polylang
+ * Plugin URI: https://meeptech.com/products/ai-translator-for-elementor-polylang
  * Description: AI-powered translation for Elementor, Gutenberg, and Classic Editor pages and posts with Polylang or WPML using OpenAI
- * Version: 1.2.6
+ * Version: 1.2.7
  * Author: Meep Tech
  * Author URI: https://meeptech.com
  * License: GPL v2 or later
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('AITRFOEL_VERSION', '1.2.6');
+define('AITRFOEL_VERSION', '1.2.7');
 define('AITRFOEL_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AITRFOEL_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AITRFOEL_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -941,6 +941,11 @@ class AITRFOEL_Main {
      * Admin notice - No multilingual plugin (Polylang or WPML)
      */
     public function admin_notice_multilingual_missing() {
+        // Don't show this notice on our own plugin page (the onboarding screen handles it)
+        $screen = get_current_screen();
+        if ($screen && strpos($screen->id, 'ai-translator-for-elementor') !== false) {
+            return;
+        }
         ?>
         <div class="notice notice-warning is-dismissible">
             <p>

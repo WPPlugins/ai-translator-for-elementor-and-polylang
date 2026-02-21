@@ -5,7 +5,7 @@ Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
 Requires Plugins: elementor, polylang
-Stable tag: 1.2.6
+Stable tag: 1.2.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,25 +15,24 @@ AI-powered translation for Elementor, Gutenberg, and Classic pages and posts. Su
 
 AI Translator for Elementor is an AI-powered translation solution for WordPress.
 
-**No APIs and no complicated setup required.**
-Translate your Elementor-powered pages seamlessly using OpenAI's advanced translation engine. The newest version also adds support for Gutenberg blocks and the WPML translation engine.
+Translate your Elementor-powered pages, Gutenberg pages, and Classic pages or posts seamlessly using OpenAI's advanced translation engine. No APIs and no complicated setup required.
 
 **Features:**
 
 * One-click translation for Elementor pages (single page or bulk)
-* Polylang integration (Free and Pro versions supported)
-* WPML support added
+* Polylang and WPML integration
 * Gutenberg block-based pages supported
+* Classic pages and posts supported
 * OpenAI-powered translations for natural, contextual results
-* No API setup needed – we do the rest!
+* No API setup needed – we handle everything for you
 * 1,800 words per week included for free
 
-**How it works:**
+**How It Works:**
 
-1. Add the required site languages in Polylang or WPML
-2. Go to the AI Translator for Elementor plugin page
-3. Select your Elementor, Gutenberg, or Classic Editor page
-4. Choose target language(s)
+1. Add the required site languages in Polylang or WPML.
+2. Go to the AI Translator for Elementor plugin page or use the Quick Translation widget on the page/post edit screen.
+3. Select your Elementor, Gutenberg, or Classic Editor page.
+4. Choose the target language(s).
 5. Click Translate – the AI does the rest!
 
 **Want a higher word limit?**
@@ -42,6 +41,7 @@ We offer affordable plans to fit your needs:
 
 * **Starter – $9.99/month** – Perfect for landing pages, portfolios, and small business sites. 1 site, ~18,000 words per month.
 * **Agency – $34.99/month** – Best for agencies, freelancers, and managing client sites. Up to 10 sites.
+* **Agency Lifetime – $299 one-time** – Unlimited words, up to 50 sites. Pay once, use forever.
 * **Enterprise – $53.99/month** – Scalable solution for large businesses. Up to 50 sites.
 
 👉 [Upgrade your license here](https://meeptech.com/products/ai-translator-for-elementor-polylang#pricing)
@@ -84,6 +84,11 @@ Visit AI Translator → Dashboard to see your current usage and words remaining.
 4. Settings page with cache management and advanced options.
 
 == Changelog ==
+= 1.2.7 =
+* Compact onboarding screen — "What You Need" and "How It Works" now side by side so everything fits in one view
+* Hides all admin notices on the onboarding page for a clean, focused experience
+* Removed redundant multilingual plugin notice on the plugin's own setup page
+
 = 1.2.6 =
 * Dashboard now separates Pages and Posts into dedicated tabs for cleaner navigation
 * Modernized dashboard UI with refined styling, card-based stats, and improved visual hierarchy

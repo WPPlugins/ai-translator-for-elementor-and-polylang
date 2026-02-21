@@ -468,10 +468,11 @@ class AITRFOEL_License_Manager_Server {
      */
     private function get_word_limit_for_plan($plan_name) {
         $limits = [
-            'Free' => 1800,          // Free: 1,800 words/month (1 site)
-            'Starter' => 18000,      // Starter: 18,000 words/month (1 site)
-            'Agency' => 89000,       // Agency: 89,000 words/month (up to 10 sites, shared)
-            'Enterprise' => 355000   // Enterprise: 355,000 words/month (up to 50 sites, shared)
+            'Free' => 1800,               // Free: 1,800 words/month (1 site)
+            'Starter' => 18000,           // Starter: 18,000 words/month (1 site)
+            'Agency' => 89000,            // Agency: 89,000 words/month (up to 10 sites, shared)
+            'Agency Lifetime' => -1,      // Agency Lifetime: unlimited words (up to 50 sites)
+            'Enterprise' => 355000        // Enterprise: 355,000 words/month (up to 50 sites, shared)
         ];
         
         return $limits[$plan_name] ?? 1800;
