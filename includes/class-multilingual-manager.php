@@ -56,7 +56,7 @@ class AITRFOEL_Multilingual_Manager {
             AITRFOEL_Logger::log('Multilingual Manager: Built-in language system enabled and loaded (user choice)', 'info');
             return;
         }
-        
+
         // Check for Polylang (backward compatibility)
         if ($this->is_polylang_available()) {
             $this->detected_plugin = 'polylang';

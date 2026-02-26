@@ -1206,7 +1206,7 @@ class AITRFOEL_Settings {
                 <button type="button" class="button button-link-delete" id="aitrfoel-disable-builtin">
                     <?php esc_html_e('Disable Built-in Language System', 'ai-translator-for-elementor-and-polylang'); ?>
                 </button>
-                <span style="color: #999; margin-left: 8px; font-size: 12px;">
+                <span style="color: #999; margin-left: 8px; font-size: 12px; vertical-align: middle;">
                     <?php esc_html_e('Switch to Polylang or WPML instead.', 'ai-translator-for-elementor-and-polylang'); ?>
                 </span>
             </div>

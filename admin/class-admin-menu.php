@@ -48,7 +48,7 @@ class AITRFOEL_Admin_Menu {
         // Create main menu page
         add_menu_page(
             __('Dashboard', 'ai-translator-for-elementor-and-polylang'),
-            __('Meep AI Translator', 'ai-translator-for-elementor-and-polylang'),
+            __('AI Translator', 'ai-translator-for-elementor-and-polylang'),
             'manage_options',
             'ai-translator-for-elementor-and-polylang',
             [$this, 'render_dashboard_page'],
@@ -501,7 +501,7 @@ class AITRFOEL_Admin_Menu {
             'aitrfoel-onboarding-wizard',
             AITRFOEL_PLUGIN_URL . 'assets/css/onboarding-wizard.css',
             [],
-            defined('AITRFOEL_VERSION') ? AITRFOEL_VERSION : '1.3.0'
+            defined('AITRFOEL_VERSION') ? AITRFOEL_VERSION : '1.3.1'
         );
         
         // Get available languages from language mapper
@@ -1323,6 +1323,10 @@ class AITRFOEL_Admin_Menu {
         
         // Create DB table
         $builtin->create_table();
+        
+        // Reset rewrite rules version so they get flushed on the next normal page load
+        // (during AJAX, the init hook has already fired so add_rewrite_rules() won't run)
+        delete_option('aitrfoel_rewrite_rules_version');
         
         // Add default language
         $builtin->add_language($default_lang_code, $default_lang_name, $default_lang_name, true);

@@ -763,17 +763,6 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             return;
         }
         
-        // Auto-flush rewrite rules when the rules version changes (e.g. after plugin update)
-        $rules_version = '1.3.0b'; // Bump this when rewrite rules change
-        $stored_version = get_option('aitrfoel_rewrite_rules_version', '');
-        if ($stored_version !== $rules_version) {
-            update_option('aitrfoel_rewrite_rules_version', $rules_version);
-            // Schedule flush after all rules are registered
-            add_action('wp_loaded', function() {
-                flush_rewrite_rules();
-            });
-        }
-        
         $languages = $this->get_stored_languages();
         $default_lang = $this->get_default_language();
         
@@ -789,6 +778,31 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         }
         
         $lang_pattern = implode('|', $lang_codes);
+        
+        // Auto-flush rewrite rules when version changes OR when stored rules
+        // are missing our language patterns (can happen after AJAX setup, reinstall, etc.)
+        $rules_version = '1.3.1a'; // Bump this when rewrite rules change
+        $stored_version = get_option('aitrfoel_rewrite_rules_version', '');
+        $needs_flush = ($stored_version !== $rules_version);
+        
+        if (!$needs_flush) {
+            // Verify our language rules are actually present in stored rewrite rules
+            $stored_rules = get_option('rewrite_rules', []);
+            if (is_array($stored_rules)) {
+                $test_pattern = '^(' . $lang_pattern . ')/?$';
+                if (!isset($stored_rules[$test_pattern])) {
+                    $needs_flush = true;
+                }
+            }
+        }
+        
+        if ($needs_flush) {
+            update_option('aitrfoel_rewrite_rules_version', $rules_version);
+            // Schedule flush after all rules are registered
+            add_action('wp_loaded', function() {
+                flush_rewrite_rules();
+            });
+        }
         
         // Language root: /fr/
         add_rewrite_rule(

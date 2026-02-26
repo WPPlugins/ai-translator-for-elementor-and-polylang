@@ -5,11 +5,11 @@ Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
 Requires Plugins: elementor
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Stop fixing broken Elementor layouts after translation. Meep AI uses advanced LLMs to translate your site while perfectly retaining your design and Polylang/WPML settings. Built-in language system included — no Polylang or WPML required.
+AI-powered translation for Elementor, Gutenberg & Classic pages. Preserves your design perfectly. Built-in languages or Polylang/WPML.
 
 == Description ==
 
@@ -86,6 +86,13 @@ Visit AI Translator → Dashboard to see your current usage and words remaining.
 4. Settings page with cache management and advanced options.
 
 == Changelog ==
+= 1.3.1 =
+* Fixed: Translated pages returning 404 — built-in language URL rewrite rules were not persisted to database after setup
+* Fixed: Rewrite rules now self-heal if missing from stored rules (e.g. after reinstall or AJAX setup)
+* Improved: Translation slug now uses translated title instead of original-slug-lang pattern
+* Changed: Admin menu label shortened to "AI Translator"
+* Updated: Plugin short description to fit WordPress.org character limit
+
 = 1.3.0 =
 * NEW: Built-in language management system — translate without Polylang or WPML
 * Added onboarding screen with 3 options: Built-in (recommended), Polylang, or WPML

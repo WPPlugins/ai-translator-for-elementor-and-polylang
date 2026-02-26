@@ -1352,12 +1352,13 @@ class AITRFOEL_Translation_Engine {
         }
         
         // Generate a proper slug for the translated post
-        // Use original post's slug + language suffix to ensure valid URL
-        $original_slug = $original_page->post_name;
-        $translated_slug = $original_slug ? $original_slug . '-' . $target_lang : sanitize_title($translated_title);
-        // If sanitize_title produced empty slug (non-Latin title), use original slug + lang
-        if (empty($translated_slug) || $translated_slug === '-' . $target_lang) {
-            $translated_slug = 'post-' . $original_page->ID . '-' . $target_lang;
+        // With Polylang/WPML: URL is /lang/slug/ so slug should be the translated title
+        // Without multilingual plugin: append language suffix as fallback
+        $translated_slug = sanitize_title($translated_title);
+        if (empty($translated_slug)) {
+            // Non-Latin titles may produce empty slug - use original + lang suffix
+            $original_slug = $original_page->post_name;
+            $translated_slug = $original_slug ? $original_slug . '-' . $target_lang : 'page-' . $original_page->ID . '-' . $target_lang;
         }
         
         $new_page_args = [
@@ -2276,10 +2277,13 @@ class AITRFOEL_Translation_Engine {
         }
         
         // Generate a proper slug for the translated post
-        $original_slug = $original_page->post_name;
-        $translated_slug = $original_slug ? $original_slug . '-' . $target_lang : sanitize_title($translated_title);
-        if (empty($translated_slug) || $translated_slug === '-' . $target_lang) {
-            $translated_slug = 'post-' . $page_id . '-' . $target_lang;
+        // With Polylang/WPML: URL is /lang/slug/ so slug should be the translated title
+        // Without multilingual plugin: append language suffix as fallback
+        $translated_slug = sanitize_title($translated_title);
+        if (empty($translated_slug)) {
+            // Non-Latin titles may produce empty slug - use original + lang suffix
+            $original_slug = $original_page->post_name;
+            $translated_slug = $original_slug ? $original_slug . '-' . $target_lang : 'page-' . $original_page_id . '-' . $target_lang;
         }
         
         $new_page_args = [
