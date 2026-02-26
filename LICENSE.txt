@@ -1,4 +1,4 @@
-WP AI Translator for Elementor
+Meep AI Translator
 Copyright (c) 2025 Denis Tchernoukho, Meep Tech
 Website: https://meeptech.com
 

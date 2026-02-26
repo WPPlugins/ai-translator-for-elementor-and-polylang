@@ -193,6 +193,14 @@ class AITRFOEL_OpenAI_API {
         // Get language-specific instructions for rare/problematic languages
         $lang_instructions = AITRFOEL_Language_Mapper::get_language_specific_instructions($target_lang);
         
+        // Prepend general translation safety instructions
+        $general_instructions = "CRITICAL: If a string is already in the target language or contains only numbers/symbols/short codes (e.g. 36K, 500+, 24/7, 100%), return it EXACTLY as-is. NEVER add explanations, commentary, or notes. Output ONLY the translated text.";
+        if (!empty($lang_instructions)) {
+            $lang_instructions = $general_instructions . "\n" . $lang_instructions;
+        } else {
+            $lang_instructions = $general_instructions;
+        }
+        
         // Log what we're sending
         if (class_exists('AITRFOEL_Logger')) {
             AITRFOEL_Logger::log('Sending to MeepTech server - Text length: ' . strlen($text) . ' chars, ' . $source_language . ' → ' . $target_language, 'debug');
@@ -255,6 +263,9 @@ class AITRFOEL_OpenAI_API {
         
         // Clean up AI artifacts that sometimes appear in translations
         $translated = $this->cleanup_ai_artifacts($translated);
+        
+        // Post-process: detect chatty AI responses and keep original
+        $translated = $this->sanitize_chatty_response($text, $translated);
         
         return $translated;
     }
@@ -333,6 +344,14 @@ class AITRFOEL_OpenAI_API {
         
         // Get language-specific instructions for rare/problematic languages
         $lang_instructions = AITRFOEL_Language_Mapper::get_language_specific_instructions($target_lang);
+        
+        // Prepend general translation safety instructions
+        $general_instructions = "CRITICAL: If a string is already in the target language or contains only numbers/symbols/short codes (e.g. 36K, 500+, 24/7, 100%, ★, →), return it EXACTLY as-is. NEVER add explanations, commentary, or notes. Your output for each string must be ONLY the translated text (or the original if no translation is needed). Never say 'this text does not need translation' or similar.";
+        if (!empty($lang_instructions)) {
+            $lang_instructions = $general_instructions . "\n" . $lang_instructions;
+        } else {
+            $lang_instructions = $general_instructions;
+        }
         
         // Send batch request to MeepTech
         $body = [
@@ -427,11 +446,73 @@ class AITRFOEL_OpenAI_API {
         $result = [];
         foreach ($texts as $index => $original_text) {
             if (isset($translated_texts[$index])) {
-                $result[$original_text] = $translated_texts[$index];
+                $translated = $translated_texts[$index];
+                
+                // Post-process: detect chatty AI responses and keep original
+                $translated = $this->sanitize_chatty_response($original_text, $translated);
+                
+                $result[$original_text] = $translated;
             }
         }
         
         return $result;
+    }
+    
+    /**
+     * Detect and fix chatty AI responses where the model adds commentary
+     * instead of just translating. Returns original text if response is chatty.
+     *
+     * @param string $original Original text
+     * @param string $translated Translated text from AI
+     * @return string Clean translation or original if chatty detected
+     */
+    private function sanitize_chatty_response($original, $translated) {
+        if (empty($original) || empty($translated)) {
+            return $translated;
+        }
+        
+        $orig_len = mb_strlen(wp_strip_all_tags($original), 'UTF-8');
+        $trans_len = mb_strlen(wp_strip_all_tags($translated), 'UTF-8');
+        
+        // For very short strings (< 10 chars), if translation is 5x+ longer, it's likely chatty
+        if ($orig_len < 10 && $trans_len > $orig_len * 5 && $orig_len > 0) {
+            AITRFOEL_Logger::log(
+                sprintf('Chatty AI response detected (short string): original="%s" (%d chars), translated=%d chars. Keeping original.',
+                    $original, $orig_len, $trans_len),
+                'warning'
+            );
+            return $original;
+        }
+        
+        // Detect known chatty patterns in multiple languages
+        $chatty_patterns = [
+            '/не (потребує|требует|вимагає) перекладу/ui',
+            '/не потрібно перекладати/ui',
+            '/does\s?n.t need (to be )?translat/i',
+            '/no translation (is )?(needed|required|necessary)/i',
+            '/already in (english|the target)/i',
+            '/вже (є |на )?(англійською|цільовою)/ui',
+            '/уже на (английском|целевом)/ui',
+            '/ist bereits (auf|in)/i',
+            '/n.a pas besoin (de|d.).*traduction/i',
+            '/ya est[áa] en/i',
+            '/please provide/i',
+            '/будь ласка, (надайте|вкажіть)/ui',
+            '/пожалуйста, (предоставьте|укажите)/ui',
+        ];
+        
+        foreach ($chatty_patterns as $pattern) {
+            if (preg_match($pattern, $translated)) {
+                AITRFOEL_Logger::log(
+                    sprintf('Chatty AI response detected (pattern match): original="%s", translated="%s". Keeping original.',
+                        mb_substr($original, 0, 50), mb_substr($translated, 0, 100)),
+                    'warning'
+                );
+                return $original;
+            }
+        }
+        
+        return $translated;
     }
     
     /**
@@ -492,7 +573,8 @@ CRITICAL TRANSLATION RULES:
 5. For proper nouns, brands, and technical terms - use appropriate localization
 6. If source is Cyrillic/Russian, ensure you understand it correctly before translating
 7. Do NOT use code fences, comments, or explanations in the output
-8. Return ONLY valid JSON (no code fences), exactly: {\"t\":[\"<translated>\"]}";
+8. Numbers, abbreviations, units, and short alphanumeric tokens (e.g. 36K, 500+, 24/7, 100%) must be kept EXACTLY as-is — do NOT add commentary or explanations, just return them unchanged
+9. Return ONLY valid JSON (no code fences), exactly: {\"t\":[\"<translated>\"]}";
 
         return [
             ['role' => 'system', 'content' => $system_prompt],
@@ -549,6 +631,7 @@ Rules:
 1) Translate each string independently to $target_full.
 2) Preserve placeholders <ph id=\"n\"/> exactly and in order.
 3) Do NOT introduce or remove HTML tags beyond placeholders.
+4) Numbers, abbreviations, units, and short alphanumeric tokens (e.g. 36K, 500+, 24/7, 100%) must be kept EXACTLY as-is — do NOT add commentary or explanations, just return them unchanged.
 $source_instructions
 $lang_instructions
 $exclusion_instructions

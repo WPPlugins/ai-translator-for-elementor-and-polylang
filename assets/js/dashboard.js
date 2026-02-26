@@ -1001,12 +1001,12 @@ jQuery(document).ready(function($) {
             return `
                 <div id="eat-analysis-modal" class="eat-modal-overlay">
                     <div class="eat-modal-content eat-analysis-panel">
-                        <button class="eat-modal-close" onclick="jQuery('#eat-analysis-modal').remove()">�</button>
+                        <button class="eat-modal-close" onclick="jQuery('#eat-analysis-modal').remove()">&times;</button>
                         
                         <h3>📊 Translation Analysis</h3>
                         
                         <div class="eat-analysis-summary">
-                            <p>Selected: <strong>${data.pages_count || 0} pages � ${data.languages_count || 0} languages = ${data.total_jobs || 0} jobs</strong></p>
+                            <p>Selected: <strong>${data.pages_count || 0} pages &times; ${data.languages_count || 0} languages = ${data.total_jobs || 0} jobs</strong></p>
                             <p>Estimated words: <strong>${totalWordsNeeded.toLocaleString()}</strong></p>
                             <p>Your limit: <strong>${wordLimit.toLocaleString()}</strong></p>
                             <p>Current usage: <strong>${wordsUsed.toLocaleString()}</strong></p>
@@ -1141,7 +1141,7 @@ jQuery(document).ready(function($) {
             const modal = `
                 <div id="eat-error-modal" class="eat-modal-overlay" style="opacity: 1 !important;">
                     <div class="eat-modal-content eat-error-modal">
-                        <button class="eat-modal-close" onclick="jQuery('#eat-error-modal').remove()">�</button>
+                        <button class="eat-modal-close" onclick="jQuery('#eat-error-modal').remove()">&times;</button>
                         
                         <h3> Translation Paused: Limit Reached</h3>
                         
@@ -1183,9 +1183,9 @@ jQuery(document).ready(function($) {
             const modal = `
                 <div id="eat-error-modal" class="eat-modal-overlay" style="opacity: 1 !important;">
                     <div class="eat-modal-content eat-error-modal">
-                        <button class="eat-modal-close" onclick="jQuery('#eat-error-modal').remove()">�</button>
+                        <button class="eat-modal-close" onclick="jQuery('#eat-error-modal').remove()">&times;</button>
                         
-                        <h3>? Cooldown Period</h3>
+                        <h3>⏳ Cooldown Period</h3>
                         
                         <div class="eat-error-message">
                             <p>${errorData.message || 'You are in cooldown period.'}</p>
@@ -1679,32 +1679,67 @@ jQuery(document).ready(function($) {
                     nonce: aitrfoelDashboard.nonce
                 },
                 success: function(response) {
-                    if (response.success && response.data.html) {
-                        // Fade out old content
-                        $('.aitrfoel-dashboard-table tbody').fadeOut(300, function() {
-                            // Replace with new content
-                            $(this).html(response.data.html).fadeIn(300);
-                            
-                            // Re-initialize accordion functionality
-                            Dashboard.initTableAccordion();
-                            
-                            // Restore expanded accordion states
-                            Object.keys(expandedStates).forEach(function(sourceId) {
-                                const $button = $(`.eat-expand-button[data-source-id="${sourceId}"]`);
-                                if ($button.length > 0) {
-                                    Dashboard.toggleTranslations(sourceId, true, $button);
-                                }
+                    if (response.success && response.data) {
+                        var pagesHtml = response.data.pages_html || response.data.html || '';
+                        var postsHtml = response.data.posts_html || '';
+                        
+                        // Update pages tab tbody
+                        var $pagesBody = $('#eat-tab-pages .aitrfoel-dashboard-table tbody');
+                        // Update posts tab tbody
+                        var $postsBody = $('#eat-tab-posts .aitrfoel-dashboard-table tbody');
+                        
+                        var tablesUpdated = 0;
+                        var totalTables = ($pagesBody.length > 0 ? 1 : 0) + ($postsBody.length > 0 ? 1 : 0);
+                        if (totalTables === 0) totalTables = 1; // safety
+                        
+                        function onTableUpdated() {
+                            tablesUpdated++;
+                            if (tablesUpdated >= totalTables) {
+                                // Re-initialize accordion functionality
+                                Dashboard.initTableAccordion();
+                                
+                                // Restore expanded accordion states
+                                Object.keys(expandedStates).forEach(function(sourceId) {
+                                    const $button = $(`.eat-expand-button[data-source-id="${sourceId}"]`);
+                                    if ($button.length > 0) {
+                                        Dashboard.toggleTranslations(sourceId, true, $button);
+                                    }
+                                });
+                                
+                                // Add highlight animation to updated rows
+                                $('.aitrfoel-dashboard-table tbody tr').addClass('eat-row-updated');
+                                
+                                // Remove animations after completion
+                                setTimeout(function() {
+                                    $('.aitrfoel-dashboard-table').removeClass('eat-table-updating');
+                                    $('.eat-row-updated').removeClass('eat-row-updated');
+                                }, 1500);
+                            }
+                        }
+                        
+                        // Update pages table
+                        if ($pagesBody.length > 0) {
+                            $pagesBody.fadeOut(300, function() {
+                                $(this).html(pagesHtml).fadeIn(300);
+                                onTableUpdated();
                             });
-                            
-                            // Add highlight animation to updated rows
-                            $('.aitrfoel-dashboard-table tbody tr').addClass('eat-row-updated');
-                            
-                            // Remove animations after completion
-                            setTimeout(function() {
-                                $('.aitrfoel-dashboard-table').removeClass('eat-table-updating');
-                                $('.eat-row-updated').removeClass('eat-row-updated');
-                            }, 1500);
-                        });
+                        }
+                        
+                        // Update posts table
+                        if ($postsBody.length > 0) {
+                            $postsBody.fadeOut(300, function() {
+                                $(this).html(postsHtml).fadeIn(300);
+                                onTableUpdated();
+                            });
+                        }
+                        
+                        // Update tab counts if provided
+                        if (response.data.pages_count !== undefined) {
+                            $('[data-tab="pages"] .eat-tab-count').text(response.data.pages_count);
+                        }
+                        if (response.data.posts_count !== undefined) {
+                            $('[data-tab="posts"] .eat-tab-count').text(response.data.posts_count);
+                        }
                     }
                 },
                 error: function() {

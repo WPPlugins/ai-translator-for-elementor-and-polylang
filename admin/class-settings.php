@@ -17,6 +17,7 @@ class AITRFOEL_Settings {
         add_action('wp_ajax_aitrfoel_save_cooldown', [self::class, 'save_cooldown']);
         add_action('wp_ajax_aitrfoel_clear_cache', [self::class, 'clear_cache']);
         add_action('wp_ajax_aitrfoel_diagnose_theme', [self::class, 'diagnose_theme_ajax_handler']);
+        add_action('wp_ajax_aitrfoel_reset_plugin_data', [self::class, 'reset_plugin_data']);
     }
     
     /**
@@ -107,6 +108,41 @@ class AITRFOEL_Settings {
         register_setting('aitrfoel_settings_group', 'aitrfoel_debug_mode', [
             'sanitize_callback' => 'boolval',
             'default' => false
+        ]);
+        
+        // Language Switcher Settings
+        register_setting('aitrfoel_settings_group', 'aitrfoel_switcher_style', [
+            'sanitize_callback' => function($value) {
+                $allowed = ['dropdown', 'list', 'flags', 'flags-text'];
+                return in_array($value, $allowed, true) ? $value : 'flags-text';
+            },
+            'default' => 'flags-text'
+        ]);
+        
+        register_setting('aitrfoel_settings_group', 'aitrfoel_switcher_show_flags', [
+            'sanitize_callback' => 'boolval',
+            'default' => true
+        ]);
+        
+        register_setting('aitrfoel_settings_group', 'aitrfoel_switcher_show_names', [
+            'sanitize_callback' => 'boolval',
+            'default' => true
+        ]);
+        
+        register_setting('aitrfoel_settings_group', 'aitrfoel_switcher_custom_css', [
+            'sanitize_callback' => 'wp_strip_all_tags',
+            'default' => ''
+        ]);
+        
+        // Nav menu switcher settings
+        register_setting('aitrfoel_settings_group', 'aitrfoel_nav_menu_switcher', [
+            'sanitize_callback' => 'boolval',
+            'default' => false
+        ]);
+        
+        register_setting('aitrfoel_settings_group', 'aitrfoel_nav_menu_location', [
+            'sanitize_callback' => 'sanitize_text_field',
+            'default' => ''
         ]);
     }
     
@@ -247,16 +283,27 @@ class AITRFOEL_Settings {
                                     $default_lang = '';
                                     $lang_codes = [];
                                     $is_polylang = false;
+                                    $is_builtin = false;
                                     
-                                    // Check for Polylang directly
-                                    if (function_exists('pll_languages_list') && function_exists('pll_default_language')) {
+                                    // Check for built-in language system FIRST (user's explicit choice)
+                                    if (class_exists('AITRFOEL_Builtin_Integration') && AITRFOEL_Builtin_Integration::is_enabled()) {
+                                        $has_plugin = true;
+                                        $is_builtin = true;
+                                        $plugin_name = 'AI Translator Built-in';
+                                        $builtin = AITRFOEL_Builtin_Integration::get_instance();
+                                        $default_lang = $builtin->get_default_language() ?: '';
+                                        $languages = $builtin->get_available_languages();
+                                        $lang_codes = array_keys($languages);
+                                    }
+                                    // Check for Polylang
+                                    elseif (function_exists('pll_languages_list') && function_exists('pll_default_language')) {
                                         $has_plugin = true;
                                         $plugin_name = 'Polylang';
                                         $is_polylang = true;
                                         $default_lang = pll_default_language('slug');
                                         $lang_codes = pll_languages_list(['fields' => 'slug']);
                                     }
-                                    // Check for WPML directly
+                                    // Check for WPML
                                     elseif (defined('ICL_SITEPRESS_VERSION')) {
                                         global $sitepress;
                                         if (isset($sitepress) && is_object($sitepress) && method_exists($sitepress, 'get_default_language')) {
@@ -269,14 +316,20 @@ class AITRFOEL_Settings {
                                     }
                                     
                                     if ($has_plugin && !empty($plugin_name)) {
-                                        $icon = $is_polylang ? '🦜' : '🌍';
+                                        if ($is_builtin) {
+                                            $icon = '⚡';
+                                        } elseif ($is_polylang) {
+                                            $icon = '🦜';
+                                        } else {
+                                            $icon = '🌍';
+                                        }
                                         $lang_count = is_array($lang_codes) ? count($lang_codes) : 0;
                                         
                                         // Get the language settings URL for the active plugin
                                         $manage_languages_url = '';
                                         if ($is_polylang) {
                                             $manage_languages_url = admin_url('admin.php?page=mlang');
-                                        } else {
+                                        } elseif (!$is_builtin) {
                                             // WPML languages page
                                             $manage_languages_url = admin_url('admin.php?page=sitepress-multilingual-cms/menu/languages.php');
                                         }
@@ -287,17 +340,29 @@ class AITRFOEL_Settings {
                                             </span>
                                             <p class="description" style="margin-top: 8px;">
                                                 <strong><?php esc_html_e('Default Language:', 'ai-translator-for-elementor-and-polylang'); ?></strong> 
+                                                <?php echo AITRFOEL_Language_Mapper::get_flag_html($default_lang, 16, 'margin-right: 4px;'); ?>
                                                 <?php echo esc_html(strtoupper($default_lang)); ?>
                                                 <br>
                                                 <strong><?php esc_html_e('Available Languages:', 'ai-translator-for-elementor-and-polylang'); ?></strong> 
                                                 <?php echo esc_html($lang_count); ?> 
-                                                (<?php echo esc_html(implode(', ', array_map('strtoupper', $lang_codes))); ?>)
+                                                (<?php 
+                                                $lang_labels = [];
+                                                foreach ($lang_codes as $lc) {
+                                                    $lang_labels[] = AITRFOEL_Language_Mapper::get_flag_html($lc, 16, 'margin-right: 2px;') . ' ' . esc_html(strtoupper($lc));
+                                                }
+                                                echo implode(', ', $lang_labels);
+                                                ?>)
                                             </p>
-                                            <p style="margin-top: 10px;">
-                                                <a href="<?php echo esc_url($manage_languages_url); ?>" class="button button-secondary">
-                                                    <?php esc_html_e('Manage Languages', 'ai-translator-for-elementor-and-polylang'); ?>
-                                                </a>
-                                            </p>
+                                            <?php if ($is_builtin): ?>
+                                                <!-- Built-in language management controls -->
+                                                <?php self::render_builtin_language_management($builtin); ?>
+                                            <?php else: ?>
+                                                <p style="margin-top: 10px;">
+                                                    <a href="<?php echo esc_url($manage_languages_url); ?>" class="button button-secondary">
+                                                        <?php esc_html_e('Manage Languages', 'ai-translator-for-elementor-and-polylang'); ?>
+                                                    </a>
+                                                </p>
+                                            <?php endif; ?>
                                         </div>
                                         <?php
                                     } else {
@@ -307,10 +372,11 @@ class AITRFOEL_Settings {
                                                 ⚠️ <?php esc_html_e('No multilingual plugin detected', 'ai-translator-for-elementor-and-polylang'); ?>
                                             </span>
                                             <p class="description" style="margin-top: 8px;">
-                                                <?php esc_html_e('Please install and activate either Polylang or WPML to use translation features.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                                <?php esc_html_e('Please install and activate either Polylang or WPML, or use the built-in language system.', 'ai-translator-for-elementor-and-polylang'); ?>
                                                 <br>
                                                 <a href="https://wordpress.org/plugins/polylang/" target="_blank">Polylang</a> | 
-                                                <a href="https://wpml.org/" target="_blank">WPML</a>
+                                                <a href="https://wpml.org/" target="_blank">WPML</a> |
+                                                <a href="<?php echo esc_url(admin_url('admin.php?page=ai-translator-for-elementor-and-polylang')); ?>"><?php esc_html_e('Set Up Built-in', 'ai-translator-for-elementor-and-polylang'); ?></a>
                                             </p>
                                         </div>
                                         <?php
@@ -454,6 +520,210 @@ class AITRFOEL_Settings {
                     </table>
                 </div>
 
+                <!-- Language Switcher Settings -->
+                <div class="aitrfoel-settings-section">
+                    <h3><?php esc_html_e('🌍 Language Switcher', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                    
+                    <p class="description" style="margin-bottom: 15px; font-size: 13px;">
+                        <?php esc_html_e('Configure the language switcher that visitors use to change the language on your site. You can add it using a shortcode, a WordPress widget, or a nav menu integration.', 'ai-translator-for-elementor-and-polylang'); ?>
+                    </p>
+                    
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_switcher_style"><?php esc_html_e('Switcher Style', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <?php $switcher_style = get_option('aitrfoel_switcher_style', 'flags-text'); ?>
+                                <select id="aitrfoel_switcher_style" name="aitrfoel_switcher_style">
+                                    <option value="dropdown" <?php selected($switcher_style, 'dropdown'); ?>>
+                                        <?php esc_html_e('Dropdown', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </option>
+                                    <option value="list" <?php selected($switcher_style, 'list'); ?>>
+                                        <?php esc_html_e('Horizontal List', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </option>
+                                    <option value="flags" <?php selected($switcher_style, 'flags'); ?>>
+                                        <?php esc_html_e('Flags Only', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </option>
+                                    <option value="flags-text" <?php selected($switcher_style, 'flags-text'); ?>>
+                                        <?php esc_html_e('Flags + Language Code', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </option>
+                                </select>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <th scope="row"><?php esc_html_e('Display Options', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                            <td>
+                                <?php $show_flags = get_option('aitrfoel_switcher_show_flags', true); ?>
+                                <?php $show_names = get_option('aitrfoel_switcher_show_names', true); ?>
+                                <label>
+                                    <input type="checkbox" name="aitrfoel_switcher_show_flags" value="1" <?php checked($show_flags); ?> />
+                                    <?php esc_html_e('Show country flags', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </label>
+                                <br>
+                                <label>
+                                    <input type="checkbox" name="aitrfoel_switcher_show_names" value="1" <?php checked($show_names); ?> />
+                                    <?php esc_html_e('Show language names', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </label>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <th scope="row"><?php esc_html_e('Shortcode', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                            <td>
+                                <div style="background: #f6f7f7; border: 1px solid #dcdcde; border-radius: 4px; padding: 12px; margin-bottom: 10px;">
+                                    <code id="aitrfoel-switcher-shortcode" style="font-size: 13px; word-break: break-all; user-select: all;">[aitrfoel_language_switcher style="<?php echo esc_attr($switcher_style); ?>" show_flags="<?php echo $show_flags ? 'true' : 'false'; ?>" show_names="<?php echo $show_names ? 'true' : 'false'; ?>"]</code>
+                                    <button type="button" class="button button-small" onclick="navigator.clipboard.writeText(document.getElementById('aitrfoel-switcher-shortcode').textContent).then(function(){var b=event.target;b.textContent='<?php echo esc_js(__('Copied!', 'ai-translator-for-elementor-and-polylang')); ?>';setTimeout(function(){b.textContent='<?php echo esc_js(__('Copy', 'ai-translator-for-elementor-and-polylang')); ?>';},1500)})" style="margin-left: 8px; vertical-align: middle;">
+                                        <?php esc_html_e('Copy', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </button>
+                                </div>
+                                <p class="description">
+                                    <?php esc_html_e('Copy this shortcode and paste it into any page, post, or text widget where you want the language switcher to appear.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                                
+                                <div style="margin-top: 12px; padding: 12px; background: #f0f6fc; border-left: 3px solid #2271b1; border-radius: 3px;">
+                                    <strong>💡 <?php esc_html_e('Alternative Ways to Add:', 'ai-translator-for-elementor-and-polylang'); ?></strong>
+                                    <ul style="margin: 8px 0 0 16px; list-style: disc;">
+                                        <li>
+                                            <strong><?php esc_html_e('WordPress Widget:', 'ai-translator-for-elementor-and-polylang'); ?></strong>
+                                            <?php printf(
+                                                /* translators: %s: link to WordPress widgets page */
+                                                esc_html__('Go to %s and add the "AI Translator – Language Switcher" widget to any sidebar or widget area.', 'ai-translator-for-elementor-and-polylang'),
+                                                '<a href="' . esc_url(admin_url('widgets.php')) . '">' . esc_html__('Appearance → Widgets', 'ai-translator-for-elementor-and-polylang') . '</a>'
+                                            ); ?>
+                                        </li>
+                                        <li>
+                                            <strong><?php esc_html_e('Elementor:', 'ai-translator-for-elementor-and-polylang'); ?></strong>
+                                            <?php esc_html_e('Use the "Shortcode" widget in Elementor and paste the shortcode above.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                        </li>
+                                        <li>
+                                            <strong><?php esc_html_e('Theme Header/Footer:', 'ai-translator-for-elementor-and-polylang'); ?></strong>
+                                            <?php esc_html_e('Use do_shortcode() in your theme template:', 'ai-translator-for-elementor-and-polylang'); ?>
+                                            <code style="font-size: 12px;">&lt;?php echo do_shortcode('[aitrfoel_language_switcher]'); ?&gt;</code>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <th scope="row"><?php esc_html_e('Preview', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                            <td>
+                                <div style="background: #fff; border: 1px solid #dcdcde; border-radius: 4px; padding: 16px;">
+                                    <?php
+                                    // Show a live preview of the language switcher
+                                    if (class_exists('AITRFOEL_Builtin_Integration') && AITRFOEL_Builtin_Integration::is_enabled()) {
+                                        $builtin = AITRFOEL_Builtin_Integration::get_instance();
+                                        $switcher_data = $builtin->get_language_switcher_data();
+                                        if (!empty($switcher_data)) {
+                                            // Render inline preview
+                                            echo '<div class="aitrfoel-switcher-preview">';
+                                            foreach ($switcher_data as $lang) {
+                                                $flag = AITRFOEL_Language_Mapper::get_flag_html($lang['code'], 20, 'margin-right: 4px;');
+                                                echo '<span style="display: inline-flex; align-items: center; padding: 4px 8px; margin-right: 6px; border: 1px solid #ddd; border-radius: 4px;">';
+                                                echo $flag . ' <span style="font-size: 13px;">' . esc_html(strtoupper($lang['code'])) . '</span>';
+                                                echo '</span>';
+                                            }
+                                            echo '</div>';
+                                        } else {
+                                            echo '<p style="color: #666; margin: 0;">' . esc_html__('No languages configured yet. Add languages in the Multilingual Plugin section above.', 'ai-translator-for-elementor-and-polylang') . '</p>';
+                                        }
+                                    } elseif (function_exists('pll_languages_list')) {
+                                        $lang_codes = pll_languages_list(['fields' => 'slug']);
+                                        echo '<div class="aitrfoel-switcher-preview">';
+                                        foreach ($lang_codes as $lc) {
+                                            $flag = AITRFOEL_Language_Mapper::get_flag_html($lc, 20, 'margin-right: 4px;');
+                                            echo '<span style="display: inline-flex; align-items: center; padding: 4px 8px; margin-right: 6px; border: 1px solid #ddd; border-radius: 4px;">';
+                                            echo $flag . ' <span style="font-size: 13px;">' . esc_html(strtoupper($lc)) . '</span>';
+                                            echo '</span>';
+                                        }
+                                        echo '</div>';
+                                    } else {
+                                        echo '<p style="color: #666; margin: 0;">' . esc_html__('No multilingual plugin active. Configure one first.', 'ai-translator-for-elementor-and-polylang') . '</p>';
+                                    }
+                                    ?>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_switcher_custom_css"><?php esc_html_e('Custom CSS', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <textarea name="aitrfoel_switcher_custom_css"
+                                          id="aitrfoel_switcher_custom_css"
+                                          class="large-text code"
+                                          rows="8"
+                                          placeholder="/* Example: change flag size */
+.aitrfoel-language-switcher img {
+    width: 24px !important;
+    height: auto !important;
+}
+
+/* Example: change active language background */
+.aitrfoel-switcher-list .aitrfoel-switcher-item.active a {
+    background-color: #333;
+}"><?php echo esc_textarea(get_option('aitrfoel_switcher_custom_css', '')); ?></textarea>
+                                <p class="description">
+                                    <?php esc_html_e('Add custom CSS to override the default language switcher styles. This CSS is loaded on the frontend wherever the shortcode or widget is used.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    <br>
+                                    <strong><?php esc_html_e('Available CSS classes:', 'ai-translator-for-elementor-and-polylang'); ?></strong>
+                                    <code>.aitrfoel-language-switcher</code>,
+                                    <code>.aitrfoel-switcher-list</code>,
+                                    <code>.aitrfoel-switcher-flags</code>,
+                                    <code>.aitrfoel-switcher-flags-text</code>,
+                                    <code>.aitrfoel-switcher-dropdown</code>,
+                                    <code>.aitrfoel-flag-link</code>,
+                                    <code>.aitrfoel-flag-text-link</code>,
+                                    <code>.aitrfoel-switcher-item</code>,
+                                    <code>.active</code>
+                                </p>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <th scope="row"><?php esc_html_e('Nav Menu Integration', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                            <td>
+                                <?php $nav_menu_enabled = get_option('aitrfoel_nav_menu_switcher', false); ?>
+                                <?php $nav_menu_location = get_option('aitrfoel_nav_menu_location', ''); ?>
+                                <label>
+                                    <input type="checkbox" name="aitrfoel_nav_menu_switcher" value="1" <?php checked($nav_menu_enabled); ?> />
+                                    <?php esc_html_e('Automatically add language switcher to a navigation menu', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </label>
+                                
+                                <?php
+                                $menu_locations = get_registered_nav_menus();
+                                if (!empty($menu_locations)): ?>
+                                <div style="margin-top: 10px;">
+                                    <label for="aitrfoel_nav_menu_location">
+                                        <strong><?php esc_html_e('Menu Location:', 'ai-translator-for-elementor-and-polylang'); ?></strong>
+                                    </label>
+                                    <select id="aitrfoel_nav_menu_location" name="aitrfoel_nav_menu_location" style="margin-left: 6px;">
+                                        <option value="" <?php selected($nav_menu_location, ''); ?>>
+                                            <?php esc_html_e('All menu locations', 'ai-translator-for-elementor-and-polylang'); ?>
+                                        </option>
+                                        <?php foreach ($menu_locations as $location_slug => $location_name): ?>
+                                            <option value="<?php echo esc_attr($location_slug); ?>" <?php selected($nav_menu_location, $location_slug); ?>>
+                                                <?php echo esc_html($location_name); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <p class="description">
+                                        <?php esc_html_e('Choose which menu location gets the language switcher appended, or select "All" to add to every menu.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </p>
+                                </div>
+                                <?php else: ?>
+                                <p class="description" style="margin-top: 6px;">
+                                    <?php esc_html_e('Your current theme has no registered navigation menu locations. The switcher will be appended to all menus when enabled.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
                 <!-- Advanced / Debug Settings -->
                 <div class="aitrfoel-settings-section">
                     <h3><?php esc_html_e('🔧 Advanced Settings', 'ai-translator-for-elementor-and-polylang'); ?></h3>
@@ -530,6 +800,73 @@ class AITRFOEL_Settings {
 
                 <?php submit_button(__('Save Settings', 'ai-translator-for-elementor-and-polylang')); ?>
             </form>
+            
+            <!-- Reset Plugin Data (outside the form) -->
+            <div class="aitrfoel-settings-section" style="background: #fff5f5; border: 1px solid #e2401c; border-radius: 6px; padding: 20px; margin-top: 30px;">
+                <h3 style="margin-top: 0; color: #d63638;">⚠️ <?php esc_html_e('Reset Plugin Data', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                <p class="description" style="margin-bottom: 15px;">
+                    <?php esc_html_e('This will reset all built-in language settings, disable the built-in system, and clear the onboarding state. Useful for re-testing the welcome screen and language setup. Your API key and other settings will be preserved. Translated pages will NOT be deleted.', 'ai-translator-for-elementor-and-polylang'); ?>
+                </p>
+                <button type="button" class="button button-link-delete" id="aitrfoel-reset-plugin-data" style="font-size: 13px; padding: 6px 16px;">
+                    🗑️ <?php esc_html_e('Reset Plugin Data', 'ai-translator-for-elementor-and-polylang'); ?>
+                </button>
+                <span id="aitrfoel-reset-status" style="margin-left: 12px; display: none;"></span>
+            </div>
+            
+            <script>
+            jQuery(document).ready(function($) {
+                $('#aitrfoel-reset-plugin-data').on('click', function() {
+                    if (!confirm('<?php echo esc_js(__('Are you sure you want to reset all plugin data? This will:\n\n• Disable the built-in language system\n• Remove all configured languages\n• Reset the onboarding/welcome screen\n• Clear dependency status cache\n\nYour API key, translated pages, and other settings will be preserved.\n\nContinue?', 'ai-translator-for-elementor-and-polylang')); ?>')) {
+                        return;
+                    }
+                    
+                    var $btn = $(this);
+                    var $status = $('#aitrfoel-reset-status');
+                    $btn.prop('disabled', true).text('<?php echo esc_js(__('Resetting...', 'ai-translator-for-elementor-and-polylang')); ?>');
+                    $status.hide();
+                    
+                    $.ajax({
+                        url: ajaxurl,
+                        type: 'POST',
+                        data: {
+                            action: 'aitrfoel_reset_plugin_data',
+                            nonce: '<?php echo wp_create_nonce('aitrfoel_reset_plugin_data'); ?>'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                $status.css('color', 'green').text('✓ ' + response.data.message).show();
+                                setTimeout(function() { 
+                                    window.location.href = '<?php echo esc_url(admin_url('admin.php?page=ai-translator-for-elementor-and-polylang')); ?>';
+                                }, 1000);
+                            } else {
+                                $btn.prop('disabled', false).text('🗑️ <?php echo esc_js(__('Reset Plugin Data', 'ai-translator-for-elementor-and-polylang')); ?>');
+                                $status.css('color', 'red').text('✗ ' + (response.data || 'Error')).show();
+                            }
+                        },
+                        error: function() {
+                            $btn.prop('disabled', false).text('🗑️ <?php echo esc_js(__('Reset Plugin Data', 'ai-translator-for-elementor-and-polylang')); ?>');
+                            $status.css('color', 'red').text('✗ <?php echo esc_js(__('Connection error', 'ai-translator-for-elementor-and-polylang')); ?>').show();
+                        }
+                    });
+                });
+            });
+            </script>
+            
+            <script>
+            jQuery(document).ready(function($) {
+                // Dynamically update shortcode display when settings change
+                function updateShortcodePreview() {
+                    var style = $('#aitrfoel_switcher_style').val() || 'flags-text';
+                    var showFlags = $('input[name="aitrfoel_switcher_show_flags"]').is(':checked') ? 'true' : 'false';
+                    var showNames = $('input[name="aitrfoel_switcher_show_names"]').is(':checked') ? 'true' : 'false';
+                    var shortcode = '[aitrfoel_language_switcher style="' + style + '" show_flags="' + showFlags + '" show_names="' + showNames + '"]';
+                    $('#aitrfoel-switcher-shortcode').text(shortcode);
+                }
+                
+                $('#aitrfoel_switcher_style').on('change', updateShortcodePreview);
+                $('input[name="aitrfoel_switcher_show_flags"], input[name="aitrfoel_switcher_show_names"]').on('change', updateShortcodePreview);
+            });
+            </script>
         </div>
         
         <?php
@@ -700,6 +1037,247 @@ class AITRFOEL_Settings {
         } catch (Exception $e) {
             wp_send_json_error(__('Error clearing cache: ', 'ai-translator-for-elementor-and-polylang') . $e->getMessage());
         }
+    }
+
+    /**
+     * Reset plugin data AJAX handler
+     * Resets built-in language system, onboarding state, and dependency cache.
+     * Preserves: API key, translated pages, cache settings, debug mode.
+     */
+    public static function reset_plugin_data() {
+        check_ajax_referer('aitrfoel_reset_plugin_data', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Permission denied');
+        }
+        
+        try {
+            // 1. Disable and clear built-in language system
+            delete_option('aitrfoel_builtin_enabled');
+            delete_option('aitrfoel_builtin_languages');
+            delete_option('aitrfoel_builtin_default_language');
+            delete_option('aitrfoel_builtin_url_structure');
+            delete_option('aitrfoel_builtin_db_version');
+            
+            // 2. Reset onboarding / dependency status (triggers welcome screen)
+            delete_option('aitrfoel_dependencies_status');
+            
+            // 3. Clear analytics opt-in pref
+            delete_option('aitrfoel_analytics_optin');
+            
+            // 4. Clear any transients
+            delete_transient('aitrfoel_theme_status_report');
+            
+            // 5. Clean up built-in taxonomy terms
+            $terms = get_terms([
+                'taxonomy' => 'aitrfoel_language',
+                'hide_empty' => false,
+                'fields' => 'ids',
+            ]);
+            if (!is_wp_error($terms)) {
+                foreach ($terms as $term_id) {
+                    wp_delete_term($term_id, 'aitrfoel_language');
+                }
+            }
+            
+            // 6. Flush rewrite rules
+            flush_rewrite_rules();
+            
+            // 7. Clear the singleton instance so it re-detects on next load
+            if (class_exists('AITRFOEL_Multilingual_Manager')) {
+                $manager = AITRFOEL_Multilingual_Manager::get_instance();
+                if (method_exists($manager, 'refresh')) {
+                    $manager->refresh();
+                }
+            }
+            
+            wp_send_json_success([
+                'message' => __('Plugin data reset successfully! Redirecting to welcome screen...', 'ai-translator-for-elementor-and-polylang')
+            ]);
+            
+        } catch (Exception $e) {
+            wp_send_json_error(__('Error resetting plugin data: ', 'ai-translator-for-elementor-and-polylang') . $e->getMessage());
+        }
+    }
+
+    /**
+     * Render built-in language management controls on the settings page.
+     *
+     * @param AITRFOEL_Builtin_Integration $builtin Instance of the built-in integration.
+     */
+    private static function render_builtin_language_management($builtin) {
+        $languages = $builtin->get_available_languages();
+        $default_lang = $builtin->get_default_language();
+        $all_mappings = AITRFOEL_Language_Mapper::get_all_mappings();
+        $nonce = wp_create_nonce('aitrfoel_ajax_nonce');
+        ?>
+        <div id="aitrfoel-builtin-lang-management" style="margin-top: 15px; padding: 15px; background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 6px;">
+            <h4 style="margin-top: 0;"><?php esc_html_e('Manage Languages', 'ai-translator-for-elementor-and-polylang'); ?></h4>
+
+            <!-- Current Languages Table -->
+            <style>
+                #aitrfoel-builtin-languages-table th,
+                #aitrfoel-builtin-languages-table td {
+                    padding: 10px 12px;
+                }
+                #aitrfoel-builtin-languages-table .dashicons {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 20px;
+                    height: 20px;
+                    font-size: 20px;
+                    vertical-align: middle;
+                }
+                #aitrfoel-builtin-languages-table .button.button-small {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-height: 28px;
+                    padding: 0 8px;
+                    line-height: 1;
+                }
+                #aitrfoel-builtin-languages-table .button.button-small .dashicons {
+                    margin: 0;
+                    line-height: 1;
+                }
+            </style>
+            <table class="widefat striped" id="aitrfoel-builtin-languages-table" style="margin-bottom: 15px;">
+                <thead>
+                    <tr>
+                        <th><?php esc_html_e('Code', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                        <th><?php esc_html_e('Language', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                        <th><?php esc_html_e('Default', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                        <th><?php esc_html_e('Actions', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($languages as $code => $lang_obj):
+                        $lang_name = is_object($lang_obj) ? $lang_obj->name : $lang_obj;
+                    ?>
+                        <tr data-lang="<?php echo esc_attr($code); ?>">
+                            <td><code><?php echo esc_html(strtoupper($code)); ?></code></td>
+                            <td>
+                                <?php echo AITRFOEL_Language_Mapper::get_flag_html($code, 20, 'margin-right: 6px;'); ?>
+                                <?php echo esc_html($lang_name); ?>
+                            </td>
+                            <td style="text-align: center;">
+                                <?php if ($code === $default_lang): ?>
+                                    <span class="dashicons dashicons-star-filled" style="color: #f0b849; vertical-align: middle;"></span>
+                                <?php else: ?>
+                                    <button type="button" class="button button-small aitrfoel-set-default-lang" data-code="<?php echo esc_attr($code); ?>" title="<?php esc_attr_e('Set as default', 'ai-translator-for-elementor-and-polylang'); ?>">
+                                        <span class="dashicons dashicons-star-empty" style="vertical-align: middle;"></span>
+                                    </button>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ($code !== $default_lang): ?>
+                                    <button type="button" class="button button-small button-link-delete aitrfoel-remove-lang" data-code="<?php echo esc_attr($code); ?>">
+                                        <?php esc_html_e('Remove', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </button>
+                                <?php else: ?>
+                                    <em style="color: #999;"><?php esc_html_e('Default', 'ai-translator-for-elementor-and-polylang'); ?></em>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+
+            <!-- Add Language -->
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 15px;">
+                <select id="aitrfoel-add-lang-select" style="min-width: 220px;">
+                    <option value=""><?php esc_html_e('— Select a language to add —', 'ai-translator-for-elementor-and-polylang'); ?></option>
+                    <?php
+                    foreach ($all_mappings as $code => $name) {
+                        if (!isset($languages[$code])) {
+                            echo '<option value="' . esc_attr($code) . '">' . esc_html($name) . ' (' . esc_html(strtoupper($code)) . ')</option>';
+                        }
+                    }
+                    ?>
+                </select>
+                <button type="button" class="button button-primary" id="aitrfoel-add-lang-btn">
+                    <?php esc_html_e('Add Language', 'ai-translator-for-elementor-and-polylang'); ?>
+                </button>
+            </div>
+
+            <!-- Disable Built-in Option -->
+            <div style="border-top: 1px solid #e0e0e0; padding-top: 12px; margin-top: 12px;">
+                <button type="button" class="button button-link-delete" id="aitrfoel-disable-builtin">
+                    <?php esc_html_e('Disable Built-in Language System', 'ai-translator-for-elementor-and-polylang'); ?>
+                </button>
+                <span style="color: #999; margin-left: 8px; font-size: 12px;">
+                    <?php esc_html_e('Switch to Polylang or WPML instead.', 'ai-translator-for-elementor-and-polylang'); ?>
+                </span>
+            </div>
+
+            <!-- Status message -->
+            <div id="aitrfoel-builtin-lang-status" style="margin-top: 10px; display: none;"></div>
+        </div>
+
+        <script>
+        jQuery(document).ready(function($) {
+            var nonce = '<?php echo esc_js($nonce); ?>';
+
+            function builtinLangAjax(operation, code, callback) {
+                var $status = $('#aitrfoel-builtin-lang-status');
+                $status.hide();
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'aitrfoel_manage_builtin_language',
+                        nonce: nonce,
+                        operation: operation,
+                        language_code: code || ''
+                    },
+                    success: function(resp) {
+                        if (resp.success) {
+                            $status.css('color', 'green').text('✓ ' + (resp.data.message || 'Done')).show();
+                            if (callback) callback(resp);
+                            setTimeout(function() { location.reload(); }, 800);
+                        } else {
+                            $status.css('color', 'red').text('✗ ' + (resp.data || 'Error')).show();
+                        }
+                    },
+                    error: function() {
+                        $status.css('color', 'red').text('✗ <?php echo esc_js(__('Connection error', 'ai-translator-for-elementor-and-polylang')); ?>').show();
+                    }
+                });
+            }
+
+            // Add language
+            $('#aitrfoel-add-lang-btn').on('click', function() {
+                var code = $('#aitrfoel-add-lang-select').val();
+                if (!code) return;
+                $(this).prop('disabled', true);
+                builtinLangAjax('add', code);
+            });
+
+            // Remove language
+            $(document).on('click', '.aitrfoel-remove-lang', function() {
+                var code = $(this).data('code');
+                if (!confirm('<?php echo esc_js(__('Remove this language? Existing translations in this language will remain but will no longer be managed.', 'ai-translator-for-elementor-and-polylang')); ?>')) return;
+                $(this).prop('disabled', true);
+                builtinLangAjax('remove', code);
+            });
+
+            // Set default
+            $(document).on('click', '.aitrfoel-set-default-lang', function() {
+                var code = $(this).data('code');
+                $(this).prop('disabled', true);
+                builtinLangAjax('set_default', code);
+            });
+
+            // Disable built-in
+            $('#aitrfoel-disable-builtin').on('click', function() {
+                if (!confirm('<?php echo esc_js(__('Are you sure you want to disable the built-in language system? You will need Polylang or WPML to manage translations.', 'ai-translator-for-elementor-and-polylang')); ?>')) return;
+                $(this).prop('disabled', true);
+                builtinLangAjax('disable', '');
+            });
+        });
+        </script>
+        <?php
     }
 
 }

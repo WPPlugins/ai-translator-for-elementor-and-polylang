@@ -10,14 +10,14 @@ class AITRFOEL_Translation_Engine {
     private static $instance = null;
     
     /**
-     * Batch size for API calls
+     * Batch size for API calls — larger batches = fewer round trips = faster
      */
-    private $batch_size = 5;
+    private $batch_size = 100;
     
     /**
-     * Rate limit delay (milliseconds) - Reduced from 500ms to 100ms for better performance
+     * Rate limit delay (milliseconds) - only used for fallback individual calls
      */
-    private $rate_limit_delay = 100;
+    private $rate_limit_delay = 10;
     
     /**
      * Last translation statistics
@@ -42,7 +42,7 @@ class AITRFOEL_Translation_Engine {
     }
 
     private function __construct() {
-        $this->batch_size = get_option('aitrfoel_batch_size', 5);
+        $this->batch_size = get_option('aitrfoel_batch_size', 100);
         $this->cache_enabled = (bool) get_option('aitrfoel_cache_enabled', true);
     }
 
@@ -256,6 +256,19 @@ class AITRFOEL_Translation_Engine {
         $cache = AITRFOEL_Cache_Manager::get_instance();
         $parser = AITRFOEL_Widget_Parser::get_instance();
         
+        // Include post title in batch to avoid a separate API call
+        $original_post = get_post($page_id);
+        $title_batch_key = '__aitrfoel_post_title__';
+        $pre_translated_title = null;
+        if ($original_post && !empty($original_post->post_title)) {
+            $strings_to_translate[] = [
+                'original' => $original_post->post_title,
+                'path' => $title_batch_key,
+                'type' => 'title',
+                'widget_type' => 'elementor',
+            ];
+        }
+        
         // Process translations in batches
         $translations = [];
         $total_strings = count($strings_to_translate);
@@ -463,19 +476,6 @@ class AITRFOEL_Translation_Engine {
                                 );
                             }
                             
-                            // Residue retry
-                            $needs_retry = false;
-                            foreach (['Read more','Číst dál','Читать далее'] as $marker) {
-                                if (is_string($translated) && mb_stripos($translated, $marker, 0, 'UTF-8') !== false) {
-                                    $needs_retry = true; break;
-                                }
-                            }
-                            if ($needs_retry) {
-                                $retry = $api->translate_text($text, $target_lang, $detected_lang);
-                                if (!is_wp_error($retry) && is_string($retry) && $retry !== '') {
-                                    $translated = $retry;
-                                }
-                            }
                             // Restore placeholders (primary) or formatting (fallback)
                             if (!empty($ph_map) && method_exists($parser, 'i18n_restore_placeholders')) {
                                 $final = $parser->i18n_restore_placeholders($translated, $ph_map);
@@ -510,8 +510,7 @@ class AITRFOEL_Translation_Engine {
                         $processed++;
                     }
                     
-                    // Rate limiting between batches
-                    usleep($this->rate_limit_delay * 1000);
+                    // No delay between successful batch calls - the server handles rate limiting
                 }
                 
                 // Update progress
@@ -755,8 +754,19 @@ class AITRFOEL_Translation_Engine {
             AITRFOEL_Logger::log('URL localization failed: ' . $e->getMessage(), 'warning', $page_id);
         }
 
+        // Extract pre-translated title from batch results (avoids separate API call)
+        if ($original_post && !empty($original_post->post_title)) {
+            // Check both path-keyed and source-text-keyed results
+            if (isset($translations[$title_batch_key])) {
+                $pre_translated_title = wp_strip_all_tags($translations[$title_batch_key]);
+                unset($translations[$title_batch_key]); // Don't apply to Elementor data
+            } elseif (isset($translations[$original_post->post_title])) {
+                $pre_translated_title = wp_strip_all_tags($translations[$original_post->post_title]);
+            }
+        }
+
         // Create new page with translations
-        $new_page_id = $this->create_translated_page($page_id, $translated_data, $target_lang, $detected_lang);
+        $new_page_id = $this->create_translated_page($page_id, $translated_data, $target_lang, $detected_lang, $pre_translated_title);
         
         if (is_wp_error($new_page_id)) {
             AITRFOEL_Logger::log(
@@ -782,10 +792,11 @@ class AITRFOEL_Translation_Engine {
             $word_count = $this->last_translation_stats['word_count'];
             
             try {
-                // Report usage to the server API for tracking
+                // Report usage to the server API for tracking (non-blocking fire-and-forget)
                 $license_manager = AITRFOEL_License_Manager_Server::get_instance();
                 $response = wp_remote_post('https://meeptech.com/api/eat/report-usage', [
-                    'timeout' => 10,
+                    'timeout' => 2,
+                    'blocking' => false,
                     'body' => json_encode([
                         'site_url' => home_url(),
                         'license_key' => null,
@@ -919,7 +930,19 @@ class AITRFOEL_Translation_Engine {
             $page_id
         );
         
-        // Translate strings
+        // Include post title in batch to avoid a separate API call
+        $post_title = $post->post_title;
+        $title_key = '__aitrfoel_post_title__';
+        if (!empty($post_title)) {
+            $strings_to_translate[] = [
+                'original' => $post_title,
+                'path' => $title_key,
+                'type' => 'title',
+                'widget_type' => 'gutenberg',
+            ];
+        }
+        
+        // Translate strings (title included in batch)
         $translations = $this->batch_translate_strings($strings_to_translate, $target_lang, $detected_lang, $page_id);
         
         if (is_wp_error($translations)) {
@@ -929,6 +952,12 @@ class AITRFOEL_Translation_Engine {
                 $page_id
             );
             return $translations;
+        }
+        
+        // Extract translated title from batch results
+        $translated_title = null;
+        if (isset($translations[$post_title])) {
+            $translated_title = $translations[$post_title];
         }
         
         AITRFOEL_Logger::log(
@@ -941,8 +970,8 @@ class AITRFOEL_Translation_Engine {
         $original_content = $post->post_content;
         $translated_content = $parser->apply_translations($original_content, $translations);
         
-        // Create translated page
-        $new_page_id = $this->create_translated_page_generic($page_id, $translated_content, $target_lang, $detected_lang, 'gutenberg');
+        // Create translated page (pass pre-translated title to skip separate API call)
+        $new_page_id = $this->create_translated_page_generic($page_id, $translated_content, $target_lang, $detected_lang, 'gutenberg', $translated_title);
         
         if (is_wp_error($new_page_id)) {
             AITRFOEL_Logger::log(
@@ -1016,19 +1045,37 @@ class AITRFOEL_Translation_Engine {
             $page_id
         );
         
-        // Translate strings
+        // Include post title in batch to avoid a separate API call
+        $post_title = $post->post_title;
+        $title_key = '__aitrfoel_post_title__';
+        if (!empty($post_title)) {
+            $strings_to_translate[] = [
+                'original' => $post_title,
+                'path' => $title_key,
+                'type' => 'title',
+                'widget_type' => 'classic_editor',
+            ];
+        }
+        
+        // Translate strings (title included in batch)
         $translations = $this->batch_translate_strings($strings_to_translate, $target_lang, $detected_lang, $page_id);
         
         if (is_wp_error($translations)) {
             return $translations;
         }
         
+        // Extract translated title from batch results
+        $translated_title = null;
+        if (isset($translations[$post_title])) {
+            $translated_title = $translations[$post_title];
+        }
+        
         // Apply translations to content
         $original_content = $post->post_content;
         $translated_content = $parser->apply_translations($original_content, $translations);
         
-        // Create translated page
-        $new_page_id = $this->create_translated_page_generic($page_id, $translated_content, $target_lang, $detected_lang, 'classic');
+        // Create translated page (pass pre-translated title to skip separate API call)
+        $new_page_id = $this->create_translated_page_generic($page_id, $translated_content, $target_lang, $detected_lang, 'classic', $translated_title);
         
         if (is_wp_error($new_page_id)) {
             return $new_page_id;
@@ -1191,8 +1238,7 @@ class AITRFOEL_Translation_Engine {
                     }
                 }
                 
-                // Rate limiting
-                usleep($this->rate_limit_delay * 1000);
+                // No delay between batches - server handles rate limiting
             }
         }
         
@@ -1224,26 +1270,99 @@ class AITRFOEL_Translation_Engine {
      * @param string $content_type Content type (gutenberg/classic)
      * @return int|WP_Error New page ID or error
      */
-    private function create_translated_page_generic($original_page_id, $translated_content, $target_lang, $source_lang, $content_type) {
+    private function create_translated_page_generic($original_page_id, $translated_content, $target_lang, $source_lang, $content_type, $pre_translated_title = null) {
         $original_page = get_post($original_page_id);
         
         if (!$original_page) {
             return new WP_Error('page_not_found', __('Original page not found.', 'ai-translator-for-elementor-and-polylang'));
         }
         
-        // Translate title
-        $api = AITRFOEL_OpenAI_API::get_instance();
-        $translated_title = $api->translate_title($original_page->post_title, $target_lang, $source_lang);
+        // Check if a translation already exists for this language — update instead of duplicating
+        $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
+        $existing_translations = $multilingual->is_active() ? $multilingual->get_post_translations($original_page_id) : [];
+        $existing_page_id = isset($existing_translations[$target_lang]) ? (int) $existing_translations[$target_lang] : 0;
         
-        if (is_wp_error($translated_title)) {
+        if ($existing_page_id && get_post($existing_page_id)) {
+            AITRFOEL_Logger::log(
+                sprintf('Existing %s translation found (ID %d) for page %d → %s. Updating.', $content_type, $existing_page_id, $original_page_id, $target_lang),
+                'info',
+                $original_page_id
+            );
+            
+            // Translate title
+            if (!empty($pre_translated_title) && is_string($pre_translated_title)) {
+                $api = AITRFOEL_OpenAI_API::get_instance();
+                $translated_title = method_exists($api, 'clean_html_from_text') 
+                    ? $api->clean_html_from_text($pre_translated_title) 
+                    : wp_strip_all_tags($pre_translated_title);
+            } else {
+                $api = AITRFOEL_OpenAI_API::get_instance();
+                $translated_title = $api->translate_title($original_page->post_title, $target_lang, $source_lang);
+            }
+            
+            // Update existing page
+            $update_args = [
+                'ID' => $existing_page_id,
+                'post_content' => $translated_content,
+            ];
+            if (!is_wp_error($translated_title) && !empty($translated_title)) {
+                $update_args['post_title'] = $translated_title;
+            }
+            wp_update_post($update_args);
+            
+            // Copy meta
+            $meta_keys_to_copy = [
+                '_wp_page_template', 'site-post-title', 'ast-title-bar-display',
+                'ast-featured-img', 'ast-site-content-layout', 'site-sidebar-layout',
+            ];
+            foreach ($meta_keys_to_copy as $meta_key) {
+                $meta_value = get_post_meta($original_page_id, $meta_key, true);
+                if ($meta_value !== '') {
+                    update_post_meta($existing_page_id, $meta_key, $meta_value);
+                }
+            }
+            update_post_meta($existing_page_id, '_aitrfoel_content_type', $content_type);
+            
+            return $existing_page_id;
+        }
+        
+        // Use pre-translated title if provided (already included in batch), otherwise translate separately
+        if (!empty($pre_translated_title) && is_string($pre_translated_title)) {
+            // Clean HTML from title (same as translate_title does)
+            $api = AITRFOEL_OpenAI_API::get_instance();
+            $translated_title = method_exists($api, 'clean_html_from_text') 
+                ? $api->clean_html_from_text($pre_translated_title) 
+                : wp_strip_all_tags($pre_translated_title);
+        } else {
+            // Fallback: translate title separately (adds ~2-5s)
+            $api = AITRFOEL_OpenAI_API::get_instance();
+            $translated_title = $api->translate_title($original_page->post_title, $target_lang, $source_lang);
+        }
+        
+        if (is_wp_error($translated_title) || empty($translated_title)) {
             $translated_title = $original_page->post_title . ' (' . strtoupper($target_lang) . ')';
         }
         
         // Create new page
-        $target_status = get_option('aitrfoel_translated_page_status', 'draft');
+        $target_status = get_option('aitrfoel_translated_page_status', 'publish');
+        
+        // If 'inherit', match the original post's status
+        if ($target_status === 'inherit') {
+            $target_status = ($original_page->post_status === 'publish') ? 'publish' : 'draft';
+        }
+        
+        // Generate a proper slug for the translated post
+        // Use original post's slug + language suffix to ensure valid URL
+        $original_slug = $original_page->post_name;
+        $translated_slug = $original_slug ? $original_slug . '-' . $target_lang : sanitize_title($translated_title);
+        // If sanitize_title produced empty slug (non-Latin title), use original slug + lang
+        if (empty($translated_slug) || $translated_slug === '-' . $target_lang) {
+            $translated_slug = 'post-' . $original_page->ID . '-' . $target_lang;
+        }
         
         $new_page_args = [
             'post_title' => $translated_title,
+            'post_name' => $translated_slug,
             'post_content' => $translated_content,
             'post_status' => $target_status,
             'post_type' => $original_page->post_type,
@@ -1351,8 +1470,11 @@ class AITRFOEL_Translation_Engine {
      */
     private function report_usage_to_server($word_count, $target_lang) {
         try {
+            // Non-blocking request: fire-and-forget with short timeout
+            // The server will process it regardless of whether we wait
             $response = wp_remote_post('https://meeptech.com/api/eat/report-usage', [
-                'timeout' => 10,
+                'timeout' => 2,
+                'blocking' => false,
                 'body' => json_encode([
                     'site_url' => home_url(),
                     'license_key' => null,
@@ -2044,25 +2166,91 @@ class AITRFOEL_Translation_Engine {
      * @param string $detected_lang Detected source language
      * @return int|WP_Error New page ID or error
      */
-    private function create_translated_page($original_page_id, $translated_data, $target_lang, $detected_lang = 'en') {
+    private function create_translated_page($original_page_id, $translated_data, $target_lang, $detected_lang = 'en', $pre_translated_title = null) {
         $original_page = get_post($original_page_id);
         
         if (!$original_page) {
             return new WP_Error('page_not_found', __('Original page not found.', 'ai-translator-for-elementor-and-polylang'));
         }
         
-        // Translate page title with better fallback
-        $api = AITRFOEL_OpenAI_API::get_instance();
+        // Check if a translation already exists for this language — update it instead of creating a duplicate
+        $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
+        $existing_translations = $multilingual->is_active() ? $multilingual->get_post_translations($original_page_id) : [];
+        $existing_page_id = isset($existing_translations[$target_lang]) ? (int) $existing_translations[$target_lang] : 0;
         
-        $translated_title = $api->translate_title($original_page->post_title, $target_lang, $detected_lang);
+        if ($existing_page_id && get_post($existing_page_id)) {
+            AITRFOEL_Logger::log(
+                sprintf('Existing translation found (ID %d) for page %d → %s. Updating instead of creating new.', $existing_page_id, $original_page_id, $target_lang),
+                'info',
+                $original_page_id
+            );
+            
+            // Update existing translated page's Elementor data
+            update_post_meta($existing_page_id, '_elementor_data', wp_slash(json_encode($translated_data)));
+            
+            // Use pre-translated title if available (from batch), otherwise translate separately
+            $translated_title = $pre_translated_title;
+            if (!$translated_title) {
+                $api = AITRFOEL_OpenAI_API::get_instance();
+                $translated_title = $api->translate_title($original_page->post_title, $target_lang, $detected_lang);
+                if (is_wp_error($translated_title)) {
+                    $translated_title = null;
+                }
+            }
+            if ($translated_title) {
+                wp_update_post([
+                    'ID' => $existing_page_id,
+                    'post_title' => $translated_title,
+                ]);
+            }
+            
+            // Copy theme/layout meta from original to keep in sync
+            $theme_meta_keys = [
+                '_wp_page_template', 'site-post-title', 'ast-title-bar-display',
+                'ast-featured-img', 'ast-site-content-layout', 'site-sidebar-layout',
+                'ast-main-header-display', 'footer-sml-layout', 'theme-transparent-header-meta'
+            ];
+            foreach ($theme_meta_keys as $meta_key) {
+                $meta_value = get_post_meta($original_page_id, $meta_key, true);
+                if ($meta_value !== '') {
+                    update_post_meta($existing_page_id, $meta_key, $meta_value);
+                }
+            }
+            
+            // Track word usage for updates too
+            $word_count = 0;
+            foreach ($translated_data as $element) {
+                $word_count += $this->count_element_words($element);
+            }
+            if ($word_count > 0 && class_exists('AITRFOEL_License_Manager_Server')) {
+                $license_manager = AITRFOEL_License_Manager_Server::get_instance();
+                $license_manager->report_word_usage($word_count, $target_lang);
+            }
+            
+            AITRFOEL_Logger::log(
+                sprintf('Successfully updated existing translation (ID %d)', $existing_page_id),
+                'info',
+                $original_page_id
+            );
+            
+            return $existing_page_id;
+        }
         
-        if (is_wp_error($translated_title)) {
+        // Use pre-translated title if available (from batch), otherwise translate separately
+        $translated_title = $pre_translated_title;
+        if (!$translated_title) {
+            $api = AITRFOEL_OpenAI_API::get_instance();
+            $translated_title = $api->translate_title($original_page->post_title, $target_lang, $detected_lang);
+        }
+        
+        if (is_wp_error($translated_title) || !$translated_title) {
             // Better fallback: try to translate just the meaningful part
+            $api_fallback = AITRFOEL_OpenAI_API::get_instance();
             $title_parts = explode('(', $original_page->post_title);
             $base_title = trim($title_parts[0]);
             
             // Try translating just the base title
-            $base_translated = $api->translate_title($base_title, $target_lang, $detected_lang);
+            $base_translated = $api_fallback->translate_title($base_title, $target_lang, $detected_lang);
             if (!is_wp_error($base_translated)) {
                 // Get language name for display
                 $lang_names = [
@@ -2080,17 +2268,23 @@ class AITRFOEL_Translation_Engine {
         }
         
         // Create new page with intelligent status selection
-        $target_status = get_option('aitrfoel_translated_page_status', 'draft');
+        $target_status = get_option('aitrfoel_translated_page_status', 'publish');
         
-        // If original page is published and setting allows, publish translation too
-        if ($target_status === 'inherit' && $original_page->post_status === 'publish') {
-            $target_status = 'publish';
-        } elseif ($target_status === 'inherit') {
-            $target_status = 'draft'; // Safe fallback
+        // If 'inherit', match the original post's status
+        if ($target_status === 'inherit') {
+            $target_status = ($original_page->post_status === 'publish') ? 'publish' : 'draft';
+        }
+        
+        // Generate a proper slug for the translated post
+        $original_slug = $original_page->post_name;
+        $translated_slug = $original_slug ? $original_slug . '-' . $target_lang : sanitize_title($translated_title);
+        if (empty($translated_slug) || $translated_slug === '-' . $target_lang) {
+            $translated_slug = 'post-' . $page_id . '-' . $target_lang;
         }
         
         $new_page_args = [
             'post_title' => $translated_title,
+            'post_name' => $translated_slug,
             'post_content' => $original_page->post_content,
             'post_status' => $target_status,
             'post_type' => $original_page->post_type,
@@ -2326,6 +2520,31 @@ class AITRFOEL_Translation_Engine {
             'uncached_strings' => 0,
             'usage_records' => []
         ];
+    }
+    
+    /**
+     * Count words in an Elementor element recursively
+     * 
+     * @param array $element Element data
+     * @return int Word count
+     */
+    private function count_element_words($element) {
+        $words = 0;
+        if (is_array($element)) {
+            if (isset($element['settings'])) {
+                foreach ($element['settings'] as $value) {
+                    if (is_string($value)) {
+                        $words += str_word_count(wp_strip_all_tags($value));
+                    }
+                }
+            }
+            if (isset($element['elements']) && is_array($element['elements'])) {
+                foreach ($element['elements'] as $child) {
+                    $words += $this->count_element_words($child);
+                }
+            }
+        }
+        return $words;
     }
     
     /**

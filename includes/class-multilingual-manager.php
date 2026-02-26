@@ -19,7 +19,7 @@ class AITRFOEL_Multilingual_Manager {
     
     /**
      * Detected plugin type
-     * @var string|null 'polylang', 'wpml', or null
+     * @var string|null 'polylang', 'wpml', 'builtin', or null
      */
     private $detected_plugin = null;
     
@@ -44,10 +44,20 @@ class AITRFOEL_Multilingual_Manager {
     
     /**
      * Detect which multilingual plugin is active
-     * Priority: Polylang first (to maintain backward compatibility), then WPML
+     * Priority: If user explicitly enabled built-in, use it regardless of other plugins.
+     * Otherwise: Polylang first (backward compatibility), then WPML, then built-in.
      */
     private function detect_multilingual_plugin() {
-        // Check for Polylang first (backward compatibility)
+        // If the user explicitly enabled the built-in system, respect that choice
+        // even if Polylang or WPML is also installed
+        if ($this->is_builtin_available()) {
+            $this->detected_plugin = 'builtin';
+            $this->integration = AITRFOEL_Builtin_Integration::get_instance();
+            AITRFOEL_Logger::log('Multilingual Manager: Built-in language system enabled and loaded (user choice)', 'info');
+            return;
+        }
+        
+        // Check for Polylang (backward compatibility)
         if ($this->is_polylang_available()) {
             $this->detected_plugin = 'polylang';
             $this->integration = AITRFOEL_Polylang_Integration::get_instance();
@@ -91,6 +101,16 @@ class AITRFOEL_Multilingual_Manager {
         return defined('ICL_SITEPRESS_VERSION') || 
                class_exists('SitePress') ||
                function_exists('icl_object_id');
+    }
+    
+    /**
+     * Check if the built-in language system is available and enabled
+     * 
+     * @return bool
+     */
+    private function is_builtin_available() {
+        return class_exists('AITRFOEL_Builtin_Integration') && 
+               AITRFOEL_Builtin_Integration::is_enabled();
     }
     
     /**
@@ -148,6 +168,15 @@ class AITRFOEL_Multilingual_Manager {
      */
     public function is_wpml() {
         return $this->detected_plugin === 'wpml';
+    }
+    
+    /**
+     * Check if the detected system is the built-in language manager
+     * 
+     * @return bool
+     */
+    public function is_builtin() {
+        return $this->detected_plugin === 'builtin';
     }
     
     /**

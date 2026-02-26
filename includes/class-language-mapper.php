@@ -311,4 +311,174 @@ class AITRFOEL_Language_Mapper {
         
         return empty($instructions) ? '' : "\n\n" . implode("\n", $instructions);
     }
+    
+    /**
+     * Map language code to country code for flag display
+     * 
+     * @param string $lang_code The language code (e.g., 'en', 'es', 'ja')
+     * @return string Country code for flagcdn.com (e.g., 'gb', 'es', 'jp')
+     */
+    public static function get_country_code($lang_code) {
+        $lang_to_country = [
+            // Major languages where language code ≠ country code
+            'en'    => 'gb',
+            'ja'    => 'jp',
+            'zh'    => 'cn',
+            'zh-cn' => 'cn',
+            'zh-tw' => 'tw',
+            'zh-hk' => 'hk',
+            'ko'    => 'kr',
+            'ar'    => 'sa',
+            'he'    => 'il',
+            'uk'    => 'ua',
+            'sv'    => 'se',
+            'da'    => 'dk',
+            'cs'    => 'cz',
+            'el'    => 'gr',
+            'fa'    => 'ir',
+            'hi'    => 'in',
+            'bn'    => 'bd',
+            'vi'    => 'vn',
+            'ms'    => 'my',
+            'sl'    => 'si',
+            'ka'    => 'ge',
+            'hy'    => 'am',
+            'ur'    => 'pk',
+            'ta'    => 'lk',
+            'te'    => 'in',
+            'ml'    => 'in',
+            'kn'    => 'in',
+            'gu'    => 'in',
+            'pa'    => 'in',
+            'ne'    => 'np',
+            'si'    => 'lk',
+            'km'    => 'kh',
+            'lo'    => 'la',
+            'my'    => 'mm',
+            'sw'    => 'tz',
+            'am'    => 'et',
+            'sq'    => 'al',
+            'bs'    => 'ba',
+            'sr'    => 'rs',
+            'mk'    => 'mk',
+            'be'    => 'by',
+            'eu'    => 'es',  // Basque → Spain
+            'ca'    => 'es',  // Catalan → Spain (Catalonia)
+            'gl'    => 'es',  // Galician → Spain
+            'an'    => 'es',  // Aragonese → Spain
+            'ast'   => 'es',  // Asturian → Spain
+            'eo'    => 'eu',  // Esperanto → EU flag
+            'cy'    => 'gb',  // Welsh → UK
+            'ga'    => 'ie',  // Irish → Ireland
+            'gd'    => 'gb',  // Scottish Gaelic → UK
+            'mt'    => 'mt',
+            'lb'    => 'lu',
+            'lb-lu' => 'lu',
+            'lb_lu' => 'lu',
+            'is'    => 'is',
+            'fo'    => 'fo',
+            'af'    => 'za',
+            'tl'    => 'ph',
+            'nb'    => 'no',
+            'nn'    => 'no',
+            'fy'    => 'nl',  // Frisian → Netherlands
+            'br'    => 'fr',  // Breton → France
+            'oc'    => 'fr',  // Occitan → France
+            'co'    => 'fr',  // Corsican → France
+            'rm'    => 'ch',  // Romansh → Switzerland
+            'ps'    => 'af',  // Pashto → Afghanistan
+            'sd'    => 'pk',  // Sindhi → Pakistan
+            'zu'    => 'za',
+            'xh'    => 'za',
+            'ha'    => 'ng',
+            'yo'    => 'ng',
+            'ig'    => 'ng',
+            'so'    => 'so',
+            'mg'    => 'mg',
+            'ti'    => 'er',
+            'om'    => 'et',
+            'az'    => 'az',
+            'kk'    => 'kz',
+            'ky'    => 'kg',
+            'uz'    => 'uz',
+            'mn'    => 'mn',
+            'dz'    => 'bt',
+            'bo'    => 'cn',  // Tibetan → China
+            'se'    => 'no',  // Northern Sami → Norway
+            'kw'    => 'gb',  // Cornish → UK
+            // Regional variants
+            'en-us' => 'us',
+            'en-gb' => 'gb',
+            'en-au' => 'au',
+            'en-ca' => 'ca',
+            'fr-fr' => 'fr',
+            'fr-ca' => 'ca',
+            'de-de' => 'de',
+            'de-at' => 'at',
+            'de-ch' => 'ch',
+            'es-es' => 'es',
+            'es-mx' => 'mx',
+            'es-ar' => 'ar',
+            'it-it' => 'it',
+            'it-ch' => 'ch',
+            'pt-br' => 'br',
+            'pt-pt' => 'pt',
+        ];
+        
+        $code = strtolower(trim($lang_code));
+        
+        // Exact match first
+        if (isset($lang_to_country[$code])) {
+            return $lang_to_country[$code];
+        }
+        
+        // Try base code (e.g., 'pt_BR' → 'pt')
+        $base = explode('-', str_replace('_', '-', $code))[0];
+        if (isset($lang_to_country[$base])) {
+            return $lang_to_country[$base];
+        }
+        
+        // Fallback: use language code as country code (works for fr, de, es, it, pt, etc.)
+        return $base;
+    }
+    
+    /**
+     * Get flag image URL from flagcdn.com
+     * 
+     * @param string $lang_code The language code
+     * @param int $width Flag width in pixels (default: 24)
+     * @return string Flag image URL
+     */
+    public static function get_flag_url($lang_code, $width = 24) {
+        $country_code = self::get_country_code($lang_code);
+        // flagcdn.com minimum width is 20 — w16 and below return 404
+        $w = max(20, intval($width));
+        return 'https://flagcdn.com/w' . $w . '/' . $country_code . '.png';
+    }
+    
+    /**
+     * Get flag image HTML tag
+     * 
+     * @param string $lang_code The language code
+     * @param int $width Flag width in pixels (default: 24)
+     * @param string $extra_style Additional inline CSS
+     * @return string HTML img tag
+     */
+    public static function get_flag_html($lang_code, $width = 24, $extra_style = '') {
+        $url = self::get_flag_url($lang_code, $width);
+        $name = self::get_language_name($lang_code, false);
+        $height = intval($width * 0.75); // Standard flag aspect ratio
+        $style = "vertical-align: middle; border-radius: 2px;";
+        if ($extra_style) {
+            $style .= ' ' . $extra_style;
+        }
+        return sprintf(
+            '<img src="%s" alt="%s" width="%d" height="%d" style="%s" loading="lazy" />',
+            esc_url($url),
+            esc_attr($name),
+            $width,
+            $height,
+            esc_attr($style)
+        );
+    }
 }

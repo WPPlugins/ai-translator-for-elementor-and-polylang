@@ -1,26 +1,27 @@
-=== AI Translator for Elementor ===
+=== Meep AI Translator ===
 Contributors: meeptechdev
 Tags: elementor, polylang, translation, ai, openai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Requires Plugins: elementor, polylang
-Stable tag: 1.2.7
+Requires Plugins: elementor
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI-powered translation for Elementor, Gutenberg, and Classic pages and posts. Supports Polylang and WPML. Translate instantly using OpenAI.
+Stop fixing broken Elementor layouts after translation. Meep AI uses advanced LLMs to translate your site while perfectly retaining your design and Polylang/WPML settings. Built-in language system included — no Polylang or WPML required.
 
 == Description ==
 
-AI Translator for Elementor is an AI-powered translation solution for WordPress.
+Meep AI Translator is an AI-powered translation solution for WordPress.
 
-Translate your Elementor-powered pages, Gutenberg pages, and Classic pages or posts seamlessly using OpenAI's advanced translation engine. No APIs and no complicated setup required.
+Translate your Elementor-powered pages, Gutenberg pages, and Classic pages or posts seamlessly using advanced LLMs. No APIs and no complicated setup required.
 
 **Features:**
 
 * One-click translation for Elementor pages (single page or bulk)
-* Polylang and WPML integration
+* Built-in language management — no Polylang or WPML required
+* Polylang and WPML integration also supported
 * Gutenberg block-based pages supported
 * Classic pages and posts supported
 * OpenAI-powered translations for natural, contextual results
@@ -29,8 +30,8 @@ Translate your Elementor-powered pages, Gutenberg pages, and Classic pages or po
 
 **How It Works:**
 
-1. Add the required site languages in Polylang or WPML.
-2. Go to the AI Translator for Elementor plugin page or use the Quick Translation widget on the page/post edit screen.
+1. Set up your languages using the built-in system, Polylang, or WPML.
+2. Go to the Meep AI Translator plugin page or use the Quick Translation widget on the page/post edit screen.
 3. Select your Elementor, Gutenberg, or Classic Editor page.
 4. Choose the target language(s).
 5. Click Translate – the AI does the rest!
@@ -49,10 +50,11 @@ We offer affordable plans to fit your needs:
 == Installation ==
 1. Upload the plugin folder to `/wp-content/plugins/` or install via the WordPress Plugins screen.
 2. Activate the plugin through the 'Plugins' screen in WordPress.
-3. Set up your languages:
+3. Set up your languages using one of these options:
+   - **Built-in (Recommended):** Use the plugin's built-in language system — no extra plugins needed
    - **Polylang:** Go to Languages → Languages tab → Add your languages
    - **WPML:** Go to WPML → Languages → Add languages and configure
-4. Navigate to AI Translator plugin page.
+4. Navigate to Meep AI Translator plugin page.
 5. Start translating your Elementor, Gutenberg, and Classic Editor pages!
 
 == Frequently Asked Questions ==
@@ -84,6 +86,22 @@ Visit AI Translator → Dashboard to see your current usage and words remaining.
 4. Settings page with cache management and advanced options.
 
 == Changelog ==
+= 1.3.0 =
+* NEW: Built-in language management system — translate without Polylang or WPML
+* Added onboarding screen with 3 options: Built-in (recommended), Polylang, or WPML
+* Added inline language setup wizard with searchable language picker
+* Added language switcher WordPress widget (list, dropdown, or flags style)
+* Added [aitrfoel_language_switcher] shortcode
+* Added optional language switcher auto-append to navigation menus
+* Added language column to Posts/Pages admin list
+* Added REST API language and translations fields for all public post types
+* Added hreflang SEO tags for built-in language system
+* Added WordPress core sitemap filtering by language
+* Added URL rewriting with language prefix (/fr/page-slug/) including pagination, feeds, categories, tags
+* Added full language management in Settings page (add/remove languages, set default)
+* Polylang is no longer a required plugin dependency
+* Updated all readme files and installation instructions
+
 = 1.2.7 =
 * Compact onboarding screen — "What You Need" and "How It Works" now side by side so everything fits in one view
 * Hides all admin notices on the onboarding page for a clean, focused experience
@@ -144,7 +162,7 @@ Visit AI Translator → Dashboard to see your current usage and words remaining.
 * Fixed API response mapping for translations
 * Fixed HTML entity handling during text replacement
 * Improved error messages with direct links to install required plugins
-* Renamed plugin references to "AI Translator for Elementor" for consistency
+* Renamed plugin references to "Meep AI Translator" for consistency
 
 = 1.1.5 =
 * Added "Activate License" submenu for PRO version

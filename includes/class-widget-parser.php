@@ -608,7 +608,13 @@ class AITRFOEL_Widget_Parser {
             preg_match('/^(serif|sans-serif|monospace|cursive|fantasy)$/i', $content) || // Font families
             preg_match('/^(thin|extra-light|light|normal|medium|semi-bold|bold|extra-bold|black)$/i', $content) || // Font weights
             preg_match('/^(italic|oblique|normal)$/i', $content) || // Font styles
-            preg_match('/^(\d+\.?\d*|\.\d+)$/', $content)) { // Pure numbers
+            preg_match('/^(\d+\.?\d*|\.\d+)$/', $content) || // Pure numbers
+            preg_match('/^\d+[KkMmBb%+★✓✗→←↓↑·•]+$/u', $content) || // Short numeric tokens: 36K, 500+, 100%
+            preg_match('/^[\d,.]+[KkMmBb%+]?$/', $content) || // Formatted numbers: 1,000K
+            preg_match('/^\d+\/\d+$/', $content) || // Fractions/ratios: 24/7
+            preg_match('/^\d+\s*[x×X]\s*\d+$/u', $content) || // Dimensions: 4x4
+            preg_match('/^[\d+%KkMmBb\/.,\-\s★✓✗→←↓↑·•]+$/u', $content) || // Pure numbers/symbols only
+            (mb_strlen($content) <= 6 && !preg_match('/[a-zA-Z\p{Cyrillic}\p{Arabic}\p{Han}]{2,}/u', $content))) { // Very short with no real words
             return false;
         }
         

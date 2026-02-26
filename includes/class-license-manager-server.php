@@ -13,6 +13,7 @@ class AITRFOEL_License_Manager_Server {
     private static $instance = null;
     private $api_base_url = 'https://meeptech.com/api/eat'; // TypeScript Next.js API
     private $cached_license_key = null; // Cache license key to avoid Freemius calls
+    private $cached_license_status = null; // Cache license status per-request to avoid repeat HTTP calls
     
     public static function get_instance() {
         if (null === self::$instance) {
@@ -116,6 +117,11 @@ class AITRFOEL_License_Manager_Server {
      * Get current license status from server
      */
     public function get_license_status() {
+        // Return cached result if already fetched this request
+        if ($this->cached_license_status !== null) {
+            return $this->cached_license_status;
+        }
+        
         $plan_name = 'Free';
         $word_limit = 1800;
         
@@ -139,7 +145,7 @@ class AITRFOEL_License_Manager_Server {
         $words_used = $server_usage['words_used'];
         $words_left = $word_limit === -1 ? -1 : max(0, $word_limit - $words_used);
         
-        return [
+        $this->cached_license_status = [
             'plan' => $plan_name,
             'word_limit' => $word_limit,
             'words_used' => $words_used,
@@ -148,6 +154,8 @@ class AITRFOEL_License_Manager_Server {
             'freemius_validated' => isset($server_usage['freemius_validated']) ? $server_usage['freemius_validated'] : false,
             'license_expired' => isset($server_usage['license_expired']) ? $server_usage['license_expired'] : false
         ];
+        
+        return $this->cached_license_status;
     }
     
     /**
@@ -166,7 +174,7 @@ class AITRFOEL_License_Manager_Server {
             }
             
             $response = wp_remote_post($this->api_base_url . '/get-usage', [
-                'timeout' => 10,
+                'timeout' => 5,
                 'body' => json_encode($request_data),
                 'headers' => [
                     'Content-Type' => 'application/json'
@@ -644,7 +652,7 @@ class AITRFOEL_License_Manager_Server {
                 ⚠️ <?php esc_html_e('AI Translator License Expired', 'ai-translator-for-elementor-and-polylang'); ?>
             </h3>
             <p>
-                <?php esc_html_e('Your AI Translator for Elementor license has expired or been cancelled.', 'ai-translator-for-elementor-and-polylang'); ?>
+                <?php esc_html_e('Your Meep AI Translator license has expired or been cancelled.', 'ai-translator-for-elementor-and-polylang'); ?>
                 <br>
                 <?php esc_html_e('You have been downgraded to the', 'ai-translator-for-elementor-and-polylang'); ?>
                 <strong><?php esc_html_e('Free plan (1,800 words/week)', 'ai-translator-for-elementor-and-polylang'); ?></strong>.

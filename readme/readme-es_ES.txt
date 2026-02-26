@@ -1,10 +1,10 @@
-=== AI Translator for Elementor and Polylang ===
+=== Meep AI Translator ===
 Contributors: meeptechdev
 Tags: elementor, polylang, translation, ai, openai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Requires Plugins: elementor, polylang
+Requires Plugins: elementor
 Stable tag: 1.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -12,7 +12,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Traducción con IA para páginas de Elementor con Polylang. Traduce tu contenido instantáneamente usando OpenAI.
 
 == Description ==
-AI Translator for Elementor and Polylang es una solución de traducción con IA para WordPress. Traduce tus páginas de Elementor sin problemas con Polylang utilizando el avanzado motor de traducción de OpenAI.
+Meep AI Translator es una solución de traducción con IA para WordPress. Traduce tus páginas de Elementor sin problemas con Polylang utilizando el avanzado motor de traducción de OpenAI.
 
 **Características:**
 – Traducción con un clic para páginas de Elementor
@@ -32,7 +32,10 @@ Una versión PRO con límites de palabras más altos está disponible en [meepte
 == Installation ==
 1. Sube la carpeta del plugin a `/wp-content/plugins/` o instala a través de la pantalla de Plugins de WordPress.
 2. Activa el plugin a través del menú 'Plugins' en WordPress.
-3. Añade los idiomas que necesites en Configuración de Polylang (Idiomas → pestaña Idiomas).
+3. Configura tus idiomas con una de estas opciones:
+   - **Integrado (Recomendado):** Usa el sistema de idiomas integrado del plugin — no se necesitan plugins adicionales
+   - **Polylang:** Ve a Idiomas → pestaña Idiomas → Añadir idiomas
+   - **WPML:** Ve a WPML → Idiomas → Añadir idiomas y configurar
 4. Navega a la página del plugin AI Translator.
 5. ¡Comienza a traducir tus páginas de Elementor!
 

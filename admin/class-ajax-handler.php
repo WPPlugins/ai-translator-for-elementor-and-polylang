@@ -1806,6 +1806,11 @@ class AITRFOEL_Ajax_Handler {
                 throw new Exception('Security check failed');
             }
 
+            // Check capabilities
+            if (!current_user_can('edit_pages') && !current_user_can('edit_posts')) {
+                throw new Exception('Insufficient permissions');
+            }
+
             // Get admin menu instance
             if (!class_exists('AITRFOEL_Admin_Menu')) {
                 throw new Exception('Admin menu class not found');
@@ -1816,13 +1821,33 @@ class AITRFOEL_Ajax_Handler {
             // Get fresh page data
             $pages_data = $admin_menu->get_pages_with_translations();
             
-            // Start output buffering to capture HTML
+            // Separate into pages and posts (matching dashboard tab structure)
+            $pages_only = [];
+            $posts_only = [];
+            foreach ($pages_data as $group) {
+                if ($group['source']->post_type === 'page') {
+                    $pages_only[] = $group;
+                } else {
+                    $posts_only[] = $group;
+                }
+            }
+            
+            // Render pages HTML
             ob_start();
-            $admin_menu->render_pages_rows($pages_data);
-            $html = ob_get_clean();
+            $admin_menu->render_pages_rows($pages_only);
+            $pages_html = ob_get_clean();
+            
+            // Render posts HTML
+            ob_start();
+            $admin_menu->render_pages_rows($posts_only);
+            $posts_html = ob_get_clean();
 
             wp_send_json_success([
-                'html' => $html,
+                'html' => $pages_html, // Backward compat: pages HTML in 'html'
+                'pages_html' => $pages_html,
+                'posts_html' => $posts_html,
+                'pages_count' => count($pages_only),
+                'posts_count' => count($posts_only),
                 'message' => 'Table data refreshed successfully'
             ]);
 

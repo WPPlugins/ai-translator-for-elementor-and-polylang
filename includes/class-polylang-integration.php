@@ -492,14 +492,29 @@ class AITRFOEL_Polylang_Integration extends AITRFOEL_Multilingual_Interface {
         
         $languages = $this->get_available_languages();
         $default_lang = $this->get_default_language();
+        $current_lang = function_exists('pll_current_language') ? pll_current_language('slug') : $default_lang;
+        $current_post_id = get_queried_object_id();
+        $translations = $current_post_id ? $this->get_post_translations($current_post_id) : [];
+        
         $switcher_data = [];
         
         foreach ($languages as $lang) {
+            // Determine the URL for this language
+            $url = home_url('/');
+            if (isset($translations[$lang->slug])) {
+                $url = $this->get_post_permalink($translations[$lang->slug]);
+            } elseif (function_exists('pll_home_url')) {
+                $url = pll_home_url($lang->slug);
+            }
+            
             $switcher_data[] = [
                 'code' => $lang->slug,
                 'name' => $lang->name,
+                'native_name' => $lang->name,
                 'flag' => $lang->flag ?? '',
-                'is_default' => $lang->slug === $default_lang
+                'is_default' => $lang->slug === $default_lang,
+                'is_current' => $lang->slug === $current_lang,
+                'url' => $url,
             ];
         }
         

@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name: AI Translator for Elementor
+ * Plugin Name: Meep AI Translator
  * Plugin URI: https://meeptech.com/products/ai-translator-for-elementor-polylang
- * Description: AI-powered translation for Elementor, Gutenberg, and Classic Editor pages and posts with Polylang or WPML using OpenAI
- * Version: 1.2.7
+ * Description: Stop fixing broken Elementor layouts after translation. Meep AI uses advanced LLMs to translate your site while perfectly retaining your design and Polylang/WPML settings. Built-in language system included — no Polylang or WPML required.
+ * Version: 1.3.0
  * Author: Meep Tech
  * Author URI: https://meeptech.com
  * License: GPL v2 or later
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('AITRFOEL_VERSION', '1.2.7');
+define('AITRFOEL_VERSION', '1.3.0');
 define('AITRFOEL_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AITRFOEL_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AITRFOEL_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -150,11 +150,12 @@ class AITRFOEL_Main {
             }
         }
         
-        // Check if a multilingual plugin (Polylang or WPML) is active
+        // Check if a multilingual plugin (Polylang, WPML, or Built-in) is active
         $has_polylang = function_exists('pll_get_post_language');
         $has_wpml = defined('ICL_SITEPRESS_VERSION') || class_exists('SitePress');
+        $has_builtin = get_option('aitrfoel_builtin_enabled', false);
         
-        if (!$has_polylang && !$has_wpml) {
+        if (!$has_polylang && !$has_wpml && !$has_builtin) {
             $missing[] = 'multilingual';
             if ($show_notices) {
                 add_action('admin_notices', [$this, 'admin_notice_multilingual_missing']);
@@ -274,6 +275,7 @@ class AITRFOEL_Main {
         require_once AITRFOEL_PLUGIN_DIR . 'includes/class-multilingual-interface.php';
         require_once AITRFOEL_PLUGIN_DIR . 'includes/class-polylang-integration.php';
         require_once AITRFOEL_PLUGIN_DIR . 'includes/class-wpml-integration.php';
+        require_once AITRFOEL_PLUGIN_DIR . 'includes/class-builtin-integration.php';
         require_once AITRFOEL_PLUGIN_DIR . 'includes/class-multilingual-manager.php';
         
         // Load analytics (PostHog integration)
@@ -327,18 +329,50 @@ class AITRFOEL_Main {
             // Initialize multilingual integration manager (auto-detects Polylang or WPML)
             AITRFOEL_Multilingual_Manager::get_instance();
             
+            // Register language switcher shortcode for all multilingual integrations
+            // (built-in integration registers its own, but Polylang/WPML users need this too)
+            add_action('init', function() {
+                if (!shortcode_exists('aitrfoel_language_switcher')) {
+                    add_shortcode('aitrfoel_language_switcher', function($atts) {
+                        $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
+                        if (!$multilingual->is_active()) {
+                            return '';
+                        }
+                        
+                        $atts = shortcode_atts([
+                            'style' => get_option('aitrfoel_switcher_style', 'flags-text'),
+                            'show_names' => get_option('aitrfoel_switcher_show_names', true) ? 'true' : 'false',
+                            'show_flags' => get_option('aitrfoel_switcher_show_flags', true) ? 'true' : 'false',
+                        ], $atts);
+                        
+                        $switcher_data = $multilingual->get_language_switcher_data();
+                        if (empty($switcher_data)) {
+                            return '';
+                        }
+                        
+                        // Use builtin renderer if available (it has the full rendering with CSS)
+                        if (class_exists('AITRFOEL_Builtin_Integration') && method_exists(AITRFOEL_Builtin_Integration::get_instance(), 'render_language_switcher_shortcode')) {
+                            return AITRFOEL_Builtin_Integration::get_instance()->render_language_switcher_shortcode($atts);
+                        }
+                        
+                        // Fallback generic renderer for Polylang/WPML
+                        return aitrfoel_render_language_switcher($switcher_data, $atts);
+                    });
+                }
+            });
+            
             // Initialize analytics (PostHog)
             AITRFOEL_Analytics::get_instance();
             
         } catch (Exception $e) {
             error_log('EAT Fatal Error during component initialization: ' . $e->getMessage());
             add_action('admin_notices', function() use ($e) {
-                echo '<div class="notice notice-error"><p><strong>AI Translator for Elementor Error:</strong> ' . esc_html($e->getMessage()) . '</p></div>';
+                echo '<div class="notice notice-error"><p><strong>Meep AI Translator Error:</strong> ' . esc_html($e->getMessage()) . '</p></div>';
             });
         } catch (Error $e) {
             error_log('EAT Fatal PHP Error during component initialization: ' . $e->getMessage());
             add_action('admin_notices', function() use ($e) {
-                echo '<div class="notice notice-error"><p><strong>AI Translator for Elementor Fatal Error:</strong> ' . esc_html($e->getMessage()) . '</p></div>';
+                echo '<div class="notice notice-error"><p><strong>Meep AI Translator Fatal Error:</strong> ' . esc_html($e->getMessage()) . '</p></div>';
             });
         }
     }
@@ -600,7 +634,7 @@ class AITRFOEL_Main {
             'debug' => true, // Add debug flag
             'strings' => [
                 // Basic translations
-                'plugin_title' => __('AI Translator for Elementor', 'ai-translator-for-elementor-and-polylang'),
+                'plugin_title' => __('Meep AI Translator', 'ai-translator-for-elementor-and-polylang'),
                 'translating' => __('Translating...', 'ai-translator-for-elementor-and-polylang'),
                 'success' => __('Translation completed successfully!', 'ai-translator-for-elementor-and-polylang'),
                 'error' => __('Translation failed. Please try again.', 'ai-translator-for-elementor-and-polylang'),
@@ -914,7 +948,7 @@ class AITRFOEL_Main {
     public function admin_notice_elementor_missing() {
         ?>
         <div class="notice notice-warning is-dismissible">
-            <p><?php esc_html_e('AI Translator for Elementor requires Elementor to be installed and activated.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+            <p><?php esc_html_e('Meep AI Translator requires Elementor to be installed and activated.', 'ai-translator-for-elementor-and-polylang'); ?></p>
         </div>
         <?php
     }
@@ -925,7 +959,7 @@ class AITRFOEL_Main {
     public function admin_notice_elementor_version() {
         ?>
         <div class="notice notice-warning is-dismissible">
-            <p><?php esc_html_e('AI Translator for Elementor requires Elementor version 3.0.0 or higher.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+            <p><?php esc_html_e('Meep AI Translator requires Elementor version 3.0.0 or higher.', 'ai-translator-for-elementor-and-polylang'); ?></p>
         </div>
         <?php
     }
@@ -949,7 +983,7 @@ class AITRFOEL_Main {
         ?>
         <div class="notice notice-warning is-dismissible">
             <p>
-                <strong><?php esc_html_e('AI Translator for Elementor', 'ai-translator-for-elementor-and-polylang'); ?></strong>: 
+                <strong><?php esc_html_e('Meep AI Translator', 'ai-translator-for-elementor-and-polylang'); ?></strong>: 
                 <?php esc_html_e('This plugin requires a multilingual plugin to be installed and activated.', 'ai-translator-for-elementor-and-polylang'); ?>
             </p>
             <p>
@@ -967,7 +1001,7 @@ class AITRFOEL_Main {
     public function admin_notice_php_version() {
         ?>
         <div class="notice notice-warning is-dismissible">
-            <p><?php esc_html_e('AI Translator for Elementor requires PHP version 7.4 or higher.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+            <p><?php esc_html_e('Meep AI Translator requires PHP version 7.4 or higher.', 'ai-translator-for-elementor-and-polylang'); ?></p>
         </div>
         <?php
     }
@@ -1592,3 +1626,140 @@ class AITRFOEL_Main {
 
 // Initialize the plugin
 AITRFOEL_Main::get_instance();
+
+/**
+ * Generic language switcher renderer for Polylang/WPML integrations
+ * Used as fallback when the built-in integration isn't active
+ *
+ * @param array $switcher_data Language switcher data
+ * @param array $atts Shortcode attributes
+ * @return string HTML output
+ */
+function aitrfoel_render_language_switcher($switcher_data, $atts = []) {
+    if (empty($switcher_data) || count($switcher_data) < 2) {
+        return '';
+    }
+    
+    $style = $atts['style'] ?? 'flags-text';
+    $show_flags = ($atts['show_flags'] ?? 'true') === 'true';
+    $show_names = ($atts['show_names'] ?? 'true') === 'true';
+    
+    // Output inline CSS (once per page)
+    static $css_output = false;
+    $css = '';
+    if (!$css_output) {
+        $css_output = true;
+        $custom_css = get_option('aitrfoel_switcher_custom_css', '');
+        $css = '<style id="aitrfoel-language-switcher-css">
+.aitrfoel-language-switcher {
+    font-family: inherit;
+    --aitrfoel-text-color: currentColor;
+    --aitrfoel-text-hover-color: currentColor;
+    --aitrfoel-active-bg: #0073aa;
+    --aitrfoel-active-color: #fff;
+    --aitrfoel-hover-bg: rgba(0,0,0,0.06);
+    --aitrfoel-border-color: rgba(0,0,0,0.15);
+    --aitrfoel-bg: transparent;
+    --aitrfoel-dropdown-bg: #fff;
+    --aitrfoel-dropdown-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+.aitrfoel-switcher-list { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 4px; }
+.aitrfoel-switcher-list .aitrfoel-switcher-item a { display: flex; align-items: center; padding: 6px 12px; text-decoration: none; color: var(--aitrfoel-text-color); border-radius: 6px; transition: background-color 0.2s; font-size: 14px; }
+.aitrfoel-switcher-list .aitrfoel-switcher-item a:hover { background-color: var(--aitrfoel-hover-bg); }
+.aitrfoel-switcher-list .aitrfoel-switcher-item.active a { background-color: var(--aitrfoel-active-bg); color: var(--aitrfoel-active-color); font-weight: 600; }
+.aitrfoel-switcher-flags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.aitrfoel-flag-link { display: inline-flex; align-items: center; padding: 4px; border-radius: 4px; transition: transform 0.15s; text-decoration: none; }
+.aitrfoel-flag-link:hover { transform: scale(1.15); }
+.aitrfoel-flag-link.active { box-shadow: 0 0 0 2px var(--aitrfoel-active-bg); }
+.aitrfoel-flag-link img { display: block; border-radius: 2px; }
+.aitrfoel-switcher-flags-text { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.aitrfoel-flag-text-link { display: inline-flex; align-items: center; padding: 4px 10px; text-decoration: none; color: var(--aitrfoel-text-color); border-radius: 6px; font-size: 13px; font-weight: 500; transition: background-color 0.2s; }
+.aitrfoel-flag-text-link:hover { background-color: var(--aitrfoel-hover-bg); }
+.aitrfoel-flag-text-link.active { background-color: var(--aitrfoel-active-bg); color: var(--aitrfoel-active-color); }
+.aitrfoel-switcher-dropdown-wrapper { display: inline-block; position: relative; }
+.aitrfoel-dropdown-trigger { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px solid var(--aitrfoel-border-color); border-radius: 6px; font-size: 14px; font-family: inherit; background: var(--aitrfoel-bg); color: var(--aitrfoel-text-color); cursor: pointer; min-width: 120px; }
+.aitrfoel-dropdown-trigger:hover { border-color: var(--aitrfoel-active-bg); }
+.aitrfoel-dropdown-arrow { margin-left: auto; transition: transform 0.2s; flex-shrink: 0; }
+.aitrfoel-dropdown-trigger[aria-expanded="true"] .aitrfoel-dropdown-arrow { transform: rotate(180deg); }
+.aitrfoel-dropdown-list { position: absolute; top: 100%; left: 0; z-index: 9999; min-width: 100%; margin: 4px 0 0; padding: 4px 0; list-style: none; background: var(--aitrfoel-dropdown-bg); border: 1px solid var(--aitrfoel-border-color); border-radius: 6px; box-shadow: var(--aitrfoel-dropdown-shadow); }
+.aitrfoel-dropdown-item a { display: flex; align-items: center; padding: 6px 12px; text-decoration: none; color: var(--aitrfoel-text-color); font-size: 14px; white-space: nowrap; transition: background-color 0.15s; }
+.aitrfoel-dropdown-item a:hover { background-color: var(--aitrfoel-hover-bg); }
+.aitrfoel-dropdown-item.active a { font-weight: 600; color: var(--aitrfoel-active-bg); }
+' . (!empty(trim($custom_css)) ? "\n/* Custom CSS */\n" . $custom_css : '') . '
+</style>';
+    }
+    
+    ob_start();
+    echo $css;
+    
+    if ($style === 'list') {
+        echo '<ul class="aitrfoel-language-switcher aitrfoel-switcher-list">';
+        foreach ($switcher_data as $lang) {
+            $active_class = !empty($lang['is_current']) ? ' active' : '';
+            $flag_html = $show_flags && class_exists('AITRFOEL_Language_Mapper') ? AITRFOEL_Language_Mapper::get_flag_html($lang['code'], 20, 'margin-right: 6px;') : '';
+            $name_html = $show_names ? esc_html($lang['native_name'] ?? $lang['name'] ?? strtoupper($lang['code'])) : esc_html(strtoupper($lang['code']));
+            printf('<li class="aitrfoel-switcher-item%s"><a href="%s">%s%s</a></li>', esc_attr($active_class), esc_url($lang['url'] ?? '#'), $flag_html, $name_html);
+        }
+        echo '</ul>';
+    } elseif ($style === 'flags') {
+        echo '<div class="aitrfoel-language-switcher aitrfoel-switcher-flags">';
+        foreach ($switcher_data as $lang) {
+            $active_class = !empty($lang['is_current']) ? ' active' : '';
+            $flag_html = class_exists('AITRFOEL_Language_Mapper') ? AITRFOEL_Language_Mapper::get_flag_html($lang['code'], 24, '') : esc_html(strtoupper($lang['code']));
+            printf('<a href="%s" class="aitrfoel-flag-link%s" title="%s">%s</a>', esc_url($lang['url'] ?? '#'), esc_attr($active_class), esc_attr($lang['name'] ?? ''), $flag_html);
+        }
+        echo '</div>';
+    } elseif ($style === 'flags-text') {
+        echo '<div class="aitrfoel-language-switcher aitrfoel-switcher-flags-text">';
+        foreach ($switcher_data as $lang) {
+            $active_class = !empty($lang['is_current']) ? ' active' : '';
+            $flag_html = class_exists('AITRFOEL_Language_Mapper') ? AITRFOEL_Language_Mapper::get_flag_html($lang['code'], 20, 'margin-right: 4px;') : '';
+            printf('<a href="%s" class="aitrfoel-flag-text-link%s" title="%s">%s<span>%s</span></a>', esc_url($lang['url'] ?? '#'), esc_attr($active_class), esc_attr($lang['name'] ?? ''), $flag_html, esc_html(strtoupper($lang['code'])));
+        }
+        echo '</div>';
+    } else {
+        // Custom dropdown with flag images
+        $current_lang = null;
+        foreach ($switcher_data as $lang) {
+            if (!empty($lang['is_current'])) { $current_lang = $lang; break; }
+        }
+        if (!$current_lang) $current_lang = $switcher_data[0];
+        
+        $current_flag = $show_flags && class_exists('AITRFOEL_Language_Mapper') ? AITRFOEL_Language_Mapper::get_flag_html($current_lang['code'], 20, 'margin-right: 6px;') : '';
+        $current_label = $show_names ? esc_html($current_lang['native_name'] ?? $current_lang['name'] ?? strtoupper($current_lang['code'])) : esc_html(strtoupper($current_lang['code']));
+        
+        echo '<div class="aitrfoel-language-switcher aitrfoel-switcher-dropdown-wrapper">';
+        echo '<button type="button" class="aitrfoel-dropdown-trigger" aria-expanded="false" aria-haspopup="listbox">';
+        echo $current_flag . '<span>' . $current_label . '</span>';
+        echo '<svg class="aitrfoel-dropdown-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        echo '</button>';
+        echo '<ul class="aitrfoel-dropdown-list" role="listbox" style="display:none;">';
+        foreach ($switcher_data as $lang) {
+            $active_class = !empty($lang['is_current']) ? ' active' : '';
+            $flag_html = $show_flags && class_exists('AITRFOEL_Language_Mapper') ? AITRFOEL_Language_Mapper::get_flag_html($lang['code'], 20, 'margin-right: 6px;') : '';
+            $label = $show_names ? esc_html($lang['native_name'] ?? $lang['name'] ?? strtoupper($lang['code'])) : esc_html(strtoupper($lang['code']));
+            printf('<li role="option" class="aitrfoel-dropdown-item%s"><a href="%s">%s%s</a></li>', esc_attr($active_class), esc_url($lang['url'] ?? '#'), $flag_html, $label);
+        }
+        echo '</ul>';
+        echo '</div>';
+        echo '<script>
+(function(){
+    var wrappers = document.querySelectorAll(".aitrfoel-switcher-dropdown-wrapper");
+    wrappers.forEach(function(w){
+        var btn = w.querySelector(".aitrfoel-dropdown-trigger");
+        var list = w.querySelector(".aitrfoel-dropdown-list");
+        if(!btn||!list) return;
+        btn.addEventListener("click",function(e){
+            e.stopPropagation();
+            var open = list.style.display !== "none";
+            list.style.display = open ? "none" : "block";
+            btn.setAttribute("aria-expanded", open ? "false" : "true");
+        });
+        document.addEventListener("click",function(){ list.style.display="none"; btn.setAttribute("aria-expanded","false"); });
+    });
+})();
+</script>';
+    }
+    
+    return ob_get_clean();
+}
