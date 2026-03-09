@@ -5,7 +5,7 @@ Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
 Requires Plugins: elementor
-Stable tag: 1.3.1
+Stable tag: 1.3.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -86,6 +86,13 @@ Visit AI Translator → Dashboard to see your current usage and words remaining.
 4. Settings page with cache management and advanced options.
 
 == Changelog ==
+= 1.3.2 =
+* Fixed: Word count estimates now account for server-side usage (source + translated words counted)
+* Fixed: Translate All recommendation now updates dynamically based on page selection checkboxes
+* Fixed: Usage reporting changed from non-blocking to blocking so cooldown and word limits propagate correctly
+* Fixed: License status cache now invalidated after each usage report for accurate word-limit enforcement
+* Improved: Selection summary and recommendation labels clarified as "estimated API words"
+
 = 1.3.1 =
 * Fixed: Translated pages returning 404 — built-in language URL rewrite rules were not persisted to database after setup
 * Fixed: Rewrite rules now self-heal if missing from stored rules (e.g. after reinstall or AJAX setup)

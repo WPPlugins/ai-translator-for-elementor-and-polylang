@@ -21,6 +21,9 @@ class AITRFOEL_Admin_Menu {
         // This allows Freemius to inject its Account/Pricing pages after our menu
         add_action('admin_menu', [$this, 'add_admin_menu'], 5);
         
+        // Register setup checklist as a WordPress dashboard widget
+        add_action('wp_dashboard_setup', [$this, 'register_dashboard_widget']);
+        
         // Hide Elementor admin notices on our plugin pages
         add_action('admin_head', [$this, 'hide_elementor_notices_on_our_pages']);
         
@@ -28,6 +31,8 @@ class AITRFOEL_Admin_Menu {
         add_action('wp_ajax_aitrfoel_setup_builtin_languages', [$this, 'handle_setup_builtin_languages']);
         add_action('wp_ajax_aitrfoel_manage_builtin_language', [$this, 'handle_manage_builtin_language']);
         add_action('wp_ajax_aitrfoel_save_analytics_optin', [$this, 'handle_save_analytics_optin']);
+        add_action('wp_ajax_aitrfoel_dismiss_setup_checklist', [$this, 'handle_dismiss_setup_checklist']);
+        add_action('wp_ajax_aitrfoel_skip_setup_step', [$this, 'handle_skip_setup_step']);
     }
 
     /**
@@ -47,7 +52,7 @@ class AITRFOEL_Admin_Menu {
     public function add_admin_menu() {
         // Create main menu page
         add_menu_page(
-            __('Dashboard', 'ai-translator-for-elementor-and-polylang'),
+            __('AI Translator', 'ai-translator-for-elementor-and-polylang'),
             __('AI Translator', 'ai-translator-for-elementor-and-polylang'),
             'manage_options',
             'ai-translator-for-elementor-and-polylang',
@@ -56,7 +61,17 @@ class AITRFOEL_Admin_Menu {
             30
         );
 
-        // Add Settings submenu
+        // Add "Translate All" submenu (2nd item)
+        add_submenu_page(
+            'ai-translator-for-elementor-and-polylang',
+            __('Translate All', 'ai-translator-for-elementor-and-polylang'),
+            __('Translate All', 'ai-translator-for-elementor-and-polylang'),
+            'manage_options',
+            'ai-translator-for-elementor-and-polylang-translate-all',
+            [$this, 'render_translate_all_page']
+        );
+
+        // Add Settings submenu (3rd item)
         add_submenu_page(
             'ai-translator-for-elementor-and-polylang',
             __('Settings', 'ai-translator-for-elementor-and-polylang'),
@@ -65,7 +80,17 @@ class AITRFOEL_Admin_Menu {
             'ai-translator-for-elementor-and-polylang-settings',
             ['AITRFOEL_Settings', 'render_page']
         );
-        
+
+        // Add History submenu
+        add_submenu_page(
+            'ai-translator-for-elementor-and-polylang',
+            __('History', 'ai-translator-for-elementor-and-polylang'),
+            __('History', 'ai-translator-for-elementor-and-polylang'),
+            'manage_options',
+            'ai-translator-for-elementor-and-polylang-history',
+            [$this, 'render_history_page']
+        );
+
         // Add "Activate License" submenu for PRO version (always visible, even before opt-in)
         if (defined('AITRFOEL_VERSION_TYPE') && AITRFOEL_VERSION_TYPE === 'pro') {
             add_submenu_page(
@@ -79,6 +104,24 @@ class AITRFOEL_Admin_Menu {
         }
         
         // Freemius will automatically add its Account, Pricing, etc. submenus after this
+    }
+
+    /**
+     * Render History page (delegates to dedicated class)
+     */
+    public function render_history_page() {
+        if (class_exists('AITRFOEL_Translation_History')) {
+            AITRFOEL_Translation_History::get_instance()->render_page();
+        }
+    }
+
+    /**
+     * Render Translate All page (delegates to dedicated class)
+     */
+    public function render_translate_all_page() {
+        if (class_exists('AITRFOEL_Translate_All')) {
+            AITRFOEL_Translate_All::get_instance()->render_page();
+        }
     }
     
     /**
@@ -501,7 +544,7 @@ class AITRFOEL_Admin_Menu {
             'aitrfoel-onboarding-wizard',
             AITRFOEL_PLUGIN_URL . 'assets/css/onboarding-wizard.css',
             [],
-            defined('AITRFOEL_VERSION') ? AITRFOEL_VERSION : '1.3.1'
+            defined('AITRFOEL_VERSION') ? AITRFOEL_VERSION : '1.3.2'
         );
         
         // Get available languages from language mapper
@@ -1663,6 +1706,8 @@ class AITRFOEL_Admin_Menu {
             <?php $this->render_compact_stats_bar(); ?>
             <?php $this->render_plugin_header(__('Dashboard', 'ai-translator-for-elementor-and-polylang')); ?>
             
+            <?php $this->render_setup_checklist(); ?>
+            
             <p class="description"><?php esc_html_e('Manage translations for your pages and posts. Select source content to create bulk translations.', 'ai-translator-for-elementor-and-polylang'); ?></p>
             
             <!-- Bulk Translation Bar (always visible) -->
@@ -2752,6 +2797,314 @@ class AITRFOEL_Admin_Menu {
                 </ul>
             </div>
         </div>
+        <?php
+    }
+
+    /**
+     * Render setup checklist widget on the dashboard
+     * Shows until all steps are complete or user dismisses it
+     */
+    private function render_setup_checklist() {
+        // Don't show if user dismissed it
+        if (get_user_meta(get_current_user_id(), 'aitrfoel_setup_checklist_dismissed', true)) {
+            return;
+        }
+
+        $checklist = $this->get_setup_checklist_items();
+
+        // Don't show if all items are complete
+        $all_complete = true;
+        foreach ($checklist as $item) {
+            if (!$item['complete']) {
+                $all_complete = false;
+                break;
+            }
+        }
+        if ($all_complete) {
+            return;
+        }
+
+        $completed_count = count(array_filter($checklist, function($item) { return $item['complete']; }));
+        $total_count = count($checklist);
+        $progress_pct = round(($completed_count / $total_count) * 100);
+        ?>
+        <div class="eat-setup-checklist" id="eat-setup-checklist">
+            <div class="eat-setup-checklist-header">
+                <div class="eat-setup-checklist-title">
+                    <span class="dashicons dashicons-yes-alt"></span>
+                    <?php esc_html_e('Setup Checklist', 'ai-translator-for-elementor-and-polylang'); ?>
+                    <span class="eat-setup-checklist-progress-text">
+                        <?php
+                        /* translators: 1: completed steps, 2: total steps */
+                        printf(esc_html__('%1$d of %2$d completed', 'ai-translator-for-elementor-and-polylang'), $completed_count, $total_count);
+                        ?>
+                    </span>
+                </div>
+                <button type="button" class="eat-setup-checklist-dismiss" id="eat-dismiss-checklist" title="<?php esc_attr_e('Dismiss checklist', 'ai-translator-for-elementor-and-polylang'); ?>">
+                    <span class="dashicons dashicons-no-alt"></span>
+                </button>
+            </div>
+            <div class="eat-setup-checklist-progress">
+                <div class="eat-setup-checklist-progress-bar" style="width: <?php echo absint($progress_pct); ?>%;"></div>
+            </div>
+            <ul class="eat-setup-checklist-items">
+                <?php foreach ($checklist as $item): ?>
+                <li class="eat-setup-checklist-item <?php echo $item['complete'] ? 'is-complete' : ''; ?>">
+                    <span class="eat-setup-check-icon">
+                        <?php if ($item['complete']): ?>
+                            <span class="dashicons dashicons-yes"></span>
+                        <?php else: ?>
+                            <span class="eat-setup-check-empty"></span>
+                        <?php endif; ?>
+                    </span>
+                    <div class="eat-setup-check-content">
+                        <strong><?php echo esc_html($item['title']); ?></strong>
+                        <p><?php echo esc_html($item['description']); ?></p>
+                    </div>
+                    <?php if (!$item['complete'] && !empty($item['action_url'])): ?>
+                        <a href="<?php echo esc_url($item['action_url']); ?>" class="button button-small">
+                            <?php echo esc_html($item['action_label']); ?>
+                        </a>
+                    <?php endif; ?>
+                    <?php if (!$item['complete']): ?>
+                        <button type="button" class="button button-small button-link eat-setup-skip-btn" data-step="<?php echo esc_attr($item['key']); ?>">
+                            <?php esc_html_e('Skip', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </button>
+                    <?php endif; ?>
+                </li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+        <?php
+    }
+
+    /**
+     * Get setup checklist items with their completion status
+     */
+    private function get_setup_checklist_items() {
+        $items = [];
+        $skipped = (array) get_user_meta(get_current_user_id(), 'aitrfoel_setup_checklist_skipped', true);
+
+        // 1. Multilingual system configured with 2+ languages
+        $multilingual = class_exists('AITRFOEL_Multilingual_Manager') ? AITRFOEL_Multilingual_Manager::get_instance() : null;
+        $has_languages = $multilingual && $multilingual->is_active()
+            && method_exists($multilingual, 'has_languages_configured') && $multilingual->has_languages_configured();
+        $detected_plugin = $multilingual ? $multilingual->get_detected_plugin() : '';
+        $lang_settings_url = admin_url('admin.php?page=ai-translator-for-elementor-and-polylang-settings');
+        if ($detected_plugin === 'polylang') {
+            $lang_settings_url = admin_url('admin.php?page=mlang');
+        } elseif ($detected_plugin === 'wpml') {
+            $lang_settings_url = admin_url('admin.php?page=sitepress-multilingual-cms/menu/languages.php');
+        }
+
+        $items[] = [
+            'key'         => 'languages',
+            'title'       => __('Languages Configured', 'ai-translator-for-elementor-and-polylang'),
+            'description' => __('At least two languages are set up for translation.', 'ai-translator-for-elementor-and-polylang'),
+            'complete'    => $has_languages || in_array('languages', $skipped),
+            'skipped'     => in_array('languages', $skipped),
+            'action_url'  => $lang_settings_url,
+            'action_label'=> __('Configure Languages', 'ai-translator-for-elementor-and-polylang'),
+        ];
+
+        // 3. First translation completed
+        $has_translation = false;
+        if ($multilingual && $multilingual->is_active()) {
+            $pages = get_posts([
+                'post_type'      => ['page', 'post'],
+                'post_status'    => ['publish', 'draft'],
+                'posts_per_page' => 50,
+                'suppress_filters' => true,
+                'meta_query'     => [['key' => '_elementor_data', 'compare' => 'EXISTS']],
+            ]);
+            foreach ($pages as $page) {
+                $translations = $multilingual->get_post_translations($page->ID);
+                if (count($translations) > 1) {
+                    $has_translation = true;
+                    break;
+                }
+            }
+        }
+
+        $items[] = [
+            'key'         => 'first_translation',
+            'title'       => __('First Translation', 'ai-translator-for-elementor-and-polylang'),
+            'description' => __('Translate your first page or post into another language.', 'ai-translator-for-elementor-and-polylang'),
+            'complete'    => $has_translation || in_array('first_translation', $skipped),
+            'skipped'     => in_array('first_translation', $skipped),
+            'action_url'  => '',
+            'action_label'=> '',
+        ];
+
+        // 4. Language switcher configured
+        $switcher_configured = false;
+        if ($detected_plugin === 'builtin') {
+            $switcher_configured = (bool) get_option('aitrfoel_nav_menu_switcher', false);
+            if (!$switcher_configured) {
+                // Check if shortcode is used in any widget or content
+                $switcher_configured = (bool) get_option('aitrfoel_switcher_style', '');
+            }
+        } else {
+            // For Polylang/WPML the switcher is managed by those plugins; mark complete
+            $switcher_configured = true;
+        }
+
+        $items[] = [
+            'key'         => 'switcher',
+            'title'       => __('Language Switcher', 'ai-translator-for-elementor-and-polylang'),
+            'description' => __('Let visitors switch between languages on the front end.', 'ai-translator-for-elementor-and-polylang'),
+            'complete'    => $switcher_configured || in_array('switcher', $skipped),
+            'skipped'     => in_array('switcher', $skipped),
+            'action_url'  => admin_url('admin.php?page=ai-translator-for-elementor-and-polylang-settings#language-switcher'),
+            'action_label'=> __('Set Up Switcher', 'ai-translator-for-elementor-and-polylang'),
+        ];
+
+        return $items;
+    }
+
+    /**
+     * AJAX handler: dismiss the setup checklist
+     */
+    public function handle_dismiss_setup_checklist() {
+        check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized', 403);
+        }
+
+        update_user_meta(get_current_user_id(), 'aitrfoel_setup_checklist_dismissed', true);
+        wp_send_json_success();
+    }
+
+    /**
+     * AJAX handler: skip a single setup checklist step
+     */
+    public function handle_skip_setup_step() {
+        check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized', 403);
+        }
+
+        $step = isset($_POST['step']) ? sanitize_key($_POST['step']) : '';
+        $allowed = ['languages', 'first_translation', 'switcher'];
+        if (!in_array($step, $allowed, true)) {
+            wp_send_json_error('Invalid step', 400);
+        }
+
+        $skipped = (array) get_user_meta(get_current_user_id(), 'aitrfoel_setup_checklist_skipped', true);
+        if (!in_array($step, $skipped, true)) {
+            $skipped[] = $step;
+            update_user_meta(get_current_user_id(), 'aitrfoel_setup_checklist_skipped', $skipped);
+        }
+
+        wp_send_json_success();
+    }
+
+    /**
+     * Register setup checklist as a WordPress dashboard widget
+     */
+    public function register_dashboard_widget() {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        // Don't register if dismissed or all complete
+        if (get_user_meta(get_current_user_id(), 'aitrfoel_setup_checklist_dismissed', true)) {
+            return;
+        }
+        $checklist = $this->get_setup_checklist_items();
+        $all_complete = true;
+        foreach ($checklist as $item) {
+            if (!$item['complete']) { $all_complete = false; break; }
+        }
+        if ($all_complete) {
+            return;
+        }
+
+        wp_add_dashboard_widget(
+            'aitrfoel_setup_checklist_widget',
+            __('AI Translator - Setup Checklist', 'ai-translator-for-elementor-and-polylang'),
+            [$this, 'render_wp_dashboard_widget']
+        );
+    }
+
+    /**
+     * Render the WordPress admin dashboard widget content
+     */
+    public function render_wp_dashboard_widget() {
+        // Enqueue our dashboard CSS on the WP dashboard
+        wp_enqueue_style(
+            'aitrfoel-dashboard',
+            AITRFOEL_PLUGIN_URL . 'assets/css/dashboard.css',
+            [],
+            defined('AITRFOEL_VERSION') ? AITRFOEL_VERSION : '1.0.0'
+        );
+
+        $checklist = $this->get_setup_checklist_items();
+        $completed_count = count(array_filter($checklist, function($item) { return $item['complete']; }));
+        $total_count = count($checklist);
+        $progress_pct = round(($completed_count / $total_count) * 100);
+        ?>
+        <div class="eat-setup-checklist eat-setup-checklist--wp-dashboard">
+            <div class="eat-setup-checklist-progress">
+                <div class="eat-setup-checklist-progress-bar" style="width: <?php echo absint($progress_pct); ?>%;"></div>
+            </div>
+            <p class="eat-setup-checklist-progress-text" style="margin: 8px 0;">
+                <?php
+                /* translators: 1: completed steps, 2: total steps */
+                printf(esc_html__('%1$d of %2$d steps completed', 'ai-translator-for-elementor-and-polylang'), $completed_count, $total_count);
+                ?>
+            </p>
+            <ul class="eat-setup-checklist-items">
+                <?php foreach ($checklist as $item): ?>
+                <li class="eat-setup-checklist-item <?php echo $item['complete'] ? 'is-complete' : ''; ?>">
+                    <span class="eat-setup-check-icon">
+                        <?php if ($item['complete']): ?>
+                            <span class="dashicons dashicons-yes"></span>
+                        <?php else: ?>
+                            <span class="eat-setup-check-empty"></span>
+                        <?php endif; ?>
+                    </span>
+                    <div class="eat-setup-check-content">
+                        <strong><?php echo esc_html($item['title']); ?></strong>
+                        <p><?php echo esc_html($item['description']); ?></p>
+                    </div>
+                    <?php if (!$item['complete'] && !empty($item['action_url'])): ?>
+                        <a href="<?php echo esc_url($item['action_url']); ?>" class="button button-small">
+                            <?php echo esc_html($item['action_label']); ?>
+                        </a>
+                    <?php endif; ?>
+                    <?php if (!$item['complete']): ?>
+                        <button type="button" class="button button-small button-link eat-setup-skip-btn" data-step="<?php echo esc_attr($item['key']); ?>">
+                            <?php esc_html_e('Skip', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </button>
+                    <?php endif; ?>
+                </li>
+                <?php endforeach; ?>
+            </ul>
+            <p style="margin: 8px 0 0;"><a href="<?php echo esc_url(admin_url('admin.php?page=ai-translator-for-elementor-and-polylang')); ?>"><?php esc_html_e('Go to AI Translator Dashboard', 'ai-translator-for-elementor-and-polylang'); ?></a></p>
+        </div>
+        <script>
+        jQuery(function($){
+            var ajaxUrl = <?php echo wp_json_encode(admin_url('admin-ajax.php')); ?>;
+            var nonce = <?php echo wp_json_encode(wp_create_nonce('aitrfoel_ajax_nonce')); ?>;
+            $('#aitrfoel_setup_checklist_widget').on('click', '.eat-setup-skip-btn', function(){
+                var $btn = $(this), step = $btn.data('step');
+                var $item = $btn.closest('.eat-setup-checklist-item');
+                $item.addClass('is-complete');
+                $item.find('.eat-setup-check-empty').replaceWith('<span class="dashicons dashicons-yes"></span>');
+                $item.find('.eat-setup-check-content strong').css({'text-decoration':'line-through','color':'#64748b'});
+                $item.find('.button-small').remove();
+                var $cl = $item.closest('.eat-setup-checklist--wp-dashboard');
+                var total = $cl.find('.eat-setup-checklist-item').length;
+                var done = $cl.find('.eat-setup-checklist-item.is-complete').length;
+                $cl.find('.eat-setup-checklist-progress-bar').css('width', Math.round((done/total)*100)+'%');
+                $cl.find('.eat-setup-checklist-progress-text').text(done+' of '+total+' steps completed');
+                if(done>=total){setTimeout(function(){$cl.slideUp(300);},400);}
+                $.post(ajaxUrl,{action:'aitrfoel_skip_setup_step',nonce:nonce,step:step});
+            });
+        });
+        </script>
         <?php
     }
 }

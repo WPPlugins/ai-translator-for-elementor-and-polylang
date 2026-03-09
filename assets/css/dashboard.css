@@ -2188,6 +2188,204 @@ tr.eat-translation-page.eat-newly-created-highlight {
     color: #333;
 }
 
+/* ============================================
+   Setup Checklist Widget
+   ============================================ */
+.eat-setup-checklist {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    animation: eatChecklistFadeIn 0.3s ease-out;
+}
+
+@keyframes eatChecklistFadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.eat-setup-checklist-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px 10px;
+}
+
+.eat-setup-checklist-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.eat-setup-checklist-title .dashicons {
+    color: #2271b1;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+.eat-setup-checklist-progress-text {
+    font-weight: 400;
+    font-size: 12px;
+    color: #94a3b8;
+    margin-left: 4px;
+}
+
+.eat-setup-checklist-dismiss {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #94a3b8;
+    padding: 4px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: color 0.15s, background 0.15s;
+}
+
+.eat-setup-checklist-dismiss:hover {
+    color: #64748b;
+    background: #f1f5f9;
+}
+
+.eat-setup-checklist-dismiss .dashicons {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+.eat-setup-checklist-progress {
+    height: 4px;
+    background: #e2e8f0;
+    margin: 0 20px 8px;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.eat-setup-checklist-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #2271b1, #00a32a);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+}
+
+.eat-setup-checklist-items {
+    list-style: none;
+    margin: 0;
+    padding: 0 20px 14px;
+}
+
+.eat-setup-checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.eat-setup-checklist-item:last-child {
+    border-bottom: none;
+}
+
+.eat-setup-check-icon {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.eat-setup-check-icon .dashicons-yes {
+    color: #fff;
+    background: #00a32a;
+    border-radius: 50%;
+    font-size: 16px;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+}
+
+.eat-setup-check-empty {
+    display: block;
+    width: 22px;
+    height: 22px;
+    border: 2px solid #cbd5e1;
+    border-radius: 50%;
+    box-sizing: border-box;
+}
+
+.eat-setup-check-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.eat-setup-check-content strong {
+    display: block;
+    font-size: 13px;
+    color: #1e293b;
+    line-height: 1.3;
+}
+
+.eat-setup-checklist-item.is-complete .eat-setup-check-content strong {
+    color: #64748b;
+    text-decoration: line-through;
+    text-decoration-color: #94a3b8;
+}
+
+.eat-setup-check-content p {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: #94a3b8;
+    line-height: 1.4;
+}
+
+.eat-setup-checklist-item .button-small {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.eat-setup-skip-btn.button-link {
+    color: #94a3b8 !important;
+    text-decoration: none !important;
+    font-size: 12px;
+    padding: 0 6px !important;
+    box-shadow: none !important;
+}
+
+.eat-setup-skip-btn.button-link:hover {
+    color: #64748b !important;
+}
+
+/* Responsive checklist */
+@media (max-width: 600px) {
+    .eat-setup-checklist-item {
+        flex-wrap: wrap;
+    }
+    .eat-setup-checklist-item .button-small {
+        margin-left: 34px;
+        margin-top: 4px;
+    }
+}
+
+/* WP admin dashboard widget variant */
+.eat-setup-checklist--wp-dashboard {
+    border: none;
+    box-shadow: none;
+    margin: 0;
+    border-radius: 0;
+    animation: none;
+}
+
+.eat-setup-checklist--wp-dashboard .eat-setup-checklist-progress {
+    margin: 0 0 8px;
+}
+
 /* Analysis Panel */
 .eat-analysis-panel h3 {
     margin: 0 0 20px 0;

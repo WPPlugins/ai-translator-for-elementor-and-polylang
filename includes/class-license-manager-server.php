@@ -114,6 +114,13 @@ class AITRFOEL_License_Manager_Server {
     }
     
     /**
+     * Clear cached license status so the next call to get_license_status() re-fetches from server.
+     */
+    public function clear_status_cache() {
+        $this->cached_license_status = null;
+    }
+    
+    /**
      * Get current license status from server
      */
     public function get_license_status() {

@@ -135,6 +135,11 @@ class AITRFOEL_Settings {
         ]);
         
         // Nav menu switcher settings
+        register_setting('aitrfoel_settings_group', 'aitrfoel_switcher_hide_untranslated', [
+            'sanitize_callback' => 'boolval',
+            'default' => false
+        ]);
+        
         register_setting('aitrfoel_settings_group', 'aitrfoel_nav_menu_switcher', [
             'sanitize_callback' => 'boolval',
             'default' => false
@@ -142,6 +147,12 @@ class AITRFOEL_Settings {
         
         register_setting('aitrfoel_settings_group', 'aitrfoel_nav_menu_location', [
             'sanitize_callback' => 'sanitize_text_field',
+            'default' => ''
+        ]);
+
+        // Glossary settings
+        register_setting('aitrfoel_settings_group', 'aitrfoel_glossary_terms', [
+            'sanitize_callback' => [self::class, 'sanitize_glossary_terms'],
             'default' => ''
         ]);
     }
@@ -481,6 +492,42 @@ class AITRFOEL_Settings {
                     </table>
                 </div>
                 
+                <!-- Translation Glossary -->
+                <div class="aitrfoel-settings-section">
+                    <h3><?php esc_html_e('📖 Translation Glossary', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                    
+                    <p class="description" style="margin-bottom: 12px;">
+                        <?php esc_html_e('Define terms that should always be translated a specific way. The AI will follow these rules for every translation to ensure consistency across your site.', 'ai-translator-for-elementor-and-polylang'); ?>
+                    </p>
+                    
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_glossary_terms"><?php esc_html_e('Glossary Terms', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <textarea name="aitrfoel_glossary_terms"
+                                          id="aitrfoel_glossary_terms"
+                                          class="large-text code"
+                                          rows="10"
+                                          placeholder="Dashboard = Tableau de bord (fr), Panel de control (es), Dashboard (de)
+Website = Site web (fr), Sitio web (es), Webseite (de)
+Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get_option('aitrfoel_glossary_terms', '')); ?></textarea>
+                                <p class="description">
+                                    <?php esc_html_e('One term per line. Format:', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    <code>English Term = Translation (lang_code), Translation (lang_code)</code>
+                                    <br>
+                                    <?php esc_html_e('Example:', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    <code>Dashboard = Tableau de bord (fr), Panel de control (es)</code>
+                                    <br>
+                                    <?php esc_html_e('You can also use a simple format without language codes — the AI will apply the term to the closest matching language:', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    <code>Get Started = Commencer</code>
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
                 <!-- Theme Compatibility Settings -->
                 <div class="aitrfoel-settings-section">
                     <h3><?php esc_html_e('🎨 Theme Compatibility', 'ai-translator-for-elementor-and-polylang'); ?></h3>
@@ -686,6 +733,15 @@ class AITRFOEL_Settings {
                         <tr>
                             <th scope="row"><?php esc_html_e('Nav Menu Integration', 'ai-translator-for-elementor-and-polylang'); ?></th>
                             <td>
+                                <?php $hide_untranslated = get_option('aitrfoel_switcher_hide_untranslated', false); ?>
+                                <label style="display: block; margin-bottom: 10px;">
+                                    <input type="checkbox" name="aitrfoel_switcher_hide_untranslated" value="1" <?php checked($hide_untranslated); ?> />
+                                    <?php esc_html_e('Hide languages that have no translation for the current page', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </label>
+                                <p class="description" style="margin-bottom: 16px;">
+                                    <?php esc_html_e('When enabled, only languages with an existing translation of the current page will appear in the language switcher. The default language is always shown.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+
                                 <?php $nav_menu_enabled = get_option('aitrfoel_nav_menu_switcher', false); ?>
                                 <?php $nav_menu_location = get_option('aitrfoel_nav_menu_location', ''); ?>
                                 <label>
@@ -872,6 +928,25 @@ class AITRFOEL_Settings {
         <?php
     }
     
+    /**
+     * Sanitize glossary terms textarea
+     */
+    public static function sanitize_glossary_terms($input) {
+        if (empty($input)) {
+            return '';
+        }
+        // Keep line structure, sanitize each line
+        $lines = explode("\n", $input);
+        $clean = [];
+        foreach ($lines as $line) {
+            $line = sanitize_text_field(trim($line));
+            if (!empty($line)) {
+                $clean[] = $line;
+            }
+        }
+        return implode("\n", $clean);
+    }
+
     /**
      * Test API connection AJAX handler
      */

@@ -3,7 +3,7 @@
  * Plugin Name: Meep AI Translator
  * Plugin URI: https://meeptech.com/products/ai-translator-for-elementor-polylang
  * Description: AI-powered translation for Elementor, Gutenberg & Classic pages. Preserves your design perfectly. Built-in languages or Polylang/WPML.
- * Version: 1.3.1
+ * Version: 1.3.2
  * Author: Meep Tech
  * Author URI: https://meeptech.com
  * License: GPL v2 or later
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('AITRFOEL_VERSION', '1.3.1');
+define('AITRFOEL_VERSION', '1.3.2');
 define('AITRFOEL_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AITRFOEL_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AITRFOEL_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -266,6 +266,17 @@ class AITRFOEL_Main {
             if (!class_exists('AITRFOEL_Translation_Metabox')) {
                 require_once AITRFOEL_PLUGIN_DIR . 'admin/class-translation-metabox.php';
             }
+            if (!class_exists('AITRFOEL_Translate_All')) {
+                require_once AITRFOEL_PLUGIN_DIR . 'admin/class-translate-all.php';
+            }
+            if (!class_exists('AITRFOEL_Translation_History')) {
+                require_once AITRFOEL_PLUGIN_DIR . 'admin/class-translation-history.php';
+            }
+        }
+        
+        // Translate All must also be loaded for WP-Cron (non-admin context)
+        if (!is_admin() && !class_exists('AITRFOEL_Translate_All')) {
+            require_once AITRFOEL_PLUGIN_DIR . 'admin/class-translate-all.php';
         }
         
         // AJAX handler must be loaded for both admin and frontend AJAX requests
@@ -317,7 +328,26 @@ class AITRFOEL_Main {
                 if (class_exists('AITRFOEL_Translation_Metabox')) {
                     AITRFOEL_Translation_Metabox::get_instance();
                 }
+                
+                // Initialize Translate All feature
+                if (class_exists('AITRFOEL_Translate_All')) {
+                    AITRFOEL_Translate_All::get_instance();
+                }
             }
+            
+            // Register Translate All cron hook (must be available outside admin for WP-Cron)
+            add_action('aitrfoel_translate_all_cron_process', ['AITRFOEL_Translate_All', 'process_cron_batch']);
+            
+            // Register custom cron interval (5 minutes)
+            add_filter('cron_schedules', function($schedules) {
+                if (!isset($schedules['aitrfoel_five_minutes'])) {
+                    $schedules['aitrfoel_five_minutes'] = [
+                        'interval' => 300,
+                        'display'  => __('Every 5 Minutes (AI Translator)', 'ai-translator-for-elementor-and-polylang'),
+                    ];
+                }
+                return $schedules;
+            });
             
             // Initialize AJAX handler (needed for both admin and frontend AJAX requests)
             if (class_exists('AITRFOEL_Ajax_Handler')) {
@@ -877,6 +907,29 @@ class AITRFOEL_Main {
         ) $charset_collate;";
         
         dbDelta($sql);
+
+        // Translation history table
+        $table_name = $wpdb->prefix . 'aitrfoel_translation_history';
+        $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            original_post_id bigint(20) NOT NULL,
+            translated_post_id bigint(20) NOT NULL,
+            source_lang varchar(10) NOT NULL DEFAULT '',
+            target_lang varchar(10) NOT NULL,
+            content_type varchar(20) NOT NULL DEFAULT 'elementor',
+            word_count int NOT NULL DEFAULT 0,
+            status varchar(20) NOT NULL DEFAULT 'success',
+            duration decimal(8,2) DEFAULT 0,
+            user_id bigint(20) NOT NULL DEFAULT 0,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY original_post (original_post_id),
+            KEY target_lang (target_lang),
+            KEY created_at (created_at),
+            KEY user_id (user_id)
+        ) $charset_collate;";
+
+        dbDelta($sql);
     }
     
     /**
@@ -1077,9 +1130,6 @@ class AITRFOEL_Main {
         $wpml_url = admin_url('admin.php?page=sitepress-multilingual-cms/menu/languages.php');
         $polylang_install_url = admin_url('plugin-install.php?s=polylang&tab=search&type=term');
         $docs_url = 'https://meeptech.com/products/ai-translator-for-elementor-polylang/documentation';
-        $video_id = 'RzcxmipDas4';
-        $video_url = 'https://www.youtube.com/watch?v=' . $video_id;
-        $video_thumbnail = 'https://img.youtube.com/vi/' . $video_id . '/maxresdefault.jpg';
         
         // Detect multilingual plugin status
         $multilingual = class_exists('AITRFOEL_Multilingual_Manager') ? AITRFOEL_Multilingual_Manager::get_instance() : null;
@@ -1103,24 +1153,6 @@ class AITRFOEL_Main {
                     <p class="aitrfoel-welcome-subtitle">
                         <?php esc_html_e('Translate your Elementor pages instantly with AI.', 'ai-translator-for-elementor-and-polylang'); ?>
                     </p>
-                </div>
-                
-                <!-- Video - Click to open on YouTube -->
-                <div class="aitrfoel-welcome-video-wrapper">
-                    <a href="<?php echo esc_url($video_url); ?>" target="_blank" rel="noopener noreferrer" class="aitrfoel-video-link">
-                        <img 
-                            src="<?php echo esc_url($video_thumbnail); ?>" 
-                            alt="<?php esc_attr_e('AI Translator Tutorial', 'ai-translator-for-elementor-and-polylang'); ?>"
-                            class="aitrfoel-welcome-video-thumb"
-                        />
-                        <div class="aitrfoel-play-button">
-                            <svg viewBox="0 0 68 48" width="68" height="48">
-                                <path class="aitrfoel-play-bg" d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"></path>
-                                <path d="M 45,24 27,14 27,34" fill="#fff"></path>
-                            </svg>
-                        </div>
-                        <span class="aitrfoel-video-label"><?php esc_html_e('▶ Watch Tutorial on YouTube', 'ai-translator-for-elementor-and-polylang'); ?></span>
-                    </a>
                 </div>
                 
                 <!-- Quick Steps - Single Line -->
@@ -1298,67 +1330,6 @@ class AITRFOEL_Main {
                 font-size: 16px;
                 margin: 0;
                 line-height: 1.5;
-            }
-            
-            /* Video */
-            .aitrfoel-welcome-video-wrapper {
-                background: #000;
-                border-radius: 16px;
-                overflow: hidden;
-                box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
-                width: 100%;
-                aspect-ratio: 16 / 9;
-                margin-bottom: 24px;
-                position: relative;
-            }
-            
-            .aitrfoel-video-link {
-                display: block;
-                width: 100%;
-                height: 100%;
-                position: relative;
-                text-decoration: none;
-            }
-            
-            .aitrfoel-welcome-video-thumb {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-                display: block;
-            }
-            
-            .aitrfoel-play-button {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                opacity: 0.9;
-                transition: opacity 0.2s, transform 0.2s;
-            }
-            
-            .aitrfoel-video-link:hover .aitrfoel-play-button {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1.1);
-            }
-            
-            .aitrfoel-video-label {
-                position: absolute;
-                bottom: 16px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: rgba(0, 0, 0, 0.8);
-                color: #fff;
-                padding: 8px 16px;
-                border-radius: 20px;
-                font-size: 14px;
-                font-weight: 500;
-            }
-            
-            .aitrfoel-welcome-video {
-                width: 100%;
-                height: 100%;
-                border: none;
-                background: #000;
             }
             
             /* Steps - Single Line */

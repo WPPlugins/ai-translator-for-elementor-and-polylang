@@ -499,7 +499,11 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         $translations = [];
         foreach ($results as $row) {
-            $translations[$row->language_code] = intval($row->post_id);
+            // Verify the post still exists and is not trashed/deleted
+            $post_status = get_post_status($row->post_id);
+            if ($post_status && $post_status !== 'trash') {
+                $translations[$row->language_code] = intval($row->post_id);
+            }
         }
         
         return $translations;
@@ -713,14 +717,23 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         $default_lang = $this->get_default_language();
         $current_post_id = get_queried_object_id();
         $translations = $current_post_id ? $this->get_post_translations($current_post_id) : [];
+        $hide_untranslated = get_option('aitrfoel_switcher_hide_untranslated', false);
         
         $switcher_data = [];
         
         foreach ($languages as $lang) {
+            $has_translation = isset($translations[$lang->slug]);
+            
+            // Skip untranslated languages if setting is enabled (always show default & current)
+            if ($hide_untranslated && $current_post_id && !$has_translation
+                && $lang->slug !== $default_lang && $lang->slug !== $this->get_current_language()) {
+                continue;
+            }
+            
             $url = home_url('/');
             
             // If we have a translation of the current page, link to it
-            if (isset($translations[$lang->slug])) {
+            if ($has_translation) {
                 $url = $this->get_post_permalink($translations[$lang->slug]);
             } elseif ($lang->slug !== $default_lang) {
                 // Link to the language homepage
@@ -781,7 +794,7 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         // Auto-flush rewrite rules when version changes OR when stored rules
         // are missing our language patterns (can happen after AJAX setup, reinstall, etc.)
-        $rules_version = '1.3.1a'; // Bump this when rewrite rules change
+        $rules_version = '1.3.2a'; // Bump this when rewrite rules change
         $stored_version = get_option('aitrfoel_rewrite_rules_version', '');
         $needs_flush = ($stored_version !== $rules_version);
         
@@ -1570,7 +1583,18 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             ],
         ]);
         
-        // Child nodes: other languages
+        // "All Languages" option (first item)
+        $wp_admin_bar->add_node([
+            'id'     => 'aitrfoel-lang-all',
+            'parent' => 'aitrfoel-lang-switcher',
+            'title'  => '🌐 ' . esc_html__('All Languages', 'ai-translator-for-elementor-and-polylang'),
+            'href'   => is_admin() ? admin_url('edit.php?page=ai-translator-for-elementor-and-polylang') : home_url('/'),
+            'meta'   => [
+                'class' => 'aitrfoel-lang-all',
+            ],
+        ]);
+
+        // Child nodes: individual languages
         foreach ($languages as $lang) {
             $lang_flag = '';
             if (class_exists('AITRFOEL_Language_Mapper')) {

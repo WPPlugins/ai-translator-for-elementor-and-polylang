@@ -560,10 +560,11 @@ class AITRFOEL_OpenAI_API {
 
         // Get exclusion settings
         $exclusion_instructions = $this->build_exclusion_instructions();
+        $glossary_instructions = $this->build_glossary_instructions($target_lang);
         
     $system_prompt = "You are a professional website translator. $source_instruction.
 
-$source_instructions$lang_instructions$exclusion_instructions
+$source_instructions$lang_instructions$exclusion_instructions$glossary_instructions
 
 CRITICAL TRANSLATION RULES:
 1. Translate ONLY the meaningful text content - never translate HTML tags, CSS, or code
@@ -598,6 +599,44 @@ CRITICAL TRANSLATION RULES:
         
         return $exclusion_text;
     }
+
+    /**
+     * Build glossary instructions from settings
+     */
+    private function build_glossary_instructions($target_lang) {
+        $raw = get_option('aitrfoel_glossary_terms', '');
+        if (empty(trim($raw))) {
+            return '';
+        }
+
+        $target_full = AITRFOEL_Language_Mapper::get_language_name($target_lang);
+        $lines = array_filter(array_map('trim', explode("\n", $raw)));
+        $entries = [];
+
+        foreach ($lines as $line) {
+            if (strpos($line, '=') === false) {
+                continue;
+            }
+            list($term, $translations) = array_map('trim', explode('=', $line, 2));
+            if (empty($term) || empty($translations)) {
+                continue;
+            }
+
+            // Check if there's a language-specific translation for the target
+            if (preg_match('/([^,]+)\s*\(' . preg_quote($target_lang, '/') . '\)/i', $translations, $m)) {
+                $entries[] = "\"$term\" → \"" . trim($m[1]) . "\"";
+            } else {
+                // Use the whole right-hand side as a general translation hint
+                $entries[] = "\"$term\" → $translations";
+            }
+        }
+
+        if (empty($entries)) {
+            return '';
+        }
+
+        return "\n\nGLOSSARY (use these translations consistently when translating to $target_full):\n" . implode("\n", $entries);
+    }
     
     /**
      * Build batch translation prompt
@@ -625,6 +664,7 @@ CRITICAL TRANSLATION RULES:
         $lang_instructions .= AITRFOEL_Language_Mapper::get_language_specific_instructions($target_lang);
         
         $exclusion_instructions = $this->build_exclusion_instructions();
+        $glossary_instructions = $this->build_glossary_instructions($target_lang);
 
     $system_prompt = "You are a professional website translator. $source_instruction.
 Rules:
@@ -635,6 +675,7 @@ Rules:
 $source_instructions
 $lang_instructions
 $exclusion_instructions
+$glossary_instructions
 Return ONLY valid JSON (no code fences, no comments), exactly: {\"t\":[\"...\", ... ]}";
 
         $user_prompt = json_encode(['src' => array_values($texts)], JSON_UNESCAPED_UNICODE);

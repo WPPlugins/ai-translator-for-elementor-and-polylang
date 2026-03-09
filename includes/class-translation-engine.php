@@ -141,16 +141,19 @@ class AITRFOEL_Translation_Engine {
         $words_left = $license_status['words_left'];
         
         // Calculate estimated word count for this translation
-        $estimated_words = 0;
+        // Server counts both source + translated words, so apply 2× factor
+        $source_words = 0;
         foreach ($strings_to_translate as $string_data) {
             if (isset($string_data['original'])) {
-                $estimated_words += str_word_count(wp_strip_all_tags($string_data['original']));
+                $source_words += str_word_count(wp_strip_all_tags($string_data['original']));
             }
         }
+        $server_factor = defined('AITRFOEL_Translate_All::SERVER_USAGE_FACTOR') ? AITRFOEL_Translate_All::SERVER_USAGE_FACTOR : 2;
+        $estimated_words = $source_words * $server_factor;
         
         AITRFOEL_Logger::log(
-            sprintf('Word limit check: Plan=%s, Limit=%d, Used=%d, Left=%d, Estimated=%d', 
-                $plan, $word_limit, $words_used, $words_left, $estimated_words),
+            sprintf('Word limit check: Plan=%s, Limit=%d, Used=%d, Left=%d, SourceWords=%d, EstimatedUsage=%d (×%d)', 
+                $plan, $word_limit, $words_used, $words_left, $source_words, $estimated_words, $server_factor),
             'info',
             $page_id
         );
@@ -792,11 +795,11 @@ class AITRFOEL_Translation_Engine {
             $word_count = $this->last_translation_stats['word_count'];
             
             try {
-                // Report usage to the server API for tracking (non-blocking fire-and-forget)
+                // Report usage to the server API for tracking
                 $license_manager = AITRFOEL_License_Manager_Server::get_instance();
                 $response = wp_remote_post('https://meeptech.com/api/eat/report-usage', [
-                    'timeout' => 2,
-                    'blocking' => false,
+                    'timeout' => 5,
+                    'blocking' => true,
                     'body' => json_encode([
                         'site_url' => home_url(),
                         'license_key' => null,
@@ -830,6 +833,9 @@ class AITRFOEL_Translation_Engine {
                         // Server says no cooldown - clear local cooldown if exists
                         delete_option('aitrfoel_cooldown_end_date');
                     }
+                    
+                    // Invalidate cached license status so next check_word_limit() gets fresh data
+                    $license_manager->clear_status_cache();
                 } else {
                     error_log('EAT: Failed to report usage: ' . $response->get_error_message());
                 }
@@ -1103,12 +1109,15 @@ class AITRFOEL_Translation_Engine {
         $words_left = $license_status['words_left'];
         
         // Calculate estimated word count
-        $estimated_words = 0;
+        // Server counts both source + translated words, so apply 2× factor
+        $source_words = 0;
         foreach ($strings_to_translate as $string_data) {
             if (isset($string_data['original'])) {
-                $estimated_words += str_word_count(wp_strip_all_tags($string_data['original']));
+                $source_words += str_word_count(wp_strip_all_tags($string_data['original']));
             }
         }
+        $server_factor = defined('AITRFOEL_Translate_All::SERVER_USAGE_FACTOR') ? AITRFOEL_Translate_All::SERVER_USAGE_FACTOR : 2;
+        $estimated_words = $source_words * $server_factor;
         
         if ($word_limit !== -1 && $estimated_words > $words_left) {
             // Check cooldown for free plan
@@ -1322,6 +1331,9 @@ class AITRFOEL_Translation_Engine {
                 }
             }
             update_post_meta($existing_page_id, '_aitrfoel_content_type', $content_type);
+
+            // Translate SEO meta, excerpt, and WooCommerce fields
+            $this->translate_post_meta_fields($original_page_id, $existing_page_id, $target_lang, $source_lang);
             
             return $existing_page_id;
         }
@@ -1399,6 +1411,9 @@ class AITRFOEL_Translation_Engine {
         update_post_meta($new_page_id, '_aitrfoel_content_type', $content_type);
         update_post_meta($new_page_id, '_aitrfoel_source_page', $original_page_id);
         
+        // Translate SEO meta, excerpt, and WooCommerce fields
+        $this->translate_post_meta_fields($original_page_id, $new_page_id, $target_lang, $source_lang);
+
         // Setup multilingual relationship
         $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
         if ($multilingual->is_active()) {
@@ -1447,9 +1462,23 @@ class AITRFOEL_Translation_Engine {
             $this->report_usage_to_server($this->last_translation_stats['word_count'], $target_lang);
         }
         
+        // Record in translation history
+        $translation_duration = microtime(true) - $translation_start_time;
+        if (class_exists('AITRFOEL_Translation_History')) {
+            AITRFOEL_Translation_History::record([
+                'original_post_id'   => $page_id,
+                'translated_post_id' => $new_page_id,
+                'source_lang'        => $source_lang,
+                'target_lang'        => $target_lang,
+                'content_type'       => $content_type,
+                'word_count'         => $this->last_translation_stats['word_count'] ?? 0,
+                'status'             => 'success',
+                'duration'           => round($translation_duration, 2),
+            ]);
+        }
+
         // Track with PostHog Analytics
         if (function_exists('aitrfoel_analytics')) {
-            $translation_duration = microtime(true) - $translation_start_time;
             aitrfoel_analytics()->track_translation_completed([
                 'duration' => round($translation_duration, 2),
                 'word_count' => $this->last_translation_stats['word_count'] ?? 0,
@@ -1471,11 +1500,9 @@ class AITRFOEL_Translation_Engine {
      */
     private function report_usage_to_server($word_count, $target_lang) {
         try {
-            // Non-blocking request: fire-and-forget with short timeout
-            // The server will process it regardless of whether we wait
             $response = wp_remote_post('https://meeptech.com/api/eat/report-usage', [
-                'timeout' => 2,
-                'blocking' => false,
+                'timeout' => 5,
+                'blocking' => true,
                 'body' => json_encode([
                     'site_url' => home_url(),
                     'license_key' => null,
@@ -1505,6 +1532,9 @@ class AITRFOEL_Translation_Engine {
                     // Server says no cooldown - clear local cooldown if exists
                     delete_option('aitrfoel_cooldown_end_date');
                 }
+                
+                // Invalidate cached license status so next check_word_limit() gets fresh data
+                AITRFOEL_License_Manager_Server::get_instance()->clear_status_cache();
             }
         } catch (Exception $e) {
             error_log('EAT: Exception reporting usage: ' . $e->getMessage());
@@ -2225,9 +2255,14 @@ class AITRFOEL_Translation_Engine {
             }
             if ($word_count > 0 && class_exists('AITRFOEL_License_Manager_Server')) {
                 $license_manager = AITRFOEL_License_Manager_Server::get_instance();
-                $license_manager->report_word_usage($word_count, $target_lang);
+                if (method_exists($license_manager, 'report_word_usage')) {
+                    $license_manager->report_word_usage($word_count, $target_lang);
+                }
             }
             
+            // Translate SEO meta, excerpt, and WooCommerce fields
+            $this->translate_post_meta_fields($original_page_id, $existing_page_id, $target_lang, $detected_lang);
+
             AITRFOEL_Logger::log(
                 sprintf('Successfully updated existing translation (ID %d)', $existing_page_id),
                 'info',
@@ -2371,6 +2406,9 @@ class AITRFOEL_Translation_Engine {
             AITRFOEL_Logger::log('No multilingual plugin is active, skipping translation relationship setup', 'info', $original_page_id);
         }
         
+        // Translate SEO meta, excerpt, and WooCommerce fields
+        $this->translate_post_meta_fields($original_page_id, $new_page_id, $target_lang, $detected_lang);
+
         // Clear Elementor cache
         if (class_exists('\Elementor\Plugin')) {
             \Elementor\Plugin::$instance->files_manager->clear_cache();
@@ -2383,9 +2421,114 @@ class AITRFOEL_Translation_Engine {
     }
 
     /**
+     * Translate SEO metadata (Yoast SEO, Rank Math), post excerpt,
+     * and copy WooCommerce product fields for a translated post.
+     *
+     * @param int    $original_id  Source post ID
+     * @param int    $target_id    Translated post ID
+     * @param string $target_lang  Target language code
+     * @param string $source_lang  Source language code
+     */
+    private function translate_post_meta_fields($original_id, $target_id, $target_lang, $source_lang = 'auto') {
+        $seo_translate_keys = [];
+
+        // Yoast SEO
+        if (defined('WPSEO_VERSION') || class_exists('WPSEO_Meta')) {
+            $seo_translate_keys = array_merge($seo_translate_keys, [
+                '_yoast_wpseo_title',
+                '_yoast_wpseo_metadesc',
+                '_yoast_wpseo_opengraph-title',
+                '_yoast_wpseo_opengraph-description',
+                '_yoast_wpseo_twitter-title',
+                '_yoast_wpseo_twitter-description',
+            ]);
+            $focus_kw = get_post_meta($original_id, '_yoast_wpseo_focuskw', true);
+            if ($focus_kw !== '') {
+                update_post_meta($target_id, '_yoast_wpseo_focuskw', $focus_kw);
+            }
+        }
+
+        // Rank Math
+        if (class_exists('RankMath') || defined('RANK_MATH_VERSION')) {
+            $seo_translate_keys = array_merge($seo_translate_keys, [
+                'rank_math_title',
+                'rank_math_description',
+                'rank_math_og_title',
+                'rank_math_og_description',
+                'rank_math_twitter_title',
+                'rank_math_twitter_description',
+            ]);
+            $rm_kw = get_post_meta($original_id, 'rank_math_focus_keyword', true);
+            if ($rm_kw !== '') {
+                update_post_meta($target_id, 'rank_math_focus_keyword', $rm_kw);
+            }
+        }
+
+        // Collect non-empty values for batch translation
+        $to_translate = [];
+        foreach ($seo_translate_keys as $key) {
+            $val = get_post_meta($original_id, $key, true);
+            if (!empty($val)) {
+                $to_translate[$key] = $val;
+            }
+        }
+
+        // Translate post excerpt (also serves as WooCommerce short description)
+        $original_post = get_post($original_id);
+        $original_excerpt = $original_post ? $original_post->post_excerpt : '';
+        if (!empty(trim($original_excerpt))) {
+            $to_translate['__excerpt__'] = $original_excerpt;
+        }
+
+        if (!empty($to_translate)) {
+            $api = AITRFOEL_OpenAI_API::get_instance();
+            $texts = array_values($to_translate);
+            $keys  = array_keys($to_translate);
+
+            $translated = $api->translate_batch($texts, $target_lang, $source_lang);
+
+            if (!is_wp_error($translated) && is_array($translated)) {
+                foreach ($translated as $i => $translated_text) {
+                    if (!isset($keys[$i]) || is_wp_error($translated_text)) {
+                        continue;
+                    }
+                    $key = $keys[$i];
+                    if ($key === '__excerpt__') {
+                        wp_update_post(['ID' => $target_id, 'post_excerpt' => $translated_text]);
+                    } else {
+                        update_post_meta($target_id, $key, $translated_text);
+                    }
+                }
+
+                AITRFOEL_Logger::log(
+                    sprintf('Translated %d SEO/meta fields for post %d → %d (%s)', count($translated), $original_id, $target_id, $target_lang),
+                    'info', $original_id, $target_id
+                );
+            }
+        }
+
+        // WooCommerce: copy non-translatable product meta
+        if (get_post_type($original_id) === 'product') {
+            $wc_copy_keys = [
+                '_regular_price', '_sale_price', '_price', '_sku',
+                '_stock_status', '_manage_stock', '_stock',
+                '_weight', '_length', '_width', '_height',
+                '_virtual', '_downloadable', '_product_image_gallery',
+                '_thumbnail_id', 'total_sales',
+            ];
+            foreach ($wc_copy_keys as $key) {
+                $val = get_post_meta($original_id, $key, true);
+                if ($val !== '') {
+                    update_post_meta($target_id, $key, $val);
+                }
+            }
+        }
+    }
+
+    /**
      * Post-creation processing for translated pages
      * Handles cache warming, HTML regeneration, and LiteSpeed optimizations
-     * 
+     *
      * @param int $page_id Translated page ID
      * @return void
      */

@@ -2527,6 +2527,51 @@ jQuery(document).ready(function($) {
     // Initialize dashboard
     Dashboard.init();
     
+    // Setup checklist dismiss
+    $(document).on('click', '#eat-dismiss-checklist', function() {
+        var $checklist = $('#eat-setup-checklist');
+        $checklist.slideUp(200, function() { $checklist.remove(); });
+        $.post(aitrfoelDashboard.ajax_url, {
+            action: 'aitrfoel_dismiss_setup_checklist',
+            nonce: aitrfoelDashboard.nonce
+        });
+    });
+
+    // Setup checklist skip step
+    $(document).on('click', '.eat-setup-skip-btn', function() {
+        var $btn = $(this);
+        var step = $btn.data('step');
+        var $item = $btn.closest('.eat-setup-checklist-item');
+
+        // Mark item as complete visually
+        $item.addClass('is-complete');
+        $item.find('.eat-setup-check-empty').replaceWith('<span class="dashicons dashicons-yes"></span>');
+        $item.find('.eat-setup-check-content strong').css({'text-decoration': 'line-through', 'color': '#64748b'});
+        $item.find('.button-small').remove();
+
+        // Update progress bar
+        var $checklist = $item.closest('.eat-setup-checklist, .eat-setup-checklist--wp-dashboard');
+        var total = $checklist.find('.eat-setup-checklist-item').length;
+        var done = $checklist.find('.eat-setup-checklist-item.is-complete').length;
+        var pct = Math.round((done / total) * 100);
+        $checklist.find('.eat-setup-checklist-progress-bar').css('width', pct + '%');
+        $checklist.find('.eat-setup-checklist-progress-text').text(done + ' of ' + total + ' completed');
+
+        // If all done, slide up
+        if (done >= total) {
+            setTimeout(function() {
+                $checklist.slideUp(300, function() { $checklist.remove(); });
+            }, 400);
+        }
+
+        // Save to server
+        $.post(aitrfoelDashboard.ajax_url, {
+            action: 'aitrfoel_skip_setup_step',
+            nonce: aitrfoelDashboard.nonce,
+            step: step
+        });
+    });
+    
     
     // Clean existing page titles that might have HTML entities
     Dashboard.cleanExistingPageTitles();
