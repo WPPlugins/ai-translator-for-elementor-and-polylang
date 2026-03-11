@@ -69,6 +69,25 @@ class AITRFOEL_Gutenberg_Parser {
             'core/separator',
             'core/more',
             'core/nextpage',
+            // WooCommerce dynamic blocks (rendered server-side, no translatable innerHTML)
+            'woocommerce/product-price',
+            'woocommerce/product-rating',
+            'woocommerce/product-stock-indicator',
+            'woocommerce/product-sku',
+            'woocommerce/add-to-cart-form',
+            'woocommerce/product-meta',
+            'woocommerce/breadcrumbs',
+            'woocommerce/mini-cart',
+            'woocommerce/cart',
+            'woocommerce/checkout',
+            'woocommerce/customer-account',
+            'woocommerce/product-results-count',
+            'woocommerce/catalog-sorting',
+            'woocommerce/active-filters',
+            'woocommerce/price-filter',
+            'woocommerce/attribute-filter',
+            'woocommerce/rating-filter',
+            'woocommerce/stock-filter',
         ];
     }
     
@@ -113,6 +132,10 @@ class AITRFOEL_Gutenberg_Parser {
         $container_blocks = [
             'core/columns', 'core/column', 'core/group', 'core/cover',
             'core/media-text', 'core/buttons', 'core/details',
+            // WooCommerce container blocks
+            'woocommerce/product-collection',
+            'woocommerce/product-template',
+            'woocommerce/single-product',
         ];
         
         foreach ($blocks as $index => $block) {
@@ -193,6 +216,8 @@ class AITRFOEL_Gutenberg_Parser {
         $translatable_attrs = [
             'content', 'citation', 'value', 'text', 'title',
             'alt', 'caption', 'placeholder', 'label', 'summary',
+            // WooCommerce block attributes
+            'heading', 'emptyCollectionContent', 'buttonText',
         ];
         
         foreach ($attrs as $key => $value) {

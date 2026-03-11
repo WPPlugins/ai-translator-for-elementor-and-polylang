@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Meep AI Translator
  * Plugin URI: https://meeptech.com/products/ai-translator-for-elementor-polylang
- * Description: AI-powered translation for Elementor, Gutenberg & Classic pages. Preserves your design perfectly. Built-in languages or Polylang/WPML.
- * Version: 1.3.2
+ * Description: AI-powered translation for Elementor, Gutenberg, Classic & WooCommerce. Preserves your design perfectly. Built-in languages or Polylang/WPML.
+ * Version: 1.4.0
  * Author: Meep Tech
  * Author URI: https://meeptech.com
  * License: GPL v2 or later
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('AITRFOEL_VERSION', '1.3.2');
+define('AITRFOEL_VERSION', '1.4.0');
 define('AITRFOEL_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AITRFOEL_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AITRFOEL_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -631,6 +631,14 @@ class AITRFOEL_Main {
             'aitrfoel-admin-style',
             AITRFOEL_PLUGIN_URL . 'assets/css/admin.css',
             [],
+            AITRFOEL_VERSION
+        );
+        
+        // Modern design overrides
+        wp_enqueue_style(
+            'aitrfoel-modern-design',
+            AITRFOEL_PLUGIN_URL . 'assets/css/modern-design.css',
+            ['aitrfoel-admin-style'],
             AITRFOEL_VERSION
         );
         

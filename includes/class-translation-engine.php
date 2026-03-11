@@ -81,6 +81,9 @@ class AITRFOEL_Translation_Engine {
             case AITRFOEL_Content_Detector::TYPE_CLASSIC:
                 return $this->translate_classic_page($page_id, $target_lang, $source_lang, $translation_start_time);
                 
+            case AITRFOEL_Content_Detector::TYPE_WOOCOMMERCE:
+                return $this->translate_woocommerce_product($page_id, $target_lang, $source_lang, $translation_start_time);
+                
             default:
                 $this->track_translation_failure('unsupported_content', 'Unsupported content type', $translation_start_time);
                 return new WP_Error(
@@ -1094,6 +1097,134 @@ class AITRFOEL_Translation_Engine {
     }
     
     /**
+     * Translate a WooCommerce product that has no traditional editor content.
+     * Handles products with only title, short description, attributes, etc.
+     * 
+     * @param int $page_id Original product ID
+     * @param string $target_lang Target language
+     * @param string $source_lang Source language
+     * @param float $translation_start_time Start time for analytics
+     * @return int|WP_Error New product ID or error
+     */
+    private function translate_woocommerce_product($page_id, $target_lang, $source_lang = 'auto', $translation_start_time = null) {
+        if (!$translation_start_time) {
+            $translation_start_time = microtime(true);
+        }
+        
+        $post = get_post($page_id);
+        if (!$post) {
+            $this->track_translation_failure('no_content', 'Product not found', $translation_start_time);
+            return new WP_Error('no_content', __('Product not found.', 'ai-translator-for-elementor-and-polylang'));
+        }
+        
+        // Collect translatable texts: title + short description + long description
+        $texts_to_translate = [];
+        $text_keys = [];
+        
+        if (!empty($post->post_title)) {
+            $texts_to_translate[] = $post->post_title;
+            $text_keys[] = 'title';
+        }
+        
+        if (!empty(trim($post->post_excerpt))) {
+            $texts_to_translate[] = $post->post_excerpt;
+            $text_keys[] = 'excerpt';
+        }
+        
+        if (!empty(trim($post->post_content))) {
+            $texts_to_translate[] = $post->post_content;
+            $text_keys[] = 'content';
+        }
+        
+        if (empty($texts_to_translate)) {
+            $this->track_translation_failure('no_translatable_content', 'Product has no translatable text', $translation_start_time);
+            return new WP_Error('no_translatable_content', __('This product has no translatable content (no title or short description).', 'ai-translator-for-elementor-and-polylang'));
+        }
+        
+        // Word limit check
+        $strings_for_check = [];
+        foreach ($texts_to_translate as $i => $text) {
+            $strings_for_check[] = [
+                'original' => $text,
+                'path' => $text_keys[$i],
+                'type' => 'text',
+                'widget_type' => 'woocommerce_product',
+            ];
+        }
+        $word_limit_check = $this->check_word_limit($strings_for_check, $page_id);
+        if (is_wp_error($word_limit_check)) {
+            return $word_limit_check;
+        }
+        
+        // Detect source language
+        $detected_lang = $this->detect_source_language_from_content($strings_for_check, $source_lang, $page_id);
+        
+        AITRFOEL_Logger::log(
+            sprintf('WooCommerce product translation: Product %d, %s → %s, %d texts', 
+                $page_id, $detected_lang, $target_lang, count($texts_to_translate)),
+            'info',
+            $page_id
+        );
+        
+        // Batch-translate title and excerpt
+        $api = AITRFOEL_OpenAI_API::get_instance();
+        $translated_texts = $api->translate_batch($texts_to_translate, $target_lang, $detected_lang);
+        
+        if (is_wp_error($translated_texts)) {
+            $this->track_translation_failure('translation_failed', 'API translation failed', $translation_start_time);
+            return $translated_texts;
+        }
+        
+        // Map results back using original texts as keys
+        // translate_batch returns [ original_text => translated_text ]
+        $translated_title = null;
+        $translated_excerpt = null;
+        $translated_content = null;
+        foreach ($texts_to_translate as $i => $original_text) {
+            $translated = isset($translated_texts[$original_text]) ? $translated_texts[$original_text] : null;
+            if (!$translated || is_wp_error($translated)) {
+                continue;
+            }
+            if ($text_keys[$i] === 'title') {
+                $translated_title = $translated;
+            } elseif ($text_keys[$i] === 'excerpt') {
+                $translated_excerpt = $translated;
+            } elseif ($text_keys[$i] === 'content') {
+                $translated_content = $translated;
+            }
+        }
+        
+        if (!$translated_title) {
+            $translated_title = $post->post_title . ' (' . strtoupper($target_lang) . ')';
+        }
+        
+        // Create translated product using the generic path
+        $new_page_id = $this->create_translated_page_generic(
+            $page_id, 
+            $translated_content ?: '', // translated long description
+            $target_lang, 
+            $detected_lang, 
+            'woocommerce', 
+            $translated_title
+        );
+        
+        if (is_wp_error($new_page_id)) {
+            return $new_page_id;
+        }
+        
+        // Apply translated excerpt (the generic path's translate_post_meta_fields handles SEO/WC meta,
+        // but the excerpt was already translated above via batch, so apply it directly)
+        if ($translated_excerpt) {
+            wp_update_post(['ID' => $new_page_id, 'post_excerpt' => $translated_excerpt]);
+        }
+        
+        // Track success
+        $this->track_translation_success($page_id, $new_page_id, $target_lang, $detected_lang, $translation_start_time, 'woocommerce');
+        
+        return $new_page_id;
+    }
+    
+    /**
      * Check word limit for translation
      * 
      * @param array $strings_to_translate Strings to translate
@@ -1334,6 +1465,18 @@ class AITRFOEL_Translation_Engine {
 
             // Translate SEO meta, excerpt, and WooCommerce fields
             $this->translate_post_meta_fields($original_page_id, $existing_page_id, $target_lang, $source_lang);
+
+            // Assign translated WooCommerce product categories/tags
+            $this->translate_product_taxonomies($original_page_id, $existing_page_id, $target_lang);
+
+            // Translate WooCommerce product attributes
+            $this->translate_product_attributes($original_page_id, $existing_page_id, $target_lang, $source_lang);
+
+            // Translate product variations for variable products
+            $this->translate_product_variations($original_page_id, $existing_page_id, $target_lang, $source_lang);
+
+            // Translate product gallery image alt text/captions
+            $this->translate_product_gallery_meta($original_page_id, $existing_page_id, $target_lang, $source_lang);
             
             return $existing_page_id;
         }
@@ -1363,14 +1506,17 @@ class AITRFOEL_Translation_Engine {
             $target_status = ($original_page->post_status === 'publish') ? 'publish' : 'draft';
         }
         
-        // Generate a proper slug for the translated post
-        // With Polylang/WPML: URL is /lang/slug/ so slug should be the translated title
-        // Without multilingual plugin: append language suffix as fallback
-        $translated_slug = sanitize_title($translated_title);
-        if (empty($translated_slug)) {
-            // Non-Latin titles may produce empty slug - use original + lang suffix
-            $original_slug = $original_page->post_name;
-            $translated_slug = $original_slug ? $original_slug . '-' . $target_lang : 'page-' . $original_page->ID . '-' . $target_lang;
+        // Generate slug for the translated post
+        // With Polylang/WPML the URL is /lang/slug/ so we can reuse the original slug
+        $multilingual_active = AITRFOEL_Multilingual_Manager::get_instance()->is_active();
+        if ($multilingual_active) {
+            // Reuse original slug — Polylang/WPML separates by language prefix
+            $translated_slug = $original_page->post_name;
+        } else {
+            $translated_slug = sanitize_title($translated_title);
+            if (empty($translated_slug)) {
+                $translated_slug = $original_page->post_name . '-' . $target_lang;
+            }
         }
         
         $new_page_args = [
@@ -1428,6 +1574,18 @@ class AITRFOEL_Translation_Engine {
                 );
             }
         }
+        
+        // Assign translated WooCommerce product categories/tags
+        $this->translate_product_taxonomies($original_page_id, $new_page_id, $target_lang);
+
+        // Translate WooCommerce product attributes
+        $this->translate_product_attributes($original_page_id, $new_page_id, $target_lang, $source_lang);
+
+        // Translate product variations for variable products
+        $this->translate_product_variations($original_page_id, $new_page_id, $target_lang, $source_lang);
+
+        // Translate product gallery image alt text/captions
+        $this->translate_product_gallery_meta($original_page_id, $new_page_id, $target_lang, $source_lang);
         
         AITRFOEL_Logger::log(
             sprintf('Created %s translated page: %d -> %d (%s)', $content_type, $original_page_id, $new_page_id, $target_lang),
@@ -2263,6 +2421,18 @@ class AITRFOEL_Translation_Engine {
             // Translate SEO meta, excerpt, and WooCommerce fields
             $this->translate_post_meta_fields($original_page_id, $existing_page_id, $target_lang, $detected_lang);
 
+            // Assign translated WooCommerce product categories/tags
+            $this->translate_product_taxonomies($original_page_id, $existing_page_id, $target_lang);
+
+            // Translate WooCommerce product attributes
+            $this->translate_product_attributes($original_page_id, $existing_page_id, $target_lang, $detected_lang);
+
+            // Translate product variations for variable products
+            $this->translate_product_variations($original_page_id, $existing_page_id, $target_lang, $detected_lang);
+
+            // Translate product gallery image alt text/captions
+            $this->translate_product_gallery_meta($original_page_id, $existing_page_id, $target_lang, $detected_lang);
+
             AITRFOEL_Logger::log(
                 sprintf('Successfully updated existing translation (ID %d)', $existing_page_id),
                 'info',
@@ -2280,27 +2450,8 @@ class AITRFOEL_Translation_Engine {
         }
         
         if (is_wp_error($translated_title) || !$translated_title) {
-            // Better fallback: try to translate just the meaningful part
-            $api_fallback = AITRFOEL_OpenAI_API::get_instance();
-            $title_parts = explode('(', $original_page->post_title);
-            $base_title = trim($title_parts[0]);
-            
-            // Try translating just the base title
-            $base_translated = $api_fallback->translate_title($base_title, $target_lang, $detected_lang);
-            if (!is_wp_error($base_translated)) {
-                // Get language name for display
-                $lang_names = [
-                    'es' => 'Español', 'pt' => 'Português', 'fr' => 'Français', 
-                    'de' => 'Deutsch', 'it' => 'Italiano', 'cs' => 'Čeština',
-                    'ru' => 'Русский', 'pl' => 'Polski', 'uk' => 'Українська',
-                    'zh' => '中文', 'ja' => '日本語', 'ko' => '한국어'
-                ];
-                $lang_display = $lang_names[$target_lang] ?? ucfirst($target_lang);
-                $translated_title = $base_translated . ' (' . $lang_display . ')';
-            } else {
-                // Last resort fallback
-                $translated_title = $original_page->post_title . ' (' . strtoupper($target_lang) . ')';
-            }
+            // Fallback: use original title with language code suffix
+            $translated_title = $original_page->post_title . ' (' . strtoupper($target_lang) . ')';
         }
         
         // Create new page with intelligent status selection
@@ -2311,14 +2462,16 @@ class AITRFOEL_Translation_Engine {
             $target_status = ($original_page->post_status === 'publish') ? 'publish' : 'draft';
         }
         
-        // Generate a proper slug for the translated post
-        // With Polylang/WPML: URL is /lang/slug/ so slug should be the translated title
-        // Without multilingual plugin: append language suffix as fallback
-        $translated_slug = sanitize_title($translated_title);
-        if (empty($translated_slug)) {
-            // Non-Latin titles may produce empty slug - use original + lang suffix
-            $original_slug = $original_page->post_name;
-            $translated_slug = $original_slug ? $original_slug . '-' . $target_lang : 'page-' . $original_page_id . '-' . $target_lang;
+        // Generate slug for the translated post
+        // With Polylang/WPML the URL is /lang/slug/ so we can reuse the original slug
+        $multilingual_active = AITRFOEL_Multilingual_Manager::get_instance()->is_active();
+        if ($multilingual_active) {
+            $translated_slug = $original_page->post_name;
+        } else {
+            $translated_slug = sanitize_title($translated_title);
+            if (empty($translated_slug)) {
+                $translated_slug = $original_page->post_name . '-' . $target_lang;
+            }
         }
         
         $new_page_args = [
@@ -2409,6 +2562,18 @@ class AITRFOEL_Translation_Engine {
         // Translate SEO meta, excerpt, and WooCommerce fields
         $this->translate_post_meta_fields($original_page_id, $new_page_id, $target_lang, $detected_lang);
 
+        // Assign translated WooCommerce product categories/tags
+        $this->translate_product_taxonomies($original_page_id, $new_page_id, $target_lang);
+
+        // Translate WooCommerce product attributes
+        $this->translate_product_attributes($original_page_id, $new_page_id, $target_lang, $detected_lang);
+
+        // Translate product variations for variable products
+        $this->translate_product_variations($original_page_id, $new_page_id, $target_lang, $detected_lang);
+
+        // Translate product gallery image alt text/captions
+        $this->translate_product_gallery_meta($original_page_id, $new_page_id, $target_lang, $detected_lang);
+
         // Clear Elementor cache
         if (class_exists('\Elementor\Plugin')) {
             \Elementor\Plugin::$instance->files_manager->clear_cache();
@@ -2432,16 +2597,24 @@ class AITRFOEL_Translation_Engine {
     private function translate_post_meta_fields($original_id, $target_id, $target_lang, $source_lang = 'auto') {
         $seo_translate_keys = [];
 
+        $seo_enabled = get_option('aitrfoel_seo_translation_enabled', true);
+        $seo_og_enabled = get_option('aitrfoel_seo_translate_og', true);
+        $seo_twitter_enabled = get_option('aitrfoel_seo_translate_twitter', true);
+
         // Yoast SEO
-        if (defined('WPSEO_VERSION') || class_exists('WPSEO_Meta')) {
-            $seo_translate_keys = array_merge($seo_translate_keys, [
-                '_yoast_wpseo_title',
-                '_yoast_wpseo_metadesc',
-                '_yoast_wpseo_opengraph-title',
-                '_yoast_wpseo_opengraph-description',
-                '_yoast_wpseo_twitter-title',
-                '_yoast_wpseo_twitter-description',
-            ]);
+        if ($seo_enabled && (defined('WPSEO_VERSION') || class_exists('WPSEO_Meta'))) {
+            $seo_translate_keys[] = '_yoast_wpseo_title';
+            $seo_translate_keys[] = '_yoast_wpseo_metadesc';
+
+            if ($seo_og_enabled) {
+                $seo_translate_keys[] = '_yoast_wpseo_opengraph-title';
+                $seo_translate_keys[] = '_yoast_wpseo_opengraph-description';
+            }
+            if ($seo_twitter_enabled) {
+                $seo_translate_keys[] = '_yoast_wpseo_twitter-title';
+                $seo_translate_keys[] = '_yoast_wpseo_twitter-description';
+            }
+
             $focus_kw = get_post_meta($original_id, '_yoast_wpseo_focuskw', true);
             if ($focus_kw !== '') {
                 update_post_meta($target_id, '_yoast_wpseo_focuskw', $focus_kw);
@@ -2449,15 +2622,19 @@ class AITRFOEL_Translation_Engine {
         }
 
         // Rank Math
-        if (class_exists('RankMath') || defined('RANK_MATH_VERSION')) {
-            $seo_translate_keys = array_merge($seo_translate_keys, [
-                'rank_math_title',
-                'rank_math_description',
-                'rank_math_og_title',
-                'rank_math_og_description',
-                'rank_math_twitter_title',
-                'rank_math_twitter_description',
-            ]);
+        if ($seo_enabled && (class_exists('RankMath') || defined('RANK_MATH_VERSION'))) {
+            $seo_translate_keys[] = 'rank_math_title';
+            $seo_translate_keys[] = 'rank_math_description';
+
+            if ($seo_og_enabled) {
+                $seo_translate_keys[] = 'rank_math_og_title';
+                $seo_translate_keys[] = 'rank_math_og_description';
+            }
+            if ($seo_twitter_enabled) {
+                $seo_translate_keys[] = 'rank_math_twitter_title';
+                $seo_translate_keys[] = 'rank_math_twitter_description';
+            }
+
             $rm_kw = get_post_meta($original_id, 'rank_math_focus_keyword', true);
             if ($rm_kw !== '') {
                 update_post_meta($target_id, 'rank_math_focus_keyword', $rm_kw);
@@ -2508,7 +2685,7 @@ class AITRFOEL_Translation_Engine {
         }
 
         // WooCommerce: copy non-translatable product meta
-        if (get_post_type($original_id) === 'product') {
+        if (get_post_type($original_id) === 'product' && get_option('aitrfoel_woocommerce_support', true)) {
             $wc_copy_keys = [
                 '_regular_price', '_sale_price', '_price', '_sku',
                 '_stock_status', '_manage_stock', '_stock',
@@ -2523,6 +2700,462 @@ class AITRFOEL_Translation_Engine {
                 }
             }
         }
+    }
+
+    /**
+     * Assign translated WooCommerce product categories and tags to a translated product.
+     * Uses Polylang/WPML term translation lookup to find equivalent terms.
+     *
+     * @param int    $original_id  Source product ID
+     * @param int    $translated_id Translated product ID
+     * @param string $target_lang  Target language code (2-letter)
+     */
+    private function translate_product_taxonomies($original_id, $translated_id, $target_lang) {
+        if (get_post_type($original_id) !== 'product') {
+            return;
+        }
+
+        $woo_enabled = get_option('aitrfoel_woocommerce_support', true);
+        if (!$woo_enabled) {
+            return;
+        }
+
+        $taxonomies = [];
+        if (get_option('aitrfoel_woo_translate_categories', true)) {
+            $taxonomies[] = 'product_cat';
+        }
+        if (get_option('aitrfoel_woo_translate_tags', true)) {
+            $taxonomies[] = 'product_tag';
+        }
+
+        if (empty($taxonomies)) {
+            return;
+        }
+
+        foreach ($taxonomies as $taxonomy) {
+            $terms = wp_get_post_terms($original_id, $taxonomy, ['fields' => 'all']);
+            if (empty($terms) || is_wp_error($terms)) {
+                continue;
+            }
+
+            $translated_term_ids = [];
+            foreach ($terms as $term) {
+                $translated_term_id = null;
+
+                // Polylang
+                if (function_exists('pll_get_term')) {
+                    $translated_term_id = pll_get_term($term->term_id, $target_lang);
+                }
+
+                // WPML fallback
+                if (!$translated_term_id && function_exists('apply_filters')) {
+                    $trid = apply_filters('wpml_element_trid', null, $term->term_taxonomy_id, 'tax_' . $taxonomy);
+                    if ($trid) {
+                        $translations = apply_filters('wpml_get_element_translations', null, $trid, 'tax_' . $taxonomy);
+                        if (isset($translations[$target_lang])) {
+                            $translated_term_id = $translations[$target_lang]->term_id;
+                        }
+                    }
+                }
+
+                if ($translated_term_id) {
+                    $translated_term_ids[] = (int) $translated_term_id;
+                }
+            }
+
+            if (!empty($translated_term_ids)) {
+                wp_set_post_terms($translated_id, $translated_term_ids, $taxonomy);
+                AITRFOEL_Logger::log(
+                    sprintf('Assigned %d translated %s terms to product %d', count($translated_term_ids), $taxonomy, $translated_id),
+                    'info', $original_id, $translated_id
+                );
+            }
+        }
+    }
+
+    /**
+     * Translate WooCommerce product attributes (_product_attributes meta).
+     * Handles both custom (local) attributes and global taxonomy (pa_*) attributes.
+     *
+     * @param int    $original_id   Source product ID
+     * @param int    $translated_id Translated product ID
+     * @param string $target_lang   Target language code (2-letter)
+     * @param string $source_lang   Source language code
+     */
+    private function translate_product_attributes($original_id, $translated_id, $target_lang, $source_lang = 'auto') {
+        if (get_post_type($original_id) !== 'product') {
+            return;
+        }
+        if (!get_option('aitrfoel_woocommerce_support', true) || !get_option('aitrfoel_woo_translate_attributes', true)) {
+            return;
+        }
+
+        $attributes = get_post_meta($original_id, '_product_attributes', true);
+        if (empty($attributes) || !is_array($attributes)) {
+            return;
+        }
+
+        $api = AITRFOEL_OpenAI_API::get_instance();
+        $translated_attributes = [];
+        $texts_to_translate = [];
+        $text_keys = []; // Track which attribute+field each text belongs to
+
+        foreach ($attributes as $attr_key => $attr_data) {
+            $translated_attributes[$attr_key] = $attr_data;
+
+            if (!empty($attr_data['is_taxonomy']) && taxonomy_exists($attr_key)) {
+                // Global taxonomy attribute (pa_color, pa_size, etc.)
+                // Assign translated terms via Polylang/WPML
+                $terms = wp_get_post_terms($original_id, $attr_key, ['fields' => 'all']);
+                if (!empty($terms) && !is_wp_error($terms)) {
+                    $translated_term_ids = [];
+                    foreach ($terms as $term) {
+                        $translated_term_id = null;
+
+                        if (function_exists('pll_get_term')) {
+                            $translated_term_id = pll_get_term($term->term_id, $target_lang);
+                        }
+
+                        if (!$translated_term_id) {
+                            $trid = apply_filters('wpml_element_trid', null, $term->term_taxonomy_id, 'tax_' . $attr_key);
+                            if ($trid) {
+                                $translations = apply_filters('wpml_get_element_translations', null, $trid, 'tax_' . $attr_key);
+                                if (isset($translations[$target_lang])) {
+                                    $translated_term_id = $translations[$target_lang]->term_id;
+                                }
+                            }
+                        }
+
+                        if ($translated_term_id) {
+                            $translated_term_ids[] = (int) $translated_term_id;
+                        } else {
+                            // Fallback: keep original term
+                            $translated_term_ids[] = $term->term_id;
+                        }
+                    }
+                    wp_set_post_terms($translated_id, $translated_term_ids, $attr_key);
+
+                    // Update the value field with translated term slugs
+                    $translated_terms_obj = array_map('get_term', $translated_term_ids);
+                    $slugs = wp_list_pluck(array_filter($translated_terms_obj), 'slug');
+                    $translated_attributes[$attr_key]['value'] = implode(' | ', $slugs);
+                }
+            } else {
+                // Custom (local) attribute — translate the name and pipe-delimited values
+                if (!empty($attr_data['name'])) {
+                    $texts_to_translate[] = $attr_data['name'];
+                    $text_keys[] = ['attr' => $attr_key, 'field' => 'name'];
+                }
+                if (!empty($attr_data['value'])) {
+                    $texts_to_translate[] = $attr_data['value'];
+                    $text_keys[] = ['attr' => $attr_key, 'field' => 'value'];
+                }
+            }
+        }
+
+        // Batch-translate custom attribute names and values
+        if (!empty($texts_to_translate)) {
+            $translated_texts = $api->translate_batch($texts_to_translate, $target_lang, $source_lang);
+            if (!is_wp_error($translated_texts) && is_array($translated_texts)) {
+                foreach ($translated_texts as $i => $translated_text) {
+                    if (!isset($text_keys[$i]) || is_wp_error($translated_text)) {
+                        continue;
+                    }
+                    $attr = $text_keys[$i]['attr'];
+                    $field = $text_keys[$i]['field'];
+                    $translated_attributes[$attr][$field] = $translated_text;
+                }
+            }
+        }
+
+        update_post_meta($translated_id, '_product_attributes', $translated_attributes);
+
+        AITRFOEL_Logger::log(
+            sprintf('Translated %d product attributes for product %d → %d', count($attributes), $original_id, $translated_id),
+            'info', $original_id, $translated_id
+        );
+    }
+
+    /**
+     * Translate WooCommerce product variations for variable products.
+     * Creates translated variation posts with proper parent-child relationships.
+     *
+     * @param int    $original_id   Source product ID
+     * @param int    $translated_id Translated product ID
+     * @param string $target_lang   Target language code (2-letter)
+     * @param string $source_lang   Source language code
+     */
+    private function translate_product_variations($original_id, $translated_id, $target_lang, $source_lang = 'auto') {
+        if (get_post_type($original_id) !== 'product') {
+            return;
+        }
+        if (!get_option('aitrfoel_woocommerce_support', true) || !get_option('aitrfoel_woo_translate_variations', true)) {
+            return;
+        }
+
+        // Only process variable products
+        $product_type = wp_get_post_terms($original_id, 'product_type', ['fields' => 'slugs']);
+        if (empty($product_type) || !in_array('variable', $product_type, true)) {
+            return;
+        }
+
+        // Set the translated product as variable type too
+        wp_set_object_terms($translated_id, 'variable', 'product_type');
+
+        // Get source variations
+        $variations = get_posts([
+            'post_type'   => 'product_variation',
+            'post_parent' => $original_id,
+            'numberposts' => -1,
+            'post_status' => 'any',
+            'orderby'     => 'menu_order',
+            'order'       => 'ASC',
+        ]);
+
+        if (empty($variations)) {
+            return;
+        }
+
+        // Delete existing variations on the translated product to avoid duplicates on re-translation
+        $existing_variations = get_posts([
+            'post_type'   => 'product_variation',
+            'post_parent' => $translated_id,
+            'numberposts' => -1,
+            'post_status' => 'any',
+            'fields'      => 'ids',
+        ]);
+        foreach ($existing_variations as $ev_id) {
+            wp_delete_post($ev_id, true);
+        }
+
+        // Collect translatable variation descriptions for batch translation
+        $descriptions_to_translate = [];
+        $desc_variation_indices = [];
+        foreach ($variations as $idx => $variation) {
+            $desc = $variation->post_excerpt;
+            if (!empty(trim($desc))) {
+                $descriptions_to_translate[] = $desc;
+                $desc_variation_indices[] = $idx;
+            }
+        }
+
+        // Batch-translate descriptions
+        $translated_descriptions = [];
+        if (!empty($descriptions_to_translate)) {
+            $api = AITRFOEL_OpenAI_API::get_instance();
+            $result = $api->translate_batch($descriptions_to_translate, $target_lang, $source_lang);
+            if (!is_wp_error($result) && is_array($result)) {
+                foreach ($result as $i => $td) {
+                    if (isset($desc_variation_indices[$i]) && !is_wp_error($td)) {
+                        $translated_descriptions[$desc_variation_indices[$i]] = $td;
+                    }
+                }
+            }
+        }
+
+        // Meta keys to copy directly (non-translatable variation data)
+        $variation_copy_keys = [
+            '_regular_price', '_sale_price', '_price', '_sku',
+            '_stock_status', '_manage_stock', '_stock',
+            '_weight', '_length', '_width', '_height',
+            '_virtual', '_downloadable', '_download_limit', '_download_expiry',
+            '_thumbnail_id', '_variation_description',
+        ];
+
+        foreach ($variations as $idx => $variation) {
+            // Create the translated variation
+            $new_variation_id = wp_insert_post([
+                'post_type'    => 'product_variation',
+                'post_parent'  => $translated_id,
+                'post_status'  => $variation->post_status,
+                'post_title'   => $variation->post_title,
+                'post_excerpt' => isset($translated_descriptions[$idx]) ? $translated_descriptions[$idx] : $variation->post_excerpt,
+                'menu_order'   => $variation->menu_order,
+            ]);
+
+            if (is_wp_error($new_variation_id) || !$new_variation_id) {
+                continue;
+            }
+
+            // Copy variation meta
+            foreach ($variation_copy_keys as $key) {
+                $val = get_post_meta($variation->ID, $key, true);
+                if ($val !== '') {
+                    update_post_meta($new_variation_id, $key, $val);
+                }
+            }
+
+            // Copy attribute assignment meta (attribute_pa_color, attribute_pa_size, etc.)
+            $all_meta = get_post_meta($variation->ID);
+            foreach ($all_meta as $meta_key => $meta_values) {
+                if (strpos($meta_key, 'attribute_') === 0) {
+                    $attr_value = $meta_values[0];
+                    $taxonomy = str_replace('attribute_', '', $meta_key);
+
+                    // For taxonomy attributes, try to find translated term slug
+                    if (taxonomy_exists($taxonomy) && !empty($attr_value)) {
+                        $term = get_term_by('slug', $attr_value, $taxonomy);
+                        if ($term) {
+                            $translated_term_id = null;
+                            if (function_exists('pll_get_term')) {
+                                $translated_term_id = pll_get_term($term->term_id, $target_lang);
+                            }
+                            if (!$translated_term_id) {
+                                $trid = apply_filters('wpml_element_trid', null, $term->term_taxonomy_id, 'tax_' . $taxonomy);
+                                if ($trid) {
+                                    $translations = apply_filters('wpml_get_element_translations', null, $trid, 'tax_' . $taxonomy);
+                                    if (isset($translations[$target_lang])) {
+                                        $translated_term_id = $translations[$target_lang]->term_id;
+                                    }
+                                }
+                            }
+                            if ($translated_term_id) {
+                                $translated_term = get_term($translated_term_id, $taxonomy);
+                                if ($translated_term && !is_wp_error($translated_term)) {
+                                    $attr_value = $translated_term->slug;
+                                }
+                            }
+                        }
+                    }
+                    update_post_meta($new_variation_id, $meta_key, $attr_value);
+                }
+            }
+        }
+
+        // Copy variable product transient data
+        $default_attributes = get_post_meta($original_id, '_default_attributes', true);
+        if (!empty($default_attributes) && is_array($default_attributes)) {
+            $translated_defaults = [];
+            foreach ($default_attributes as $taxonomy => $slug) {
+                if (taxonomy_exists($taxonomy) && !empty($slug)) {
+                    $term = get_term_by('slug', $slug, $taxonomy);
+                    if ($term) {
+                        $translated_term_id = null;
+                        if (function_exists('pll_get_term')) {
+                            $translated_term_id = pll_get_term($term->term_id, $target_lang);
+                        }
+                        if ($translated_term_id) {
+                            $translated_term = get_term($translated_term_id, $taxonomy);
+                            if ($translated_term && !is_wp_error($translated_term)) {
+                                $translated_defaults[$taxonomy] = $translated_term->slug;
+                                continue;
+                            }
+                        }
+                    }
+                }
+                $translated_defaults[$taxonomy] = $slug;
+            }
+            update_post_meta($translated_id, '_default_attributes', $translated_defaults);
+        }
+
+        // Clean transients so WooCommerce rebuilds variation data
+        delete_transient('wc_product_children_' . $translated_id);
+        delete_transient('wc_var_prices_' . $translated_id);
+
+        AITRFOEL_Logger::log(
+            sprintf('Created %d translated variations for variable product %d → %d', count($variations), $original_id, $translated_id),
+            'info', $original_id, $translated_id
+        );
+    }
+
+    /**
+     * Translate product gallery and featured image alt text, captions, and descriptions.
+     *
+     * @param int    $original_id   Source product ID
+     * @param int    $translated_id Translated product ID
+     * @param string $target_lang   Target language code (2-letter)
+     * @param string $source_lang   Source language code
+     */
+    private function translate_product_gallery_meta($original_id, $translated_id, $target_lang, $source_lang = 'auto') {
+        if (get_post_type($original_id) !== 'product') {
+            return;
+        }
+        if (!get_option('aitrfoel_woocommerce_support', true) || !get_option('aitrfoel_woo_translate_gallery_alt', true)) {
+            return;
+        }
+
+        // Collect all image IDs: featured image + gallery images
+        $image_ids = [];
+        $thumbnail_id = get_post_meta($original_id, '_thumbnail_id', true);
+        if ($thumbnail_id) {
+            $image_ids[] = (int) $thumbnail_id;
+        }
+        $gallery_ids = get_post_meta($original_id, '_product_image_gallery', true);
+        if (!empty($gallery_ids)) {
+            $gallery_arr = array_map('intval', array_filter(explode(',', $gallery_ids)));
+            $image_ids = array_merge($image_ids, $gallery_arr);
+        }
+        $image_ids = array_unique($image_ids);
+
+        if (empty($image_ids)) {
+            return;
+        }
+
+        // Collect translatable text from images
+        $texts_to_translate = [];
+        $text_keys = []; // [image_id, field]
+        foreach ($image_ids as $img_id) {
+            $alt = get_post_meta($img_id, '_wp_attachment_image_alt', true);
+            if (!empty(trim($alt))) {
+                $texts_to_translate[] = $alt;
+                $text_keys[] = ['id' => $img_id, 'field' => 'alt'];
+            }
+
+            $attachment = get_post($img_id);
+            if ($attachment) {
+                if (!empty(trim($attachment->post_excerpt))) {
+                    $texts_to_translate[] = $attachment->post_excerpt;
+                    $text_keys[] = ['id' => $img_id, 'field' => 'caption'];
+                }
+                if (!empty(trim($attachment->post_content))) {
+                    $texts_to_translate[] = $attachment->post_content;
+                    $text_keys[] = ['id' => $img_id, 'field' => 'description'];
+                }
+            }
+        }
+
+        if (empty($texts_to_translate)) {
+            return;
+        }
+
+        // Batch-translate all image text
+        $api = AITRFOEL_OpenAI_API::get_instance();
+        $translated_texts = $api->translate_batch($texts_to_translate, $target_lang, $source_lang);
+        if (is_wp_error($translated_texts) || !is_array($translated_texts)) {
+            return;
+        }
+
+        // Apply translations — we store translated alt/caption/description as post meta on the translated product
+        // This avoids modifying the shared attachment posts (which are shared across languages)
+        $translated_image_meta = [];
+        foreach ($translated_texts as $i => $translated_text) {
+            if (!isset($text_keys[$i]) || is_wp_error($translated_text)) {
+                continue;
+            }
+            $img_id = $text_keys[$i]['id'];
+            $field = $text_keys[$i]['field'];
+            if (!isset($translated_image_meta[$img_id])) {
+                $translated_image_meta[$img_id] = [];
+            }
+            $translated_image_meta[$img_id][$field] = $translated_text;
+        }
+
+        // Store as structured meta on the translated product for theme/frontend retrieval
+        update_post_meta($translated_id, '_aitrfoel_translated_image_meta', $translated_image_meta);
+
+        // Also update the alt text directly on attachment posts if they don't have language-specific versions
+        // This is safe because alt text meta can be overwritten and is the most impactful for SEO
+        foreach ($translated_image_meta as $img_id => $fields) {
+            if (isset($fields['alt'])) {
+                // Store translated alt with a language-specific key to avoid overwriting the original
+                update_post_meta($img_id, '_wp_attachment_image_alt_' . $target_lang, sanitize_text_field($fields['alt']));
+            }
+        }
+
+        AITRFOEL_Logger::log(
+            sprintf('Translated image meta for %d images on product %d → %d', count($translated_image_meta), $original_id, $translated_id),
+            'info', $original_id, $translated_id
+        );
     }
 
     /**

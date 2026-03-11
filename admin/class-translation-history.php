@@ -135,16 +135,16 @@ class AITRFOEL_Translation_History {
             <!-- Summary Cards -->
             <div class="aitrfoel-history-summary" style="display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;">
                 <div class="aitrfoel-history-card" style="background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 16px 24px; min-width: 160px;">
-                    <div style="font-size: 28px; font-weight: 700; color: #1d2327;"><?php echo number_format($summary['total_translations']); ?></div>
-                    <div style="color: #646970; font-size: 13px;"><?php esc_html_e('Translations', 'ai-translator-for-elementor-and-polylang'); ?></div>
+                    <div class="aitrfoel-history-number"><?php echo number_format($summary['total_translations']); ?></div>
+                    <div class="aitrfoel-history-label"><?php esc_html_e('Translations', 'ai-translator-for-elementor-and-polylang'); ?></div>
                 </div>
                 <div class="aitrfoel-history-card" style="background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 16px 24px; min-width: 160px;">
-                    <div style="font-size: 28px; font-weight: 700; color: #1d2327;"><?php echo number_format($summary['total_words']); ?></div>
-                    <div style="color: #646970; font-size: 13px;"><?php esc_html_e('Words Translated', 'ai-translator-for-elementor-and-polylang'); ?></div>
+                    <div class="aitrfoel-history-number"><?php echo number_format($summary['total_words']); ?></div>
+                    <div class="aitrfoel-history-label"><?php esc_html_e('Words Translated', 'ai-translator-for-elementor-and-polylang'); ?></div>
                 </div>
                 <div class="aitrfoel-history-card" style="background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 16px 24px; min-width: 160px;">
-                    <div style="font-size: 28px; font-weight: 700; color: #1d2327;"><?php echo count($summary['languages']); ?></div>
-                    <div style="color: #646970; font-size: 13px;"><?php esc_html_e('Languages', 'ai-translator-for-elementor-and-polylang'); ?></div>
+                    <div class="aitrfoel-history-number"><?php echo count($summary['languages']); ?></div>
+                    <div class="aitrfoel-history-label"><?php esc_html_e('Languages', 'ai-translator-for-elementor-and-polylang'); ?></div>
                 </div>
                 <?php if (!empty($summary['languages'])): ?>
                 <div class="aitrfoel-history-card" style="background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 16px 24px; flex: 1; min-width: 200px;">
@@ -163,6 +163,10 @@ class AITRFOEL_Translation_History {
             <!-- Filters -->
             <form method="get" style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                 <input type="hidden" name="page" value="ai-translator-for-elementor-and-polylang-history" />
+                <style>
+                    .aitrfoel-history-summary select { min-width: 130px; padding: 4px 28px 4px 8px; -webkit-appearance: none; -moz-appearance: none; appearance: none; background: #fff url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5%206l5%205%205-5%22%20fill%3D%22none%22%20stroke%3D%22%23646970%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E') no-repeat right 6px center; background-size: 16px; border: 1px solid #8c8f94; border-radius: 4px; cursor: pointer; }
+                    form[method="get"] select { min-width: 130px; padding: 4px 28px 4px 8px; -webkit-appearance: none; -moz-appearance: none; appearance: none; background: #fff url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5%206l5%205%205-5%22%20fill%3D%22none%22%20stroke%3D%22%23646970%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E') no-repeat right 6px center; background-size: 16px; border: 1px solid #8c8f94; border-radius: 4px; cursor: pointer; }
+                </style>
                 <?php if (!empty($summary['languages'])): ?>
                 <select name="lang">
                     <option value=""><?php esc_html_e('All Languages', 'ai-translator-for-elementor-and-polylang'); ?></option>
@@ -290,11 +294,21 @@ class AITRFOEL_Translation_History {
             <?php endif; ?>
 
             <?php endif; // table_exists ?>
+            
+            <!-- MeepTech Footer Branding -->
+            <div class="aitrfoel-footer-branding">
+                <a href="https://meeptech.com" target="_blank" rel="noopener noreferrer">
+                    <img src="<?php echo esc_url(AITRFOEL_PLUGIN_URL . 'assets/img/meeptech.svg'); ?>" alt="Meep Tech" class="aitrfoel-footer-logo">
+                </a>
+                <span class="aitrfoel-footer-text"><?php esc_html_e('Powered by', 'ai-translator-for-elementor-and-polylang'); ?> <a href="https://meeptech.com" target="_blank" rel="noopener noreferrer">Meep Tech</a></span>
+            </div>
         </div>
 
         <style>
             .aitrfoel-history-card { transition: box-shadow 0.2s; }
             .aitrfoel-history-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+            .aitrfoel-history-number { font-size: 28px; font-weight: 700; color: #1d2327; margin-bottom: 8px; line-height: 1; }
+            .aitrfoel-history-label { color: #646970; font-size: 13px; line-height: 1.3; }
             .eat-lang-flag { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; line-height: 1.3; }
             .eat-lang-flag.eat-lang-exists { background: #2271b1; color: #fff; }
         </style>

@@ -547,6 +547,13 @@ class AITRFOEL_Admin_Menu {
             defined('AITRFOEL_VERSION') ? AITRFOEL_VERSION : '1.3.2'
         );
         
+        wp_enqueue_style(
+            'aitrfoel-modern-design',
+            AITRFOEL_PLUGIN_URL . 'assets/css/modern-design.css',
+            ['aitrfoel-onboarding-wizard'],
+            defined('AITRFOEL_VERSION') ? AITRFOEL_VERSION : '1.3.2'
+        );
+        
         // Get available languages from language mapper
         $available_languages = [];
         if (class_exists('AITRFOEL_Language_Mapper')) {
@@ -745,18 +752,7 @@ class AITRFOEL_Admin_Menu {
             <div class="aitrfoel-wiz-panel active" data-panel="1">
                 <div class="aitrfoel-wiz-welcome">
                     <div class="aitrfoel-wiz-logo">
-                        <svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="200" height="39" viewBox="0 0 536.4 105.14" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd">
-                            <g>
-                                <path fill="#1447E6" fill-rule="nonzero" d="M0 81.94l15.76 0 0 -33.28c0,-10.08 6.81,-11.85 10.46,-11.85 3.66,0 10.72,1.77 10.72,11.85l0 33.28 15.75 0 0 -33.28c0,-10.08 6.94,-11.85 10.47,-11.85 3.65,0 10.84,1.77 10.84,11.85l0 33.28 15.76 0 0 -35.42c0,-18.16 -11.47,-23.45 -21.69,-23.45 -6.43,0 -14.11,2.14 -19.03,8.82 -4.16,-6.55 -11.22,-8.82 -17.9,-8.82 -5.3,0 -11.1,2.02 -15.38,6.68l0 -5.8 -15.76 0 0 57.99z"/>
-                                <path fill="#1447E6" fill-rule="nonzero" d="M127.95 83.2c10.59,0 19.42,-4.54 24.46,-11.85l-10.72 -7.81c-2.01,2.64 -6.05,6.17 -13.74,6.17 -7.18,0 -12.85,-4.66 -14.37,-12.48l41.6 0 0 -4.28c0,-17.27 -10.59,-30.13 -27.86,-30.13 -17.52,0 -28.87,12.86 -28.87,30.13 0,17.27 11.73,30.25 29.5,30.25zm-14.12 -35.93c1.52,-7.31 6.31,-11.97 13.49,-11.97 7.44,0 11.73,5.17 13.11,11.97l-26.6 0z"/>
-                                <path fill="#1447E6" fill-rule="nonzero" d="M191.24 83.2c10.59,0 19.41,-4.54 24.45,-11.85l-10.71 -7.81c-2.02,2.64 -6.05,6.17 -13.74,6.17 -7.19,0 -12.86,-4.66 -14.37,-12.48l41.6 0 0 -4.28c0,-17.27 -10.59,-30.13 -27.86,-30.13 -17.53,0 -28.87,12.86 -28.87,30.13 0,17.27 11.72,30.25 29.5,30.25zm-14.12 -35.93c1.51,-7.31 6.3,-11.97 13.49,-11.97 7.43,0 11.73,5.17 13.11,11.97l-26.6 0z"/>
-                                <path fill="#1447E6" fill-rule="nonzero" d="M227.16 105.14l15.76 0 0 -29.25c3.91,4.41 9.33,7.06 16.64,7.06 15.89,0 27.48,-12.36 27.48,-29.88 0,-17.27 -11.59,-30 -27.48,-30 -7.31,0 -12.73,2.65 -16.64,7.06l0 -6.18 -15.76 0 0 81.19zm30.13 -37.07c-8.69,0 -14.37,-6.3 -14.37,-15 0,-8.7 5.68,-15.25 14.37,-15.25 8.7,0 14.5,6.55 14.5,15.25 0,8.7 -5.8,15 -14.5,15z"/>
-                                <path fill="#2B2A29" fill-rule="nonzero" d="M352.35 31.14l0 -7.19 -13.87 0 0 -17.65 -9.2 0 0 17.65 -8.07 0 0 7.19 8.07 0 0 36.93c0,8.83 5.16,13.87 13.99,13.87l8.44 0 0 -7.44 -5.16 0c-4.29,0 -8.07,-1.51 -8.07,-7.69l0 -35.67 13.87 0z"/>
-                                <path fill="#2B2A29" fill-rule="nonzero" d="M385.75 22.94c-17.39,0 -28.61,12.74 -28.61,30.01 0,17.27 11.72,30.12 29.37,30.12 10.59,0 19.16,-4.66 24.2,-12.1l-6.43 -4.66c-3.27,4.91 -9.2,8.82 -17.77,8.82 -11.47,0 -19.42,-7.69 -20.55,-19.28l47.53 0 0 -2.9c0,-17.27 -11.1,-30.01 -27.74,-30.01zm0 7.57c10.84,0 18.03,8.07 19.29,19.03l-39.08 0c1.26,-11.34 8.45,-19.03 19.79,-19.03z"/>
-                                <path fill="#2B2A29" fill-rule="nonzero" d="M469.08 39.71l6.68 -5.04c-5.04,-7.19 -13.36,-11.6 -23.57,-11.6 -17.4,0 -29.38,12.48 -29.38,29.88 0,17.39 11.98,30 29.38,30 10.21,0 18.53,-4.41 23.57,-11.73l-6.68 -4.91c-3.4,4.54 -8.7,7.94 -16.64,7.94 -12.48,0 -20.68,-8.95 -20.68,-21.3 0,-12.36 8.2,-21.18 20.68,-21.18 7.94,0 13.36,3.4 16.64,7.94z"/>
-                                <path fill="#2B2A29" fill-rule="nonzero" d="M513.33 23.07c-7.19,0 -14.25,2.65 -18.66,8.7l0 -31.77 -9.08 0 0 81.94 9.08 0 0 -34.41c0,-11.1 7.56,-16.52 16.26,-16.52 8.57,0 16.39,5.42 16.39,16.52l0 34.41 9.08 0 0 -35.68c0,-16.38 -11.48,-23.19 -23.07,-23.19z"/>
-                            </g>
-                        </svg>
+                        <img src="<?php echo esc_url(AITRFOEL_PLUGIN_URL . 'assets/img/meeptech.svg'); ?>" alt="Meep Tech" width="200" height="39">
                     </div>
                     <h1><?php esc_html_e('Welcome to Meep AI Translator', 'ai-translator-for-elementor-and-polylang'); ?></h1>
                     <p class="aitrfoel-wiz-subtitle">
@@ -1005,6 +1001,11 @@ class AITRFOEL_Admin_Menu {
                         <?php esc_html_e('Settings', 'ai-translator-for-elementor-and-polylang'); ?>
                     </a>
                 </span>
+                <div class="aitrfoel-wiz-footer-branding">
+                    <a href="https://meeptech.com" target="_blank" rel="noopener noreferrer">
+                        <img src="<?php echo esc_url(AITRFOEL_PLUGIN_URL . 'assets/img/meeptech.svg'); ?>" alt="Meep Tech" style="height: 18px; width: auto; opacity: 0.6; transition: opacity 0.3s;">
+                    </a>
+                </div>
             </div>
         </div><!-- .aitrfoel-wiz-card -->
         </div><!-- .aitrfoel-wizard-wrap -->
@@ -1722,7 +1723,7 @@ class AITRFOEL_Admin_Menu {
                         <label><?php esc_html_e('From:', 'ai-translator-for-elementor-and-polylang'); ?></label>
                         <div class="eat-source-languages">
                             <button type="button" class="button" id="eat-select-source-language">
-                                <?php esc_html_e('🌐 Auto-detect ▼', 'ai-translator-for-elementor-and-polylang'); ?>
+                                <?php esc_html_e('🌐 Auto-detect', 'ai-translator-for-elementor-and-polylang'); ?>
                             </button>
                             <div id="eat-source-dropdown" class="eat-dropdown-content" style="display: none;">
                                 <div class="eat-dropdown-item">
@@ -1754,7 +1755,7 @@ class AITRFOEL_Admin_Menu {
                         <label><?php esc_html_e('To:', 'ai-translator-for-elementor-and-polylang'); ?></label>
                         <div class="eat-target-languages">
                             <button type="button" class="button" id="eat-select-languages">
-                                <?php esc_html_e('Select languages ▼', 'ai-translator-for-elementor-and-polylang'); ?>
+                                <?php esc_html_e('Select languages', 'ai-translator-for-elementor-and-polylang'); ?>
                             </button>
                             <div id="eat-languages-dropdown" class="eat-dropdown-content" style="display: none;">
                                 <!-- Will be populated by JS -->
@@ -1771,6 +1772,10 @@ class AITRFOEL_Admin_Menu {
                         <button type="button" class="button" id="eat-bulk-settings" title="Configure translation settings">
                             ⚙️ <?php esc_html_e('Settings', 'ai-translator-for-elementor-and-polylang'); ?>
                         </button>
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=ai-translator-for-elementor-and-polylang-translate-all')); ?>" class="button" id="eat-translate-all-site" title="<?php esc_attr_e('Translate your entire site at once', 'ai-translator-for-elementor-and-polylang'); ?>">
+                            <span class="eat-btn-label">🌐 <?php esc_html_e('Translate All Site', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                            <span class="eat-btn-sub"><?php esc_html_e('experimental', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                        </a>
                         <button type="button" class="button button-primary" id="eat-start-translation" disabled title="Select pages and languages to start">
                             🚀 <?php esc_html_e('Start Translation', 'ai-translator-for-elementor-and-polylang'); ?>
                         </button>
@@ -1779,18 +1784,23 @@ class AITRFOEL_Admin_Menu {
             </div>
             
             <?php
-            // Separate pages_data into pages and posts
+            // Separate pages_data into pages, posts, and products
             $pages_only = [];
             $posts_only = [];
+            $products_only = [];
             foreach ($pages_data as $group) {
                 if ($group['source']->post_type === 'page') {
                     $pages_only[] = $group;
+                } elseif ($group['source']->post_type === 'product') {
+                    $products_only[] = $group;
                 } else {
                     $posts_only[] = $group;
                 }
             }
             $pages_count = count($pages_only);
             $posts_count = count($posts_only);
+            $products_count = count($products_only);
+            $has_woocommerce = class_exists('WooCommerce');
             ?>
 
             <!-- Content Type Tabs -->
@@ -1806,6 +1816,13 @@ class AITRFOEL_Admin_Menu {
                         <?php esc_html_e('Posts', 'ai-translator-for-elementor-and-polylang'); ?>
                         <span class="eat-tab-count"><?php echo absint($posts_count); ?></span>
                     </button>
+                    <?php if ($has_woocommerce || $products_count > 0) : ?>
+                    <button type="button" class="eat-tab-btn" data-tab="products" role="tab" aria-selected="false" aria-controls="eat-tab-products">
+                        <span class="dashicons dashicons-cart"></span>
+                        <?php esc_html_e('Products', 'ai-translator-for-elementor-and-polylang'); ?>
+                        <span class="eat-tab-count"><?php echo absint($products_count); ?></span>
+                    </button>
+                    <?php endif; ?>
                 </nav>
 
                 <!-- Pages Tab -->
@@ -1879,9 +1896,55 @@ class AITRFOEL_Admin_Menu {
                         </table>
                     </div>
                 </div>
+
+                <?php if ($has_woocommerce || $products_count > 0) : ?>
+                <!-- Products Tab -->
+                <div id="eat-tab-products" class="eat-tab-panel" role="tabpanel" data-tab="products" style="display: none;">
+                    <div class="aitrfoel-dashboard-table">
+                        <table class="wp-list-table widefat fixed">
+                            <thead>
+                                <tr>
+                                    <td class="manage-column column-cb check-column">
+                                        <input id="cb-select-all-products" type="checkbox" data-tab="products">
+                                    </td>
+                                    <th scope="col" class="manage-column column-title">
+                                        <?php esc_html_e('Product', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </th>
+                                    <th scope="col" class="manage-column column-languages">
+                                        <?php esc_html_e('Languages', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </th>
+                                    <th scope="col" class="manage-column column-status">
+                                        <?php esc_html_e('Translation Status', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </th>
+                                    <th scope="col" class="manage-column column-page-type">
+                                        <?php esc_html_e('Product Type', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </th>
+                                    <th scope="col" class="manage-column column-actions">
+                                        <?php esc_html_e('Actions', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </th>
+                                    <th scope="col" class="manage-column column-expand">
+                                        <span class="dashicons dashicons-list-view" title="<?php esc_html_e('Expand/Collapse', 'ai-translator-for-elementor-and-polylang'); ?>"></span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $this->render_pages_rows($products_only); ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
             
             <?php $this->render_quick_tips(); ?>
+            
+            <!-- MeepTech Footer Branding -->
+            <div class="aitrfoel-footer-branding">
+                <a href="https://meeptech.com" target="_blank" rel="noopener noreferrer">
+                    <img src="<?php echo esc_url(AITRFOEL_PLUGIN_URL . 'assets/img/meeptech.svg'); ?>" alt="Meep Tech" class="aitrfoel-footer-logo">
+                </a>
+                <span class="aitrfoel-footer-text"><?php esc_html_e('Powered by', 'ai-translator-for-elementor-and-polylang'); ?> <a href="https://meeptech.com" target="_blank" rel="noopener noreferrer">Meep Tech</a></span>
+            </div>
         </div>
         
         <?php
@@ -1900,7 +1963,7 @@ class AITRFOEL_Admin_Menu {
 
         // Get all pages and posts
         $all_pages = get_posts([
-            'post_type' => ['page', 'post'],
+            'post_type' => ['page', 'post', 'product'],
             'post_status' => ['publish', 'draft'],
             'numberposts' => -1,
             'orderby' => 'title',
@@ -1918,6 +1981,30 @@ class AITRFOEL_Admin_Menu {
             // Skip if already processed as part of another translation group
             if (in_array($page->ID, $processed_pages)) {
                 continue;
+            }
+
+            // Check if this is a translated post created by our plugin — skip it
+            // (it will be displayed as a translation under its source post)
+            $source_page_meta = get_post_meta($page->ID, '_aitrfoel_source_page', true);
+            if ($source_page_meta && (int) $source_page_meta !== $page->ID) {
+                $source_id = (int) $source_page_meta;
+                // If the source is already in a group, add this as a translation
+                if (isset($source_id_to_group[$source_id])) {
+                    $gi = $source_id_to_group[$source_id];
+                    $lang = $multilingual->get_post_language($page->ID);
+                    if ($lang && !isset($translation_groups[$gi]['translations'][$lang])) {
+                        $translation_groups[$gi]['translations'][$lang] = $page;
+                    }
+                    $processed_pages[] = $page->ID;
+                    continue;
+                }
+                // Source not yet processed — skip; meta query will pick this up
+                // when the source post creates its group
+                $source_post = get_post($source_id);
+                if ($source_post && $source_post->post_status !== 'trash') {
+                    continue;
+                }
+                // Source is gone — fall through to create own group
             }
 
             $page_lang = $multilingual->get_post_language($page->ID);
@@ -2025,6 +2112,26 @@ class AITRFOEL_Admin_Menu {
                     }
                 }
 
+                // Fallback: find translations via our meta key
+                // (covers cases where Polylang/WPML don't track the relationship)
+                $meta_translations = get_posts([
+                    'post_type'      => $source_page->post_type,
+                    'meta_key'       => '_aitrfoel_source_page',
+                    'meta_value'     => (string) $source_page->ID,
+                    'numberposts'    => -1,
+                    'post_status'    => 'any',
+                    'suppress_filters' => true,
+                ]);
+                foreach ($meta_translations as $meta_trans) {
+                    if ($meta_trans->ID !== $source_page->ID && !in_array($meta_trans->ID, $processed_pages)) {
+                        $lang = $multilingual->get_post_language($meta_trans->ID);
+                        if ($lang && !isset($group['translations'][$lang])) {
+                            $group['translations'][$lang] = $meta_trans;
+                            $processed_pages[] = $meta_trans->ID;
+                        }
+                    }
+                }
+
                 $group_index = count($translation_groups);
                 $translation_groups[] = $group;
                 $processed_pages[] = $source_page->ID;
@@ -2082,6 +2189,14 @@ class AITRFOEL_Admin_Menu {
                         'label' => '📝 ' . __('Classic', 'ai-translator-for-elementor-and-polylang'),
                         'class' => 'eat-page-classic',
                         'tooltip' => __('Classic Editor content - can be translated', 'ai-translator-for-elementor-and-polylang')
+                    ];
+                    
+                case AITRFOEL_Content_Detector::TYPE_WOOCOMMERCE:
+                    return [
+                        'type' => 'woocommerce',
+                        'label' => '🛒 ' . __('WooCommerce', 'ai-translator-for-elementor-and-polylang'),
+                        'class' => 'eat-page-woocommerce',
+                        'tooltip' => __('WooCommerce product - title, description, attributes and meta are translated', 'ai-translator-for-elementor-and-polylang')
                     ];
                     
                 default:
@@ -2159,8 +2274,15 @@ class AITRFOEL_Admin_Menu {
             
             // Get the correct permalink using the multilingual manager
             $source_permalink = $multilingual->get_post_permalink($source->ID);
-            $post_type_icon = ($source->post_type === 'post') ? '📄' : '🏠';
-            $post_type_label = ($source->post_type === 'post') ? __('Post', 'ai-translator-for-elementor-and-polylang') : __('Page', 'ai-translator-for-elementor-and-polylang');
+            $post_type_icon = '🏠';
+            $post_type_label = __('Page', 'ai-translator-for-elementor-and-polylang');
+            if ($source->post_type === 'post') {
+                $post_type_icon = '📄';
+                $post_type_label = __('Post', 'ai-translator-for-elementor-and-polylang');
+            } elseif ($source->post_type === 'product') {
+                $post_type_icon = '🛒';
+                $post_type_label = __('Product', 'ai-translator-for-elementor-and-polylang');
+            }
             ?>
             <tr class="eat-source-page" data-page-id="<?php echo absint($source->ID); ?>">
                 <th scope="row" class="check-column">
@@ -2312,6 +2434,13 @@ class AITRFOEL_Admin_Menu {
             'aitrfoel-dashboard',
             AITRFOEL_PLUGIN_URL . 'assets/css/dashboard.css',
             [],
+            AITRFOEL_VERSION
+        );
+        
+        wp_enqueue_style(
+            'aitrfoel-modern-design',
+            AITRFOEL_PLUGIN_URL . 'assets/css/modern-design.css',
+            ['aitrfoel-dashboard'],
             AITRFOEL_VERSION
         );
 

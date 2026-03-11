@@ -282,6 +282,31 @@ class AITRFOEL_Ajax_Handler {
                             $translation_map = $classic_parser->parse_for_translation($page_id);
                             break;
                             
+                        case AITRFOEL_Content_Detector::TYPE_WOOCOMMERCE:
+                            // WooCommerce product with no editor content
+                            $wc_post = get_post($page_id);
+                            if ($wc_post) {
+                                if (!empty($wc_post->post_title)) {
+                                    $translation_map['wc_title'] = [
+                                        'original' => $wc_post->post_title,
+                                        'path' => 'title',
+                                        'type' => 'text',
+                                        'widget_type' => 'woocommerce_product',
+                                        'display_text' => $wc_post->post_title,
+                                    ];
+                                }
+                                if (!empty(trim($wc_post->post_excerpt))) {
+                                    $translation_map['wc_excerpt'] = [
+                                        'original' => $wc_post->post_excerpt,
+                                        'path' => 'excerpt',
+                                        'type' => 'text',
+                                        'widget_type' => 'woocommerce_product',
+                                        'display_text' => wp_trim_words($wc_post->post_excerpt, 20),
+                                    ];
+                                }
+                            }
+                            break;
+                            
                         default:
                             throw new Exception(__('This page does not contain any translatable content. Please ensure the page has content created with Elementor, Gutenberg (Block Editor), or Classic Editor.', 'ai-translator-for-elementor-and-polylang'));
                     }
@@ -1821,11 +1846,14 @@ class AITRFOEL_Ajax_Handler {
             // Get fresh page data
             $pages_data = $admin_menu->get_pages_with_translations();
             
-            // Separate into pages and posts (matching dashboard tab structure)
+            // Separate into pages, posts, and products (matching dashboard tab structure)
             $pages_only = [];
             $posts_only = [];
+            $products_only = [];
             foreach ($pages_data as $group) {
-                if ($group['source']->post_type === 'page') {
+                if ($group['source']->post_type === 'product') {
+                    $products_only[] = $group;
+                } elseif ($group['source']->post_type === 'page') {
                     $pages_only[] = $group;
                 } else {
                     $posts_only[] = $group;
@@ -1842,12 +1870,19 @@ class AITRFOEL_Ajax_Handler {
             $admin_menu->render_pages_rows($posts_only);
             $posts_html = ob_get_clean();
 
+            // Render products HTML
+            ob_start();
+            $admin_menu->render_pages_rows($products_only);
+            $products_html = ob_get_clean();
+
             wp_send_json_success([
                 'html' => $pages_html, // Backward compat: pages HTML in 'html'
                 'pages_html' => $pages_html,
                 'posts_html' => $posts_html,
+                'products_html' => $products_html,
                 'pages_count' => count($pages_only),
                 'posts_count' => count($posts_only),
+                'products_count' => count($products_only),
                 'message' => 'Table data refreshed successfully'
             ]);
 
@@ -1885,8 +1920,8 @@ class AITRFOEL_Ajax_Handler {
                 throw new Exception('Page not found');
             }
 
-            if (!in_array($page->post_type, ['page', 'post'])) {
-                throw new Exception('Only pages and posts can be deleted through this interface');
+            if (!in_array($page->post_type, ['page', 'post', 'product'])) {
+                throw new Exception('Only pages, posts, and products can be deleted through this interface');
             }
 
             // Check if this is a translated page (not an original)

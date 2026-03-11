@@ -44,6 +44,13 @@ class AITRFOEL_Translate_All {
             [],
             AITRFOEL_VERSION
         );
+        
+        wp_enqueue_style(
+            'aitrfoel-modern-design',
+            AITRFOEL_PLUGIN_URL . 'assets/css/modern-design.css',
+            ['aitrfoel-translate-all'],
+            AITRFOEL_VERSION
+        );
 
         wp_enqueue_script(
             'aitrfoel-translate-all',
@@ -427,6 +434,14 @@ class AITRFOEL_Translate_All {
                 </div>
             </div>
             <?php endif; ?>
+            
+            <!-- MeepTech Footer Branding -->
+            <div class="aitrfoel-footer-branding">
+                <a href="https://meeptech.com" target="_blank" rel="noopener noreferrer">
+                    <img src="<?php echo esc_url(AITRFOEL_PLUGIN_URL . 'assets/img/meeptech.svg'); ?>" alt="Meep Tech" class="aitrfoel-footer-logo">
+                </a>
+                <span class="aitrfoel-footer-text"><?php esc_html_e('Powered by', 'ai-translator-for-elementor-and-polylang'); ?> <a href="https://meeptech.com" target="_blank" rel="noopener noreferrer">Meep Tech</a></span>
+            </div>
         </div>
         <?php
     }
@@ -694,12 +709,25 @@ class AITRFOEL_Translate_All {
                 break;
 
             case 'classic':
-            default:
                 if (class_exists('AITRFOEL_Classic_Parser')) {
                     $parser = AITRFOEL_Classic_Parser::get_instance();
                     $translation_map = $parser->parse_for_translation($post_id);
                 }
                 break;
+
+            case 'woocommerce':
+                // WooCommerce product with no editor content — count excerpt words
+                $wc_post = get_post($post_id);
+                if ($wc_post && !empty(trim($wc_post->post_excerpt))) {
+                    $translation_map['wc_excerpt'] = [
+                        'original' => $wc_post->post_excerpt,
+                        'path' => 'excerpt',
+                        'type' => 'text',
+                    ];
+                }
+                break;
+
+            default:
         }
 
         // Count words from parsed translatable strings (same as translation engine)

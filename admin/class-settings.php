@@ -98,6 +98,53 @@ class AITRFOEL_Settings {
             'default' => 'draft'
         ]);
 
+        // SEO Translation Settings
+        register_setting('aitrfoel_settings_group', 'aitrfoel_seo_translation_enabled', [
+            'sanitize_callback' => 'boolval',
+            'default' => true
+        ]);
+
+        register_setting('aitrfoel_settings_group', 'aitrfoel_seo_translate_og', [
+            'sanitize_callback' => 'boolval',
+            'default' => true
+        ]);
+
+        register_setting('aitrfoel_settings_group', 'aitrfoel_seo_translate_twitter', [
+            'sanitize_callback' => 'boolval',
+            'default' => true
+        ]);
+
+        // WooCommerce Settings
+        register_setting('aitrfoel_settings_group', 'aitrfoel_woocommerce_support', [
+            'sanitize_callback' => 'boolval',
+            'default' => true
+        ]);
+
+        register_setting('aitrfoel_settings_group', 'aitrfoel_woo_translate_categories', [
+            'sanitize_callback' => 'boolval',
+            'default' => true
+        ]);
+
+        register_setting('aitrfoel_settings_group', 'aitrfoel_woo_translate_tags', [
+            'sanitize_callback' => 'boolval',
+            'default' => true
+        ]);
+
+        register_setting('aitrfoel_settings_group', 'aitrfoel_woo_translate_attributes', [
+            'sanitize_callback' => 'boolval',
+            'default' => true
+        ]);
+
+        register_setting('aitrfoel_settings_group', 'aitrfoel_woo_translate_variations', [
+            'sanitize_callback' => 'boolval',
+            'default' => true
+        ]);
+
+        register_setting('aitrfoel_settings_group', 'aitrfoel_woo_translate_gallery_alt', [
+            'sanitize_callback' => 'boolval',
+            'default' => true
+        ]);
+
         // Theme Compatibility Settings
         register_setting('aitrfoel_settings_group', 'aitrfoel_custom_meta_fields', [
             'sanitize_callback' => 'sanitize_textarea_field',
@@ -190,9 +237,67 @@ class AITRFOEL_Settings {
             <form method="post" action="options.php">
                 <?php settings_fields('aitrfoel_settings_group'); ?>
                 
+                <!-- Settings Section Navigation -->
+                <nav class="aitrfoel-settings-nav" id="aitrfoel-settings-nav">
+                    <a href="#section-license">🔑 <?php esc_html_e('License', 'ai-translator-for-elementor-and-polylang'); ?></a>
+                    <a href="#section-multilingual">🌍 <?php esc_html_e('Multilingual', 'ai-translator-for-elementor-and-polylang'); ?></a>
+                    <a href="#section-switcher">🔄 <?php esc_html_e('Switcher', 'ai-translator-for-elementor-and-polylang'); ?></a>
+                    <a href="#section-cache">💾 <?php esc_html_e('Cache', 'ai-translator-for-elementor-and-polylang'); ?></a>
+                    <a href="#section-page-creation">📄 <?php esc_html_e('Pages', 'ai-translator-for-elementor-and-polylang'); ?></a>
+                    <a href="#section-seo">🔍 <?php esc_html_e('SEO', 'ai-translator-for-elementor-and-polylang'); ?></a>
+                    <a href="#section-woocommerce">🛒 <?php esc_html_e('WooCommerce', 'ai-translator-for-elementor-and-polylang'); ?></a>
+                    <a href="#section-glossary">📖 <?php esc_html_e('Glossary', 'ai-translator-for-elementor-and-polylang'); ?></a>
+                    <a href="#section-theme">🎨 <?php esc_html_e('Theme', 'ai-translator-for-elementor-and-polylang'); ?></a>
+                    <a href="#section-advanced">🔧 <?php esc_html_e('Advanced', 'ai-translator-for-elementor-and-polylang'); ?></a>
+                    <a href="#section-privacy">🔒 <?php esc_html_e('Privacy', 'ai-translator-for-elementor-and-polylang'); ?></a>
+                </nav>
+                
+                <script>
+                (function() {
+                    document.addEventListener('DOMContentLoaded', function() {
+                        var nav = document.getElementById('aitrfoel-settings-nav');
+                        if (!nav) return;
+                        var links = nav.querySelectorAll('a[href^="#"]');
+                        
+                        // Smooth scroll
+                        links.forEach(function(link) {
+                            link.addEventListener('click', function(e) {
+                                var target = document.querySelector(this.getAttribute('href'));
+                                if (target) {
+                                    e.preventDefault();
+                                    var offset = nav.offsetHeight + 48;
+                                    var top = target.getBoundingClientRect().top + window.pageYOffset - offset;
+                                    window.scrollTo({ top: top, behavior: 'smooth' });
+                                }
+                            });
+                        });
+                        
+                        // Active state on scroll
+                        var sections = [];
+                        links.forEach(function(link) {
+                            var id = link.getAttribute('href').substring(1);
+                            var el = document.getElementById(id);
+                            if (el) sections.push({ id: id, el: el, link: link });
+                        });
+                        
+                        function updateActive() {
+                            var scrollPos = window.pageYOffset + nav.offsetHeight + 80;
+                            var current = sections[0];
+                            sections.forEach(function(s) {
+                                if (s.el.offsetTop <= scrollPos) current = s;
+                            });
+                            links.forEach(function(l) { l.classList.remove('active'); });
+                            if (current) current.link.classList.add('active');
+                        }
+                        
+                        window.addEventListener('scroll', updateActive);
+                        updateActive();
+                    });
+                })();
+                </script>
                 
                 <!-- License Configuration -->
-                <div class="aitrfoel-settings-section" id="license-settings">
+                <div class="aitrfoel-settings-section" id="section-license">
                     <h3><?php esc_html_e('🔑 License Configuration', 'ai-translator-for-elementor-and-polylang'); ?></h3>
                     
                     <table class="form-table">
@@ -278,7 +383,7 @@ class AITRFOEL_Settings {
                 </div>
                 
                 <!-- Multilingual Plugin Info -->
-                <div class="aitrfoel-settings-section">
+                <div class="aitrfoel-settings-section" id="section-multilingual">
                     <h3><?php esc_html_e('🌐 Multilingual Plugin', 'ai-translator-for-elementor-and-polylang'); ?></h3>
                     
                     <table class="form-table">
@@ -407,168 +512,8 @@ class AITRFOEL_Settings {
                     </table>
                 </div>
                 
-                <!-- Cache Settings -->
-                <div class="aitrfoel-settings-section">
-                    <h3><?php esc_html_e('💾 Cache Settings', 'ai-translator-for-elementor-and-polylang'); ?></h3>
-                    
-                    <table class="form-table">
-                        <tr>
-                            <th scope="row">
-                                <label for="aitrfoel_cache_enabled"><?php esc_html_e('Enable Cache', 'ai-translator-for-elementor-and-polylang'); ?></label>
-                            </th>
-                            <td>
-                                <input type="checkbox" 
-                                       id="aitrfoel_cache_enabled" 
-                                       name="aitrfoel_cache_enabled" 
-                                       value="1" 
-                                       <?php checked($cache_enabled); ?> />
-                                <label for="aitrfoel_cache_enabled"><?php esc_html_e('Cache translations to avoid duplicate API calls', 'ai-translator-for-elementor-and-polylang'); ?></label>
-                            </td>
-                        </tr>
-                        
-                        <tr>
-                            <th scope="row">
-                                <label for="aitrfoel_cache_duration"><?php esc_html_e('Cache Duration (days)', 'ai-translator-for-elementor-and-polylang'); ?></label>
-                            </th>
-                            <td>
-                                <input type="number" 
-                                       id="aitrfoel_cache_duration" 
-                                       name="aitrfoel_cache_duration" 
-                                       value="<?php echo esc_attr($cache_duration); ?>" 
-                                       min="1" 
-                                       max="365" 
-                                       class="small-text" />
-                                <p class="description"><?php esc_html_e('How long to keep translations in cache before refreshing.', 'ai-translator-for-elementor-and-polylang'); ?></p>
-                            </td>
-                        </tr>
-                        
-                        <tr>
-                            <th scope="row">
-                                <?php esc_html_e('Clear Cache', 'ai-translator-for-elementor-and-polylang'); ?>
-                            </th>
-                            <td>
-                                <button type="button" class="button" id="aitrfoel-clear-cache-btn">
-                                    🗑️ <?php esc_html_e('Clear Translation Cache', 'ai-translator-for-elementor-and-polylang'); ?>
-                                </button>
-                                <span id="aitrfoel-clear-cache-status" style="margin-left: 10px;"></span>
-                                <p class="description">
-                                    <?php esc_html_e('Remove all cached translations. Useful when you want to regenerate translations with updated content or settings.', 'ai-translator-for-elementor-and-polylang'); ?>
-                                </p>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-                
-
-                <!-- Page Creation Settings -->
-                <div class="aitrfoel-settings-section">
-                    <h3><?php esc_html_e('📄 Page Creation Settings', 'ai-translator-for-elementor-and-polylang'); ?></h3>
-                    
-                    <table class="form-table">
-                        <tr>
-                            <th scope="row">
-                                <label for="aitrfoel_translated_page_status"><?php esc_html_e('Translated Page Status', 'ai-translator-for-elementor-and-polylang'); ?></label>
-                            </th>
-                            <td>
-                                <select id="aitrfoel_translated_page_status" name="aitrfoel_translated_page_status">
-                                    <option value="draft" <?php selected($translated_page_status, 'draft'); ?>>
-                                        <?php esc_html_e('Draft (Recommended)', 'ai-translator-for-elementor-and-polylang'); ?>
-                                    </option>
-                                    <option value="publish" <?php selected($translated_page_status, 'publish'); ?>>
-                                        <?php esc_html_e('Published (Auto-publish)', 'ai-translator-for-elementor-and-polylang'); ?>
-                                    </option>
-                                    <option value="inherit" <?php selected($translated_page_status, 'inherit'); ?>>
-                                        <?php esc_html_e('Inherit from Original', 'ai-translator-for-elementor-and-polylang'); ?>
-                                    </option>
-                                </select>
-                                <p class="description">
-                                    <?php esc_html_e('Status for newly created translated pages. Draft is recommended for review before publishing.', 'ai-translator-for-elementor-and-polylang'); ?>
-                                    <br/>
-                                    <strong><?php esc_html_e('Note:', 'ai-translator-for-elementor-and-polylang'); ?></strong> 
-                                    <?php esc_html_e('LiteSpeed Cache optimizations only apply to published pages viewed by visitors.', 'ai-translator-for-elementor-and-polylang'); ?>
-                                </p>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-                
-                <!-- Translation Glossary -->
-                <div class="aitrfoel-settings-section">
-                    <h3><?php esc_html_e('📖 Translation Glossary', 'ai-translator-for-elementor-and-polylang'); ?></h3>
-                    
-                    <p class="description" style="margin-bottom: 12px;">
-                        <?php esc_html_e('Define terms that should always be translated a specific way. The AI will follow these rules for every translation to ensure consistency across your site.', 'ai-translator-for-elementor-and-polylang'); ?>
-                    </p>
-                    
-                    <table class="form-table">
-                        <tr>
-                            <th scope="row">
-                                <label for="aitrfoel_glossary_terms"><?php esc_html_e('Glossary Terms', 'ai-translator-for-elementor-and-polylang'); ?></label>
-                            </th>
-                            <td>
-                                <textarea name="aitrfoel_glossary_terms"
-                                          id="aitrfoel_glossary_terms"
-                                          class="large-text code"
-                                          rows="10"
-                                          placeholder="Dashboard = Tableau de bord (fr), Panel de control (es), Dashboard (de)
-Website = Site web (fr), Sitio web (es), Webseite (de)
-Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get_option('aitrfoel_glossary_terms', '')); ?></textarea>
-                                <p class="description">
-                                    <?php esc_html_e('One term per line. Format:', 'ai-translator-for-elementor-and-polylang'); ?>
-                                    <code>English Term = Translation (lang_code), Translation (lang_code)</code>
-                                    <br>
-                                    <?php esc_html_e('Example:', 'ai-translator-for-elementor-and-polylang'); ?>
-                                    <code>Dashboard = Tableau de bord (fr), Panel de control (es)</code>
-                                    <br>
-                                    <?php esc_html_e('You can also use a simple format without language codes — the AI will apply the term to the closest matching language:', 'ai-translator-for-elementor-and-polylang'); ?>
-                                    <code>Get Started = Commencer</code>
-                                </p>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-                
-                <!-- Theme Compatibility Settings -->
-                <div class="aitrfoel-settings-section">
-                    <h3><?php esc_html_e('🎨 Theme Compatibility', 'ai-translator-for-elementor-and-polylang'); ?></h3>
-                    
-                    <table class="form-table">
-                        <tr>
-                            <th scope="row">
-                                <?php esc_html_e('Compatibility Status', 'ai-translator-for-elementor-and-polylang'); ?>
-                            </th>
-                            <td>
-                                <div id="theme-compatibility-status-wrapper">
-                                    <!-- Status will be loaded here by JavaScript -->
-                                    <p><i><?php esc_html_e('Loading status...', 'ai-translator-for-elementor-and-polylang'); ?></i></p>
-                                </div>
-                                <button type="button" class="button" id="eat-diagnose-theme-btn">
-                                    &#128269; <?php esc_html_e('Re-check Compatibility', 'ai-translator-for-elementor-and-polylang'); ?>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row">
-                                <label for="aitrfoel_custom_meta_fields"><?php esc_html_e('Additional Meta Fields', 'ai-translator-for-elementor-and-polylang'); ?></label>
-                            </th>
-                            <td>
-                                <textarea name="aitrfoel_custom_meta_fields"
-                                          id="aitrfoel_custom_meta_fields"
-                                          class="large-text"
-                                          rows="5"
-                                          placeholder="theme_field_1, theme_field_2, theme_field_3"><?php 
-                                    echo esc_textarea(get_option('aitrfoel_custom_meta_fields', '')); 
-                                ?></textarea>
-                                <p class="description">
-                                    <?php esc_html_e('Advanced setting. Add comma-separated meta field keys here if the auto-detection misses something for your theme.', 'ai-translator-for-elementor-and-polylang'); ?>
-                                </p>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-
                 <!-- Language Switcher Settings -->
-                <div class="aitrfoel-settings-section">
+                <div class="aitrfoel-settings-section" id="section-switcher">
                     <h3><?php esc_html_e('🌍 Language Switcher', 'ai-translator-for-elementor-and-polylang'); ?></h3>
                     
                     <p class="description" style="margin-bottom: 15px; font-size: 13px;">
@@ -664,7 +609,6 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                                         $builtin = AITRFOEL_Builtin_Integration::get_instance();
                                         $switcher_data = $builtin->get_language_switcher_data();
                                         if (!empty($switcher_data)) {
-                                            // Render inline preview
                                             echo '<div class="aitrfoel-switcher-preview">';
                                             foreach ($switcher_data as $lang) {
                                                 $flag = AITRFOEL_Language_Mapper::get_flag_html($lang['code'], 20, 'margin-right: 4px;');
@@ -780,8 +724,371 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                     </table>
                 </div>
 
+                <!-- Cache Settings -->
+                <div class="aitrfoel-settings-section" id="section-cache">
+                    <h3><?php esc_html_e('💾 Cache Settings', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                    
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_cache_enabled"><?php esc_html_e('Enable Cache', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <input type="checkbox" 
+                                       id="aitrfoel_cache_enabled" 
+                                       name="aitrfoel_cache_enabled" 
+                                       value="1" 
+                                       <?php checked($cache_enabled); ?> />
+                                <label for="aitrfoel_cache_enabled"><?php esc_html_e('Cache translations to avoid duplicate API calls', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_cache_duration"><?php esc_html_e('Cache Duration (days)', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <input type="number" 
+                                       id="aitrfoel_cache_duration" 
+                                       name="aitrfoel_cache_duration" 
+                                       value="<?php echo esc_attr($cache_duration); ?>" 
+                                       min="1" 
+                                       max="365" 
+                                       class="small-text" />
+                                <p class="description"><?php esc_html_e('How long to keep translations in cache before refreshing.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <th scope="row">
+                                <?php esc_html_e('Clear Cache', 'ai-translator-for-elementor-and-polylang'); ?>
+                            </th>
+                            <td>
+                                <button type="button" class="button" id="aitrfoel-clear-cache-btn">
+                                    🗑️ <?php esc_html_e('Clear Translation Cache', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </button>
+                                <span id="aitrfoel-clear-cache-status" style="margin-left: 10px;"></span>
+                                <p class="description">
+                                    <?php esc_html_e('Remove all cached translations. Useful when you want to regenerate translations with updated content or settings.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+
+                <!-- Page Creation Settings -->
+                <div class="aitrfoel-settings-section" id="section-page-creation">
+                    <h3><?php esc_html_e('📄 Page Creation Settings', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                    
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_translated_page_status"><?php esc_html_e('Translated Page Status', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <select id="aitrfoel_translated_page_status" name="aitrfoel_translated_page_status">
+                                    <option value="draft" <?php selected($translated_page_status, 'draft'); ?>>
+                                        <?php esc_html_e('Draft (Recommended)', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </option>
+                                    <option value="publish" <?php selected($translated_page_status, 'publish'); ?>>
+                                        <?php esc_html_e('Published (Auto-publish)', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </option>
+                                    <option value="inherit" <?php selected($translated_page_status, 'inherit'); ?>>
+                                        <?php esc_html_e('Inherit from Original', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </option>
+                                </select>
+                                <p class="description">
+                                    <?php esc_html_e('Status for newly created translated pages. Draft is recommended for review before publishing.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    <br/>
+                                    <strong><?php esc_html_e('Note:', 'ai-translator-for-elementor-and-polylang'); ?></strong> 
+                                    <?php esc_html_e('LiteSpeed Cache optimizations only apply to published pages viewed by visitors.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <!-- SEO Translation Settings -->
+                <div class="aitrfoel-settings-section" id="section-seo">
+                    <h3><?php esc_html_e('🔍 SEO Translation', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                    
+                    <?php
+                    $seo_enabled = get_option('aitrfoel_seo_translation_enabled', true);
+                    $seo_og = get_option('aitrfoel_seo_translate_og', true);
+                    $seo_twitter = get_option('aitrfoel_seo_translate_twitter', true);
+                    $has_yoast = defined('WPSEO_VERSION') || class_exists('WPSEO_Meta');
+                    $has_rankmath = class_exists('RankMath') || defined('RANK_MATH_VERSION');
+                    $seo_plugin = $has_yoast ? 'Yoast SEO' : ($has_rankmath ? 'Rank Math' : '');
+                    ?>
+                    
+                    <?php if ($seo_plugin) : ?>
+                        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
+                            <span style="color: #166534;">✅ <strong><?php echo esc_html($seo_plugin); ?></strong> <?php esc_html_e('detected — SEO meta fields will be translated automatically.', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                        </div>
+                    <?php else : ?>
+                        <div style="background: #fefce8; border: 1px solid #fef08a; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
+                            <span style="color: #854d0e;">⚠️ <?php esc_html_e('No supported SEO plugin detected. Install Yoast SEO or Rank Math to enable SEO meta translation.', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_seo_translation_enabled"><?php esc_html_e('SEO Meta Translation', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <input type="checkbox" 
+                                       id="aitrfoel_seo_translation_enabled" 
+                                       name="aitrfoel_seo_translation_enabled" 
+                                       value="1" 
+                                       <?php checked($seo_enabled); ?> />
+                                <label for="aitrfoel_seo_translation_enabled"><?php esc_html_e('Translate SEO title & meta description', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                                <p class="description">
+                                    <?php esc_html_e('Automatically translates SEO meta title, description, and focus keywords when translating pages.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_seo_translate_og"><?php esc_html_e('Open Graph Tags', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <input type="checkbox" 
+                                       id="aitrfoel_seo_translate_og" 
+                                       name="aitrfoel_seo_translate_og" 
+                                       value="1" 
+                                       <?php checked($seo_og); ?> />
+                                <label for="aitrfoel_seo_translate_og"><?php esc_html_e('Translate Open Graph title & description', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                                <p class="description">
+                                    <?php esc_html_e('Translates og:title and og:description for Facebook/social sharing previews.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_seo_translate_twitter"><?php esc_html_e('Twitter Card Tags', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <input type="checkbox" 
+                                       id="aitrfoel_seo_translate_twitter" 
+                                       name="aitrfoel_seo_translate_twitter" 
+                                       value="1" 
+                                       <?php checked($seo_twitter); ?> />
+                                <label for="aitrfoel_seo_translate_twitter"><?php esc_html_e('Translate Twitter card title & description', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                                <p class="description">
+                                    <?php esc_html_e('Translates twitter:title and twitter:description for Twitter/X sharing.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <p class="description" style="margin-top: 8px;">
+                        💡 <?php esc_html_e('Supported plugins: Yoast SEO, Rank Math. Both are auto-detected at runtime.', 'ai-translator-for-elementor-and-polylang'); ?>
+                    </p>
+                </div>
+
+                <!-- WooCommerce Settings -->
+                <div class="aitrfoel-settings-section" id="section-woocommerce">
+                    <h3><?php esc_html_e('🛒 WooCommerce', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                    
+                    <?php
+                    $woo_enabled = get_option('aitrfoel_woocommerce_support', true);
+                    $woo_categories = get_option('aitrfoel_woo_translate_categories', true);
+                    $woo_tags = get_option('aitrfoel_woo_translate_tags', true);
+                    $woo_attributes = get_option('aitrfoel_woo_translate_attributes', true);
+                    $woo_variations = get_option('aitrfoel_woo_translate_variations', true);
+                    $woo_gallery_alt = get_option('aitrfoel_woo_translate_gallery_alt', true);
+                    $has_woo = class_exists('WooCommerce');
+                    ?>
+                    
+                    <?php if ($has_woo) : ?>
+                        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
+                            <span style="color: #166534;">✅ <strong>WooCommerce</strong> <?php esc_html_e('detected — product translation support is available.', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                        </div>
+                    <?php else : ?>
+                        <div style="background: #fefce8; border: 1px solid #fef08a; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
+                            <span style="color: #854d0e;">⚠️ <?php esc_html_e('WooCommerce is not active. These settings will apply when WooCommerce is installed and activated.', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_woocommerce_support"><?php esc_html_e('Product Support', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <input type="checkbox" 
+                                       id="aitrfoel_woocommerce_support" 
+                                       name="aitrfoel_woocommerce_support" 
+                                       value="1" 
+                                       <?php checked($woo_enabled); ?> />
+                                <label for="aitrfoel_woocommerce_support"><?php esc_html_e('Enable WooCommerce product translation', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                                <p class="description">
+                                    <?php esc_html_e('Translates product descriptions, short descriptions, and copies product data (price, SKU, stock, etc.) to translated products.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_woo_translate_categories"><?php esc_html_e('Product Categories', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <input type="checkbox" 
+                                       id="aitrfoel_woo_translate_categories" 
+                                       name="aitrfoel_woo_translate_categories" 
+                                       value="1" 
+                                       <?php checked($woo_categories); ?> />
+                                <label for="aitrfoel_woo_translate_categories"><?php esc_html_e('Assign translated product categories', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                                <p class="description">
+                                    <?php esc_html_e('When translating products, automatically assigns the translated category equivalents (if they exist in the target language via Polylang/WPML).', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_woo_translate_tags"><?php esc_html_e('Product Tags', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <input type="checkbox" 
+                                       id="aitrfoel_woo_translate_tags" 
+                                       name="aitrfoel_woo_translate_tags" 
+                                       value="1" 
+                                       <?php checked($woo_tags); ?> />
+                                <label for="aitrfoel_woo_translate_tags"><?php esc_html_e('Assign translated product tags', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                                <p class="description">
+                                    <?php esc_html_e('Same as categories — assigns translated product tag equivalents to the translated product.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_woo_translate_attributes"><?php esc_html_e('Product Attributes', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <input type="checkbox" 
+                                       id="aitrfoel_woo_translate_attributes" 
+                                       name="aitrfoel_woo_translate_attributes" 
+                                       value="1" 
+                                       <?php checked($woo_attributes); ?> />
+                                <label for="aitrfoel_woo_translate_attributes"><?php esc_html_e('Translate product attributes', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                                <p class="description">
+                                    <?php esc_html_e('Translates custom product attribute labels and values (e.g., Color, Size). For global taxonomy attributes (pa_*), assigns translated terms if available.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_woo_translate_variations"><?php esc_html_e('Variable Products', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <input type="checkbox" 
+                                       id="aitrfoel_woo_translate_variations" 
+                                       name="aitrfoel_woo_translate_variations" 
+                                       value="1" 
+                                       <?php checked($woo_variations); ?> />
+                                <label for="aitrfoel_woo_translate_variations"><?php esc_html_e('Translate product variations', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                                <p class="description">
+                                    <?php esc_html_e('Creates translated variations for variable products, preserving parent-child relationships, pricing, and per-variation data (SKU, stock, dimensions).', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_woo_translate_gallery_alt"><?php esc_html_e('Gallery & Image ALT', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <input type="checkbox" 
+                                       id="aitrfoel_woo_translate_gallery_alt" 
+                                       name="aitrfoel_woo_translate_gallery_alt" 
+                                       value="1" 
+                                       <?php checked($woo_gallery_alt); ?> />
+                                <label for="aitrfoel_woo_translate_gallery_alt"><?php esc_html_e('Translate product image alt text', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                                <p class="description">
+                                    <?php esc_html_e('Translates alt text, captions, and descriptions of product images and gallery images for multilingual SEO.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Translation Glossary -->
+                <div class="aitrfoel-settings-section" id="section-glossary">
+                    <h3><?php esc_html_e('📖 Translation Glossary', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                    
+                    <p class="description" style="margin-bottom: 12px;">
+                        <?php esc_html_e('Define terms that should always be translated a specific way. The AI will follow these rules for every translation to ensure consistency across your site.', 'ai-translator-for-elementor-and-polylang'); ?>
+                    </p>
+                    
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_glossary_terms"><?php esc_html_e('Glossary Terms', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <textarea name="aitrfoel_glossary_terms"
+                                          id="aitrfoel_glossary_terms"
+                                          class="large-text code"
+                                          rows="10"
+                                          placeholder="Dashboard = Tableau de bord (fr), Panel de control (es), Dashboard (de)
+Website = Site web (fr), Sitio web (es), Webseite (de)
+Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get_option('aitrfoel_glossary_terms', '')); ?></textarea>
+                                <p class="description">
+                                    <?php esc_html_e('One term per line. Format:', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    <code>English Term = Translation (lang_code), Translation (lang_code)</code>
+                                    <br>
+                                    <?php esc_html_e('Example:', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    <code>Dashboard = Tableau de bord (fr), Panel de control (es)</code>
+                                    <br>
+                                    <?php esc_html_e('You can also use a simple format without language codes — the AI will apply the term to the closest matching language:', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    <code>Get Started = Commencer</code>
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <!-- Theme Compatibility Settings -->
+                <div class="aitrfoel-settings-section" id="section-theme">
+                    <h3><?php esc_html_e('🎨 Theme Compatibility', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                    
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">
+                                <?php esc_html_e('Compatibility Status', 'ai-translator-for-elementor-and-polylang'); ?>
+                            </th>
+                            <td>
+                                <div id="theme-compatibility-status-wrapper">
+                                    <!-- Status will be loaded here by JavaScript -->
+                                    <p><i><?php esc_html_e('Loading status...', 'ai-translator-for-elementor-and-polylang'); ?></i></p>
+                                </div>
+                                <button type="button" class="button" id="eat-diagnose-theme-btn">
+                                    &#128269; <?php esc_html_e('Re-check Compatibility', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_custom_meta_fields"><?php esc_html_e('Additional Meta Fields', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <textarea name="aitrfoel_custom_meta_fields"
+                                          id="aitrfoel_custom_meta_fields"
+                                          class="large-text"
+                                          rows="5"
+                                          placeholder="theme_field_1, theme_field_2, theme_field_3"><?php 
+                                    echo esc_textarea(get_option('aitrfoel_custom_meta_fields', '')); 
+                                ?></textarea>
+                                <p class="description">
+                                    <?php esc_html_e('Advanced setting. Add comma-separated meta field keys here if the auto-detection misses something for your theme.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
                 <!-- Advanced / Debug Settings -->
-                <div class="aitrfoel-settings-section">
+                <div class="aitrfoel-settings-section" id="section-advanced">
                     <h3><?php esc_html_e('🔧 Advanced Settings', 'ai-translator-for-elementor-and-polylang'); ?></h3>
                     
                     <table class="form-table">
@@ -810,7 +1117,7 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                 </div>
 
                 <!-- Privacy & Data Collection Notice -->
-                <div class="aitrfoel-settings-section" style="background: #f0f8ff; border-left: 4px solid #2271b1; padding: 20px; margin-top: 30px;">
+                <div class="aitrfoel-settings-section" id="section-privacy" style="background: #f0f8ff; border-left: 4px solid #1447E6; padding: 20px; margin-top: 30px;">
                     <h3 style="margin-top: 0;">🔒 <?php esc_html_e('Privacy & Data Collection', 'ai-translator-for-elementor-and-polylang'); ?></h3>
                     
                     <p><?php esc_html_e('This plugin connects to our translation API at', 'ai-translator-for-elementor-and-polylang'); ?> <code>meeptech.com</code> <?php esc_html_e('to:', 'ai-translator-for-elementor-and-polylang'); ?></p>
@@ -923,6 +1230,14 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                 $('input[name="aitrfoel_switcher_show_flags"], input[name="aitrfoel_switcher_show_names"]').on('change', updateShortcodePreview);
             });
             </script>
+            
+            <!-- MeepTech Footer Branding -->
+            <div class="aitrfoel-footer-branding">
+                <a href="https://meeptech.com" target="_blank" rel="noopener noreferrer">
+                    <img src="<?php echo esc_url(AITRFOEL_PLUGIN_URL . 'assets/img/meeptech.svg'); ?>" alt="Meep Tech" class="aitrfoel-footer-logo">
+                </a>
+                <span class="aitrfoel-footer-text"><?php esc_html_e('Powered by', 'ai-translator-for-elementor-and-polylang'); ?> <a href="https://meeptech.com" target="_blank" rel="noopener noreferrer">Meep Tech</a></span>
+            </div>
         </div>
         
         <?php

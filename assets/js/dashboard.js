@@ -56,7 +56,7 @@ jQuery(document).ready(function($) {
                 $('#eat-tab-' + tab).show();
                 
                 // Reset select-all checkboxes
-                $('#cb-select-all, #cb-select-all-posts').prop('checked', false);
+                $('#cb-select-all, #cb-select-all-posts, #cb-select-all-products').prop('checked', false);
                 
                 // Uncheck any selected items in hidden tab, keep visible tab's selection
                 // (Don't uncheck the active tab's items)
@@ -470,19 +470,28 @@ jQuery(document).ready(function($) {
         },
 
         showNotice: function(message, type = 'info') {
-            const noticeClass = 'notice notice-' + type;
-            const noticeHtml = `<div class="${noticeClass} is-dismissible"><p>${message}</p></div>`;
+            // Modern toast notification
+            const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+            const icon = icons[type] || icons.info;
+            const toast = $(`<div class="eat-toast eat-toast-${type}"><span class="eat-toast-icon">${icon}</span><span class="eat-toast-msg">${message}</span><button class="eat-toast-close">&times;</button></div>`);
             
-            // Remove existing notices
-            $('.aitrfoel-dashboard-wrapper .notice').remove();
+            let container = $('#eat-toast-container');
+            if (!container.length) {
+                container = $('<div id="eat-toast-container"></div>').appendTo('body');
+            }
             
-            // Add new notice
-            $('.aitrfoel-dashboard-wrapper h1').after(noticeHtml);
+            container.append(toast);
+            requestAnimationFrame(function() { toast.addClass('eat-toast-show'); });
             
-            // Auto-dismiss after 5 seconds
+            toast.find('.eat-toast-close').on('click', function() {
+                toast.removeClass('eat-toast-show');
+                setTimeout(function() { toast.remove(); }, 300);
+            });
+            
             setTimeout(function() {
-                $('.aitrfoel-dashboard-wrapper .notice').fadeOut();
-            }, 5000);
+                toast.removeClass('eat-toast-show');
+                setTimeout(function() { toast.remove(); }, 300);
+            }, 6000);
         },
 
         bindEvents: function() {
@@ -742,7 +751,7 @@ jQuery(document).ready(function($) {
             const selectedText = selectedRadio.parent().text().trim();
             
             // Update button text
-            $('#eat-select-source-language').text(selectedText + ' ?');
+            $('#eat-select-source-language').text(selectedText);
             
             // Close dropdown
             $('#eat-source-dropdown').hide();
@@ -1587,7 +1596,7 @@ jQuery(document).ready(function($) {
             $('.eat-page-checkbox').prop('disabled', false);
             
             // ????? UI ?????????
-            $('#eat-select-languages').text(aitrfoelDashboard.strings?.select_languages || 'Select Languages ?');
+            $('#eat-select-languages').text(aitrfoelDashboard.strings?.select_languages || 'Select Languages');
             $('#eat-estimated-words').text('Select pages for translation');
             $('#eat-bulk-bar').removeClass('processing completed error');
             
@@ -1682,14 +1691,17 @@ jQuery(document).ready(function($) {
                     if (response.success && response.data) {
                         var pagesHtml = response.data.pages_html || response.data.html || '';
                         var postsHtml = response.data.posts_html || '';
+                        var productsHtml = response.data.products_html || '';
                         
                         // Update pages tab tbody
                         var $pagesBody = $('#eat-tab-pages .aitrfoel-dashboard-table tbody');
                         // Update posts tab tbody
                         var $postsBody = $('#eat-tab-posts .aitrfoel-dashboard-table tbody');
+                        // Update products tab tbody
+                        var $productsBody = $('#eat-tab-products .aitrfoel-dashboard-table tbody');
                         
                         var tablesUpdated = 0;
-                        var totalTables = ($pagesBody.length > 0 ? 1 : 0) + ($postsBody.length > 0 ? 1 : 0);
+                        var totalTables = ($pagesBody.length > 0 ? 1 : 0) + ($postsBody.length > 0 ? 1 : 0) + ($productsBody.length > 0 ? 1 : 0);
                         if (totalTables === 0) totalTables = 1; // safety
                         
                         function onTableUpdated() {
@@ -1733,12 +1745,23 @@ jQuery(document).ready(function($) {
                             });
                         }
                         
+                        // Update products table
+                        if ($productsBody.length > 0) {
+                            $productsBody.fadeOut(300, function() {
+                                $(this).html(productsHtml).fadeIn(300);
+                                onTableUpdated();
+                            });
+                        }
+                        
                         // Update tab counts if provided
                         if (response.data.pages_count !== undefined) {
                             $('[data-tab="pages"] .eat-tab-count').text(response.data.pages_count);
                         }
                         if (response.data.posts_count !== undefined) {
                             $('[data-tab="posts"] .eat-tab-count').text(response.data.posts_count);
+                        }
+                        if (response.data.products_count !== undefined) {
+                            $('[data-tab="products"] .eat-tab-count').text(response.data.products_count);
                         }
                     }
                 },

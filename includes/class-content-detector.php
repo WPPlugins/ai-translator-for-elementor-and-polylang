@@ -16,6 +16,7 @@ class AITRFOEL_Content_Detector {
     const TYPE_ELEMENTOR = 'elementor';
     const TYPE_GUTENBERG = 'gutenberg';
     const TYPE_CLASSIC = 'classic';
+    const TYPE_WOOCOMMERCE = 'woocommerce';
     const TYPE_UNKNOWN = 'unknown';
     
     /**
@@ -53,6 +54,12 @@ class AITRFOEL_Content_Detector {
         $post = get_post($post_id);
         if ($post && !empty(trim($post->post_content))) {
             return self::TYPE_CLASSIC;
+        }
+
+        // WooCommerce product with no editor content but has translatable data
+        // (title, short description, meta, attributes, etc.)
+        if ($post && $post->post_type === 'product') {
+            return self::TYPE_WOOCOMMERCE;
         }
         
         return self::TYPE_UNKNOWN;
@@ -130,6 +137,7 @@ class AITRFOEL_Content_Detector {
             self::TYPE_ELEMENTOR => __('Elementor', 'ai-translator-for-elementor-and-polylang'),
             self::TYPE_GUTENBERG => __('Gutenberg', 'ai-translator-for-elementor-and-polylang'),
             self::TYPE_CLASSIC => __('Classic Editor', 'ai-translator-for-elementor-and-polylang'),
+            self::TYPE_WOOCOMMERCE => __('WooCommerce Product', 'ai-translator-for-elementor-and-polylang'),
             self::TYPE_UNKNOWN => __('Unknown', 'ai-translator-for-elementor-and-polylang'),
         ];
         
@@ -147,6 +155,7 @@ class AITRFOEL_Content_Detector {
             self::TYPE_ELEMENTOR => '🎨',
             self::TYPE_GUTENBERG => '📦',
             self::TYPE_CLASSIC => '📝',
+            self::TYPE_WOOCOMMERCE => '🛒',
             self::TYPE_UNKNOWN => '❓',
         ];
         
@@ -164,6 +173,7 @@ class AITRFOEL_Content_Detector {
             self::TYPE_ELEMENTOR,
             self::TYPE_GUTENBERG,
             self::TYPE_CLASSIC,
+            self::TYPE_WOOCOMMERCE,
         ], true);
     }
 }

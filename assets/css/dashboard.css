@@ -424,7 +424,7 @@
 .eat-bulk-translation-bar.is-sticky {
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     border-color: #d1d5db;
-    border-left: 4px solid #0073aa; /* Blue left border to indicate sticky state */
+    border-left: 4px solid #1447E6;
 }
 
 /* Add a subtle animation when becoming sticky */
@@ -435,7 +435,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(90deg, #0073aa, #00a0d2);
+    background: linear-gradient(90deg, #1447E6, #3d6aff);
     opacity: 0.7;
 }
 
@@ -556,21 +556,7 @@
 
 
 
-/* Improved tooltips */
-.eat-bulk-actions .button[title]:hover:after {
-    content: attr(title);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #333;
-    color: white;
-    padding: 5px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    white-space: nowrap;
-    z-index: 50;
-}
+/* Tooltips handled by native title attribute — CSS tooltip removed */
 
 .eat-bulk-stats {
     color: #666;
@@ -609,26 +595,18 @@
 }
 
 /* Column Width Distribution - Best Practice */
-.aitrfoel-dashboard-table .column-cb {
+.aitrfoel-dashboard-table .column-cb,
+.aitrfoel-dashboard-table th.check-column {
     width: 40px;
     text-align: center;
-}
-
-/* Align checkboxes - target specific elements */
-.aitrfoel-dashboard-table td.column-cb,
-.aitrfoel-dashboard-table th.check-column {
     vertical-align: middle;
-    padding: 12px 15px;
-   
+    padding: 12px 8px;
 }
 
-.aitrfoel-dashboard-table td.column-cb input[type="checkbox"],
+.aitrfoel-dashboard-table .column-cb input[type="checkbox"],
 .aitrfoel-dashboard-table th.check-column input[type="checkbox"] {
-       margin: 0px 10px;
-}
-
-.aitrfoel-dashboard-table th.check-column input[type="checkbox"] {
-    margin: 0px 12px; 
+    margin: 0 auto;
+    display: block;
 }
 
 .aitrfoel-dashboard-table .column-title {
@@ -1124,16 +1102,16 @@ tr.eat-translation-page.eat-translation-expanded {
 
 /* СОСТОЯНИЕ ЗАГРУЗКИ - Движущиеся полосы + пульсация */
 #eat-start-translation.loading {
-    background: #0073aa !important;
+    background: #1447E6 !important;
     background-size: 100% !important;
     animation: 
         movingStripes 1s linear infinite,
         pulseGlow 2s ease-in-out infinite !important;
     color: white !important;
-    border-color: #0073aa !important;
+    border-color: #0f35b8 !important;
     cursor: wait !important;
     transform: scale(1.02) !important;
-    box-shadow: 0 4px 15px rgba(0, 115, 170, 0.4) !important;
+    box-shadow: 0 4px 15px rgba(20, 71, 230, 0.4) !important;
     position: relative !important;
 }
 
@@ -1427,7 +1405,7 @@ tr.eat-translation-page.eat-newly-created-highlight {
 /* Animated progress with text and dots */
 /* Simple animated dots for estimated words */
 #eat-estimated-words.translating {
-    color: #0073aa !important;
+    color: #1447E6 !important;
     font-weight: 500;
 }
 

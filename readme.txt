@@ -5,11 +5,11 @@ Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
 Requires Plugins: elementor
-Stable tag: 1.3.2
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI-powered translation for Elementor, Gutenberg & Classic pages. Preserves your design perfectly. Built-in languages or Polylang/WPML.
+AI-powered translation for Elementor, Gutenberg, Classic & WooCommerce. Preserves your design perfectly. Built-in languages or Polylang/WPML.
 
 == Description ==
 
@@ -20,6 +20,7 @@ Translate your Elementor-powered pages, Gutenberg pages, and Classic pages or po
 **Features:**
 
 * One-click translation for Elementor pages (single page or bulk)
+* WooCommerce product translation (title, description, excerpt, attributes, variations, gallery SEO)
 * Built-in language management — no Polylang or WPML required
 * Polylang and WPML integration also supported
 * Gutenberg block-based pages supported
@@ -86,6 +87,23 @@ Visit AI Translator → Dashboard to see your current usage and words remaining.
 4. Settings page with cache management and advanced options.
 
 == Changelog ==
+= 1.4.0 =
+* NEW: Full WooCommerce product translation support
+* Added: Translate product titles, descriptions, short descriptions, and attributes
+* Added: Variable product support — variations translated with proper parent-child relationships
+* Added: Product gallery image SEO — translates alt text, captions, and descriptions
+* Added: WooCommerce block support in Gutenberg (skips dynamic blocks, translates content blocks)
+* Added: Products tab in dashboard with dedicated management
+* Added: Frontend locale switching — WooCommerce UI (Add to cart, etc.) displays in the correct language
+* Added: Single custom post type URL rewrite rules for built-in language system (/de/product/slug/)
+* Fixed: Built-in language taxonomy now registered for all public post types including products
+* Fixed: Product content detection — products with no editor content now properly detected as WooCommerce type
+* Fixed: Dashboard grouping — translated products no longer appear as duplicate entries
+* Fixed: Product deletion now supported from the plugin dashboard
+* Fixed: Language column in WooCommerce admin fits properly in table layout
+* Improved: Translation title mapping fixed for batch API responses
+* Improved: Slug generation reuses original slug when multilingual plugin is active
+
 = 1.3.2 =
 * Fixed: Word count estimates now account for server-side usage (source + translated words counted)
 * Fixed: Translate All recommendation now updates dynamically based on page selection checkboxes

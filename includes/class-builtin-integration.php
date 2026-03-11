@@ -67,8 +67,8 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
      * Constructor
      */
     private function __construct() {
-        // Register taxonomy
-        add_action('init', [$this, 'register_taxonomy'], 5);
+        // Register taxonomy (after CPTs like 'product' are registered)
+        add_action('init', [$this, 'register_taxonomy'], 20);
         
         // If init already fired (e.g. during AJAX), register taxonomy/rewrite rules immediately
         if (did_action('init')) {
@@ -78,10 +78,15 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         // Ensure DB table exists
         $this->maybe_create_table();
         
-        // Frontend URL rewriting and language detection
-        add_action('init', [$this, 'add_rewrite_rules'], 10);
+        // Frontend URL rewriting and language detection (after CPTs registered)
+        add_action('init', [$this, 'add_rewrite_rules'], 25);
         add_filter('query_vars', [$this, 'register_query_vars']);
         add_action('parse_request', [$this, 'detect_language_from_request']);
+        
+        // Switch WordPress locale on frontend based on detected language
+        if (!is_admin()) {
+            add_filter('locale', [$this, 'filter_locale']);
+        }
         
         // Permalink filtering for language prefixes
         add_filter('post_link', [$this, 'filter_permalink'], 10, 2);
@@ -123,6 +128,7 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             add_filter('manage_pages_columns', [$this, 'add_language_column']);
             add_action('manage_posts_custom_column', [$this, 'render_language_column'], 10, 2);
             add_action('manage_pages_custom_column', [$this, 'render_language_column'], 10, 2);
+            add_action('admin_head', [$this, 'language_column_css']);
         }
     }
     
@@ -134,11 +140,23 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
      * Register the language taxonomy
      */
     public function register_taxonomy() {
+        // Collect all public post types (including product, etc.)
+        $post_types = array_keys(get_post_types(['public' => true], 'names'));
+        if (empty($post_types)) {
+            $post_types = ['post', 'page'];
+        }
+
         if (taxonomy_exists(self::TAXONOMY)) {
+            // Taxonomy already registered — ensure it covers all public post types
+            foreach ($post_types as $pt) {
+                if (!is_object_in_taxonomy($pt, self::TAXONOMY)) {
+                    register_taxonomy_for_object_type(self::TAXONOMY, $pt);
+                }
+            }
             return;
         }
         
-        register_taxonomy(self::TAXONOMY, ['post', 'page'], [
+        register_taxonomy(self::TAXONOMY, $post_types, [
             'label' => __('Language', 'ai-translator-for-elementor-and-polylang'),
             'public' => false,
             'show_ui' => false,
@@ -445,11 +463,26 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
     public function get_post_language($post_id) {
         $terms = wp_get_object_terms($post_id, self::TAXONOMY, ['fields' => 'slugs']);
         
-        if (is_wp_error($terms) || empty($terms)) {
-            return null;
+        if (!is_wp_error($terms) && !empty($terms)) {
+            return $terms[0];
         }
         
-        return $terms[0];
+        // Fallback: check translation groups DB table (handles products or
+        // posts whose taxonomy term was not set due to earlier bugs)
+        global $wpdb;
+        $table = $this->get_table_name();
+        $lang = $wpdb->get_var($wpdb->prepare(
+            "SELECT language_code FROM {$table} WHERE post_id = %d LIMIT 1",
+            $post_id
+        ));
+        
+        if ($lang) {
+            // Auto-heal: set taxonomy term for future lookups
+            $this->set_post_language($post_id, $lang);
+            return $lang;
+        }
+        
+        return null;
     }
     
     /**
@@ -677,8 +710,12 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             return [];
         }
         
+        $post_types = ['page', 'post'];
+        if (class_exists('WooCommerce') && get_option('aitrfoel_woocommerce_support', false)) {
+            $post_types[] = 'product';
+        }
         $pages = get_posts([
-            'post_type' => ['page', 'post'],
+            'post_type' => $post_types,
             'posts_per_page' => -1,
             'post_status' => ['publish', 'draft'],
             'orderby' => 'title',
@@ -794,7 +831,7 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         // Auto-flush rewrite rules when version changes OR when stored rules
         // are missing our language patterns (can happen after AJAX setup, reinstall, etc.)
-        $rules_version = '1.3.2a'; // Bump this when rewrite rules change
+        $rules_version = '1.4.0'; // Bump this when rewrite rules change
         $stored_version = get_option('aitrfoel_rewrite_rules_version', '');
         $needs_flush = ($stored_version !== $rules_version);
         
@@ -859,11 +896,21 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         // Search: /fr/?s=query (handled by query var, no special rewrite needed)
         
-        // Custom post type archives: /fr/cpt-slug/
-        $custom_post_types = get_post_types(['public' => true, '_builtin' => false, 'has_archive' => true], 'objects');
+        // Custom post type rules: archives + single posts
+        $custom_post_types = get_post_types(['public' => true, '_builtin' => false], 'objects');
         foreach ($custom_post_types as $cpt) {
-            $archive_slug = $cpt->has_archive === true ? $cpt->rewrite['slug'] : $cpt->has_archive;
-            if ($archive_slug) {
+            $slug = isset($cpt->rewrite['slug']) ? $cpt->rewrite['slug'] : $cpt->name;
+
+            // Single CPT post: /fr/product/my-product/
+            add_rewrite_rule(
+                '^(' . $lang_pattern . ')/' . preg_quote($slug, '/') . '/([^/]+)/?$',
+                'index.php?lang=$matches[1]&' . $cpt->name . '=$matches[2]',
+                'top'
+            );
+
+            // Archive: /fr/product/
+            if ($cpt->has_archive) {
+                $archive_slug = $cpt->has_archive === true ? $slug : $cpt->has_archive;
                 add_rewrite_rule(
                     '^(' . $lang_pattern . ')/' . preg_quote($archive_slug, '/') . '/?$',
                     'index.php?lang=$matches[1]&post_type=' . $cpt->name,
@@ -949,6 +996,66 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             return $this->current_language;
         }
         return $this->get_default_language();
+    }
+    
+    /**
+     * Filter WordPress locale based on the current frontend language.
+     * This makes WooCommerce, other plugins, and WordPress core
+     * output their UI strings in the correct language.
+     *
+     * @param string $locale Current WordPress locale
+     * @return string Modified locale
+     */
+    public function filter_locale($locale) {
+        if (!$this->current_language) {
+            return $locale;
+        }
+        
+        $default_lang = $this->get_default_language();
+        if ($this->current_language === $default_lang) {
+            return $locale;
+        }
+        
+        $wp_locale = $this->get_wp_locale($this->current_language);
+        return $wp_locale ?: $locale;
+    }
+    
+    /**
+     * Map a short language code to WordPress locale code.
+     * E.g. 'cs' → 'cs_CZ', 'de' → 'de_DE', 'ru' → 'ru_RU'
+     *
+     * @param string $lang_code Short language code
+     * @return string|null WordPress locale or null if unknown
+     */
+    private function get_wp_locale($lang_code) {
+        $map = [
+            'af' => 'af',       'ar' => 'ar',       'az' => 'az',
+            'be' => 'bel',      'bg' => 'bg_BG',    'bn' => 'bn_BD',
+            'bs' => 'bs_BA',    'ca' => 'ca',       'cs' => 'cs_CZ',
+            'cy' => 'cy',       'da' => 'da_DK',    'de' => 'de_DE',
+            'el' => 'el',       'en' => 'en_US',    'es' => 'es_ES',
+            'et' => 'et',       'eu' => 'eu',       'fa' => 'fa_IR',
+            'fi' => 'fi',       'fr' => 'fr_FR',    'ga' => 'ga',
+            'gl' => 'gl_ES',    'he' => 'he_IL',    'hi' => 'hi_IN',
+            'hr' => 'hr',       'hu' => 'hu_HU',    'hy' => 'hy',
+            'id' => 'id_ID',    'is' => 'is_IS',    'it' => 'it_IT',
+            'ja' => 'ja',       'ka' => 'ka_GE',    'kk' => 'kk',
+            'km' => 'km',       'ko' => 'ko_KR',    'lo' => 'lo',
+            'lt' => 'lt_LT',    'lv' => 'lv',       'mk' => 'mk_MK',
+            'mn' => 'mn',       'ms' => 'ms_MY',    'my' => 'my_MM',
+            'nb' => 'nb_NO',    'ne' => 'ne_NP',    'nl' => 'nl_NL',
+            'nn' => 'nn_NO',    'pl' => 'pl_PL',    'pt' => 'pt_PT',
+            'ro' => 'ro_RO',    'ru' => 'ru_RU',    'si' => 'si_LK',
+            'sk' => 'sk_SK',    'sl' => 'sl_SI',    'sq' => 'sq',
+            'sr' => 'sr_RS',    'sv' => 'sv_SE',    'sw' => 'sw',
+            'ta' => 'ta_IN',    'te' => 'te',       'th' => 'th',
+            'tl' => 'tl',       'tr' => 'tr_TR',    'uk' => 'uk',
+            'ur' => 'ur',       'uz' => 'uz_UZ',    'vi' => 'vi',
+            'zh' => 'zh_CN',    'an' => 'an',       'as' => 'as',
+            'lb' => 'lb_LU',
+        ];
+        
+        return $map[$lang_code] ?? null;
     }
     
     /**
@@ -1143,7 +1250,7 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         foreach ($columns as $key => $label) {
             $new_columns[$key] = $label;
             if ($key === 'title') {
-                $new_columns['aitrfoel_language'] = __('Language', 'ai-translator-for-elementor-and-polylang');
+                $new_columns['aitrfoel_language'] = '<span style="font-size:11px;">' . __('Lang', 'ai-translator-for-elementor-and-polylang') . '</span>';
             }
         }
         return $new_columns;
@@ -1162,14 +1269,21 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         $lang = $this->get_post_language($post_id);
         if ($lang) {
             $default = $this->get_default_language();
-            echo '<span style="font-size: 12px;">' . esc_html(strtoupper($lang));
+            echo '<span style="font-size:11px;white-space:nowrap;">' . esc_html(strtoupper($lang));
             if ($lang === $default) {
-                echo ' <span style="color: #888; font-size: 10px;">(' . esc_html__('default', 'ai-translator-for-elementor-and-polylang') . ')</span>';
+                echo ' <small style="color:#888;">(' . esc_html__('def', 'ai-translator-for-elementor-and-polylang') . ')</small>';
             }
             echo '</span>';
         } else {
             echo '<span style="color: #ccc;">—</span>';
         }
+    }
+    
+    /**
+     * Output CSS to constrain the language column width
+     */
+    public function language_column_css() {
+        echo '<style>.column-aitrfoel_language{width:50px!important;text-align:center;}</style>';
     }
     
     // =========================================================================
