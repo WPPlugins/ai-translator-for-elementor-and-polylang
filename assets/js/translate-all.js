@@ -502,6 +502,20 @@
                         if (d.results && d.results.length > 0) {
                             renderTranslatedList(d.results, d.errors || []);
                         }
+
+                        // Review prompt (dismissable via localStorage)
+                        if (successCount > 0 && !localStorage.getItem('aitrfoel_review_dismissed')) {
+                            var $reviewPrompt = $(
+                                '<div class="aitrfoel-ta-review-prompt" style="margin-top: 15px; padding: 12px 16px; background: linear-gradient(135deg, #fef9e7, #fdf2d1); border: 1px solid #f0d78c; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">' +
+                                    '<span style="font-size: 0.95em; color: #5a4e2f;">⭐ Enjoying Meep AI Translator? A quick review helps us a lot!</span>' +
+                                    '<span style="white-space: nowrap;">' +
+                                        '<a href="https://wordpress.org/support/plugin/ai-translator-for-elementor-and-polylang/reviews/#new-post" target="_blank" class="button button-small button-primary" style="margin-right: 6px;">Leave a Review</a>' +
+                                        '<button type="button" class="button button-small aitrfoel-ta-dismiss-review">No thanks</button>' +
+                                    '</span>' +
+                                '</div>'
+                            );
+                            $('#ta-progress-area').append($reviewPrompt);
+                        }
                     } else if (d.status === 'cancelled') {
                         addLogEntry(escHtml(TA.strings.cancelled), 'info');
                     } else {
@@ -674,6 +688,12 @@
         $('#ta-deselect-all-types').on('click', function () { $('input[name="post_types[]"]').prop('checked', false); });
         $('#ta-select-all-langs').on('click', function () { $('input[name="target_languages[]"]').prop('checked', true); });
         $('#ta-deselect-all-langs').on('click', function () { $('input[name="target_languages[]"]').prop('checked', false); });
+
+        // Dismiss review prompt
+        $(document).on('click', '.aitrfoel-ta-dismiss-review', function () {
+            localStorage.setItem('aitrfoel_review_dismissed', '1');
+            $(this).closest('.aitrfoel-ta-review-prompt').slideUp(200);
+        });
 
         // Detail table filter buttons
         $(document).on('click', '.ta-detail-filter', function () {

@@ -752,6 +752,19 @@ jQuery(document).ready(function($) {
                 </div>
             </div>
         `;
+
+        // Review prompt (dismissable via localStorage)
+        if (!localStorage.getItem('aitrfoel_review_dismissed')) {
+            successHtml += `
+                <div class="eat-review-prompt" style="margin-top: 15px; padding: 12px 16px; background: linear-gradient(135deg, #fef9e7, #fdf2d1); border: 1px solid #f0d78c; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                    <span style="font-size: 0.95em; color: #5a4e2f;">⭐ Enjoying Meep AI Translator? A quick review helps us a lot!</span>
+                    <span style="white-space: nowrap;">
+                        <a href="https://wordpress.org/support/plugin/ai-translator-for-elementor-and-polylang/reviews/#new-post" target="_blank" class="button button-small button-primary" style="margin-right: 6px;">Leave a Review</a>
+                        <button type="button" class="button button-small eat-dismiss-review">No thanks</button>
+                    </span>
+                </div>
+            `;
+        }
         
         showStatus(successHtml, 'success');
         
@@ -763,6 +776,12 @@ jQuery(document).ready(function($) {
         resetBtn.show().text('Translate Another Page');
     }
     
+    // Handle dismiss review button
+    $(document).on('click', '.eat-dismiss-review', function() {
+        localStorage.setItem('aitrfoel_review_dismissed', '1');
+        $(this).closest('.eat-review-prompt').slideUp(200);
+    });
+
     // Handle preview button click
     $(document).on('click', '.eat-preview-btn', function() {
         const pageId = $(this).data('page-id');

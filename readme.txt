@@ -1,84 +1,99 @@
-=== Meep AI Translator ===
+=== Meep AI Translator – Multilingual Elementor & WooCommerce ===
 Contributors: meeptechdev
-Tags: elementor, polylang, translation, ai, openai
+Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Requires Plugins: elementor
-Stable tag: 1.4.0
+Stable tag: 1.4.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI-powered translation for Elementor, Gutenberg, Classic & WooCommerce. Preserves your design perfectly. Built-in languages or Polylang/WPML.
+AI translation for Elementor & WooCommerce — layout stays pixel-perfect. Built-in multilingual system. No Polylang or WPML needed.
 
 == Description ==
 
-Meep AI Translator is an AI-powered translation solution for WordPress.
+Meep AI Translator is an AI-powered translation plugin for WordPress that keeps your Elementor layouts, Gutenberg blocks, and WooCommerce products pixel-perfect after translation — no broken widgets, no collapsed sections, no manual fixes.
 
-Translate your Elementor-powered pages, Gutenberg pages, and Classic pages or posts seamlessly using advanced LLMs. No APIs and no complicated setup required.
+Most translation plugins treat your site as plain text. Meep AI reads Elementor's JSON structure directly, so every widget, column, and design element stays exactly where you placed it.
+
+**Why Meep AI Translator?**
+
+* ✅ Elementor layout preserved — pixel-perfect after every translation
+* ✅ Built-in language system — no Polylang or WPML required
+* ✅ WooCommerce support — products, variations, attributes, gallery SEO
+* ✅ No API key needed — zero setup friction
+* ✅ 1,800 words per week free — resets automatically
 
 **Features:**
 
 * One-click translation for Elementor pages (single page or bulk)
 * WooCommerce product translation (title, description, excerpt, attributes, variations, gallery SEO)
-* Built-in language management — no Polylang or WPML required
-* Polylang and WPML integration also supported
+* Built-in language management — add languages directly in the plugin, no extra plugins needed
+* Polylang and WPML integration also supported if you prefer
 * Gutenberg block-based pages supported
 * Classic pages and posts supported
-* OpenAI-powered translations for natural, contextual results
-* No API setup needed – we handle everything for you
-* 1,800 words per week included for free
+* Context-aware AI translations using advanced LLMs — not word-for-word
+* Automatic hreflang SEO tags and clean URL prefixes (/fr/, /de/)
+* Language switcher widget, shortcode, and nav menu integration (4 display styles)
 
 **How It Works:**
 
-1. Set up your languages using the built-in system, Polylang, or WPML.
-2. Go to the Meep AI Translator plugin page or use the Quick Translation widget on the page/post edit screen.
-3. Select your Elementor, Gutenberg, or Classic Editor page.
-4. Choose the target language(s).
-5. Click Translate – the AI does the rest!
+1. Install and activate — no API keys, no complicated setup.
+2. Choose your language system: Built-in (recommended), Polylang, or WPML.
+3. Pick any Elementor page, Gutenberg post, or WooCommerce product.
+4. Choose your target languages and click Translate.
+5. Your site is multilingual — layouts intact, SEO tags in place.
 
 **Want a higher word limit?**
 
-We offer affordable plans to fit your needs:
+* **Starter – $9.99/month** – 1 site, ~18,000 words/month. Perfect for small business sites.
+* **Agency – $34.99/month** – Up to 10 sites. Best for agencies and freelancers.
+* **Agency Lifetime – $299 one-time** – 50 sites, unlimited words. Pay once, use forever.
+* **Enterprise – $53.99/month** – Up to 50 sites, dedicated account manager.
 
-* **Starter – $9.99/month** – Perfect for landing pages, portfolios, and small business sites. 1 site, ~18,000 words per month.
-* **Agency – $34.99/month** – Best for agencies, freelancers, and managing client sites. Up to 10 sites.
-* **Agency Lifetime – $299 one-time** – Unlimited words, up to 50 sites. Pay once, use forever.
-* **Enterprise – $53.99/month** – Scalable solution for large businesses. Up to 50 sites.
-
-👉 [Upgrade your license here](https://meeptech.com/products/ai-translator-for-elementor-polylang#pricing)
+👉 [View plans and upgrade](https://meeptech.com/products/ai-translator-for-elementor-polylang#pricing)
 
 == Installation ==
 1. Upload the plugin folder to `/wp-content/plugins/` or install via the WordPress Plugins screen.
 2. Activate the plugin through the 'Plugins' screen in WordPress.
-3. Set up your languages using one of these options:
+3. Choose your language setup option:
    - **Built-in (Recommended):** Use the plugin's built-in language system — no extra plugins needed
    - **Polylang:** Go to Languages → Languages tab → Add your languages
    - **WPML:** Go to WPML → Languages → Add languages and configure
-4. Navigate to Meep AI Translator plugin page.
-5. Start translating your Elementor, Gutenberg, and Classic Editor pages!
+4. Navigate to AI Translator in your WordPress menu.
+5. Start translating your pages, posts, and WooCommerce products!
 
 == Frequently Asked Questions ==
-= How many words can I translate for free? =
-The free version includes 1,800 words per week. After reaching the limit, there's a weekly cooldown period before you can translate again.
 
-= Does this require Elementor Pro? =
-No. It works with Elementor free and Elementor Pro.
+= How do I translate Elementor pages without breaking the layout? =
+Meep AI Translator reads Elementor's internal JSON structure directly instead of treating your page as plain text. This means every widget, column, heading, and button stays exactly where you placed it after translation. No broken sections, no collapsed widgets, no manual CSS fixes needed.
+
+= Can I translate a WordPress site without Polylang or WPML? =
+Yes. Since v1.3.0, Meep AI Translator includes a fully built-in language management system. You can add languages, configure URL prefixes (/fr/, /de/), and get a language switcher widget — all without installing any additional plugins. Polylang and WPML are still supported if you prefer them.
+
+= How do I add multiple languages to WooCommerce? =
+Install Meep AI Translator, choose Built-in language system during setup, add your target languages, then go to the Products tab in the dashboard. Select the products you want to translate, choose target languages, and click Translate. Product titles, descriptions, attributes, variations, and gallery alt text are all translated automatically.
+
+= Does Elementor translation work with dynamic widgets? =
+Meep AI Translator translates static Elementor content — text, headings, buttons, image captions, and any text stored inside Elementor's JSON. Dynamic widgets that pull content from external sources or custom fields at runtime are skipped to avoid conflicts. Standard Elementor widgets are fully supported.
+
+= Does this work with Elementor Free or only Elementor Pro? =
+Both. Meep AI Translator works with Elementor free and Elementor Pro. No Pro license is required for translation to work.
+
+= Do I need my own OpenAI API key? =
+No. Translation is handled through our secure API — no setup, no API keys, no accounts with third-party services required. Just install and translate.
+
+= How many words can I translate for free? =
+The free version includes 1,800 words per week, which resets automatically every 7 days. There are no one-time limits — you can keep translating week after week on the free plan.
 
 = Does this require Polylang Pro? =
-No. It supports both Polylang free and Polylang Pro.
-
-= Which AI provider do you use? =
-OpenAI via our secure translation API. We handle all API communication to ensure security and reliability.
+No. It supports both Polylang free and Polylang Pro. And since v1.3.0, you don't need Polylang at all — the built-in language system replaces it completely.
 
 = Will this modify my existing content? =
-No. Translations are applied to translated copies in the target language. Your original content remains unchanged.
-
-= What happens when I reach my word limit? =
-You'll need to wait for the weekly reset, or upgrade to a PRO plan for higher limits and no waiting periods.
+No. Translations are created as separate pages or posts in the target language. Your original content remains completely unchanged.
 
 = How do I check how many words I have left? =
-Visit AI Translator → Dashboard to see your current usage and words remaining.
+Go to AI Translator → Dashboard to see your current usage, words remaining, and weekly reset date.
 
 == Screenshots ==
 1. Dashboard with translation stats and usage info.
@@ -87,6 +102,10 @@ Visit AI Translator → Dashboard to see your current usage and words remaining.
 4. Settings page with cache management and advanced options.
 
 == Changelog ==
+= 1.4.1 =
+* Added review prompt after successful translation
+* Minor fixes
+
 = 1.4.0 =
 * NEW: Full WooCommerce product translation support
 * Added: Translate product titles, descriptions, short descriptions, and attributes
@@ -244,8 +263,11 @@ Visit AI Translator → Dashboard to see your current usage and words remaining.
 * Clean admin interface
 
 == Upgrade Notice ==
-= 1.1.0 =
-Fixed plugin name and updated readme. Recommended update.
+= 1.4.1 =
+Minor fixes and improvements.
+
+= 1.4.0 =
+WooCommerce translation now fully supported. Upgrade to translate products, variations, and gallery SEO automatically.
 
 == External Services & Privacy ==
 
