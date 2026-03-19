@@ -3,7 +3,7 @@
  * Plugin Name: Meep AI Translator
  * Plugin URI: https://meeptech.com/products/ai-translator-for-elementor-polylang
  * Description: AI-powered translation for Elementor, Gutenberg, Classic & WooCommerce. Preserves your design perfectly. Built-in languages or Polylang/WPML.
- * Version: 1.4.1
+ * Version: 1.4.2
  * Author: Meep Tech
  * Author URI: https://meeptech.com
  * License: GPL v2 or later
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('AITRFOEL_VERSION', '1.4.1');
+define('AITRFOEL_VERSION', '1.4.2');
 define('AITRFOEL_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AITRFOEL_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AITRFOEL_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -134,35 +134,7 @@ class AITRFOEL_Main {
     public function check_dependencies($show_notices = true) {
         $missing = [];
         
-        // Check if Elementor is active
-        if (!did_action('elementor/loaded')) {
-            $missing[] = 'elementor';
-            if ($show_notices) {
-                add_action('admin_notices', [$this, 'admin_notice_elementor_missing']);
-            }
-        }
-        
-        // Check Elementor version (only if Elementor is loaded)
-        if (did_action('elementor/loaded') && !version_compare(ELEMENTOR_VERSION, '3.0.0', '>=')) {
-            $missing[] = 'elementor_version';
-            if ($show_notices) {
-                add_action('admin_notices', [$this, 'admin_notice_elementor_version']);
-            }
-        }
-        
-        // Check if a multilingual plugin (Polylang, WPML, or Built-in) is active
-        $has_polylang = function_exists('pll_get_post_language');
-        $has_wpml = defined('ICL_SITEPRESS_VERSION') || class_exists('SitePress');
-        $has_builtin = get_option('aitrfoel_builtin_enabled', false);
-        
-        if (!$has_polylang && !$has_wpml && !$has_builtin) {
-            $missing[] = 'multilingual';
-            if ($show_notices) {
-                add_action('admin_notices', [$this, 'admin_notice_multilingual_missing']);
-            }
-        }
-        
-        // Check PHP version
+        // Check PHP version (hard requirement)
         if (version_compare(PHP_VERSION, '7.4', '<')) {
             $missing[] = 'php_version';
             if ($show_notices) {
@@ -762,7 +734,8 @@ class AITRFOEL_Main {
                 'no_fields_found' => __('No fields found', 'ai-translator-for-elementor-and-polylang'),
                 'fields_copied' => __('Fields copied to clipboard', 'ai-translator-for-elementor-and-polylang'),
                 'click_to_check_compatibility' => __('Click the button to check theme compatibility.', 'ai-translator-for-elementor-and-polylang'),
-            ]
+            ],
+            'is_pro' => (defined('AITRFOEL_VERSION_TYPE') && AITRFOEL_VERSION_TYPE === 'pro'),
         ]);
         
         // Add inline script for immediate Elementor removal

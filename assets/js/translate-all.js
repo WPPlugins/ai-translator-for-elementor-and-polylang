@@ -503,8 +503,8 @@
                             renderTranslatedList(d.results, d.errors || []);
                         }
 
-                        // Review prompt (dismissable via localStorage)
-                        if (successCount > 0 && !localStorage.getItem('aitrfoel_review_dismissed')) {
+                        // Review prompt (server-driven: shows after 3+ successful translations)
+                        if (successCount > 0 && d.review_eligible) {
                             var $reviewPrompt = $(
                                 '<div class="aitrfoel-ta-review-prompt" style="margin-top: 15px; padding: 12px 16px; background: linear-gradient(135deg, #fef9e7, #fdf2d1); border: 1px solid #f0d78c; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">' +
                                     '<span style="font-size: 0.95em; color: #5a4e2f;">⭐ Enjoying Meep AI Translator? A quick review helps us a lot!</span>' +
@@ -691,9 +691,43 @@
 
         // Dismiss review prompt
         $(document).on('click', '.aitrfoel-ta-dismiss-review', function () {
-            localStorage.setItem('aitrfoel_review_dismissed', '1');
-            $(this).closest('.aitrfoel-ta-review-prompt').slideUp(200);
+            var $prompt = $(this).closest('.aitrfoel-ta-review-prompt');
+            $.post(TA.ajax_url, {
+                action: 'aitrfoel_dismiss_review',
+                nonce: TA.nonce
+            });
+            $prompt.slideUp(200);
         });
+
+        // Free version: limit to one language at a time — grey out others
+        if (!TA.is_pro) {
+            $(document).on('change', 'input[name="target_languages[]"]', function () {
+                if ($(this).is(':checked')) {
+                    // Uncheck all others
+                    $('input[name="target_languages[]"]').not(this).prop('checked', false);
+                    // Grey out all unchecked
+                    $('input[name="target_languages[]"]').not(':checked').prop('disabled', true)
+                        .closest('.aitrfoel-ta-lang-card').css('opacity', '0.45');
+                } else {
+                    // Nothing selected — re-enable all
+                    $('input[name="target_languages[]"]').prop('disabled', false)
+                        .closest('.aitrfoel-ta-lang-card').css('opacity', '1');
+                }
+            });
+
+            // Disable Select All for free version and add upgrade prompt
+            $('#ta-select-all-langs').prop('disabled', true).attr('title', 'Upgrade to Pro for multi-language translation');
+
+            // Add upgrade notice after language cards
+            if ($('.aitrfoel-ta-languages').length && !$('.aitrfoel-ta-free-lang-notice').length) {
+                $('.aitrfoel-ta-languages').after(
+                    '<div class="aitrfoel-ta-free-lang-notice" style="margin-top: 10px; padding: 10px 14px; background: linear-gradient(135deg, #f0f6ff, #e8f0fe); border: 1px solid #a8c7fa; border-radius: 6px; font-size: 0.9em; color: #1a3d6e;">' +
+                        '⚡ Free version supports one language at a time. ' +
+                        '<a href="' + escHtml(TA.upgrade_url) + '" target="_blank" style="font-weight: 600; color: #1a56db;">Upgrade to Pro</a> to translate into multiple languages at once.' +
+                    '</div>'
+                );
+            }
+        }
 
         // Detail table filter buttons
         $(document).on('click', '.ta-detail-filter', function () {

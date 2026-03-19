@@ -72,6 +72,7 @@ class AITRFOEL_Translate_All {
             'words_left' => $license_info['words_left'],
             'server_usage_factor' => self::SERVER_USAGE_FACTOR,
             'upgrade_url' => $this->get_upgrade_url(),
+            'is_pro' => (defined('AITRFOEL_VERSION_TYPE') && AITRFOEL_VERSION_TYPE === 'pro'),
             'strings'   => [
                 'scanning'            => __('Scanning content...', 'ai-translator-for-elementor-and-polylang'),
                 'scan_complete'       => __('Scan complete', 'ai-translator-for-elementor-and-polylang'),
@@ -918,6 +919,10 @@ class AITRFOEL_Translate_All {
                     return;
                 }
             } else {
+                // Increment successful translation counter for review prompt
+                $count = (int) get_option('aitrfoel_successful_translations', 0);
+                update_option('aitrfoel_successful_translations', $count + 1);
+
                 $job['results'][] = [
                     'post_id'        => $item['post_id'],
                     'title'          => html_entity_decode(get_the_title($item['post_id']), ENT_QUOTES, 'UTF-8'),
@@ -1011,15 +1016,18 @@ class AITRFOEL_Translate_All {
             $current_item_info = sprintf('%s → %s', $post_title, strtoupper($current['language']));
         }
 
+        $review_eligible = !get_option('aitrfoel_review_dismissed') && ((int) get_option('aitrfoel_successful_translations', 0) >= 1);
+
         wp_send_json_success([
-            'status'         => $job['status'] ?? 'unknown',
-            'stopped_reason' => $job['stopped_reason'] ?? '',
-            'progress'       => $progress,
-            'completed'      => $completed,
-            'total'          => $total,
-            'current_item'   => $current_item_info,
-            'errors'         => $job['errors'] ?? [],
-            'results'        => $job['results'] ?? [],
+            'status'           => $job['status'] ?? 'unknown',
+            'stopped_reason'   => $job['stopped_reason'] ?? '',
+            'progress'         => $progress,
+            'completed'        => $completed,
+            'total'            => $total,
+            'current_item'     => $current_item_info,
+            'errors'           => $job['errors'] ?? [],
+            'results'          => $job['results'] ?? [],
+            'review_eligible'  => $review_eligible,
         ]);
     }
 

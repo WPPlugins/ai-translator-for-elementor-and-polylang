@@ -61,9 +61,45 @@ class AITRFOEL_Ajax_Handler {
         
         // Removed: Background process endpoints (using direct processing now)
         
+        // Review
+        add_action('wp_ajax_aitrfoel_dismiss_review', [$this, 'handle_dismiss_review']);
+
         // Legacy support
         add_action('wp_ajax_aitrfoel_publish_translation', [$this, 'handle_publish_translation']);
         add_action('wp_ajax_aitrfoel_get_preview_url', [$this, 'handle_get_preview_url']);
+    }
+
+    /**
+     * Check if user is eligible to see review prompt.
+     * Shows after 3+ successful translations and not dismissed.
+     */
+    private function is_review_eligible() {
+        if (get_option('aitrfoel_review_dismissed')) {
+            return false;
+        }
+        $count = (int) get_option('aitrfoel_successful_translations', 0);
+        return $count >= 1;
+    }
+
+    /**
+     * Increment successful translation counter.
+     */
+    private function increment_translation_counter() {
+        $count = (int) get_option('aitrfoel_successful_translations', 0);
+        update_option('aitrfoel_successful_translations', $count + 1);
+    }
+
+    /**
+     * Handle dismiss review request.
+     */
+    public function handle_dismiss_review() {
+        // Accept nonce from either the main page or translate-all page
+        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'aitrfoel_ajax_nonce') &&
+            !wp_verify_nonce($_POST['nonce'] ?? '', 'aitrfoel_translate_all_nonce')) {
+            wp_send_json_error('Invalid nonce.');
+        }
+        update_option('aitrfoel_review_dismissed', true);
+        wp_send_json_success();
     }
     
     /**
@@ -400,6 +436,9 @@ class AITRFOEL_Ajax_Handler {
                 'page_count' => 1,
                 'character_count' => $stats['character_count'] ?? 0
             ]);
+
+            // Increment successful translation counter for review prompt
+            $this->increment_translation_counter();
             
             // Log success
             AITRFOEL_Logger::log(sprintf(
@@ -435,6 +474,9 @@ class AITRFOEL_Ajax_Handler {
                 )
             ];
             
+            // Add review eligibility flag
+            $response_data['review_eligible'] = $this->is_review_eligible();
+
             wp_send_json_success($response_data);
             
         } catch (Exception $e) {

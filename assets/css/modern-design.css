@@ -689,12 +689,26 @@
     accent-color: var(--mt-blue);
 }
 
+/* Make checkbox a flex container so the ::before checkmark is centered */
+.aitrfoel-admin-wrapper input[type="checkbox"]:checked {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Keep language-card checkboxes hidden (override the inline-flex above) */
+.aitrfoel-admin-wrapper .aitrfoel-ta-lang-card input[type="checkbox"],
+.aitrfoel-admin-wrapper .aitrfoel-ta-lang-card input[type="checkbox"]:checked {
+    display: none !important;
+}
+
 /* Ensure white checkmark on blue background */
 .aitrfoel-admin-wrapper input[type="checkbox"]:checked::before {
     content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='%23ffffff' d='M14.83 4.89l1.34.94-5.81 8.38H9.02L5.78 9.67l1.34-1.25 2.57 2.4z'/%3E%3C/svg%3E") !important;
-    margin: -0.1875rem 0 0 -0.25rem !important;
     width: 1.0625rem !important;
     height: 1.0625rem !important;
+    margin: 0 !important;
+    float: none !important;
 }
 
 /* ── Smooth page load animation ──────────────────────────────── */

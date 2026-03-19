@@ -531,11 +531,13 @@ jQuery(document).ready(function($) {
             const dropdown = $('#eat-languages-dropdown');
             let html = '';
             
-            // Add "Select all missing" option
-            html += '<div class="eat-dropdown-item">';
-            html += '<label><input type="checkbox" class="eat-select-all-missing"> Select all missing</label>';
-            html += '</div>';
-            html += '<div class="eat-dropdown-divider"></div>';
+            // Add "Select all missing" option (Pro only)
+            if (aitrfoelDashboard.is_pro) {
+                html += '<div class="eat-dropdown-item">';
+                html += '<label><input type="checkbox" class="eat-select-all-missing"> Select all missing</label>';
+                html += '</div>';
+                html += '<div class="eat-dropdown-divider"></div>';
+            }
             
             // Add individual language options
             Object.keys(languages).forEach(function(code) {
@@ -546,6 +548,14 @@ jQuery(document).ready(function($) {
                 html += '</label>';
                 html += '</div>';
             });
+
+            // Free version: add upgrade notice
+            if (!aitrfoelDashboard.is_pro) {
+                html += '<div class="eat-dropdown-divider"></div>';
+                html += '<div class="eat-dropdown-item" style="padding: 8px 12px; background: linear-gradient(135deg, #f0f6ff, #e8f0fe); font-size: 12px; color: #1a3d6e;">';
+                html += '⚡ Free: 1 language at a time. <a href="' + aitrfoelDashboard.upgrade_url + '" target="_blank" style="font-weight:600;color:#1a56db;">Upgrade to Pro</a>';
+                html += '</div>';
+            }
             
             dropdown.html(html);
         },
@@ -665,11 +675,13 @@ jQuery(document).ready(function($) {
             let html = '';
             
             if (missingLanguagesArray.length > 0) {
-                // Add "Select all missing" option
-                html += '<div class="eat-dropdown-item">';
-                html += '<label><input type="checkbox" class="eat-select-all-missing"> Select all missing</label>';
-                html += '</div>';
-                html += '<div class="eat-dropdown-divider"></div>';
+                // Add "Select all missing" option (Pro only)
+                if (aitrfoelDashboard.is_pro) {
+                    html += '<div class="eat-dropdown-item">';
+                    html += '<label><input type="checkbox" class="eat-select-all-missing"> Select all missing</label>';
+                    html += '</div>';
+                    html += '<div class="eat-dropdown-divider"></div>';
+                }
                 
                 // Add individual missing language options
                 missingLanguagesArray.forEach(function(code) {
@@ -682,6 +694,14 @@ jQuery(document).ready(function($) {
                         html += '</div>';
                     }
                 });
+
+                // Free version: add upgrade notice
+                if (!aitrfoelDashboard.is_pro) {
+                    html += '<div class="eat-dropdown-divider"></div>';
+                    html += '<div class="eat-dropdown-item" style="padding: 8px 12px; background: linear-gradient(135deg, #f0f6ff, #e8f0fe); font-size: 12px; color: #1a3d6e;">';
+                    html += '⚡ Free: 1 language at a time. <a href="' + aitrfoelDashboard.upgrade_url + '" target="_blank" style="font-weight:600;color:#1a56db;">Upgrade to Pro</a>';
+                    html += '</div>';
+                }
             } else {
                 // No missing languages
                 html += '<div class="eat-dropdown-item" style="color: #666; font-style: italic;">';
@@ -760,10 +780,29 @@ jQuery(document).ready(function($) {
         handleLanguageSelection: function() {
             const selectedLanguages = $('.eat-language-checkbox:checked');
             const selectedCount = selectedLanguages.length;
-            
+
+            // Free version: limit to one language at a time — grey out others
+            if (!aitrfoelDashboard.is_pro) {
+                if (selectedCount >= 1) {
+                    // Keep only the last checked, uncheck others
+                    if (selectedCount > 1) {
+                        $('.eat-language-checkbox:checked').not(':last').prop('checked', false);
+                    }
+                    // Disable (grey out) all unchecked language checkboxes
+                    $('.eat-language-checkbox').not(':checked').prop('disabled', true)
+                        .closest('.eat-dropdown-item').css('opacity', '0.45');
+                } else {
+                    // Nothing selected — re-enable all
+                    $('.eat-language-checkbox').prop('disabled', false)
+                        .closest('.eat-dropdown-item').css('opacity', '1');
+                }
+            }
+
+            const finalCount = $('.eat-language-checkbox:checked').length;
+
             // Update button text
-            if (selectedCount > 0) {
-                const text = aitrfoelDashboard.strings.languages_selected.replace('%d', selectedCount);
+            if (finalCount > 0) {
+                const text = aitrfoelDashboard.strings.languages_selected.replace('%d', finalCount);
                 $('#eat-select-languages').text(text);
             } else {
                 $('#eat-select-languages').text(aitrfoelDashboard.strings.select_languages);
@@ -775,6 +814,11 @@ jQuery(document).ready(function($) {
         },
 
         handleSelectAllMissing: function() {
+            // Free version: don't allow select all
+            if (!aitrfoelDashboard.is_pro) {
+                $(this).prop('checked', false);
+                return;
+            }
             const isChecked = $(this).is(':checked');
             $('.eat-language-checkbox').prop('checked', isChecked);
             Dashboard.handleLanguageSelection();
@@ -1551,7 +1595,7 @@ jQuery(document).ready(function($) {
             // ??????? ??????? ????? ? bounce
             button.removeClass('loading')
                   .addClass('success')
-                  .html('✅ Complete!')
+                  .html('✓ Complete!')
                   .addClass('non-clickable');
             
             $('#eat-bulk-bar').removeClass('processing').addClass(__('status_completed', 'Completed'));
@@ -2598,4 +2642,25 @@ jQuery(document).ready(function($) {
     
     // Clean existing page titles that might have HTML entities
     Dashboard.cleanExistingPageTitles();
+
+    // Show review popup if ?show_review=1 is in the URL
+    if (new URLSearchParams(window.location.search).get('show_review') === '1') {
+        var reviewHtml = '<div class="eat-review-prompt" style="margin: 15px 0; padding: 14px 18px; background: linear-gradient(135deg, #fef9e7, #fdf2d1); border: 1px solid #f0d78c; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">' +
+            '<span style="font-size: 0.95em; color: #5a4e2f;">\u2B50 Enjoying Meep AI Translator? A quick review helps us a lot!</span>' +
+            '<span style="white-space: nowrap;">' +
+                '<a href="https://wordpress.org/support/plugin/ai-translator-for-elementor-and-polylang/reviews/#new-post" target="_blank" class="button button-small button-primary" style="margin-right: 6px;">Leave a Review</a>' +
+                '<button type="button" class="button button-small eat-dismiss-review">No thanks</button>' +
+            '</span>' +
+        '</div>';
+        $('.aitrfoel-dashboard-wrapper').prepend(reviewHtml);
+    }
+
+    $(document).on('click', '.eat-dismiss-review', function() {
+        var $prompt = $(this).closest('.eat-review-prompt');
+        $.post(aitrfoelDashboard.ajax_url, {
+            action: 'aitrfoel_dismiss_review',
+            nonce: aitrfoelDashboard.nonce
+        });
+        $prompt.slideUp(200);
+    });
 });

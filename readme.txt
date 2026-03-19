@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.1
+Stable tag: 1.4.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -96,12 +96,22 @@ No. Translations are created as separate pages or posts in the target language. 
 Go to AI Translator → Dashboard to see your current usage, words remaining, and weekly reset date.
 
 == Screenshots ==
-1. Dashboard with translation stats and usage info.
-2. Translation in progress with real-time progress indicator.
-3. Page list with language status and quick translate buttons.
-4. Settings page with cache management and advanced options.
+1. Plugin main translation interface — translate any page with one click.
+2. Translate All interface — bulk translate multiple pages at once.
+3. Language management settings — configure your site languages.
+4. Language switcher settings — customize the frontend language switcher.
+5. SEO translation settings — translate meta titles, descriptions, and slugs.
+6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.2 =
+* Removed unnecessary dependency notices (Elementor/multilingual no longer required)
+* Fixed checkbox alignment in admin settings
+* Fixed language card checkbox visibility in Translate All
+* Added review prompt URL trigger for dashboard
+* Free version: single language selection with upgrade prompts
+* UI improvements and minor fixes
+
 = 1.4.1 =
 * Added review prompt after successful translation
 * Minor fixes
@@ -263,6 +273,9 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 * Clean admin interface
 
 == Upgrade Notice ==
+= 1.4.2 =
+Removed unnecessary dependency notices. UI improvements and free version language limits.
+
 = 1.4.1 =
 Minor fixes and improvements.
 

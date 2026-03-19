@@ -250,7 +250,7 @@ class AITRFOEL_Admin_Menu {
                 <p><?php esc_html_e('If direct activation doesn\'t work, you can also:', 'ai-translator-for-elementor-and-polylang'); ?></p>
                 <ol>
                     <li><?php esc_html_e('Go to Plugins → Installed Plugins', 'ai-translator-for-elementor-and-polylang'); ?></li>
-                    <li><?php esc_html_e('Deactivate "Meep AI Translator"', 'ai-translator-for-elementor-and-polylang'); ?></li>
+                    <li><?php esc_html_e('Deactivate "Meep AI Translator PRO"', 'ai-translator-for-elementor-and-polylang'); ?></li>
                     <li><?php esc_html_e('Activate it again - the license activation dialog will appear', 'ai-translator-for-elementor-and-polylang'); ?></li>
                 </ol>
             </div>
@@ -2711,7 +2711,7 @@ class AITRFOEL_Admin_Menu {
         // Dynamic plugin name based on version type
         $plugin_name = (defined('AITRFOEL_VERSION_TYPE') && AITRFOEL_VERSION_TYPE === 'free') 
             ? __('Meep AI Translator', 'ai-translator-for-elementor-and-polylang')
-            : __('Meep AI Translator', 'ai-translator-for-elementor-and-polylang');
+            : __('Meep AI Translator PRO', 'ai-translator-for-elementor-and-polylang');
         ?>
         <div class="eat-plugin-header">
             <h1 class="eat-plugin-title">
