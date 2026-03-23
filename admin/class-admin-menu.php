@@ -250,7 +250,7 @@ class AITRFOEL_Admin_Menu {
                 <p><?php esc_html_e('If direct activation doesn\'t work, you can also:', 'ai-translator-for-elementor-and-polylang'); ?></p>
                 <ol>
                     <li><?php esc_html_e('Go to Plugins → Installed Plugins', 'ai-translator-for-elementor-and-polylang'); ?></li>
-                    <li><?php esc_html_e('Deactivate "Meep AI Translator PRO"', 'ai-translator-for-elementor-and-polylang'); ?></li>
+                    <li><?php esc_html_e('Deactivate "Meep AI Translator"', 'ai-translator-for-elementor-and-polylang'); ?></li>
                     <li><?php esc_html_e('Activate it again - the license activation dialog will appear', 'ai-translator-for-elementor-and-polylang'); ?></li>
                 </ol>
             </div>
@@ -1650,14 +1650,8 @@ class AITRFOEL_Admin_Menu {
         // Check if multilingual plugin is active
         $multilingual = class_exists('AITRFOEL_Multilingual_Manager') ? AITRFOEL_Multilingual_Manager::get_instance() : null;
         if (!$multilingual || !$multilingual->is_active()) {
-            ?>
-            <div class="wrap">
-                <h1><?php esc_html_e('Translation Dashboard', 'ai-translator-for-elementor-and-polylang'); ?></h1>
-                <div class="notice notice-error">
-                    <p><?php esc_html_e('A multilingual plugin (Polylang or WPML) is required for the Dashboard functionality.', 'ai-translator-for-elementor-and-polylang'); ?></p>
-                </div>
-            </div>
-            <?php
+            // Show the onboarding/installation screen instead of an error
+            $this->render_multilingual_onboarding_screen();
             return;
         }
         
@@ -2711,7 +2705,7 @@ class AITRFOEL_Admin_Menu {
         // Dynamic plugin name based on version type
         $plugin_name = (defined('AITRFOEL_VERSION_TYPE') && AITRFOEL_VERSION_TYPE === 'free') 
             ? __('Meep AI Translator', 'ai-translator-for-elementor-and-polylang')
-            : __('Meep AI Translator PRO', 'ai-translator-for-elementor-and-polylang');
+            : __('Meep AI Translator', 'ai-translator-for-elementor-and-polylang');
         ?>
         <div class="eat-plugin-header">
             <h1 class="eat-plugin-title">
