@@ -89,7 +89,7 @@ class AITRFOEL_Translation_Metabox {
                 'draft'                => __('Draft', 'ai-translator-for-elementor-and-polylang'),
                 'published'            => __('Published', 'ai-translator-for-elementor-and-polylang'),
                 'pending'              => __('Pending', 'ai-translator-for-elementor-and-polylang'),
-                'no_multilingual'      => __('A multilingual plugin (Polylang or WPML) is required.', 'ai-translator-for-elementor-and-polylang'),
+                'no_multilingual'      => __('Set up a multilingual plugin to enable quick translations.', 'ai-translator-for-elementor-and-polylang'),
                 'no_content'           => __('No translatable content detected.', 'ai-translator-for-elementor-and-polylang'),
                 'word_limit_reached'   => __('Word limit reached. Please upgrade your plan.', 'ai-translator-for-elementor-and-polylang'),
             ],
@@ -106,8 +106,14 @@ class AITRFOEL_Translation_Metabox {
 
         // No multilingual plugin
         if (!$multilingual || !$multilingual->is_active()) {
+            $dashboard_url = admin_url('admin.php?page=ai-translator-for-elementor-and-polylang');
             echo '<p class="aitrfoel-mb-notice">';
-            esc_html_e('A multilingual plugin (Polylang or WPML) is required.', 'ai-translator-for-elementor-and-polylang');
+            printf(
+                /* translators: %1$s: opening link tag, %2$s: closing link tag */
+                esc_html__('Set up your languages for quick translations. %1$sGo to Dashboard%2$s', 'ai-translator-for-elementor-and-polylang'),
+                '<a href="' . esc_url($dashboard_url) . '">',
+                '</a>'
+            );
             echo '</p>';
             return;
         }
