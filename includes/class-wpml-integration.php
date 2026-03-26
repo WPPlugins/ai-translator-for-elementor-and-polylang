@@ -347,40 +347,55 @@ class AITRFOEL_WPML_Integration extends AITRFOEL_Multilingual_Interface {
         }
         
         // Link translated post to original using WPML API
-        // First, check for existing stale translation in this trid+language
-        // (e.g. from a previous failed attempt) to avoid duplicate key errors
-        $existing_translations = apply_filters('wpml_get_element_translations', null, $trid, $element_type);
-        if (is_array($existing_translations) && isset($existing_translations[$wpml_lang_code])) {
-            $existing = $existing_translations[$wpml_lang_code];
-            $existing_id = isset($existing->element_id) ? (int) $existing->element_id : 0;
+        // First, directly check DB for existing stale translation in this trid+language
+        // WPML's API filters (wpml_get_element_translations) don't return trashed/deleted posts,
+        // but their DB rows still exist and cause "Duplicate entry" errors on INSERT.
+        global $wpdb;
+        $icl_table = $wpdb->prefix . 'icl_translations';
+        
+        // Check for ANY existing row with this trid+language_code
+        $stale_row = $wpdb->get_row($wpdb->prepare(
+            "SELECT translation_id, element_id FROM {$icl_table} WHERE trid = %d AND language_code = %s AND element_type = %s",
+            $trid, $wpml_lang_code, $element_type
+        ));
+        
+        if ($stale_row && (int) $stale_row->element_id !== $translated_post_id) {
+            // Remove the stale entry to prevent duplicate key error
+            $wpdb->delete($icl_table, [
+                'translation_id' => $stale_row->translation_id,
+            ]);
             
-            if ($existing_id && $existing_id !== $translated_post_id) {
-                // There's a stale translation entry — remove it from WPML before linking new one
-                global $wpdb;
-                $icl_table = $wpdb->prefix . 'icl_translations';
-                $deleted = $wpdb->delete($icl_table, [
-                    'trid' => $trid,
-                    'language_code' => $wpml_lang_code,
-                ]);
-                
-                AITRFOEL_Logger::log(
-                    sprintf('WPML: Removed stale %s translation (post %d) from trid %s before linking new post %d (rows deleted: %s)',
-                        $wpml_lang_code, $existing_id, $trid, $translated_post_id, $deleted !== false ? $deleted : 'error'),
-                    'warning',
-                    $original_post_id,
-                    $translated_post_id
-                );
-                
-                // Also remove the translated post's own entry if it exists in a different trid
-                $wpdb->delete($icl_table, [
-                    'element_id' => $translated_post_id,
-                    'element_type' => $element_type,
-                ]);
-                
-                // Clear WPML caches after direct DB changes
-                do_action('wpml_cache_clear');
-            }
+            AITRFOEL_Logger::log(
+                sprintf('WPML: Removed stale %s DB entry (element_id: %d, translation_id: %d) from trid %s before linking new post %d',
+                    $wpml_lang_code, $stale_row->element_id, $stale_row->translation_id, $trid, $translated_post_id),
+                'warning',
+                $original_post_id,
+                $translated_post_id
+            );
         }
+        
+        // Also remove any existing entry for the translated post itself (might be in wrong trid)
+        $translated_row = $wpdb->get_row($wpdb->prepare(
+            "SELECT translation_id, trid FROM {$icl_table} WHERE element_id = %d AND element_type = %s",
+            $translated_post_id, $element_type
+        ));
+        
+        if ($translated_row && (int) $translated_row->trid !== (int) $trid) {
+            $wpdb->delete($icl_table, [
+                'translation_id' => $translated_row->translation_id,
+            ]);
+            
+            AITRFOEL_Logger::log(
+                sprintf('WPML: Removed orphan entry for post %d (was in trid %s, needs to be in trid %s)',
+                    $translated_post_id, $translated_row->trid, $trid),
+                'warning',
+                $original_post_id,
+                $translated_post_id
+            );
+        }
+        
+        // Clear WPML caches before linking so it sees the cleaned state
+        do_action('wpml_cache_clear');
         
         do_action('wpml_set_element_language_details', [
             'element_id' => $translated_post_id,
