@@ -130,7 +130,7 @@ class AITRFOEL_Gutenberg_Parser {
     private function extract_translatable_blocks($blocks, &$translation_map, $path) {
         // Container blocks that should recurse into innerBlocks
         $container_blocks = [
-            'core/gallery', 'core/columns', 'core/column', 'core/group', 'core/cover',
+            'core/columns', 'core/column', 'core/group', 'core/cover',
             'core/media-text', 'core/buttons', 'core/details',
             // WooCommerce container blocks
             'woocommerce/product-collection',
@@ -216,62 +216,30 @@ class AITRFOEL_Gutenberg_Parser {
         $translatable_attrs = [
             'content', 'citation', 'value', 'text', 'title',
             'alt', 'caption', 'placeholder', 'label', 'summary',
-            // WooCommerce & Form block attributes (SureForms, WPForms, etc.)
+            // WooCommerce block attributes
             'heading', 'emptyCollectionContent', 'buttonText',
-            'helpText', 'description', 'errorMessage', 'validationMessage',
-            'submitButtonText', 'confirmationMessage', 'help', 'errorMsg', 'duplicateMsg', 'subHeading',
         ];
         
         foreach ($attrs as $key => $value) {
-            if (is_string($value) && !empty(trim($value))) {
-                if (in_array($key, $translatable_attrs, true)) {
-                    $text = wp_strip_all_tags($value);
-                    $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
-                    $text = trim($text);
-                    
-                    if (strlen($text) > 1 && preg_match('/\w/u', $text)) {
-                        $map_key = 'gb_' . md5($path . '_attr_' . $key);
-                        $translation_map[$map_key] = [
-                            'original' => $value,
-                            'path' => $path . '/attrs/' . $key,
-                            'type' => 'attribute',
-                            'attr_key' => $key,
-                            'widget_type' => 'gutenberg_' . sanitize_key($block_name),
-                            'block_name' => $block_name,
-                        ];
-                    }
-                }
-            } elseif (is_array($value) && in_array($key, ['options', 'choices', 'items'], true)) {
-                // Handle options/choices array (e.g., SureForms select/radio/checkbox options)
-                foreach ($value as $opt_idx => $opt) {
-                    if (is_array($opt)) {
-                        foreach (['label', 'text', 'name'] as $opt_field) {
-                            if (!empty($opt[$opt_field]) && is_string($opt[$opt_field])) {
-                                $opt_val = trim($opt[$opt_field]);
-                                if (strlen($opt_val) > 1 && preg_match('/\w/u', $opt_val)) {
-                                    $map_key = 'gb_' . md5($path . '_attr_' . $key . '_' . $opt_idx . '_' . $opt_field);
-                                    $translation_map[$map_key] = [
-                                        'original' => $opt[$opt_field],
-                                        'path' => $path . '/attrs/' . $key . '/' . $opt_idx . '/' . $opt_field,
-                                        'type' => 'attribute',
-                                        'attr_key' => $key,
-                                        'widget_type' => 'gutenberg_' . sanitize_key($block_name),
-                                        'block_name' => $block_name,
-                                    ];
-                                }
-                            }
-                        }
-                    } elseif (is_string($opt) && strlen(trim($opt)) > 1 && preg_match('/\w/u', trim($opt))) {
-                        $map_key = 'gb_' . md5($path . '_attr_' . $key . '_' . $opt_idx);
-                        $translation_map[$map_key] = [
-                            'original' => $opt,
-                            'path' => $path . '/attrs/' . $key . '/' . $opt_idx,
-                            'type' => 'attribute',
-                            'attr_key' => $key,
-                            'widget_type' => 'gutenberg_' . sanitize_key($block_name),
-                            'block_name' => $block_name,
-                        ];
-                    }
+            if (!is_string($value) || empty(trim($value))) {
+                continue;
+            }
+            
+            if (in_array($key, $translatable_attrs, true)) {
+                $text = wp_strip_all_tags($value);
+                $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
+                $text = trim($text);
+                
+                if (strlen($text) > 1 && preg_match('/\w/u', $text)) {
+                    $map_key = 'gb_' . md5($path . '_attr_' . $key);
+                    $translation_map[$map_key] = [
+                        'original' => $value,
+                        'path' => $path . '/attrs/' . $key,
+                        'type' => 'attribute',
+                        'attr_key' => $key,
+                        'widget_type' => 'gutenberg_' . sanitize_key($block_name),
+                        'block_name' => $block_name,
+                    ];
                 }
             }
         }
@@ -302,63 +270,9 @@ class AITRFOEL_Gutenberg_Parser {
                 continue;
             }
             
-            // Direct replacement (innerHTML and raw attributes)
-            $content = preg_replace_callback(
-                '/<!--\s+(wp:[a-z0-9_-]+\/[a-z0-9_-]+|wp:[a-z0-9_-]+)\s+(\{.*?\})\s+(\/-->|-->)/s',
-                function ($m) use ($original, $translated) {
-                    $decoded = json_decode($m[2], true);
-                    if (!is_array($decoded)) {
-                        return $m[0];
-                    }
-                    $changed = false;
-                    foreach ($decoded as $k => &$v) {
-                        if (is_string($v) && $v === $original) {
-                            $v = $translated;
-                            $changed = true;
-                        } elseif (is_array($v) && in_array($k, ['options', 'choices', 'items'], true)) {
-                            foreach ($v as &$opt) {
-                                if (is_array($opt)) {
-                                    foreach (['label', 'text', 'name'] as $of) {
-                                        if (!empty($opt[$of]) && $opt[$of] === $original) {
-                                            $opt[$of] = $translated;
-                                            $changed = true;
-                                        }
-                                    }
-                                } elseif (is_string($opt) && $opt === $original) {
-                                    $opt = $translated;
-                                    $changed = true;
-                                }
-                            }
-                            unset($opt);
-                        }
-                    }
-                    unset($v);
-                    if ($changed) {
-                        return '<!-- ' . $m[1] . ' ' . wp_json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . ' ' . $m[3];
-                    }
-                    return $m[0];
-                },
-                $content
-            );
-            $parts = preg_split('/(<!--\s+wp:.*?-->)/s', $content, -1, PREG_SPLIT_DELIM_CAPTURE);
-            if (is_array($parts)) {
-                foreach ($parts as $idx => &$part) {
-                    if ($idx % 2 === 0) {
-                        $part = str_replace($original, $translated, $part);
-                    }
-                }
-                unset($part);
-                $content = implode('', $parts);
-            } else {
-                $content = str_replace($original, $translated, $content);
-            }
-
-            // Also check for JSON-escaped occurrences in block comment attributes
-            $json_orig = trim(wp_json_encode($original), '"');
-            $json_trans = trim(wp_json_encode($translated), '"');
-            if ($json_orig !== $original && !empty($json_orig) && !empty($json_trans)) {
-                $content = str_replace($json_orig, $json_trans, $content);
-            }
+            // Replace all occurrences — handles duplicate blocks with same content
+            // Safe because we're replacing whole block innerHTML which won't be substrings of each other
+            $content = str_replace($original, $translated, $content);
         }
         
         return $content;

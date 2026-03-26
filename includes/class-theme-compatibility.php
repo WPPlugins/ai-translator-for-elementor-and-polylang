@@ -129,7 +129,7 @@ class AITRFOEL_Theme_Compatibility {
         '_elementor_version',
         '_elementor_pro_version',
         '_elementor_page_settings',
-        '_elementor_controls_usage',
+        '_elementor_controls_usage'
     ];
 
     /**

@@ -6,12 +6,6 @@
 if (!defined('ABSPATH')) exit;
 
 final class AITRFOEL_Gap_Filler {
-    /** Fields longer than this (chars) are left to the chunked first pass, not re-translated/diffed here. */
-    const MAX_CANDIDATE_LEN = 8000;
-
-    /** Wall-clock budget (seconds) for the whole gap-filler pass, so it returns before max_execution_time. */
-    const TIME_BUDGET_SEC = 60;
-
     /**
      * Run gap-filler on provided strings and translations (by reference)
      *
@@ -56,13 +50,6 @@ final class AITRFOEL_Gap_Filler {
             $orig = (string)($row['original'] ?? '');
             $tr   = (string)($translations[$path] ?? '');
 
-            // Skip very large fields. These are handled by the chunked first pass; re-translating
-            // them here as a single request would truncate the output, and diffing them is what
-            // makes similar_text() blow the time budget. Leave the first-pass result in place.
-            if (mb_strlen($orig) > self::MAX_CANDIDATE_LEN) {
-                continue;
-            }
-
             // Skip proper nouns and acronyms - they shouldn't be translated
             if (self::isProperNounOrAcronym($orig)) {
                 // If translation is empty or same as original, that's correct for names
@@ -77,7 +64,7 @@ final class AITRFOEL_Gap_Filler {
                 ? !self::notAlmostSame($orig, $tr, $L)
                 : false;
             $hasResidue = ($tr !== '' && @preg_match($RES, $tr) === 1);
-            $hasEscaped = (bool)preg_match('/\\\\<\/[a-z]+>/i', $tr) || (strpos($tr, '<\\ph') !== false);
+            $hasEscaped = (bool)preg_match('/\\<\/[a-z]+>/i', $tr) || (strpos($tr, '<\\ph') !== false);
 
             if ($isEmpty || $isAlmostSame || $hasResidue || $hasEscaped) {
                 $candidates[] = $row + [
@@ -97,14 +84,7 @@ final class AITRFOEL_Gap_Filler {
 
         // Process one by one (sequential for now)
         $debug_shown = 0;
-        $pass_start  = microtime(true);
         foreach ($candidates as $row) {
-            // Respect a wall-clock budget so we hand control back to the engine (which still has
-            // to apply_translations() and save) instead of risking a max_execution_time fatal.
-            if ((microtime(true) - $pass_start) > self::TIME_BUDGET_SEC) {
-                AITRFOEL_Logger::log(sprintf('[EAT gap-filler] time budget (%ds) reached, stopping early after %d of %d candidates', self::TIME_BUDGET_SEC, $metrics['retried'], count($candidates)), 'warning', $page);
-                break;
-            }
             $metrics['retried']++;
             $path = (string)$row['path'];
             $orig = (string)$row['original'];
@@ -160,11 +140,8 @@ final class AITRFOEL_Gap_Filler {
                 $notSame = self::notAlmostSame($orig, (string)$tmp, $L);
                 $residueLeft = (@preg_match($RES, (string)$tmp) === 1);
 
-                // Store as best candidate if it's not empty and meaningfully different from original
-                // Use html_entity_decode to avoid entity encoding false positives (& vs &amp;)
-                $orig_decoded = strtolower(trim(html_entity_decode(wp_strip_all_tags($orig), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
-                $tmp_decoded = strtolower(trim(html_entity_decode(wp_strip_all_tags((string)$tmp), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
-                if ($okNotEmpty && $tmp_decoded !== $orig_decoded) {
+                // Store as best candidate if it's not empty and different from original
+                if ($okNotEmpty && $tmp !== $orig) {
                     $best_candidate = (string)$tmp;
                 }
 
@@ -236,15 +213,8 @@ final class AITRFOEL_Gap_Filler {
         // For strings longer than 200 chars, use percentage-based comparison instead of levenshtein
         // (PHP's levenshtein has a 255 char limit)
         if (mb_strlen($a_clean) > 200 || mb_strlen($b_clean) > 200) {
-            // IMPORTANT: PHP's similar_text() is O(n^3). On large fields (e.g. multi-thousand
-            // character Elementor text-editor blocks) it can run for minutes and blow past
-            // max_execution_time, fataling the whole request before translations are saved.
-            // Compare a bounded prefix sample instead — more than enough to tell whether the
-            // translation meaningfully changed.
-            $cap   = 2000;
-            $a_cmp = mb_substr($a_clean, 0, $cap);
-            $b_cmp = mb_substr($b_clean, 0, $cap);
-            similar_text($a_cmp, $b_cmp, $percent);
+            // Use similar_text percentage - if less than 85% similar, it's different enough
+            similar_text($a_clean, $b_clean, $percent);
             return $percent < 85;
         }
         
@@ -270,28 +240,10 @@ final class AITRFOEL_Gap_Filler {
             return true;
         }
         
-        // Pattern: 2-3 capitalized words where NONE are common English words (likely a person's name)
-        // Must be at least 2 words to be a name. Single capitalized words could be headings.
+        // Pattern: 1-3 capitalized words (likely a person's name)
         // Matches: "John Smith", "Mary Jane Watson", "Juan Soto"
-        // Does NOT match: "Our Story", "Contact Us", "About Us", "Read More"
-        if (preg_match('/^[A-Z][a-z]+(\s+[A-Z][a-z]+){1,2}$/', $text)) {
-            $common_words = [
-                'our', 'my', 'your', 'the', 'a', 'an', 'and', 'or', 'for', 'with', 'about',
-                'from', 'this', 'that', 'all', 'new', 'more', 'get', 'read', 'see', 'view',
-                'how', 'why', 'what', 'where', 'when', 'who', 'which',
-                'contact', 'home', 'story', 'services', 'products', 'blog', 'news',
-                'team', 'work', 'portfolio', 'gallery', 'pricing', 'plans', 'features',
-                'crafting', 'building', 'creating', 'designing', 'making', 'growing',
-                'gardens', 'landscapes', 'expertise', 'care', 'quality', 'best',
-                'free', 'quote', 'call', 'now', 'today', 'here', 'us', 'them',
-            ];
-            $words = preg_split('/\s+/', strtolower($text));
-            foreach ($words as $word) {
-                if (in_array($word, $common_words, true)) {
-                    return false; // Contains a common word — it's a heading, not a name
-                }
-            }
-            return true; // All words look like proper nouns
+        if (preg_match('/^[A-Z][a-z]+(\s+[A-Z][a-z]+){0,2}$/', $text)) {
+            return true;
         }
         
         return false;

@@ -113,9 +113,12 @@ class AITRFOEL_Classic_Parser {
         // Match: optional whitespace, opening tag, content (greedy), closing tag
         $pattern = '#(<(?:' . $block_tags . ')(?:\s[^>]*)?>[\s\S]*?</(?:' . $block_tags . ')>)#i';
         
-        // Split by block elements, capturing positions in a single pass
-        if (preg_match_all($pattern, $html, $positioned_matches, PREG_OFFSET_CAPTURE)) {
+        // First try: split by block elements
+        if (preg_match_all($pattern, $html, $matches)) {
             $last_end = 0;
+            
+            // Use preg_match_all with PREG_OFFSET_CAPTURE to get positions
+            preg_match_all($pattern, $html, $positioned_matches, PREG_OFFSET_CAPTURE);
             
             foreach ($positioned_matches[0] as $match) {
                 $match_text = $match[0];
@@ -139,18 +142,8 @@ class AITRFOEL_Classic_Parser {
                 $chunks[] = $trailing;
             }
         } else {
-            // No block elements found — split by double newlines (\n\n) if present, else treat entire content as one chunk
-            $paragraphs = preg_split('/(\r\n\r\n|\n\n)/u', $html);
-            if (count($paragraphs) > 1) {
-                foreach ($paragraphs as $para) {
-                    $para = trim($para);
-                    if (!empty($para) && $this->has_translatable_text($para)) {
-                        $chunks[] = $para;
-                    }
-                }
-            } else {
-                $chunks[] = trim($html);
-            }
+            // No block elements found — treat entire content as one chunk
+            $chunks[] = trim($html);
         }
         
         return $chunks;

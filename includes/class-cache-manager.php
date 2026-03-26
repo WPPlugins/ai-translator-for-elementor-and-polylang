@@ -38,41 +38,6 @@ class AITRFOEL_Cache_Manager {
         ));
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 
-        // Dynamic cache cleanup: if the source text contains an excluded word,
-        // but the cached translation does not contain it (meaning it got translated in the past),
-        // delete this dirty cache entry so it gets re-translated and corrected.
-        $settings = get_option('aitrfoel_translation_settings', []);
-        $exclude_words = $settings['exclude_words'] ?? [];
-        if (!empty($exclude_words) && !empty($result)) {
-            foreach ($exclude_words as $word) {
-                if (trim($word) === '') {
-                    continue;
-                }
-                $pattern = '/\b' . preg_quote($word, '/') . '\b/iu';
-                if (preg_match($pattern, $source_text)) {
-                    if (stripos($result, $word) === false) {
-                        $this->wpdb->delete($this->table_name, [
-                            'source_hash' => $source_hash,
-                            'target_lang' => $target_lang,
-                            'source_lang' => $source_lang,
-                        ]);
-                        return null;
-                    }
-                }
-            }
-        }
-
-        // Dynamic cleanup: if cached translation is identical to source text and has letters,
-        // prune this poisoned entry and return null so it gets translated afresh.
-        if (!empty($result) && trim($result) === trim($source_text) && preg_match('/[\p{L}]/u', $source_text)) {
-            $this->wpdb->delete($this->table_name, [
-                'source_hash' => $source_hash,
-                'target_lang' => $target_lang,
-                'source_lang' => $source_lang,
-            ]);
-            return null;
-        }
-
         return $result;
     }
 
@@ -86,15 +51,9 @@ class AITRFOEL_Cache_Manager {
      * @param string $model The model used for translation.
      */
     public function set_to_cache($source_text, $translated_text, $target_lang, $source_lang, $model) {
-        if (trim($source_text) === trim($translated_text) && preg_match('/[\p{L}]/u', $source_text)) {
-            return; // Never cache untranslated duplicate text
-        }
-
         $source_hash = md5($source_text);
 
-        // Use replace() instead of insert() to handle duplicate cache entries gracefully
-        // (same source text translated to same language pair)
-        $this->wpdb->replace(
+        $this->wpdb->insert(
             $this->table_name,
             [
                 'source_hash' => $source_hash,

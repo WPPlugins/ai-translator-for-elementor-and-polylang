@@ -192,39 +192,6 @@ class AITRFOEL_Language_Mapper {
     }
     
     /**
-     * Reverse lookup: get language code from a full language name.
-     *
-     * @param string $name Full language name (e.g. 'Luxembourgish')
-     * @return string|null ISO language code or null
-     */
-    public static function get_code_from_language_name($name) {
-        $name_lower = strtolower(trim($name));
-        foreach (self::$language_map as $code => $mapped_name) {
-            if (strtolower($mapped_name) === $name_lower) {
-                // Prefer shortest code (e.g. 'lb' over 'lb-lu')
-                if (strlen($code) <= 3 || !strpos($code, '-') && !strpos($code, '_')) {
-                    return $code;
-                }
-            }
-        }
-        // Second pass: accept regional variants if no short code found
-        foreach (self::$language_map as $code => $mapped_name) {
-            if (strtolower($mapped_name) === $name_lower) {
-                return $code;
-            }
-        }
-        // Third pass: normalize parentheses and punctuation (e.g. 'Chinese (Simplified)' vs 'Chinese Simplified')
-        $norm_input = preg_replace('/\s+/', ' ', strtolower(trim(str_replace(['(', ')', '-', '_'], ' ', $name))));
-        foreach (self::$language_map as $code => $mapped_name) {
-            $norm_mapped = preg_replace('/\s+/', ' ', strtolower(trim(str_replace(['(', ')', '-', '_'], ' ', $mapped_name))));
-            if ($norm_mapped === $norm_input) {
-                return $code;
-            }
-        }
-        return null;
-    }
-
-    /**
      * Generate a reasonable fallback name for unmapped language codes
      * 
      * @param string $lang_code The language code
@@ -476,34 +443,15 @@ class AITRFOEL_Language_Mapper {
     }
     
     /**
-     * Get flag image URL (local bundled SVG, CDN fallback)
+     * Get flag image URL from flagcdn.com
      * 
      * @param string $lang_code The language code
-     * @param int $width Flag width in pixels (used for fallback CDN sizing)
+     * @param int $width Flag width in pixels (default: 24)
      * @return string Flag image URL
      */
-    /**
-     * Flag URL for a country code: bundled SVG first, CDN only for flags we don't ship.
-     */
-    public static function get_flag_url_for_country($country_code, $width = 40) {
-        $country_code = strtolower(preg_replace('/[^a-z]/i', '', (string) $country_code));
-        $local_file = 'assets/img/flags/' . $country_code . '.svg';
-        if ($country_code && defined('AITRFOEL_PLUGIN_DIR') && file_exists(AITRFOEL_PLUGIN_DIR . $local_file)) {
-            return AITRFOEL_PLUGIN_URL . $local_file;
-        }
-        return 'https://flagcdn.com/w' . max(20, intval($width)) . '/' . $country_code . '.png';
-    }
-
     public static function get_flag_url($lang_code, $width = 24) {
         $country_code = self::get_country_code($lang_code);
-        $local_file = 'assets/img/flags/' . $country_code . '.svg';
-        
-        // Use bundled SVG if available
-        if (defined('AITRFOEL_PLUGIN_DIR') && file_exists(AITRFOEL_PLUGIN_DIR . $local_file)) {
-            return AITRFOEL_PLUGIN_URL . $local_file;
-        }
-        
-        // Fallback to CDN for flags not bundled
+        // flagcdn.com minimum width is 20 — w16 and below return 404
         $w = max(20, intval($width));
         return 'https://flagcdn.com/w' . $w . '/' . $country_code . '.png';
     }
