@@ -347,6 +347,41 @@ class AITRFOEL_WPML_Integration extends AITRFOEL_Multilingual_Interface {
         }
         
         // Link translated post to original using WPML API
+        // First, check for existing stale translation in this trid+language
+        // (e.g. from a previous failed attempt) to avoid duplicate key errors
+        $existing_translations = apply_filters('wpml_get_element_translations', null, $trid, $element_type);
+        if (is_array($existing_translations) && isset($existing_translations[$wpml_lang_code])) {
+            $existing = $existing_translations[$wpml_lang_code];
+            $existing_id = isset($existing->element_id) ? (int) $existing->element_id : 0;
+            
+            if ($existing_id && $existing_id !== $translated_post_id) {
+                // There's a stale translation entry — remove it from WPML before linking new one
+                global $wpdb;
+                $icl_table = $wpdb->prefix . 'icl_translations';
+                $deleted = $wpdb->delete($icl_table, [
+                    'trid' => $trid,
+                    'language_code' => $wpml_lang_code,
+                ]);
+                
+                AITRFOEL_Logger::log(
+                    sprintf('WPML: Removed stale %s translation (post %d) from trid %s before linking new post %d (rows deleted: %s)',
+                        $wpml_lang_code, $existing_id, $trid, $translated_post_id, $deleted !== false ? $deleted : 'error'),
+                    'warning',
+                    $original_post_id,
+                    $translated_post_id
+                );
+                
+                // Also remove the translated post's own entry if it exists in a different trid
+                $wpdb->delete($icl_table, [
+                    'element_id' => $translated_post_id,
+                    'element_type' => $element_type,
+                ]);
+                
+                // Clear WPML caches after direct DB changes
+                do_action('wpml_cache_clear');
+            }
+        }
+        
         do_action('wpml_set_element_language_details', [
             'element_id' => $translated_post_id,
             'element_type' => $element_type,
