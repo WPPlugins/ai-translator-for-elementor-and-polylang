@@ -40,13 +40,24 @@ class AITRFOEL_Content_Detector {
      * @return string Content type constant
      */
     public function detect($post_id) {
-        // Check for Elementor first (highest priority)
-        if ($this->is_elementor_page($post_id)) {
+        $has_elementor = $this->is_elementor_page($post_id);
+        $has_gutenberg = $this->is_gutenberg_page($post_id);
+        
+        // When both Elementor data AND Gutenberg blocks exist, the user likely
+        // switched from Elementor to a block-based editor (e.g. Greenshift).
+        // Stale _elementor_data remains but post_content now drives rendering.
+        // Prefer Gutenberg in this case; pure Elementor pages have no block markers.
+        if ($has_elementor && $has_gutenberg) {
+            return self::TYPE_GUTENBERG;
+        }
+        
+        // Check for Elementor (page only has Elementor data, no Gutenberg blocks)
+        if ($has_elementor) {
             return self::TYPE_ELEMENTOR;
         }
         
         // Check for Gutenberg blocks
-        if ($this->is_gutenberg_page($post_id)) {
+        if ($has_gutenberg) {
             return self::TYPE_GUTENBERG;
         }
         

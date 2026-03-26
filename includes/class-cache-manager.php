@@ -53,7 +53,9 @@ class AITRFOEL_Cache_Manager {
     public function set_to_cache($source_text, $translated_text, $target_lang, $source_lang, $model) {
         $source_hash = md5($source_text);
 
-        $this->wpdb->insert(
+        // Use replace() instead of insert() to handle duplicate cache entries gracefully
+        // (same source text translated to same language pair)
+        $this->wpdb->replace(
             $this->table_name,
             [
                 'source_hash' => $source_hash,
