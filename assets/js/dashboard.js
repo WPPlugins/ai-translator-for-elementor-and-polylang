@@ -1049,7 +1049,8 @@ jQuery(document).ready(function($) {
             const wordLimit = data.word_limit || 0;
             const wordsUsed = data.words_used || 0;
             const wordsRemaining = data.words_left || 0;
-            const wordsAfter = wordsRemaining - totalWordsNeeded;
+            const isUnlimited = wordLimit === -1 || wordsRemaining === -1;
+            const wordsAfter = isUnlimited ? -1 : wordsRemaining - totalWordsNeeded;
             
             return `
                 <div id="eat-analysis-modal" class="eat-modal-overlay">
@@ -1061,10 +1062,10 @@ jQuery(document).ready(function($) {
                         <div class="eat-analysis-summary">
                             <p>Selected: <strong>${data.pages_count || 0} pages &times; ${data.languages_count || 0} languages = ${data.total_jobs || 0} jobs</strong></p>
                             <p>Estimated words: <strong>${totalWordsNeeded.toLocaleString()}</strong></p>
-                            <p>Your limit: <strong>${wordLimit.toLocaleString()}</strong></p>
+                            <p>Your limit: <strong>${isUnlimited ? 'Unlimited' : wordLimit.toLocaleString()}</strong></p>
                             <p>Current usage: <strong>${wordsUsed.toLocaleString()}</strong></p>
-                            <p>Available: <strong>${wordsRemaining.toLocaleString()}</strong></p>
-                            ${data.can_proceed ? `<p>After translation: <strong>${wordsAfter.toLocaleString()} words left</strong></p>` : ''}
+                            <p>Available: <strong>${isUnlimited ? 'Unlimited' : wordsRemaining.toLocaleString()}</strong></p>
+                            ${data.can_proceed ? (isUnlimited ? '' : `<p>After translation: <strong>${wordsAfter.toLocaleString()} words left</strong></p>`) : ''}
                         </div>
                         
                         <div class="eat-analysis-status ${statusClass}">
@@ -1677,13 +1678,14 @@ jQuery(document).ready(function($) {
                             
                             if (label.includes('Words Left')) {
                                 const $value = $(this).find('.eat-compact-value');
-                                $value.text(stats.words_left.toLocaleString());
+                                const isUnlimited = stats.word_limit === -1 || stats.words_left === -1;
+                                $value.text(isUnlimited ? 'Unlimited' : stats.words_left.toLocaleString());
                                 
                                 // Update tooltip
-                                $value.attr('title', 'Used: ' + stats.words_used.toLocaleString() + ' of ' + stats.word_limit.toLocaleString() + ' words');
+                                $value.attr('title', isUnlimited ? 'Unlimited plan' : 'Used: ' + stats.words_used.toLocaleString() + ' of ' + stats.word_limit.toLocaleString() + ' words');
                                 
-                                // Add warning if low
-                                if (stats.words_left <= 0) {
+                                // Add warning if low (not for unlimited)
+                                if (!isUnlimited && stats.words_left <= 0) {
                                     $value.addClass('eat-compact-limit-reached');
                                 } else {
                                     $value.removeClass('eat-compact-limit-reached');
