@@ -69,7 +69,7 @@ class AITRFOEL_License_Manager_Server {
     /**
      * Get license key from Freemius (with caching to avoid repeated SDK calls)
      */
-    private function get_license_key() {
+    public function get_license_key() {
         // Return cached value if available
         if ($this->cached_license_key !== null) {
             return $this->cached_license_key;
@@ -563,6 +563,21 @@ class AITRFOEL_License_Manager_Server {
      * Show cooldown admin notices
      */
     public function show_cooldown_notices() {
+        // If user has a paid/unlimited license, cooldown notices don't apply.
+        // This handles the case where a site has both a free entry and a paid
+        // license on the server — the free entry may trigger cooldown but the
+        // paid license should take priority.
+        $status = $this->get_license_status();
+        if ($status && (
+            (isset($status['word_limit']) && $status['word_limit'] === -1) ||
+            (isset($status['plan']) && $status['plan'] !== 'Free' && $status['plan'] !== 'Free User')
+        )) {
+            // Paid plan — clear any stale cooldown state and skip notice
+            delete_transient('aitrfoel_cooldown_activated');
+            delete_option('aitrfoel_cooldown_end_date');
+            return;
+        }
+
         // Check if cooldown was just activated
         if (get_transient('aitrfoel_cooldown_activated')) {
             delete_transient('aitrfoel_cooldown_activated');

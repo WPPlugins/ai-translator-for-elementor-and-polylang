@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.9
+Stable tag: 1.4.10
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,11 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.10 =
+* Fixed: "Monthly Limit Reached" notice incorrectly showing for paid license users
+* Fixed: Usage reporting now sends actual license key instead of null
+* Improved: Paid license detection prevents false cooldown activation
+
 = 1.4.4 =
 * Improved: Metabox now shows helpful setup message with link to dashboard when no multilingual plugin is configured
 

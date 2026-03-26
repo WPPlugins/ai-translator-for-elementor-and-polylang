@@ -805,7 +805,7 @@ class AITRFOEL_Translation_Engine {
                     'blocking' => true,
                     'body' => json_encode([
                         'site_url' => home_url(),
-                        'license_key' => null,
+                        'license_key' => $license_manager->get_license_key(),
                         'words_used' => $word_count,
                         'target_lang' => $target_lang
                     ]),
@@ -1658,12 +1658,13 @@ class AITRFOEL_Translation_Engine {
      */
     private function report_usage_to_server($word_count, $target_lang) {
         try {
+            $license_manager = AITRFOEL_License_Manager_Server::get_instance();
             $response = wp_remote_post('https://meeptech.com/api/eat/report-usage', [
                 'timeout' => 5,
                 'blocking' => true,
                 'body' => json_encode([
                     'site_url' => home_url(),
-                    'license_key' => null,
+                    'license_key' => $license_manager->get_license_key(),
                     'words_used' => $word_count,
                     'target_lang' => $target_lang
                 ]),
