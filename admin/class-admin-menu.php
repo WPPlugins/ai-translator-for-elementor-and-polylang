@@ -1764,7 +1764,8 @@ class AITRFOEL_Admin_Menu {
                     
                     <div class="eat-bulk-actions">
                         <button type="button" class="button" id="eat-bulk-settings" title="Configure translation settings">
-                            ⚙️ <?php esc_html_e('Settings', 'ai-translator-for-elementor-and-polylang'); ?>
+                            <span class="eat-btn-label">⚙️ <?php esc_html_e('Settings', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                            <span class="eat-btn-sub"><?php esc_html_e('exclude words', 'ai-translator-for-elementor-and-polylang'); ?></span>
                         </button>
                         <a href="<?php echo esc_url(admin_url('admin.php?page=ai-translator-for-elementor-and-polylang-translate-all')); ?>" class="button" id="eat-translate-all-site" title="<?php esc_attr_e('Translate your entire site at once', 'ai-translator-for-elementor-and-polylang'); ?>">
                             <span class="eat-btn-label">🌐 <?php esc_html_e('Translate All Site', 'ai-translator-for-elementor-and-polylang'); ?></span>

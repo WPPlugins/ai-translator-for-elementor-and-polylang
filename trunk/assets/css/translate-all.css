@@ -1,0 +1,631 @@
+/**
+ * Translate All – Admin Page Styles
+ */
+
+/* ── Usage Card ────────────────────────────────────────── */
+.aitrfoel-ta-usage-card {
+    background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%);
+    border-left: 4px solid #2271b1;
+}
+
+.aitrfoel-ta-usage-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.aitrfoel-ta-usage-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.aitrfoel-ta-usage-label {
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.aitrfoel-ta-usage-value {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.aitrfoel-ta-usage-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.aitrfoel-ta-usage-bar {
+    flex: 1;
+    height: 8px;
+    background: #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.aitrfoel-ta-usage-bar-fill {
+    height: 100%;
+    background: #2271b1;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.aitrfoel-ta-usage-bar-fill.warning {
+    background: #dba617;
+}
+
+.aitrfoel-ta-usage-bar-fill.full {
+    background: #d63638;
+}
+
+.aitrfoel-ta-usage-pct {
+    font-size: 13px;
+    color: #666;
+    white-space: nowrap;
+}
+
+/* ── Steps ─────────────────────────────────────────────── */
+.aitrfoel-ta-step {
+    margin-bottom: 20px;
+}
+
+.aitrfoel-ta-step h3 {
+    margin-top: 0;
+    font-size: 16px;
+}
+
+/* ── Selection Action Buttons ──────────────────────────── */
+.aitrfoel-ta-selection-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.aitrfoel-ta-selection-actions .button-small {
+    min-height: 28px;
+    line-height: 26px;
+    font-size: 12px;
+}
+
+/* ── Post Type Cards ───────────────────────────────────── */
+.aitrfoel-ta-post-types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.aitrfoel-ta-post-type-card {
+    cursor: pointer;
+}
+
+.aitrfoel-ta-post-type-card input[type="checkbox"] {
+    display: none;
+}
+
+.aitrfoel-ta-post-type-inner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    transition: all 0.2s;
+    min-width: 160px;
+}
+
+.aitrfoel-ta-post-type-card input:checked + .aitrfoel-ta-post-type-inner {
+    border-color: #2271b1;
+    background: #f0f6fc;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.aitrfoel-ta-post-type-card:hover .aitrfoel-ta-post-type-inner {
+    border-color: #2271b1;
+}
+
+.aitrfoel-ta-post-type-icon {
+    font-size: 24px;
+}
+
+.aitrfoel-ta-post-type-name {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.aitrfoel-ta-post-type-count {
+    color: #666;
+    font-size: 13px;
+    margin-left: auto;
+}
+
+/* ── Language Cards ────────────────────────────────────── */
+.aitrfoel-ta-languages {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.aitrfoel-ta-lang-card {
+    cursor: pointer;
+}
+
+.aitrfoel-ta-lang-card input[type="checkbox"] {
+    display: none;
+}
+
+.aitrfoel-ta-lang-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    transition: all 0.2s;
+}
+
+.aitrfoel-ta-lang-card input:checked + .aitrfoel-ta-lang-inner {
+    border-color: #2271b1;
+    background: #f0f6fc;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.aitrfoel-ta-lang-card:hover .aitrfoel-ta-lang-inner {
+    border-color: #2271b1;
+}
+
+.aitrfoel-ta-lang-code {
+    background: #2271b1;
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.aitrfoel-ta-lang-name {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Language badge in detail table */
+.eat-lang-flag {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    line-height: 1.4;
+}
+
+.eat-lang-flag.eat-lang-exists {
+    background: #2271b1;
+    color: #fff;
+}
+
+/* ── Scan Results Table ────────────────────────────────── */
+.aitrfoel-ta-results-table {
+    margin-top: 16px;
+}
+
+.aitrfoel-ta-results-table th {
+    font-weight: 600;
+    background: #f6f7f7;
+}
+
+.aitrfoel-ta-results-table td,
+.aitrfoel-ta-results-table th {
+    padding: 10px 12px;
+}
+
+.aitrfoel-ta-results-table tfoot td {
+    font-weight: 700;
+    background: #f0f6fc;
+    border-top: 2px solid #2271b1;
+}
+
+/* ── Recommendation Box ────────────────────────────────── */
+.aitrfoel-ta-recommendation {
+    margin-top: 20px;
+    padding: 16px 20px;
+    border-radius: 8px;
+    border-left: 4px solid #2271b1;
+    background: #f0f6fc;
+}
+
+.aitrfoel-ta-recommendation.fits {
+    border-left-color: #00a32a;
+    background: #f0faf0;
+}
+
+.aitrfoel-ta-recommendation.exceeds {
+    border-left-color: #dba617;
+    background: #fff8e5;
+}
+
+.aitrfoel-ta-recommendation.over-limit {
+    border-left-color: #d63638;
+    background: #fff0f0;
+}
+
+.aitrfoel-ta-recommendation h4 {
+    margin: 0 0 8px 0;
+}
+
+.aitrfoel-ta-recommendation p {
+    margin: 4px 0;
+}
+
+.aitrfoel-ta-recommendation .highlight {
+    font-weight: 700;
+    font-size: 16px;
+}
+
+/* ── Action Cards ──────────────────────────────────────── */
+.aitrfoel-ta-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 12px;
+}
+
+.aitrfoel-ta-action-card {
+    padding: 20px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    background: #fff;
+    text-align: center;
+}
+
+.aitrfoel-ta-action-card:hover {
+    border-color: #2271b1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.aitrfoel-ta-action-icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+    padding: 8px 0;
+    line-height: 1;
+}
+
+.aitrfoel-ta-action-card h4 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+}
+
+.aitrfoel-ta-action-card p {
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 16px;
+}
+
+.aitrfoel-ta-schedule-info {
+    background: #f0f6fc;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+.aitrfoel-ta-schedule-info strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+/* ── Progress ──────────────────────────────────────────── */
+.aitrfoel-ta-progress-wrap {
+    margin: 16px 0;
+}
+
+.aitrfoel-ta-progress-bar {
+    height: 24px;
+    background: #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.aitrfoel-ta-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2271b1, #00a32a);
+    border-radius: 12px;
+    transition: width 0.5s ease;
+    min-width: 0;
+}
+
+.aitrfoel-ta-progress-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #555;
+}
+
+#ta-progress-text {
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.aitrfoel-ta-progress-log {
+    max-height: 200px;
+    overflow-y: auto;
+    background: #f6f7f7;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 12px;
+    margin: 12px 0;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.aitrfoel-ta-progress-log .log-entry {
+    padding: 2px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.aitrfoel-ta-progress-log .log-entry:last-child {
+    border-bottom: none;
+}
+
+.aitrfoel-ta-progress-log .log-entry.success {
+    color: #00a32a;
+}
+
+.aitrfoel-ta-progress-log .log-entry.error {
+    color: #d63638;
+}
+
+.aitrfoel-ta-progress-log .log-entry.info {
+    color: #2271b1;
+}
+
+.aitrfoel-ta-progress-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 12px;
+}
+
+.aitrfoel-ta-progress-actions .button {
+    min-height: 32px;
+    line-height: 30px;
+}
+
+#ta-cancel-btn {
+    color: #d63638;
+}
+
+#ta-cancel-btn:hover {
+    color: #a00;
+}
+
+/* Stopped / Paused progress bar states */
+.aitrfoel-ta-progress-fill.stopped {
+    background: linear-gradient(90deg, #dba617, #e8a000);
+}
+
+.aitrfoel-ta-progress-fill.paused {
+    background: linear-gradient(90deg, #72aee6, #2271b1);
+    animation: ta-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes ta-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* ── Cron Status ───────────────────────────────────────── */
+.aitrfoel-ta-cron-status {
+    border-left: 4px solid #dba617;
+    background: #fff8e5;
+}
+
+.aitrfoel-ta-cron-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    background: #dba617;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* ── Responsive ────────────────────────────────────────── */
+@media (max-width: 782px) {
+    .aitrfoel-ta-usage-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .aitrfoel-ta-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .aitrfoel-ta-post-types,
+    .aitrfoel-ta-languages {
+        flex-direction: column;
+    }
+
+    .aitrfoel-ta-post-type-inner,
+    .aitrfoel-ta-lang-inner {
+        min-width: auto;
+    }
+}
+
+/* ── Summary Count Colors ──────────────────────────────── */
+.aitrfoel-ta-count-done {
+    color: #00a32a;
+    font-weight: 600;
+}
+
+.aitrfoel-ta-count-pending {
+    color: #dba617;
+    font-weight: 600;
+}
+
+/* ── Per-Page Detail Section ───────────────────────────── */
+.aitrfoel-ta-posts-detail {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #ddd;
+}
+
+.aitrfoel-ta-posts-detail h4 {
+    margin: 0 0 12px 0;
+    font-size: 15px;
+}
+
+.aitrfoel-ta-detail-filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.ta-detail-filter {
+    padding: 6px 14px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s;
+}
+
+.ta-detail-filter:hover {
+    border-color: #2271b1;
+    color: #2271b1;
+}
+
+.ta-detail-filter.active {
+    background: #2271b1;
+    color: #fff;
+    border-color: #2271b1;
+}
+
+.aitrfoel-ta-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.aitrfoel-ta-detail-table th {
+    font-weight: 600;
+    background: #f6f7f7;
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 13px;
+    border-bottom: 2px solid #ddd;
+}
+
+.aitrfoel-ta-detail-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.aitrfoel-ta-detail-table tr:hover td {
+    background: #f9f9f9;
+}
+
+.aitrfoel-ta-detail-table a {
+    text-decoration: none;
+    color: #2271b1;
+}
+
+.aitrfoel-ta-detail-table a:hover {
+    color: #135e96;
+    text-decoration: underline;
+}
+
+/* ── Editor Badges ─────────────────────────────────────── */
+.aitrfoel-ta-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+/* ── Language Tags ─────────────────────────────────────── */
+.aitrfoel-ta-lang-tags {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.aitrfoel-ta-lang-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.aitrfoel-ta-lang-tag.done {
+    background: #e6f7e6;
+    color: #00a32a;
+    border: 1px solid #b8e6b8;
+}
+
+.aitrfoel-ta-lang-tag.missing {
+    background: #fff0e0;
+    color: #b26200;
+    border: 1px solid #f0d4a8;
+}
+
+/* ── Status Labels ─────────────────────────────────────── */
+.aitrfoel-ta-status-done {
+    font-weight: 600;
+    color: #00a32a;
+    font-size: 13px;
+}
+
+.aitrfoel-ta-status-pending {
+    font-weight: 600;
+    color: #dba617;
+    font-size: 13px;
+}
+
+/* ── View Link Arrow ───────────────────────────────────── */
+.aitrfoel-ta-view-link {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 14px;
+    color: #999;
+    text-decoration: none !important;
+}
+
+.aitrfoel-ta-view-link:hover {
+    color: #2271b1;
+}
+
+/* ── Translated Pages List (completion) ────────────────── */
+.aitrfoel-ta-translated-list {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #ddd;
+}
+
+.aitrfoel-ta-translated-list h4 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+}

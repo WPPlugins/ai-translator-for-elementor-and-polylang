@@ -311,7 +311,8 @@
 }
 
 /* ── Bulk Translation Bar ────────────────────────────────────── */
-#eat-translate-all-site {
+#eat-translate-all-site,
+#eat-bulk-settings {
     border: 1.5px dashed var(--mt-blue) !important;
     color: var(--mt-blue) !important;
     background: var(--mt-blue-50) !important;
@@ -328,7 +329,8 @@
     gap: 0 !important;
 }
 
-#eat-translate-all-site .eat-btn-sub {
+#eat-translate-all-site .eat-btn-sub,
+#eat-bulk-settings .eat-btn-sub {
     font-size: 9px;
     opacity: 0.6;
     font-weight: 400;

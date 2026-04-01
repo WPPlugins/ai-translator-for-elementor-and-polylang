@@ -1,0 +1,221 @@
+# Copyright (C) 2025 Meeptech
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: WP AI Translator for Elementor and Polylang 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-ai-translator-for-elementor-polylang\n"
+"POT-Creation-Date: 2025-01-10 00:00:00+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+
+#: elementor-ai-translator.php:180
+msgid "Translating..."
+msgstr ""
+
+#: elementor-ai-translator.php:181
+msgid "Translation completed successfully!"
+msgstr ""
+
+#: elementor-ai-translator.php:182
+msgid "Translation failed. Please try again."
+msgstr ""
+
+#: elementor-ai-translator.php:183
+msgid "Are you sure you want to translate this content?"
+msgstr ""
+
+#: elementor-ai-translator.php:235
+msgid "Loading pages..."
+msgstr ""
+
+#: elementor-ai-translator.php:236
+msgid "Select a page to translate"
+msgstr ""
+
+#: elementor-ai-translator.php:237
+msgid "Error loading pages"
+msgstr ""
+
+#: elementor-ai-translator.php:238
+msgid "Please select a page first"
+msgstr ""
+
+#: elementor-ai-translator.php:241
+msgid "Calculating..."
+msgstr ""
+
+#: elementor-ai-translator.php:242
+msgid "Estimated Cost"
+msgstr ""
+
+#: elementor-ai-translator.php:243
+msgid "Words"
+msgstr ""
+
+#: elementor-ai-translator.php:244
+msgid "Tokens"
+msgstr ""
+
+#: elementor-ai-translator.php:245
+msgid "Provider"
+msgstr ""
+
+#: elementor-ai-translator.php:246
+msgid "Model"
+msgstr ""
+
+#: elementor-ai-translator.php:247
+msgid "This page contains a lot of content and may take longer to translate."
+msgstr ""
+
+#: elementor-ai-translator.php:248
+msgid "Error calculating cost"
+msgstr ""
+
+#: elementor-ai-translator.php:249
+msgid "Estimate Cost"
+msgstr ""
+
+#: elementor-ai-translator.php:252
+msgid "Please select a target language"
+msgstr ""
+
+#: elementor-ai-translator.php:253
+msgid "Time taken"
+msgstr ""
+
+#: elementor-ai-translator.php:254
+msgid "Words translated"
+msgstr ""
+
+#: elementor-ai-translator.php:255
+msgid "Actual cost"
+msgstr ""
+
+#: elementor-ai-translator.php:256
+msgid "Preview Translation"
+msgstr ""
+
+#: elementor-ai-translator.php:257
+msgid "Edit Translation"
+msgstr ""
+
+#: elementor-ai-translator.php:258
+msgid "Publish Now"
+msgstr ""
+
+#: elementor-ai-translator.php:259
+msgid "Translate Page"
+msgstr ""
+
+#: elementor-ai-translator.php:260
+msgid "Are you sure you want to publish this page?"
+msgstr ""
+
+#: elementor-ai-translator.php:261
+msgid "Page published successfully!"
+msgstr ""
+
+#: elementor-ai-translator.php:264
+msgid "Request timed out. Please try again."
+msgstr ""
+
+#: elementor-ai-translator.php:265
+msgid "Network error:"
+msgstr ""
+
+#: elementor-ai-translator.php:268
+msgid "Are you sure you want to clear the translation cache?"
+msgstr ""
+
+#: elementor-ai-translator.php:271
+msgid "Pages Translated"
+msgstr ""
+
+#: elementor-ai-translator.php:272
+msgid "Words Processed"
+msgstr ""
+
+#: elementor-ai-translator.php:273
+msgid "Total Cost"
+msgstr ""
+
+#: elementor-ai-translator.php:274
+msgid "Daily Average"
+msgstr ""
+
+#: elementor-ai-translator.php:275
+msgid "Breakdown by Provider"
+msgstr ""
+
+#: elementor-ai-translator.php:276
+msgid "Uses"
+msgstr ""
+
+#: elementor-ai-translator.php:277
+msgid "Cost"
+msgstr ""
+
+#: elementor-ai-translator.php:278
+msgid "Error loading statistics"
+msgstr ""
+
+#: elementor-ai-translator.php:281
+msgid "Checking..."
+msgstr ""
+
+#: elementor-ai-translator.php:282
+msgid "Theme check complete"
+msgstr ""
+
+#: elementor-ai-translator.php:283
+msgid "Re-check Compatibility"
+msgstr ""
+
+#: elementor-ai-translator.php:284
+msgid "Theme"
+msgstr ""
+
+#: elementor-ai-translator.php:285
+msgid "Status"
+msgstr ""
+
+#: elementor-ai-translator.php:286
+msgid "Fields found"
+msgstr ""
+
+#: elementor-ai-translator.php:287
+msgid "View fields"
+msgstr ""
+
+#: elementor-ai-translator.php:288
+msgid "Detected Fields"
+msgstr ""
+
+#: elementor-ai-translator.php:289
+msgid "Copy all fields"
+msgstr ""
+
+#: elementor-ai-translator.php:290
+msgid "No fields found"
+msgstr ""
+
+#: elementor-ai-translator.php:291
+msgid "Fields copied to clipboard"
+msgstr ""
+
+#: elementor-ai-translator.php:318
+msgid "Elementor AI Translator requires Elementor to be installed and activated."
+msgstr ""
+
+#: elementor-ai-translator.php:328
+msgid "Elementor AI Translator requires Elementor version 3.0.0 or higher."
+msgstr ""
+
+#: elementor-ai-translator.php:338
+msgid "Elementor AI Translator requires PHP version 7.4 or higher."
+msgstr "

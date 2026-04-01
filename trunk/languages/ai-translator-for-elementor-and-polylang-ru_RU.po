@@ -1,0 +1,1497 @@
+# Russian translation for WP AI Translator for Elementor and Polylang
+# Copyright (C) 2025 Meeptech
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: WP AI Translator for Elementor and Polylang 1.0.9\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-ai-translator-for-elementor-polylang\n"
+"POT-Creation-Date: 2025-01-10 00:00:00+00:00\n"
+"PO-Revision-Date: 2025-12-09 12:00:00+00:00\n"
+"Last-Translator: Meeptech <support@meeptech.com>\n"
+"Language-Team: Russian <ru@li.org>\n"
+"Language: ru_RU\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: ai-translator-for-elementor-polylang.php:180
+msgid "Translating..."
+msgstr "Перевод..."
+
+#: ai-translator-for-elementor-polylang.php:181
+msgid "Translation completed successfully!"
+msgstr "Перевод успешно завершён!"
+
+#: ai-translator-for-elementor-polylang.php:182
+msgid "Translation failed. Please try again."
+msgstr "Ошибка перевода. Пожалуйста, попробуйте снова."
+
+#: ai-translator-for-elementor-polylang.php:183
+msgid "Are you sure you want to translate this content?"
+msgstr "Вы уверены, что хотите перевести этот контент?"
+
+#: ai-translator-for-elementor-polylang.php:235
+msgid "Loading pages..."
+msgstr "Загрузка страниц..."
+
+#: ai-translator-for-elementor-polylang.php:236
+msgid "Select a page to translate"
+msgstr "Выберите страницу для перевода"
+
+#: ai-translator-for-elementor-polylang.php:237
+msgid "Error loading pages"
+msgstr "Ошибка загрузки страниц"
+
+#: ai-translator-for-elementor-polylang.php:238
+msgid "Please select a page first"
+msgstr "Сначала выберите страницу"
+
+#: ai-translator-for-elementor-polylang.php:241
+msgid "Calculating..."
+msgstr "Вычисление..."
+
+#: ai-translator-for-elementor-polylang.php:242
+msgid "Estimated Cost"
+msgstr "Расчётная стоимость"
+
+#: ai-translator-for-elementor-polylang.php:243
+msgid "Words"
+msgstr "Слова"
+
+#: ai-translator-for-elementor-polylang.php:244
+msgid "Tokens"
+msgstr "Токены"
+
+#: ai-translator-for-elementor-polylang.php:245
+msgid "Provider"
+msgstr "Провайдер"
+
+#: ai-translator-for-elementor-polylang.php:246
+msgid "Model"
+msgstr "Модель"
+
+#: ai-translator-for-elementor-polylang.php:247
+msgid "This page contains a lot of content and may take longer to translate."
+msgstr "Эта страница содержит много контента, и перевод может занять больше времени."
+
+#: ai-translator-for-elementor-polylang.php:248
+msgid "Error calculating cost"
+msgstr "Ошибка расчёта стоимости"
+
+#: ai-translator-for-elementor-polylang.php:249
+msgid "Estimate Cost"
+msgstr "Рассчитать стоимость"
+
+#: ai-translator-for-elementor-polylang.php:252
+msgid "Please select a target language"
+msgstr "Пожалуйста, выберите целевой язык"
+
+#: ai-translator-for-elementor-polylang.php:253
+msgid "Time taken"
+msgstr "Затраченное время"
+
+#: ai-translator-for-elementor-polylang.php:254
+msgid "Words translated"
+msgstr "Переведено слов"
+
+#: ai-translator-for-elementor-polylang.php:255
+msgid "Actual cost"
+msgstr "Фактическая стоимость"
+
+#: ai-translator-for-elementor-polylang.php:256
+msgid "Preview Translation"
+msgstr "Предпросмотр перевода"
+
+#: ai-translator-for-elementor-polylang.php:257
+msgid "Edit Translation"
+msgstr "Редактировать перевод"
+
+#: ai-translator-for-elementor-polylang.php:258
+msgid "Publish Now"
+msgstr "Опубликовать сейчас"
+
+#: ai-translator-for-elementor-polylang.php:259
+msgid "Translate Page"
+msgstr "Перевести страницу"
+
+#: ai-translator-for-elementor-polylang.php:260
+msgid "Are you sure you want to publish this page?"
+msgstr "Вы уверены, что хотите опубликовать эту страницу?"
+
+#: ai-translator-for-elementor-polylang.php:261
+msgid "Page published successfully!"
+msgstr "Страница успешно опубликована!"
+
+#: ai-translator-for-elementor-polylang.php:264
+msgid "Request timed out. Please try again."
+msgstr "Время ожидания запроса истекло. Пожалуйста, попробуйте снова."
+
+#: ai-translator-for-elementor-polylang.php:265
+msgid "Network error:"
+msgstr "Сетевая ошибка:"
+
+#: ai-translator-for-elementor-polylang.php:268
+msgid "Are you sure you want to clear the translation cache?"
+msgstr "Вы уверены, что хотите очистить кеш переводов?"
+
+#: ai-translator-for-elementor-polylang.php:271
+msgid "Pages Translated"
+msgstr "Переведено страниц"
+
+#: ai-translator-for-elementor-polylang.php:272
+msgid "Words Processed"
+msgstr "Обработано слов"
+
+#: ai-translator-for-elementor-polylang.php:273
+msgid "Total Cost"
+msgstr "Общая стоимость"
+
+#: ai-translator-for-elementor-polylang.php:274
+msgid "Daily Average"
+msgstr "Среднее за день"
+
+#: ai-translator-for-elementor-polylang.php:275
+msgid "Breakdown by Provider"
+msgstr "Разбивка по провайдерам"
+
+#: ai-translator-for-elementor-polylang.php:276
+msgid "Uses"
+msgstr "Использований"
+
+#: ai-translator-for-elementor-polylang.php:277
+msgid "Cost"
+msgstr "Стоимость"
+
+#: ai-translator-for-elementor-polylang.php:278
+msgid "Error loading statistics"
+msgstr "Ошибка загрузки статистики"
+
+#: ai-translator-for-elementor-polylang.php:281
+msgid "Checking..."
+msgstr "Проверка..."
+
+#: ai-translator-for-elementor-polylang.php:282
+msgid "Theme check complete"
+msgstr "Проверка темы завершена"
+
+#: ai-translator-for-elementor-polylang.php:283
+msgid "Re-check Compatibility"
+msgstr "Проверить совместимость снова"
+
+#: ai-translator-for-elementor-polylang.php:284
+msgid "Theme"
+msgstr "Тема"
+
+#: ai-translator-for-elementor-polylang.php:285
+msgid "Status"
+msgstr "Статус"
+
+#: ai-translator-for-elementor-polylang.php:286
+msgid "Fields found"
+msgstr "Найдено полей"
+
+#: ai-translator-for-elementor-polylang.php:287
+msgid "View fields"
+msgstr "Просмотр полей"
+
+#: ai-translator-for-elementor-polylang.php:288
+msgid "Detected Fields"
+msgstr "Обнаруженные поля"
+
+#: ai-translator-for-elementor-polylang.php:289
+msgid "Copy all fields"
+msgstr "Копировать все поля"
+
+#: ai-translator-for-elementor-polylang.php:290
+msgid "No fields found"
+msgstr "Поля не найдены"
+
+#: ai-translator-for-elementor-polylang.php:291
+msgid "Fields copied to clipboard"
+msgstr "Поля скопированы в буфер обмена"
+
+#: ai-translator-for-elementor-polylang.php:318
+msgid "Elementor AI Translator requires Elementor to be installed and activated."
+msgstr "Elementor AI Translator требует установки и активации Elementor."
+
+#: ai-translator-for-elementor-polylang.php:328
+msgid "Elementor AI Translator requires Elementor version 3.0.0 or higher."
+msgstr "Elementor AI Translator требует Elementor версии 3.0.0 или выше."
+
+#: ai-translator-for-elementor-polylang.php:338
+msgid "Elementor AI Translator requires PHP version 7.4 or higher."
+msgstr "Elementor AI Translator требует PHP версии 7.4 или выше."
+
+#: admin/class-admin-menu.php
+msgid "AI Translator"
+msgstr "ИИ-переводчик"
+
+#: admin/class-admin-menu.php
+msgid "Settings"
+msgstr "Настройки"
+
+#: admin/class-admin-menu.php
+msgid "Dashboard"
+msgstr "Панель управления"
+
+#: admin/class-admin-menu.php
+msgid "Source Language"
+msgstr "Исходный язык"
+
+#: admin/class-admin-menu.php
+msgid "Target Language"
+msgstr "Целевой язык"
+
+#: admin/class-admin-menu.php
+msgid "Select Page"
+msgstr "Выберите страницу"
+
+#: admin/class-admin-menu.php
+msgid "Fetch Content"
+msgstr "Получить контент"
+
+#: admin/class-admin-menu.php
+msgid "Translate"
+msgstr "Перевести"
+
+#: admin/class-admin-menu.php
+msgid "Reset"
+msgstr "Сбросить"
+
+#: admin/class-admin-menu.php
+msgid "Select All"
+msgstr "Выбрать все"
+
+#: admin/class-admin-menu.php
+msgid "API Configuration"
+msgstr "Настройка API"
+
+#: admin/class-admin-menu.php
+msgid "API Key"
+msgstr "API-ключ"
+
+#: admin/class-admin-menu.php
+msgid "Save Settings"
+msgstr "Сохранить настройки"
+
+#: admin/class-admin-menu.php
+msgid "Clear Cache"
+msgstr "Очистить кеш"
+
+#: admin/class-admin-menu.php
+msgid "Translation Options"
+msgstr "Опции перевода"
+
+#: admin/class-admin-menu.php
+msgid "Preserve formatting"
+msgstr "Сохранять форматирование"
+
+#: admin/class-admin-menu.php
+msgid "Create as draft"
+msgstr "Создать как черновик"
+
+#: admin/class-admin-menu.php
+msgid "Documentation"
+msgstr "Документация"
+
+#: admin/class-admin-menu.php
+msgid "Support"
+msgstr "Поддержка"
+
+#: admin/class-admin-menu.php
+msgid "Upgrade to Pro"
+msgstr "Обновить до Pro"
+
+#: includes/class-translation-engine.php
+msgid "Translation in progress..."
+msgstr "Перевод выполняется..."
+
+#: includes/class-translation-engine.php
+msgid "Processing widgets..."
+msgstr "Обработка виджетов..."
+
+#: includes/class-translation-engine.php
+msgid "Saving translation..."
+msgstr "Сохранение перевода..."
+
+#: includes/class-usage-tracker.php
+msgid "Daily limit reached"
+msgstr "Достигнут дневной лимит"
+
+#: includes/class-usage-tracker.php
+msgid "Please wait before trying again"
+msgstr "Пожалуйста, подождите перед повторной попыткой"
+
+#: includes/class-license-manager.php
+msgid "License activated successfully"
+msgstr "Лицензия успешно активирована"
+
+#: includes/class-license-manager.php
+msgid "Invalid license key"
+msgstr "Недействительный лицензионный ключ"
+
+#: includes/class-license-manager.php
+msgid "License expired"
+msgstr "Лицензия истекла"
+
+#: ai-translator-for-elementor-polylang.php (new)
+msgid "Clearing translation cache..."
+msgstr "Очистка кэша переводов..."
+
+#: ai-translator-for-elementor-polylang.php (new)
+msgid "Failed to clear cache:"
+msgstr "Ошибка очистки кэша:"
+
+#: ai-translator-for-elementor-polylang.php (new)
+msgid "Found"
+msgstr "Найдено"
+
+#: ai-translator-for-elementor-polylang.php (new)
+msgid "translatable strings."
+msgstr "строк для перевода."
+
+#: ai-translator-for-elementor-polylang.php (new)
+msgid "No translatable content found on this page."
+msgstr "На этой странице не найдено контента для перевода."
+
+#: ai-translator-for-elementor-polylang.php (new)
+msgid "Please select at least one string to translate."
+msgstr "Пожалуйста, выберите хотя бы одну строку для перевода."
+
+#: ai-translator-for-elementor-polylang.php (new)
+msgid "Ready to translate another page."
+msgstr "Готов к переводу другой страницы."
+
+#: ai-translator-for-elementor-polylang.php (new)
+msgid "Cost estimation completed successfully!"
+msgstr "Расчёт стоимости успешно завершён!"
+
+#: ai-translator-for-elementor-polylang.php (new)
+msgid "Clearing translation cache..."
+msgstr "Очистка кэша переводов..."
+
+#: ai-translator-for-elementor-polylang.php (new)
+msgid "Failed to clear cache:"
+msgstr "Ошибка очистки кэша:"
+
+#: ai-translator-for-elementor-polylang.php (new)
+msgid "Found"
+msgstr "Найдено"
+
+#: ai-translator-for-elementor-polylang.php (new)
+msgid "translatable strings."
+msgstr "строк для перевода."
+
+#: ai-translator-for-elementor-polylang.php (new)
+msgid "No translatable content found on this page."
+msgstr "На этой странице не найдено контента для перевода."
+
+#: ai-translator-for-elementor-polylang.php (new)
+msgid "Please select at least one string to translate."
+msgstr "Пожалуйста, выберите хотя бы одну строку для перевода."
+
+#: ai-translator-for-elementor-polylang.php (new)
+msgid "Ready to translate another page."
+msgstr "Готов к переводу другой страницы."
+
+#: ai-translator-for-elementor-polylang.php (new)
+msgid "Cost estimation completed successfully!"
+msgstr "Расчёт стоимости успешно завершён!"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Start Translation"
+msgstr "Начать перевод"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Translation in Progress"
+msgstr "Перевод выполняется"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Translation queued, waiting to start"
+msgstr "Перевод в очереди, ожидание запуска"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Translation paused: word limit reached"
+msgstr "Перевод приостановлен: достигнут лимит слов"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Translation failed to start."
+msgstr "Не удалось запустить перевод."
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Translation is already in progress. Please wait for completion."
+msgstr "Перевод уже выполняется. Пожалуйста, дождитесь завершения."
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Checking active translation status..."
+msgstr "Проверка статуса активного перевода..."
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Processing translation"
+msgstr "Обработка перевода"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Completed"
+msgstr "Завершено"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Please select at least one page to translate."
+msgstr "Пожалуйста, выберите хотя бы одну страницу для перевода."
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Please select at least one target language."
+msgstr "Пожалуйста, выберите хотя бы один целевой язык."
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Select at least one page to start translation"
+msgstr "Выберите хотя бы одну страницу для начала перевода"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Select target languages to start translation"
+msgstr "Выберите целевые языки для начала перевода"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Network error during pre-analysis"
+msgstr "Сетевая ошибка при предварительном анализе"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Pre-analysis failed"
+msgstr "Ошибка предварительного анализа"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "%d pages selected"
+msgstr "Выбрано страниц: %d"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Est: ~%d words"
+msgstr "Примерно ~%d слов"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Select languages "
+msgstr "Выберите языки "
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "%d languages "
+msgstr "Языков: %d "
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Start Translation"
+msgstr "Начать перевод"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Translation in Progress"
+msgstr "Перевод выполняется"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Translation queued, waiting to start"
+msgstr "Перевод в очереди, ожидание запуска"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Translation paused: word limit reached"
+msgstr "Перевод приостановлен: достигнут лимит слов"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Translation failed to start."
+msgstr "Не удалось запустить перевод."
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Translation is already in progress. Please wait for completion."
+msgstr "Перевод уже выполняется. Пожалуйста, дождитесь завершения."
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Checking active translation status..."
+msgstr "Проверка статуса активного перевода..."
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Processing translation"
+msgstr "Обработка перевода"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Completed"
+msgstr "Завершено"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Please select at least one page to translate."
+msgstr "Пожалуйста, выберите хотя бы одну страницу для перевода."
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Please select at least one target language."
+msgstr "Пожалуйста, выберите хотя бы один целевой язык."
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Select at least one page to start translation"
+msgstr "Выберите хотя бы одну страницу для начала перевода"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Select target languages to start translation"
+msgstr "Выберите целевые языки для начала перевода"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Network error during pre-analysis"
+msgstr "Сетевая ошибка при предварительном анализе"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Pre-analysis failed"
+msgstr "Ошибка предварительного анализа"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "%d pages selected"
+msgstr "Выбрано страниц: %d"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Est: ~%d words"
+msgstr "Примерно ~%d слов"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Select languages "
+msgstr "Выберите языки "
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "%d languages "
+msgstr "Языков: %d "
+
+#: admin/class-admin-menu.php (dashboard page)
+msgid "Total Pages"
+msgstr "Всего страниц"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Words Translated"
+msgstr "Переведено слов"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Words Left"
+msgstr "Осталось слов"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "License"
+msgstr "Лицензия"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Free"
+msgstr "Бесплатная"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Buy More Words"
+msgstr "Купить больше слов"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Upgrade Plan"
+msgstr "Обновить план"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Dashboard"
+msgstr "Панель управления"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Manage translations for your pages. Select source pages to create bulk translations."
+msgstr "Управляйте переводами ваших страниц. Выберите исходные страницы для массового перевода."
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "From:"
+msgstr "Из:"
+
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "To:"
+msgstr "В:"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Select pages for translation"
+msgstr "Выберите страницы для перевода"
+
+#: admin/class-admin-menu.php (table headers)
+msgid "Page"
+msgstr "Страница"
+
+#: admin/class-admin-menu.php (table headers)
+msgid "Languages"
+msgstr "Языки"
+
+#: admin/class-admin-menu.php (table headers)
+msgid "Translation Status"
+msgstr "Статус перевода"
+
+#: admin/class-admin-menu.php (table headers)
+msgid "Page Type"
+msgstr "Тип страницы"
+
+#: admin/class-admin-menu.php (table headers)
+msgid "Actions"
+msgstr "Действия"
+
+#: admin/class-admin-menu.php (page status)
+msgid "Published"
+msgstr "Опубликовано"
+
+#: admin/class-admin-menu.php (page status)
+msgid "Draft"
+msgstr "Черновик"
+
+#: admin/class-admin-menu.php (page status)
+msgid "Private"
+msgstr "Личное"
+
+#: admin/class-admin-menu.php (page status)
+msgid "Pending Review"
+msgstr "На рассмотрении"
+
+#: admin/class-admin-menu.php (page status)
+msgid "Scheduled"
+msgstr "Запланировано"
+
+#: admin/class-admin-menu.php (page type)
+msgid "Elementor"
+msgstr "Elementor"
+
+#: admin/class-admin-menu.php (page type)
+msgid "Standard"
+msgstr "Стандартная"
+
+#: admin/class-admin-menu.php (table)
+msgid "translated"
+msgstr "переведено"
+
+#: admin/class-admin-menu.php (actions)
+msgid "Edit"
+msgstr "Редактировать"
+
+#: admin/class-admin-menu.php (actions)
+msgid "View"
+msgstr "Просмотр"
+
+#: admin/class-admin-menu.php (actions)
+msgid "Delete"
+msgstr "Удалить"
+
+#: admin/class-admin-menu.php (info box)
+msgid "Information"
+msgstr "Информация"
+
+#: admin/class-admin-menu.php (info box)
+msgid "Translation engine is not ideal - errors can be spotted in translated pages. We are constantly updating algorithm to provide you with the best experience. If you spot a bug in translation contact us via feedback form."
+msgstr "Движок перевода не идеален - в переведённых страницах могут быть ошибки. Мы постоянно обновляем алгоритм, чтобы обеспечить вам лучший опыт. Если вы заметили ошибку в переводе, свяжитесь с нами через форму обратной связи."
+
+#: admin/class-admin-menu.php (info box)
+msgid "Feedback Form"
+msgstr "Форма обратной связи"
+
+
+#: admin/class-admin-menu.php (dashboard page)
+msgid "Total Pages"
+msgstr "Всего страниц"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Words Translated"
+msgstr "Переведено слов"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Words Left"
+msgstr "Осталось слов"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "License"
+msgstr "Лицензия"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Free"
+msgstr "Бесплатная"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Buy More Words"
+msgstr "Купить больше слов"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Upgrade Plan"
+msgstr "Обновить план"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Dashboard"
+msgstr "Панель управления"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Manage translations for your pages. Select source pages to create bulk translations."
+msgstr "Управляйте переводами ваших страниц. Выберите исходные страницы для массового перевода."
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "From:"
+msgstr "Из:"
+
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "To:"
+msgstr "В:"
+
+#: admin/class-admin-menu.php (dashboard)
+msgid "Select pages for translation"
+msgstr "Выберите страницы для перевода"
+
+#: admin/class-admin-menu.php (table headers)
+msgid "Page"
+msgstr "Страница"
+
+#: admin/class-admin-menu.php (table headers)
+msgid "Languages"
+msgstr "Языки"
+
+#: admin/class-admin-menu.php (table headers)
+msgid "Translation Status"
+msgstr "Статус перевода"
+
+#: admin/class-admin-menu.php (table headers)
+msgid "Page Type"
+msgstr "Тип страницы"
+
+#: admin/class-admin-menu.php (table headers)
+msgid "Actions"
+msgstr "Действия"
+
+#: admin/class-admin-menu.php (page status)
+msgid "Published"
+msgstr "Опубликовано"
+
+#: admin/class-admin-menu.php (page status)
+msgid "Draft"
+msgstr "Черновик"
+
+#: admin/class-admin-menu.php (page status)
+msgid "Private"
+msgstr "Личное"
+
+#: admin/class-admin-menu.php (page status)
+msgid "Pending Review"
+msgstr "На рассмотрении"
+
+#: admin/class-admin-menu.php (page status)
+msgid "Scheduled"
+msgstr "Запланировано"
+
+#: admin/class-admin-menu.php (page type)
+msgid "Elementor"
+msgstr "Elementor"
+
+#: admin/class-admin-menu.php (page type)
+msgid "Standard"
+msgstr "Стандартная"
+
+#: admin/class-admin-menu.php (table)
+msgid "translated"
+msgstr "переведено"
+
+#: admin/class-admin-menu.php (actions)
+msgid "Edit"
+msgstr "Редактировать"
+
+#: admin/class-admin-menu.php (actions)
+msgid "View"
+msgstr "Просмотр"
+
+#: admin/class-admin-menu.php (actions)
+msgid "Delete"
+msgstr "Удалить"
+
+#: admin/class-admin-menu.php (info box)
+msgid "Information"
+msgstr "Информация"
+
+#: admin/class-admin-menu.php (info box)
+msgid "Translation engine is not ideal - errors can be spotted in translated pages. We are constantly updating algorithm to provide you with the best experience. If you spot a bug in translation contact us via feedback form."
+msgstr "Движок перевода не идеален - в переведённых страницах могут быть ошибки. Мы постоянно обновляем алгоритм, чтобы обеспечить вам лучший опыт. Если вы заметили ошибку в переводе, свяжитесь с нами через форму обратной связи."
+
+#: admin/class-admin-menu.php (info box)
+msgid "Feedback Form"
+msgstr "Форма обратной связи"
+
+
+
+#: admin/class-settings.php (settings)
+msgid "Current Plan:"
+msgstr "Текущий план:"
+
+#: admin/class-settings.php (settings)
+msgid "Words Translated:"
+msgstr "Переведено слов:"
+
+#: admin/class-settings.php (settings)
+msgid "Unlimited"
+msgstr "Неограничено"
+
+#: admin/class-settings.php (settings)
+msgid "Get your License from:"
+msgstr "Получите лицензию на:"
+
+#: admin/class-settings.php (settings)
+msgid "Upgrade page"
+msgstr "Страница обновления"
+
+#: admin/class-settings.php (settings)
+msgid "Upgrade License"
+msgstr "Обновить лицензию"
+
+#: admin/class-settings.php (settings)
+msgid "Get License"
+msgstr "Получить лицензию"
+
+
+#: admin/class-settings.php (settings)
+msgid "Enable Cache"
+msgstr "Включить кэш"
+
+#: admin/class-settings.php (settings)
+msgid "Cache translations to avoid duplicate API calls"
+msgstr "Кэшировать переводы, чтобы избежать повторных запросов к API"
+
+#: admin/class-settings.php (settings)
+msgid "Cache Duration (days)"
+msgstr "Время хранения кэша (дней)"
+
+#: admin/class-settings.php (settings)
+msgid "How long to keep translations in cache before refreshing."
+msgstr "Как долго хранить переводы в кэше перед обновлением."
+
+#: admin/class-settings.php (settings)
+msgid "Clear Cache"
+msgstr "Очистить кэш"
+
+
+#: admin/class-settings.php (settings)
+msgid "Remove all cached translations. Useful when you want to regenerate translations with updated content or settings."
+msgstr "Удалить все закэшированные переводы. Полезно, когда вы хотите повторно сгенерировать переводы с обновлённым содержимым или настройками."
+
+
+#: admin/class-settings.php (settings)
+msgid "Translated Page Status"
+msgstr "Статус переведённой страницы"
+
+#: admin/class-settings.php (settings)
+msgid "Draft (Recommended)"
+msgstr "Черновик (рекомендуется)"
+
+#: admin/class-settings.php (settings)
+msgid "Published (Auto-publish)"
+msgstr "Опубликовано (автопубликация)"
+
+#: admin/class-settings.php (settings)
+msgid "Inherit from Original"
+msgstr "Наследовать от оригинала"
+
+#: admin/class-settings.php (settings)
+msgid "Status for newly created translated pages. Draft is recommended for review before publishing."
+msgstr "Статус для вновь созданных переведённых страниц. Черновик рекомендуется для проверки перед публикацией."
+
+#: admin/class-settings.php (settings)
+msgid "Note:"
+msgstr "Примечание:"
+
+#: admin/class-settings.php (settings)
+msgid "LiteSpeed Cache optimizations only apply to published pages viewed by visitors."
+msgstr "Оптимизации LiteSpeed Cache применяются только к опубликованным страницам, просматриваемым посетителями."
+
+
+#: admin/class-settings.php (settings)
+msgid "Compatibility Status"
+msgstr "Статус совместимости"
+
+#: admin/class-settings.php (settings)
+msgid "Loading status..."
+msgstr "Загрузка статуса..."
+
+#: admin/class-settings.php (settings)
+msgid "Re-check Compatibility"
+msgstr "Проверить совместимость снова"
+
+#: admin/class-settings.php (settings)
+msgid "Additional Meta Fields"
+msgstr "Дополнительные мета-поля"
+
+#: admin/class-settings.php (settings)
+msgid "Advanced setting. Add comma-separated meta field keys here if the auto-detection misses something for your theme."
+msgstr "Расширенная настройка. Добавьте ключи мета-полей через запятую, если автоопределение что-то пропустило для вашей темы."
+
+#: admin/class-settings.php (privacy)
+msgid "Privacy & Data Collection"
+msgstr "Конфиденциальность и сбор данных"
+
+#: admin/class-settings.php (privacy)
+msgid "This plugin connects to our translation API at"
+msgstr "Этот плагин подключается к нашему API перевода на"
+
+#: admin/class-settings.php (privacy)
+msgid "to:"
+msgstr "для:"
+
+#: admin/class-settings.php (privacy)
+msgid "Process AI-powered translations"
+msgstr "Обработки переводов на основе ИИ"
+
+#: admin/class-settings.php (privacy)
+msgid "Track word usage for plan limits and licensing"
+msgstr "Отслеживания использования слов для лимитов плана и лицензирования"
+
+#: admin/class-settings.php (privacy)
+msgid "Enforce monthly word limits based on your plan"
+msgstr "Применения месячных лимитов слов в соответствии с вашим планом"
+
+#: admin/class-settings.php (privacy)
+msgid "Data sent to our server:"
+msgstr "Данные, отправляемые на наш сервер:"
+
+#: admin/class-settings.php (privacy)
+msgid "Your website URL (for service authentication)"
+msgstr "URL вашего сайта (для аутентификации сервиса)"
+
+#: admin/class-settings.php (privacy)
+msgid "Word counts and language pairs (for usage tracking)"
+msgstr "Количество слов и языковые пары (для отслеживания использования)"
+
+#: admin/class-settings.php (privacy)
+msgid "License key (if applicable)"
+msgstr "Лицензионный ключ (если применимо)"
+
+#: admin/class-settings.php (privacy)
+msgid "We DO NOT collect:"
+msgstr "Мы НЕ собираем:"
+
+#: admin/class-settings.php (privacy)
+msgid "Your actual translated content"
+msgstr "Ваш фактический переведённый контент"
+
+#: admin/class-settings.php (privacy)
+msgid "Personal information or email addresses"
+msgstr "Личную информацию или адреса электронной почты"
+
+#: admin/class-settings.php (privacy)
+msgid "User or visitor data"
+msgstr "Данные пользователей или посетителей"
+
+#: admin/class-settings.php (privacy)
+msgid "IP addresses (beyond standard server logs)"
+msgstr "IP-адреса (помимо стандартных журналов сервера)"
+
+#: admin/class-settings.php (privacy)
+msgid "Privacy Policy"
+msgstr "Политика конфиденциальности"
+
+#: admin/class-settings.php (privacy)
+msgid "Terms of Service"
+msgstr "Условия использования"
+
+#: admin/class-settings.php (privacy)
+msgid "Third-party services:"
+msgstr "Сторонние сервисы:"
+
+#: admin/class-settings.php (privacy)
+msgid "Content you translate is sent to OpenAI for translation processing. Review their privacy policy."
+msgstr "Контент, который вы переводите, отправляется в OpenAI для обработки перевода. Ознакомьтесь с их политикой конфиденциальности."
+
+
+
+#: admin/class-settings.php (settings)
+msgid "Current Plan:"
+msgstr "Текущий план:"
+
+#: admin/class-settings.php (settings)
+msgid "Words Translated:"
+msgstr "Переведено слов:"
+
+#: admin/class-settings.php (settings)
+msgid "Unlimited"
+msgstr "Неограничено"
+
+#: admin/class-settings.php (settings)
+msgid "Get your License from:"
+msgstr "Получите лицензию на:"
+
+#: admin/class-settings.php (settings)
+msgid "Upgrade page"
+msgstr "Страница обновления"
+
+#: admin/class-settings.php (settings)
+msgid "Upgrade License"
+msgstr "Обновить лицензию"
+
+#: admin/class-settings.php (settings)
+msgid "Get License"
+msgstr "Получить лицензию"
+
+
+#: admin/class-settings.php (settings)
+msgid "Enable Cache"
+msgstr "Включить кэш"
+
+#: admin/class-settings.php (settings)
+msgid "Cache translations to avoid duplicate API calls"
+msgstr "Кэшировать переводы, чтобы избежать повторных запросов к API"
+
+#: admin/class-settings.php (settings)
+msgid "Cache Duration (days)"
+msgstr "Время хранения кэша (дней)"
+
+#: admin/class-settings.php (settings)
+msgid "How long to keep translations in cache before refreshing."
+msgstr "Как долго хранить переводы в кэше перед обновлением."
+
+#: admin/class-settings.php (settings)
+msgid "Clear Cache"
+msgstr "Очистить кэш"
+
+
+#: admin/class-settings.php (settings)
+msgid "Remove all cached translations. Useful when you want to regenerate translations with updated content or settings."
+msgstr "Удалить все закэшированные переводы. Полезно, когда вы хотите повторно сгенерировать переводы с обновлённым содержимым или настройками."
+
+
+#: admin/class-settings.php (settings)
+msgid "Translated Page Status"
+msgstr "Статус переведённой страницы"
+
+#: admin/class-settings.php (settings)
+msgid "Draft (Recommended)"
+msgstr "Черновик (рекомендуется)"
+
+#: admin/class-settings.php (settings)
+msgid "Published (Auto-publish)"
+msgstr "Опубликовано (автопубликация)"
+
+#: admin/class-settings.php (settings)
+msgid "Inherit from Original"
+msgstr "Наследовать от оригинала"
+
+#: admin/class-settings.php (settings)
+msgid "Status for newly created translated pages. Draft is recommended for review before publishing."
+msgstr "Статус для вновь созданных переведённых страниц. Черновик рекомендуется для проверки перед публикацией."
+
+#: admin/class-settings.php (settings)
+msgid "Note:"
+msgstr "Примечание:"
+
+#: admin/class-settings.php (settings)
+msgid "LiteSpeed Cache optimizations only apply to published pages viewed by visitors."
+msgstr "Оптимизации LiteSpeed Cache применяются только к опубликованным страницам, просматриваемым посетителями."
+
+
+#: admin/class-settings.php (settings)
+msgid "Compatibility Status"
+msgstr "Статус совместимости"
+
+#: admin/class-settings.php (settings)
+msgid "Loading status..."
+msgstr "Загрузка статуса..."
+
+#: admin/class-settings.php (settings)
+msgid "Re-check Compatibility"
+msgstr "Проверить совместимость снова"
+
+#: admin/class-settings.php (settings)
+msgid "Additional Meta Fields"
+msgstr "Дополнительные мета-поля"
+
+#: admin/class-settings.php (settings)
+msgid "Advanced setting. Add comma-separated meta field keys here if the auto-detection misses something for your theme."
+msgstr "Расширенная настройка. Добавьте ключи мета-полей через запятую, если автоопределение что-то пропустило для вашей темы."
+
+#: admin/class-settings.php (privacy)
+msgid "Privacy & Data Collection"
+msgstr "Конфиденциальность и сбор данных"
+
+#: admin/class-settings.php (privacy)
+msgid "This plugin connects to our translation API at"
+msgstr "Этот плагин подключается к нашему API перевода на"
+
+#: admin/class-settings.php (privacy)
+msgid "to:"
+msgstr "для:"
+
+#: admin/class-settings.php (privacy)
+msgid "Process AI-powered translations"
+msgstr "Обработки переводов на основе ИИ"
+
+#: admin/class-settings.php (privacy)
+msgid "Track word usage for plan limits and licensing"
+msgstr "Отслеживания использования слов для лимитов плана и лицензирования"
+
+#: admin/class-settings.php (privacy)
+msgid "Enforce monthly word limits based on your plan"
+msgstr "Применения месячных лимитов слов в соответствии с вашим планом"
+
+#: admin/class-settings.php (privacy)
+msgid "Data sent to our server:"
+msgstr "Данные, отправляемые на наш сервер:"
+
+#: admin/class-settings.php (privacy)
+msgid "Your website URL (for service authentication)"
+msgstr "URL вашего сайта (для аутентификации сервиса)"
+
+#: admin/class-settings.php (privacy)
+msgid "Word counts and language pairs (for usage tracking)"
+msgstr "Количество слов и языковые пары (для отслеживания использования)"
+
+#: admin/class-settings.php (privacy)
+msgid "License key (if applicable)"
+msgstr "Лицензионный ключ (если применимо)"
+
+#: admin/class-settings.php (privacy)
+msgid "We DO NOT collect:"
+msgstr "Мы НЕ собираем:"
+
+#: admin/class-settings.php (privacy)
+msgid "Your actual translated content"
+msgstr "Ваш фактический переведённый контент"
+
+#: admin/class-settings.php (privacy)
+msgid "Personal information or email addresses"
+msgstr "Личную информацию или адреса электронной почты"
+
+#: admin/class-settings.php (privacy)
+msgid "User or visitor data"
+msgstr "Данные пользователей или посетителей"
+
+#: admin/class-settings.php (privacy)
+msgid "IP addresses (beyond standard server logs)"
+msgstr "IP-адреса (помимо стандартных журналов сервера)"
+
+#: admin/class-settings.php (privacy)
+msgid "Privacy Policy"
+msgstr "Политика конфиденциальности"
+
+#: admin/class-settings.php (privacy)
+msgid "Terms of Service"
+msgstr "Условия использования"
+
+#: admin/class-settings.php (privacy)
+msgid "Third-party services:"
+msgstr "Сторонние сервисы:"
+
+#: admin/class-settings.php (privacy)
+msgid "Content you translate is sent to OpenAI for translation processing. Review their privacy policy."
+msgstr "Контент, который вы переводите, отправляется в OpenAI для обработки перевода. Ознакомьтесь с их политикой конфиденциальности."
+
+
+#: admin/class-admin-menu.php (missing)
+msgid "AI Translator for Elementor and Polylang"
+msgstr "AI Translator for Elementor and Polylang"
+
+#: admin/class-admin-menu.php (missing)
+msgid "AI Translator for Elementor and Polylang PRO"
+msgstr "AI Translator for Elementor and Polylang PRO"
+
+#: admin/class-admin-menu.php (missing)
+msgid "Auto-detect"
+msgstr "Автоопределение"
+
+#: admin/class-admin-menu.php (missing)
+msgid "Select languages "
+msgstr "Выберите языки "
+
+#: admin/class-settings.php (missing)
+msgid "Content you translate is sent to OpenAI for translation processing. Review their"
+msgstr "Контент, который вы переводите, отправляется в OpenAI для обработки перевода. Ознакомьтесь с их"
+
+#: admin/class-settings.php (missing)
+msgid "privacy policy"
+msgstr "политикой конфиденциальности"
+
+#: admin/class-settings.php (missing)
+msgid "Save Settings"
+msgstr "Сохранить настройки"
+
+#: assets/js/admin.js (missing)
+msgid "Click the button to check theme compatibility."
+msgstr "Нажмите кнопку для проверки совместимости с темой."
+
+
+#: admin/class-admin-menu.php (missing)
+msgid "AI Translator for Elementor and Polylang"
+msgstr "AI Translator for Elementor and Polylang"
+
+#: admin/class-admin-menu.php (missing)
+msgid "AI Translator for Elementor and Polylang PRO"
+msgstr "AI Translator for Elementor and Polylang PRO"
+
+#: admin/class-admin-menu.php (missing)
+msgid "Auto-detect"
+msgstr "Автоопределение"
+
+#: admin/class-admin-menu.php (missing)
+msgid "Select languages "
+msgstr "Выберите языки "
+
+#: admin/class-settings.php (missing)
+msgid "Content you translate is sent to OpenAI for translation processing. Review their"
+msgstr "Контент, который вы переводите, отправляется в OpenAI для обработки перевода. Ознакомьтесь с их"
+
+#: admin/class-settings.php (missing)
+msgid "privacy policy"
+msgstr "политикой конфиденциальности"
+
+#: admin/class-settings.php (missing)
+msgid "Save Settings"
+msgstr "Сохранить настройки"
+
+#: assets/js/admin.js (missing)
+msgid "Click the button to check theme compatibility."
+msgstr "Нажмите кнопку для проверки совместимости с темой."
+
+
+
+
+
+
+#: admin/class-admin-menu.php (breadcrumb)
+msgid "Settings"
+msgstr "Настройки"
+
+
+
+
+
+
+
+#: admin/class-admin-menu.php (breadcrumb)
+msgid "Settings"
+msgstr "Настройки"
+
+
+
+#: admin/class-settings.php (section headers with emoji)
+msgid "🔑 License Configuration"
+msgstr "🔑 Настройка лицензии"
+
+#: admin/class-settings.php (section headers with emoji)
+msgid "💾 Cache Settings"
+msgstr "💾 Настройки кэша"
+
+#: admin/class-settings.php (section headers with emoji)
+msgid "📄 Page Creation Settings"
+msgstr "📄 Настройки создания страниц"
+
+#: admin/class-settings.php (section headers with emoji)
+msgid "🎨 Theme Compatibility"
+msgstr "🎨 Совместимость с темой"
+
+#: admin/class-admin-menu.php (dropdown with emoji)
+msgid "🌐 Auto-detect ▼"
+msgstr "🌐 Автоопределение ▼"
+
+#: admin/class-admin-menu.php (page title)
+msgid "Dashboard"
+msgstr "Панель управления"
+
+#: admin/class-settings.php (page title)  
+msgid "Setup"
+msgstr "Настройка"
+
+#: admin/class-admin-menu.php (dropdown button)
+msgid "Select languages ▼"
+msgstr "Выберите языки ▼"
+
+#: admin/class-settings.php (button with emoji)
+msgid "🗑️ Clear Translation Cache"
+msgstr "🗑️ Очистить кэш переводов"
+
+#: admin/class-settings.php (button)
+msgid "Clear Translation Cache"
+msgstr "Очистить кэш переводов"
+
+#: admin/class-admin-menu.php (tooltip)
+msgid "Select target languages for translation"
+msgstr "Выберите целевые языки для перевода"
+
+#: general
+msgid "Select All"
+msgstr "Выбрать все"
+
+msgid "Welcome to AI Translator!"
+msgstr "Добро пожаловать в AI Translator!"
+
+msgid "Translate your Elementor pages instantly with AI. Watch the quick tutorial below to get started."
+msgstr "Мгновенно переводите страницы Elementor с помощью ИИ. Посмотрите краткое руководство ниже, чтобы начать."
+
+msgid "How to Use AI Translator"
+msgstr "Как использовать AI Translator"
+
+msgid "Quick tutorial"
+msgstr "Краткое руководство"
+
+msgid "AI Translation"
+msgstr "ИИ-перевод"
+
+msgid "Translate pages with one click using advanced AI"
+msgstr "Переводите страницы одним кликом с помощью продвинутого ИИ"
+
+msgid "Bulk Mode"
+msgstr "Массовый режим"
+
+msgid "Translate multiple pages at once to save time"
+msgstr "Переводите несколько страниц одновременно, чтобы сэкономить время"
+
+msgid "Elementor Ready"
+msgstr "Готово для Elementor"
+
+msgid "Works seamlessly with all Elementor widgets"
+msgstr "Работает без проблем со всеми виджетами Elementor"
+
+msgid "Quick Start Guide:"
+msgstr "Краткое руководство:"
+
+msgid "Set up languages"
+msgstr "Настройте языки"
+
+msgid "Go to %s to add the languages you need."
+msgstr "Перейдите в %s, чтобы добавить нужные языки."
+
+msgid "Select pages to translate"
+msgstr "Выберите страницы для перевода"
+
+msgid "Choose your Elementor pages and target languages."
+msgstr "Выберите страницы Elementor и целевые языки."
+
+msgid "Start translating!"
+msgstr "Начните переводить!"
+
+msgid "Click translate and let AI do the work for you."
+msgstr "Нажмите перевести и позвольте ИИ сделать работу за вас."
+
+msgid "Let's Get Started!"
+msgstr "Давайте начнём!"
+
+msgid "View Documentation"
+msgstr "Просмотреть документацию"
+
+msgid "Press ESC or click anywhere outside to close"
+msgstr "Нажмите ESC или кликните снаружи, чтобы закрыть"
+
+msgid "Your browser does not support the video tag."
+msgstr "Ваш браузер не поддерживает тег video."
+
+msgid "Translate your Elementor pages instantly with AI."
+msgstr "Мгновенно переводите страницы Elementor с помощью ИИ."
+
+msgid "One-click translation with advanced AI"
+msgstr "Перевод одним кликом с продвинутым ИИ"
+
+msgid "Translate multiple pages at once"
+msgstr "Переводите несколько страниц одновременно"
+
+msgid "Works with all Elementor widgets"
+msgstr "Работает со всеми виджетами Elementor"
+
+msgid "Set up languages in"
+msgstr "Настройте языки в"
+
+msgid "Select pages & target languages"
+msgstr "Выберите страницы и целевые языки"
+
+msgid "Click translate!"
+msgstr "Нажмите перевести!"
+
+msgid "Help us improve by enabling anonymous usage tracking"
+msgstr "Помогите нам улучшить плагин, включив анонимный сбор статистики"
+
+msgid "What we collect:"
+msgstr "Что мы собираем:"
+
+msgid "Plugin version & WordPress version"
+msgstr "Версия плагина и WordPress"
+
+msgid "Features used (translation, bulk mode)"
+msgstr "Используемые функции (перевод, массовый режим)"
+
+msgid "Error reports for debugging"
+msgstr "Отчеты об ошибках для отладки"
+
+msgid "AI model usage statistics"
+msgstr "Статистика использования моделей ИИ"
+
+msgid "We never collect:"
+msgstr "Мы никогда не собираем:"
+
+msgid "Personal data or content"
+msgstr "Личные данные или контент"
+
+msgid "API keys or credentials"
+msgstr "API ключи или учетные данные"
+
+msgid "Data is never shared with third parties."
+msgstr "Данные никогда не передаются третьим лицам."
+
+# Cooldown and Review strings
+msgid "AI Translator: Cooldown Active"
+msgstr "AI Переводчик: Кулдаун активен"
+
+msgid "Your free plan word limit will reset in %d days. "
+msgstr "Лимит слов вашего бесплатного плана сбросится через %d дней. "
+
+msgid "Upgrade to a paid plan to start translating immediately."
+msgstr "Перейдите на платный план, чтобы начать переводить немедленно."
+
+msgid "Rate Our Plugin"
+msgstr "Оцените наш плагин"
+
+msgid "If you enjoy using AI Translator for Elementor & Polylang, please take a moment to rate us on WordPress.org! Your feedback helps us improve the plugin and reach more users who could benefit from it."
+msgstr "Если вам нравится AI Translator для Elementor и Polylang, пожалуйста, уделите минуту, чтобы оценить нас на WordPress.org! Ваш отзыв помогает нам улучшать плагин и находить новых пользователей, которым он может быть полезен."
+
+msgid "Leave a Review"
+msgstr "Оставить отзыв"
+
+# Progress messages
+msgid "Waiting for AI response"
+msgstr "Ожидание ответа ИИ"
+
+msgid "Sending content for translation"
+msgstr "Отправка контента на перевод"
+
+msgid "Processing the data"
+msgstr "Обработка данных"
+
+msgid "Analyzing page structure"
+msgstr "Анализ структуры страницы"
+
+msgid "Preparing translation request"
+msgstr "Подготовка запроса на перевод"
+
+msgid "Processing translation results"
+msgstr "Обработка результатов перевода"
+
+msgid "Applying translations to content"
+msgstr "Применение переводов к контенту"
+
+msgid "Finalizing page creation"
+msgstr "Завершение создания страницы"
+
+msgid "Optimizing translated content"
+msgstr "Оптимизация переведённого контента"
+
+msgid "Completing translation process"
+msgstr "Завершение процесса перевода"
+
+msgid "Settings"
+msgstr "Настройки"
+
+# Insufficient words modal
+msgid "Not Enough Words"
+msgstr "Недостаточно слов"
+
+msgid "Insufficient words for this translation."
+msgstr "Недостаточно слов для этого перевода."
+
+msgid "Required"
+msgstr "Требуется"
+
+msgid "Available"
+msgstr "Доступно"
+
+msgid "Missing"
+msgstr "Не хватает"
+
+msgid "words"
+msgstr "слов"
+
+msgid "Reduce your selection or upgrade your plan to proceed."
+msgstr "Сократите выбор или обновите план, чтобы продолжить."
+
+msgid "Upgrade Plan"
+msgstr "Обновить план"
+
+msgid "Close"
+msgstr "Закрыть"

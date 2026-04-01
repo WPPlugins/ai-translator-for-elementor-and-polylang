@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.10
+Stable tag: 1.4.11
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,12 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.11 =
+* Fixed: Translated pages now get proper translated slugs instead of reusing the source language slug
+* Added: Exclude Words tab in Settings page for managing terms that should not be translated
+* Improved: Settings button on main plugin page now clearly indicates exclude words functionality
+* Fixed: Settings button now opens the exclude words modal instead of showing "coming soon" toast
+
 = 1.4.10 =
 * Fixed: "Monthly Limit Reached" notice incorrectly showing for paid license users
 * Fixed: Usage reporting now sends actual license key instead of null

@@ -1,0 +1,367 @@
+/**
+ * AI Translator – Translation Metabox Styles
+ * Widget in the post/page edit screen sidebar
+ */
+
+/* Wrapper */
+.aitrfoel-mb-wrapper {
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* Labels */
+.aitrfoel-mb-label {
+    display: block;
+    font-weight: 600;
+    color: #1d2327;
+    margin-bottom: 4px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* Current language */
+.aitrfoel-mb-current-lang {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.aitrfoel-mb-current-lang strong {
+    font-size: 14px;
+}
+
+/* Badges */
+.aitrfoel-mb-badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.aitrfoel-mb-badge-source {
+    background: #e7f5e8;
+    color: #00a32a;
+}
+
+.aitrfoel-mb-badge-translation {
+    background: #f0f6fc;
+    color: #2271b1;
+}
+
+/* Content type */
+.aitrfoel-mb-content-type {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.aitrfoel-mb-type-badge {
+    font-size: 12px;
+    color: #50575e;
+}
+
+/* Divider */
+.aitrfoel-mb-divider {
+    border: none;
+    border-top: 1px solid #e0e0e0;
+    margin: 10px 0;
+}
+
+/* Translation list */
+.aitrfoel-mb-lang-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.aitrfoel-mb-lang-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 0;
+    border-bottom: 1px solid #f0f0f0;
+    flex-wrap: wrap;
+}
+
+.aitrfoel-mb-lang-item:last-child {
+    border-bottom: none;
+}
+
+.aitrfoel-mb-lang-flag {
+    display: inline-block;
+    min-width: 24px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #2271b1;
+    padding: 1px 4px;
+    border-radius: 3px;
+    line-height: 1.4;
+}
+
+.aitrfoel-mb-lang-item.no-translation .aitrfoel-mb-lang-flag {
+    background: #b0b0b0;
+}
+
+.aitrfoel-mb-lang-name {
+    flex: 1;
+    font-size: 12px;
+    color: #1d2327;
+    min-width: 60px;
+}
+
+/* Status badges */
+.aitrfoel-mb-status {
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    white-space: nowrap;
+}
+
+.aitrfoel-mb-status-publish {
+    background: #e7f5e8;
+    color: #00a32a;
+}
+
+.aitrfoel-mb-status-draft {
+    background: #fff8e5;
+    color: #996800;
+}
+
+.aitrfoel-mb-status-pending {
+    background: #fef0f0;
+    color: #a00;
+}
+
+.aitrfoel-mb-status-private {
+    background: #f0f0f0;
+    color: #50575e;
+}
+
+.aitrfoel-mb-status-missing {
+    background: #f0f0f0;
+    color: #999;
+    font-style: italic;
+}
+
+/* Action links */
+.aitrfoel-mb-actions {
+    display: flex;
+    gap: 2px;
+}
+
+.aitrfoel-mb-actions a {
+    color: #2271b1;
+    text-decoration: none;
+}
+
+.aitrfoel-mb-actions a:hover {
+    color: #135e96;
+}
+
+.aitrfoel-mb-actions .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+}
+
+/* Translate section */
+.aitrfoel-mb-translate-section {
+    margin-bottom: 8px;
+}
+
+/* Checkboxes */
+.aitrfoel-mb-lang-checkboxes {
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    padding: 4px;
+    margin: 6px 0;
+    background: #fff;
+}
+
+.aitrfoel-mb-lang-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 4px;
+    cursor: pointer;
+    border-radius: 3px;
+    font-size: 12px;
+    transition: background-color .15s;
+}
+
+.aitrfoel-mb-lang-checkbox:hover {
+    background: #f0f6fc;
+}
+
+.aitrfoel-mb-lang-checkbox input[type="checkbox"] {
+    margin: 0;
+}
+
+.aitrfoel-mb-lang-checkbox.already-translated {
+    color: #787c82;
+}
+
+.aitrfoel-mb-lang-checkbox.already-translated span:first-of-type {
+    text-decoration: line-through;
+    text-decoration-color: #ccc;
+}
+
+.aitrfoel-mb-lang-checkbox.retranslate-selected {
+    background: #fff8e5;
+}
+
+.aitrfoel-mb-retranslate-hint {
+    font-size: 14px;
+    color: #dba617;
+    cursor: help;
+    margin-left: auto;
+}
+
+/* Translate actions */
+.aitrfoel-mb-translate-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.aitrfoel-mb-translate-btn {
+    flex: 1;
+}
+
+.aitrfoel-mb-translate-actions .spinner {
+    float: none;
+    margin: 0;
+}
+
+/* Progress bar */
+.aitrfoel-mb-progress {
+    margin: 8px 0;
+}
+
+.aitrfoel-mb-progress-bar {
+    height: 6px;
+    background: #e0e0e0;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.aitrfoel-mb-progress-fill {
+    height: 100%;
+    background: #2271b1;
+    border-radius: 3px;
+    width: 0;
+    transition: width 0.4s ease;
+}
+
+.aitrfoel-mb-progress-text {
+    font-size: 11px;
+    color: #50575e;
+}
+
+/* Message */
+.aitrfoel-mb-message {
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 1.5;
+    margin: 8px 0;
+}
+
+.aitrfoel-mb-message.success {
+    background: #e7f5e8;
+    border-left: 3px solid #00a32a;
+    color: #1d2327;
+}
+
+.aitrfoel-mb-message.error {
+    background: #fef0f0;
+    border-left: 3px solid #d63638;
+    color: #1d2327;
+}
+
+.aitrfoel-mb-message.info {
+    background: #f0f6fc;
+    border-left: 3px solid #2271b1;
+    color: #1d2327;
+}
+
+/* Results list inside message */
+.aitrfoel-mb-results {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+}
+
+.aitrfoel-mb-results li {
+    padding: 3px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.aitrfoel-mb-results a {
+    font-size: 11px;
+}
+
+/* Errors inside message */
+.aitrfoel-mb-errors {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.aitrfoel-mb-errors ul {
+    list-style: none;
+    margin: 4px 0 0;
+    padding: 0;
+}
+
+.aitrfoel-mb-errors li {
+    padding: 2px 0;
+    color: #a00;
+    font-size: 11px;
+}
+
+/* Footer link */
+.aitrfoel-mb-footer {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #e0e0e0;
+    text-align: center;
+}
+
+.aitrfoel-mb-footer a {
+    color: #2271b1;
+    text-decoration: none;
+    font-size: 12px;
+}
+
+.aitrfoel-mb-footer a:hover {
+    color: #135e96;
+    text-decoration: underline;
+}
+
+/* Notice */
+.aitrfoel-mb-notice {
+    color: #50575e;
+    font-style: italic;
+    margin: 0;
+}
+
+.aitrfoel-mb-notice a {
+    color: #2271b1;
+}

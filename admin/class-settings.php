@@ -202,6 +202,43 @@ class AITRFOEL_Settings {
             'sanitize_callback' => [self::class, 'sanitize_glossary_terms'],
             'default' => ''
         ]);
+
+        // Exclude words settings
+        register_setting('aitrfoel_settings_group', 'aitrfoel_exclude_words', [
+            'sanitize_callback' => [self::class, 'sanitize_exclude_words'],
+            'default' => ''
+        ]);
+    }
+
+    /**
+     * Get exclude words as array (synced from both Settings page and modal)
+     */
+    public static function get_exclude_words() {
+        // Check the modal-based setting first (stored by AJAX handler)
+        $modal_settings = get_option('aitrfoel_translation_settings', []);
+        $modal_words = isset($modal_settings['exclude_words']) ? $modal_settings['exclude_words'] : [];
+
+        // Check the settings-page-based textarea
+        $textarea_value = get_option('aitrfoel_exclude_words', '');
+        $textarea_words = array_filter(array_map('trim', explode("\n", $textarea_value)));
+
+        // Merge both sources, remove duplicates
+        return array_values(array_unique(array_merge($modal_words, $textarea_words)));
+    }
+
+    /**
+     * Sanitize exclude words textarea and sync to modal option
+     */
+    public static function sanitize_exclude_words($input) {
+        $words = array_filter(array_map('sanitize_text_field', explode("\n", $input)));
+
+        // Sync to the AJAX-based modal option so both stay in sync
+        $settings = get_option('aitrfoel_translation_settings', []);
+        $settings['exclude_words'] = array_values($words);
+        $settings['updated_at'] = time();
+        update_option('aitrfoel_translation_settings', $settings);
+
+        return implode("\n", $words);
     }
     
     public static function render_page() {
@@ -246,6 +283,7 @@ class AITRFOEL_Settings {
                     <a href="#section-page-creation">📄 <?php esc_html_e('Pages', 'ai-translator-for-elementor-and-polylang'); ?></a>
                     <a href="#section-seo">🔍 <?php esc_html_e('SEO', 'ai-translator-for-elementor-and-polylang'); ?></a>
                     <a href="#section-woocommerce">🛒 <?php esc_html_e('WooCommerce', 'ai-translator-for-elementor-and-polylang'); ?></a>
+                    <a href="#section-exclude-words">🚫 <?php esc_html_e('Exclude Words', 'ai-translator-for-elementor-and-polylang'); ?></a>
                     <a href="#section-glossary">📖 <?php esc_html_e('Glossary', 'ai-translator-for-elementor-and-polylang'); ?></a>
                     <a href="#section-theme">🎨 <?php esc_html_e('Theme', 'ai-translator-for-elementor-and-polylang'); ?></a>
                     <a href="#section-advanced">🔧 <?php esc_html_e('Advanced', 'ai-translator-for-elementor-and-polylang'); ?></a>
@@ -1006,6 +1044,38 @@ class AITRFOEL_Settings {
                                 <label for="aitrfoel_woo_translate_gallery_alt"><?php esc_html_e('Translate product image alt text', 'ai-translator-for-elementor-and-polylang'); ?></label>
                                 <p class="description">
                                     <?php esc_html_e('Translates alt text, captions, and descriptions of product images and gallery images for multilingual SEO.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Exclude Words -->
+                <div class="aitrfoel-settings-section" id="section-exclude-words">
+                    <h3><?php esc_html_e('🚫 Exclude Words', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                    
+                    <p class="description" style="margin-bottom: 12px;">
+                        <?php esc_html_e('Words or terms listed here will never be translated — they will be kept exactly as-is in every language. Use this for brand names, product names, technical terms, or any text that should remain untranslated.', 'ai-translator-for-elementor-and-polylang'); ?>
+                    </p>
+                    
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_exclude_words"><?php esc_html_e('Excluded Terms', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <textarea name="aitrfoel_exclude_words"
+                                          id="aitrfoel_exclude_words"
+                                          class="large-text code"
+                                          rows="8"
+                                          placeholder="WordPress
+WooCommerce
+Elementor
+Meep Tech"><?php echo esc_textarea(implode("\n", self::get_exclude_words())); ?></textarea>
+                                <p class="description">
+                                    <?php esc_html_e('One word or phrase per line. These terms will be preserved as-is during translation.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    <br>
+                                    <?php esc_html_e('Tip: You can also quickly add/remove words from the ⚙️ Settings button on the main plugin page.', 'ai-translator-for-elementor-and-polylang'); ?>
                                 </p>
                             </td>
                         </tr>

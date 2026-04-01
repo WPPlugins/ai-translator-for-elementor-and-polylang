@@ -1919,7 +1919,10 @@ jQuery(document).ready(function($) {
         },
 
         openSettings: function() {
-            Dashboard.showNotice('⚙️ Settings panel coming soon! Currently using default settings.', 'info');
+            // Let settings-modal.js handle this via its own event binding
+            if (window.eatSettingsModal) {
+                window.eatSettingsModal.openModal();
+            }
         },
 
         handleDeletePage: function() {

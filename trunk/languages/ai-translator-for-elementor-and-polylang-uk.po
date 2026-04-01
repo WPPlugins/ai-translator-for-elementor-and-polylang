@@ -1,0 +1,858 @@
+# Ukrainian translation for WP AI Translator for Elementor and Polylang
+# Copyright (C) 2025 Meeptech
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: WP AI Translator for Elementor and Polylang 1.0.9\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-ai-translator-for-elementor-polylang\n"
+"POT-Creation-Date: 2025-01-10 00:00:00+00:00\n"
+"PO-Revision-Date: 2025-12-09 12:00:00+00:00\n"
+"Last-Translator: Meeptech <support@meeptech.com>\n"
+"Language-Team: Ukrainian <uk@li.org>\n"
+"Language: uk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: ai-translator-for-elementor-polylang.php:180
+msgid "Translating..."
+msgstr "Переклад..."
+
+#: ai-translator-for-elementor-polylang.php:181
+msgid "Translation completed successfully!"
+msgstr "Переклад успішно завершено!"
+
+#: ai-translator-for-elementor-polylang.php:182
+msgid "Translation failed. Please try again."
+msgstr "Помилка перекладу. Будь ласка, спробуйте ще раз."
+
+#: ai-translator-for-elementor-polylang.php:183
+msgid "Are you sure you want to translate this content?"
+msgstr "Ви впевнені, що хочете перекласти цей контент?"
+
+#: ai-translator-for-elementor-polylang.php:235
+msgid "Loading pages..."
+msgstr "Завантаження сторінок..."
+
+#: ai-translator-for-elementor-polylang.php:236
+msgid "Select a page to translate"
+msgstr "Виберіть сторінку для перекладу"
+
+#: ai-translator-for-elementor-polylang.php:237
+msgid "Error loading pages"
+msgstr "Помилка завантаження сторінок"
+
+#: ai-translator-for-elementor-polylang.php:238
+msgid "Please select a page first"
+msgstr "Спочатку виберіть сторінку"
+
+#: ai-translator-for-elementor-polylang.php:241
+msgid "Calculating..."
+msgstr "Обчислення..."
+
+#: ai-translator-for-elementor-polylang.php:242
+msgid "Estimated Cost"
+msgstr "Розрахункова вартість"
+
+#: ai-translator-for-elementor-polylang.php:243
+msgid "Words"
+msgstr "Слова"
+
+#: ai-translator-for-elementor-polylang.php:244
+msgid "Tokens"
+msgstr "Токени"
+
+#: ai-translator-for-elementor-polylang.php:245
+msgid "Provider"
+msgstr "Провайдер"
+
+#: ai-translator-for-elementor-polylang.php:246
+msgid "Model"
+msgstr "Модель"
+
+#: ai-translator-for-elementor-polylang.php:247
+msgid "This page contains a lot of content and may take longer to translate."
+msgstr "Ця сторінка містить багато контенту, і переклад може зайняти більше часу."
+
+#: ai-translator-for-elementor-polylang.php:248
+msgid "Error calculating cost"
+msgstr "Помилка розрахунку вартості"
+
+#: ai-translator-for-elementor-polylang.php:249
+msgid "Estimate Cost"
+msgstr "Розрахувати вартість"
+
+#: ai-translator-for-elementor-polylang.php:252
+msgid "Please select a target language"
+msgstr "Будь ласка, виберіть цільову мову"
+
+#: ai-translator-for-elementor-polylang.php:253
+msgid "Time taken"
+msgstr "Витрачений час"
+
+#: ai-translator-for-elementor-polylang.php:254
+msgid "Words translated"
+msgstr "Перекладено слів"
+
+#: ai-translator-for-elementor-polylang.php:255
+msgid "Actual cost"
+msgstr "Фактична вартість"
+
+#: ai-translator-for-elementor-polylang.php:256
+msgid "Preview Translation"
+msgstr "Попередній перегляд перекладу"
+
+#: ai-translator-for-elementor-polylang.php:257
+msgid "Edit Translation"
+msgstr "Редагувати переклад"
+
+#: ai-translator-for-elementor-polylang.php:258
+msgid "Publish Now"
+msgstr "Опублікувати зараз"
+
+#: ai-translator-for-elementor-polylang.php:259
+msgid "Translate Page"
+msgstr "Перекласти сторінку"
+
+#: ai-translator-for-elementor-polylang.php:260
+msgid "Are you sure you want to publish this page?"
+msgstr "Ви впевнені, що хочете опублікувати цю сторінку?"
+
+#: ai-translator-for-elementor-polylang.php:261
+msgid "Page published successfully!"
+msgstr "Сторінку успішно опубліковано!"
+
+#: ai-translator-for-elementor-polylang.php:264
+msgid "Request timed out. Please try again."
+msgstr "Час очікування запиту вичерпано. Будь ласка, спробуйте ще раз."
+
+#: ai-translator-for-elementor-polylang.php:265
+msgid "Network error:"
+msgstr "Мережева помилка:"
+
+#: ai-translator-for-elementor-polylang.php:268
+msgid "Are you sure you want to clear the translation cache?"
+msgstr "Ви впевнені, що хочете очистити кеш перекладів?"
+
+#: ai-translator-for-elementor-polylang.php:271
+msgid "Pages Translated"
+msgstr "Перекладено сторінок"
+
+#: ai-translator-for-elementor-polylang.php:272
+msgid "Words Processed"
+msgstr "Оброблено слів"
+
+#: ai-translator-for-elementor-polylang.php:273
+msgid "Total Cost"
+msgstr "Загальна вартість"
+
+#: ai-translator-for-elementor-polylang.php:274
+msgid "Daily Average"
+msgstr "Середнє за день"
+
+#: ai-translator-for-elementor-polylang.php:275
+msgid "Breakdown by Provider"
+msgstr "Розбивка за провайдерами"
+
+#: ai-translator-for-elementor-polylang.php:276
+msgid "Uses"
+msgstr "Використань"
+
+#: ai-translator-for-elementor-polylang.php:277
+msgid "Cost"
+msgstr "Вартість"
+
+#: ai-translator-for-elementor-polylang.php:278
+msgid "Error loading statistics"
+msgstr "Помилка завантаження статистики"
+
+#: ai-translator-for-elementor-polylang.php:281
+msgid "Checking..."
+msgstr "Перевірка..."
+
+#: ai-translator-for-elementor-polylang.php:282
+msgid "Theme check complete"
+msgstr "Перевірка теми завершена"
+
+#: ai-translator-for-elementor-polylang.php:283
+msgid "Re-check Compatibility"
+msgstr "Перевірити сумісність знову"
+
+#: ai-translator-for-elementor-polylang.php:284
+msgid "Theme"
+msgstr "Тема"
+
+#: ai-translator-for-elementor-polylang.php:285
+msgid "Status"
+msgstr "Статус"
+
+#: ai-translator-for-elementor-polylang.php:286
+msgid "Fields found"
+msgstr "Знайдено полів"
+
+#: ai-translator-for-elementor-polylang.php:287
+msgid "View fields"
+msgstr "Переглянути поля"
+
+#: ai-translator-for-elementor-polylang.php:288
+msgid "Detected Fields"
+msgstr "Виявлені поля"
+
+#: ai-translator-for-elementor-polylang.php:289
+msgid "Copy all fields"
+msgstr "Копіювати всі поля"
+
+#: ai-translator-for-elementor-polylang.php:290
+msgid "No fields found"
+msgstr "Поля не знайдено"
+
+#: ai-translator-for-elementor-polylang.php:291
+msgid "Fields copied to clipboard"
+msgstr "Поля скопійовано до буфера обміну"
+
+#: ai-translator-for-elementor-polylang.php:318
+msgid "Elementor AI Translator requires Elementor to be installed and activated."
+msgstr "Elementor AI Translator вимагає встановлення та активації Elementor."
+
+#: ai-translator-for-elementor-polylang.php:328
+msgid "Elementor AI Translator requires Elementor version 3.0.0 or higher."
+msgstr "Elementor AI Translator вимагає Elementor версії 3.0.0 або вище."
+
+#: ai-translator-for-elementor-polylang.php:338
+msgid "Elementor AI Translator requires PHP version 7.4 or higher."
+msgstr "Elementor AI Translator вимагає PHP версії 7.4 або вище."
+
+#: admin/class-admin-menu.php
+msgid "AI Translator"
+msgstr "ШІ-перекладач"
+
+#: admin/class-admin-menu.php
+msgid "Settings"
+msgstr "Налаштування"
+
+#: admin/class-admin-menu.php
+msgid "Dashboard"
+msgstr "Панель керування"
+
+#: admin/class-admin-menu.php
+msgid "Source Language"
+msgstr "Мова джерела"
+
+#: admin/class-admin-menu.php
+msgid "Target Language"
+msgstr "Цільова мова"
+
+#: admin/class-admin-menu.php
+msgid "Select Page"
+msgstr "Виберіть сторінку"
+
+#: admin/class-admin-menu.php
+msgid "Fetch Content"
+msgstr "Отримати контент"
+
+#: admin/class-admin-menu.php
+msgid "Translate"
+msgstr "Перекласти"
+
+#: admin/class-admin-menu.php
+msgid "Reset"
+msgstr "Скинути"
+
+#: admin/class-admin-menu.php
+msgid "Select All"
+msgstr "Вибрати все"
+
+#: admin/class-admin-menu.php
+msgid "API Configuration"
+msgstr "Налаштування API"
+
+#: admin/class-admin-menu.php
+msgid "API Key"
+msgstr "API-ключ"
+
+#: admin/class-admin-menu.php
+msgid "Save Settings"
+msgstr "Зберегти налаштування"
+
+#: admin/class-admin-menu.php
+msgid "Clear Cache"
+msgstr "Очистити кеш"
+
+#: admin/class-admin-menu.php
+msgid "Translation Options"
+msgstr "Опції перекладу"
+
+#: admin/class-admin-menu.php
+msgid "Preserve formatting"
+msgstr "Зберігати форматування"
+
+#: admin/class-admin-menu.php
+msgid "Create as draft"
+msgstr "Створити як чернетку"
+
+#: admin/class-admin-menu.php
+msgid "Documentation"
+msgstr "Документація"
+
+#: admin/class-admin-menu.php
+msgid "Support"
+msgstr "Підтримка"
+
+#: admin/class-admin-menu.php
+msgid "Upgrade to Pro"
+msgstr "Оновити до Pro"
+
+#: includes/class-translation-engine.php
+msgid "Translation in progress..."
+msgstr "Переклад виконується..."
+
+#: includes/class-translation-engine.php
+msgid "Processing widgets..."
+msgstr "Обробка віджетів..."
+
+#: includes/class-translation-engine.php
+msgid "Saving translation..."
+msgstr "Збереження перекладу..."
+
+#: includes/class-usage-tracker.php
+msgid "Daily limit reached"
+msgstr "Досягнуто денний ліміт"
+
+#: includes/class-usage-tracker.php
+msgid "Please wait before trying again"
+msgstr "Будь ласка, зачекайте перед повторною спробою"
+
+#: includes/class-license-manager.php
+msgid "License activated successfully"
+msgstr "Ліцензію успішно активовано"
+
+#: includes/class-license-manager.php
+msgid "Invalid license key"
+msgstr "Недійсний ліцензійний ключ"
+
+#: includes/class-license-manager.php
+msgid "License expired"
+msgstr "Ліцензія закінчилася"
+
+msgid "AI Translator for Elementor and Polylang"
+msgstr "AI Translator for Elementor and Polylang"
+
+msgid "Total Pages"
+msgstr "Всього сторінок"
+
+msgid "Words Translated"
+msgstr "Перекладено слів"
+
+msgid "Words Left"
+msgstr "Залишилось слів"
+
+msgid "License"
+msgstr "Ліцензія"
+
+msgid "Free"
+msgstr "Безкоштовна"
+
+msgid "Buy More Words"
+msgstr "Купити більше слів"
+
+msgid "Upgrade Plan"
+msgstr "Оновити план"
+
+msgid "Manage translations for your pages. Select source pages to create bulk translations."
+msgstr "Керуйте перекладами ваших сторінок. Виберіть вихідні сторінки для масового перекладу."
+
+msgid "From:"
+msgstr "З:"
+
+msgid "To:"
+msgstr "До:"
+
+msgid "🌐 Auto-detect ▼"
+msgstr "🌐 Автовизначення ▼"
+
+msgid "Auto-detect"
+msgstr "Автовизначення"
+
+msgid "Select languages ▼"
+msgstr "Вибрати мови ▼"
+
+msgid "Select pages for translation"
+msgstr "Виберіть сторінки для перекладу"
+
+msgid "Start Translation"
+msgstr "Почати переклад"
+
+msgid "Page"
+msgstr "Сторінка"
+
+msgid "Languages"
+msgstr "Мови"
+
+msgid "Translation Status"
+msgstr "Статус перекладу"
+
+msgid "Page Type"
+msgstr "Тип сторінки"
+
+msgid "Actions"
+msgstr "Дії"
+
+msgid "Published"
+msgstr "Опубліковано"
+
+msgid "Draft"
+msgstr "Чернетка"
+
+msgid "translated"
+msgstr "перекладено"
+
+msgid "Edit"
+msgstr "Редагувати"
+
+msgid "View"
+msgstr "Переглянути"
+
+msgid "Delete"
+msgstr "Видалити"
+
+msgid "Information"
+msgstr "Інформація"
+
+msgid "Feedback Form"
+msgstr "Форма зворотного зв'язку"
+
+msgid "🔑 License Configuration"
+msgstr "🔑 Налаштування ліцензії"
+
+msgid "💾 Cache Settings"
+msgstr "💾 Налаштування кешу"
+
+msgid "📄 Page Creation Settings"
+msgstr "📄 Налаштування створення сторінок"
+
+msgid "🎨 Theme Compatibility"
+msgstr "🎨 Сумісність з темою"
+
+msgid "Current Plan:"
+msgstr "Поточний план:"
+
+msgid "Words Translated:"
+msgstr "Перекладено слів:"
+
+msgid "Get License"
+msgstr "Отримати ліцензію"
+
+msgid "Enable Cache"
+msgstr "Увімкнути кеш"
+
+msgid "Cache translations to avoid duplicate API calls"
+msgstr "Кешувати переклади, щоб уникнути повторних запитів до API"
+
+msgid "Cache Duration (days)"
+msgstr "Тривалість кешу (днів)"
+
+msgid "Clear Translation Cache"
+msgstr "Очистити кеш перекладів"
+
+msgid "🗑️ Clear Translation Cache"
+msgstr "🗑️ Очистити кеш перекладів"
+
+msgid "Translated Page Status"
+msgstr "Статус перекладеної сторінки"
+
+msgid "Draft (Recommended)"
+msgstr "Чернетка (Рекомендовано)"
+
+msgid "Click the button to check theme compatibility."
+msgstr "Натисніть кнопку для перевірки сумісності з темою."
+
+msgid "Privacy & Data Collection"
+msgstr "Конфіденційність та збір даних"
+
+msgid "Privacy Policy"
+msgstr "Політика конфіденційності"
+
+msgid "Terms of Service"
+msgstr "Умови використання"
+
+msgid "Translation in Progress"
+msgstr "Переклад виконується"
+
+msgid "%d pages selected"
+msgstr "Вибрано сторінок: %d"
+
+msgid "Translating..."
+msgstr "Переклад..."
+
+msgid "Translation completed successfully!"
+msgstr "Переклад успішно завершено!"
+
+msgid "Translation failed. Please try again."
+msgstr "Помилка перекладу. Будь ласка, спробуйте знову."
+
+msgid "Are you sure you want to translate this content?"
+msgstr "Ви впевнені, що хочете перекласти цей контент?"
+
+msgid "Loading pages..."
+msgstr "Завантаження сторінок..."
+
+msgid "Select a page to translate"
+msgstr "Виберіть сторінку для перекладу"
+
+msgid "Error loading pages"
+msgstr "Помилка завантаження сторінок"
+
+msgid "Please select a page first"
+msgstr "Спочатку виберіть сторінку"
+
+msgid "Calculating..."
+msgstr "Обчислення..."
+
+msgid "Estimated Cost"
+msgstr "Орієнтовна вартість"
+
+msgid "Words"
+msgstr "Слова"
+
+msgid "Tokens"
+msgstr "Токени"
+
+msgid "Provider"
+msgstr "Провайдер"
+
+msgid "Model"
+msgstr "Модель"
+
+msgid "Error calculating cost"
+msgstr "Помилка обчислення вартості"
+
+msgid "Estimate Cost"
+msgstr "Розрахувати вартість"
+
+msgid "Please select a target language"
+msgstr "Будь ласка, виберіть цільову мову"
+
+msgid "Time taken"
+msgstr "Витрачений час"
+
+msgid "Words translated"
+msgstr "Перекладено слів"
+
+msgid "Actual cost"
+msgstr "Фактична вартість"
+
+msgid "Dashboard"
+msgstr "Панель керування"
+
+msgid "Settings"
+msgstr "Налаштування"
+
+msgid "AI Translator"
+msgstr "AI Translator"
+
+msgid "Documentation"
+msgstr "Документація"
+
+msgid "Clear Cache"
+msgstr "Очистити кеш"
+
+msgid "Re-check Compatibility"
+msgstr "Перевірити сумісність знову"
+
+msgid "Save Settings"
+msgstr "Зберегти налаштування"
+
+msgid "Select All"
+msgstr "Вибрати все"
+
+msgid "Setup"
+msgstr "Налаштування"
+
+msgid "Elementor"
+msgstr "Elementor"
+
+msgid "Standard"
+msgstr "Стандартна"
+
+msgid "Cancel"
+msgstr "Скасувати"
+
+msgid "Close"
+msgstr "Закрити"
+
+msgid "Confirm"
+msgstr "Підтвердити"
+
+msgid "Loading..."
+msgstr "Завантаження..."
+
+msgid "Error"
+msgstr "Помилка"
+
+msgid "Success"
+msgstr "Успіх"
+
+msgid "Warning"
+msgstr "Попередження"
+
+msgid "Yes"
+msgstr "Так"
+
+msgid "No"
+msgstr "Ні"
+
+msgid "Save"
+msgstr "Зберегти"
+
+msgid "Saving..."
+msgstr "Збереження..."
+
+msgid "Settings saved successfully!"
+msgstr "Налаштування успішно збережено!"
+
+msgid "Error saving settings"
+msgstr "Помилка збереження налаштувань"
+
+msgid "Please wait..."
+msgstr "Будь ласка, зачекайте..."
+
+msgid "Select"
+msgstr "Вибрати"
+
+msgid "Deselect"
+msgstr "Скасувати вибір"
+
+msgid "All"
+msgstr "Всі"
+
+msgid "None"
+msgstr "Жодного"
+
+msgid "Next"
+msgstr "Далі"
+
+msgid "Previous"
+msgstr "Назад"
+
+msgid "Search"
+msgstr "Пошук"
+
+msgid "Filter"
+msgstr "Фільтр"
+
+msgid "Refresh"
+msgstr "Оновити"
+
+msgid "No pages found"
+msgstr "Сторінок не знайдено"
+
+msgid "Processing..."
+msgstr "Обробка..."
+
+msgid "Complete"
+msgstr "Завершено"
+
+msgid "Pending"
+msgstr "Очікує"
+
+msgid "Failed"
+msgstr "Невдача"
+
+msgid "Translation Queue"
+msgstr "Черга перекладів"
+
+msgid "Bulk Translation"
+msgstr "Масовий переклад"
+
+msgid "Language"
+msgstr "Мова"
+
+msgid "Progress"
+msgstr "Прогрес"
+
+msgid "Time"
+msgstr "Час"
+
+msgid "Date"
+msgstr "Дата"
+
+msgid "Title"
+msgstr "Заголовок"
+
+msgid "Description"
+msgstr "Опис"
+
+msgid "Content"
+msgstr "Контент"
+
+msgid "Checking theme compatibility..."
+msgstr "Перевірка сумісності теми..."
+
+msgid "Premium"
+msgstr "Преміум"
+
+msgid "Pro"
+msgstr "Pro"
+
+msgid "Basic"
+msgstr "Базовий"
+
+msgid "Unlimited"
+msgstr "Необмежений"
+
+msgid "Used"
+msgstr "Використано"
+
+msgid "Remaining"
+msgstr "Залишилось"
+
+msgid "per month"
+msgstr "на місяць"
+
+msgid "per year"
+msgstr "на рік"
+
+msgid "Help"
+msgstr "Допомога"
+
+msgid "Contact"
+msgstr "Контакт"
+
+msgid "About"
+msgstr "Про нас"
+
+msgid "Version"
+msgstr "Версія"
+
+msgid "Update"
+msgstr "Оновити"
+
+msgid "Check for updates"
+msgstr "Перевірити оновлення"
+
+msgid "No updates available"
+msgstr "Немає доступних оновлень"
+
+msgid "An error occurred"
+msgstr "Сталася помилка"
+
+msgid "Please try again later"
+msgstr "Будь ласка, спробуйте пізніше"
+
+msgid "Something went wrong"
+msgstr "Щось пішло не так"
+
+msgid "Welcome to AI Translator!"
+msgstr "Ласкаво просимо до AI Translator!"
+
+msgid "Translate your Elementor pages instantly with AI. Watch the quick tutorial below to get started."
+msgstr "Миттєво перекладайте сторінки Elementor за допомогою ШІ. Перегляньте короткий підручник нижче, щоб почати."
+
+msgid "How to Use AI Translator"
+msgstr "Як використовувати AI Translator"
+
+msgid "Quick tutorial"
+msgstr "Короткий підручник"
+
+msgid "AI Translation"
+msgstr "ШІ-переклад"
+
+msgid "Translate pages with one click using advanced AI"
+msgstr "Перекладайте сторінки одним кліком за допомогою передового ШІ"
+
+msgid "Bulk Mode"
+msgstr "Масовий режим"
+
+msgid "Translate multiple pages at once to save time"
+msgstr "Перекладайте кілька сторінок одночасно, щоб заощадити час"
+
+msgid "Elementor Ready"
+msgstr "Готово для Elementor"
+
+msgid "Works seamlessly with all Elementor widgets"
+msgstr "Працює бездоганно з усіма віджетами Elementor"
+
+msgid "Quick Start Guide:"
+msgstr "Короткий посібник:"
+
+msgid "Set up languages"
+msgstr "Налаштуйте мови"
+
+msgid "Go to %s to add the languages you need."
+msgstr "Перейдіть до %s, щоб додати потрібні мови."
+
+msgid "Select pages to translate"
+msgstr "Виберіть сторінки для перекладу"
+
+msgid "Choose your Elementor pages and target languages."
+msgstr "Виберіть сторінки Elementor та цільові мови."
+
+msgid "Start translating!"
+msgstr "Почніть перекладати!"
+
+msgid "Click translate and let AI do the work for you."
+msgstr "Натисніть перекласти і дозвольте ШІ зробити роботу за вас."
+
+msgid "Let's Get Started!"
+msgstr "Почнімо!"
+
+msgid "View Documentation"
+msgstr "Переглянути документацію"
+
+msgid "Press ESC or click anywhere outside to close"
+msgstr "Натисніть ESC або клікніть зовні, щоб закрити"
+
+msgid "Your browser does not support the video tag."
+msgstr "Ваш браузер не підтримує тег video."
+
+msgid "Translate your Elementor pages instantly with AI."
+msgstr "Миттєво перекладайте сторінки Elementor за допомогою ШІ."
+
+msgid "One-click translation with advanced AI"
+msgstr "Переклад одним кліком з передовим ШІ"
+
+msgid "Translate multiple pages at once"
+msgstr "Перекладайте кілька сторінок одночасно"
+
+msgid "Works with all Elementor widgets"
+msgstr "Працює з усіма віджетами Elementor"
+
+msgid "Set up languages in"
+msgstr "Налаштуйте мови в"
+
+msgid "Select pages & target languages"
+msgstr "Виберіть сторінки та цільові мови"
+
+msgid "Click translate!"
+msgstr "Натисніть перекласти!"
+
+msgid "Help us improve by enabling anonymous usage tracking"
+msgstr "Допоможіть нам покращити плагін, увімкнувши анонімне відстеження використання"
+
+msgid "What we collect:"
+msgstr "Що ми збираємо:"
+
+msgid "Plugin version & WordPress version"
+msgstr "Версія плагіна та WordPress"
+
+msgid "Features used (translation, bulk mode)"
+msgstr "Використані функції (переклад, масовий режим)"
+
+msgid "Error reports for debugging"
+msgstr "Звіти про помилки для налагодження"
+
+msgid "AI model usage statistics"
+msgstr "Статистика використання моделей ШІ"
+
+msgid "We never collect:"
+msgstr "Ми ніколи не збираємо:"
+
+msgid "Personal data or content"
+msgstr "Особисті дані або вміст"
+
+msgid "API keys or credentials"
+msgstr "API ключі або облікові дані"
+
+msgid "Data is never shared with third parties."
+msgstr "Дані ніколи не передаються третім особам."
