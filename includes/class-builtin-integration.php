@@ -482,7 +482,8 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             return $lang;
         }
         
-        return null;
+        // Posts without an explicit language are assumed to be in the default language
+        return $this->get_default_language();
     }
     
     /**
@@ -1077,6 +1078,11 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             return $permalink;
         }
         
+        // Plain permalinks: use ?lang= query parameter instead of URL prefix
+        if (empty(get_option('permalink_structure', ''))) {
+            return add_query_arg('lang', $lang, $permalink);
+        }
+        
         $home_url = home_url('/');
         if (strpos($permalink, $home_url) === 0) {
             // Don't double-add language prefix
@@ -1109,6 +1115,11 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         if (!$lang || $lang === $default_lang) {
             return $permalink;
+        }
+        
+        // Plain permalinks: use ?lang= query parameter instead of URL prefix
+        if (empty(get_option('permalink_structure', ''))) {
+            return add_query_arg('lang', $lang, $permalink);
         }
         
         $home_url = home_url('/');

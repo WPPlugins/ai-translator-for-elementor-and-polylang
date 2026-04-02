@@ -146,11 +146,23 @@ class AITRFOEL_Translation_Engine {
         // Calculate estimated word count for this translation
         // Server counts both source + translated words, so apply 2× factor
         $source_words = 0;
+        $debug_word_breakdown = []; // DEBUG: track per-string word counts
         foreach ($strings_to_translate as $string_data) {
             if (isset($string_data['original'])) {
-                $source_words += str_word_count(wp_strip_all_tags($string_data['original']));
+                $text = wp_strip_all_tags($string_data['original']);
+                $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $wc = str_word_count($text);
+                $source_words += $wc;
+                $debug_word_breakdown[] = $wc . ':' . mb_substr($text, 0, 60);
             }
         }
+        // DEBUG: Log per-string word counts
+        AITRFOEL_Logger::log(
+            sprintf('[WORD-DEBUG] Total strings: %d, Source words: %d, Breakdown: %s',
+                count($strings_to_translate), $source_words, implode(' | ', $debug_word_breakdown)),
+            'info',
+            $page_id
+        );
         $server_factor = defined('AITRFOEL_Translate_All::SERVER_USAGE_FACTOR') ? AITRFOEL_Translate_All::SERVER_USAGE_FACTOR : 2;
         $estimated_words = $source_words * $server_factor;
         
@@ -266,16 +278,29 @@ class AITRFOEL_Translation_Engine {
         $original_post = get_post($page_id);
         $title_batch_key = '__aitrfoel_post_title__';
         $pre_translated_title = null;
+        $title_already_in_batch = false;
         if ($original_post && !empty($original_post->post_title)) {
-            $strings_to_translate[] = [
-                'original' => $original_post->post_title,
-                'path' => $title_batch_key,
-                'type' => 'title',
-                'widget_type' => 'elementor',
-            ];
+            // Check if title already exists in parsed content
+            foreach ($strings_to_translate as $s) {
+                $stripped = trim(wp_strip_all_tags($s['original'] ?? ''));
+                if ($stripped === trim($original_post->post_title)) {
+                    $title_already_in_batch = true;
+                    break;
+                }
+            }
+            if (!$title_already_in_batch) {
+                $strings_to_translate[] = [
+                    'original' => $original_post->post_title,
+                    'path' => $title_batch_key,
+                    'type' => 'title',
+                    'widget_type' => 'elementor',
+                ];
+            }
         }
         
         // Process translations in batches
+        $batch_start_time = microtime(true);
+        AITRFOEL_Logger::log(sprintf('[TIMING] Starting batch processing: %d strings', count($strings_to_translate)), 'info', $page_id);
         $translations = [];
         $total_strings = count($strings_to_translate);
         $processed = 0;
@@ -359,6 +384,8 @@ class AITRFOEL_Translation_Engine {
         
         // Process uncached strings in batches
         if (!empty($uncached_items)) {
+            $cache_elapsed = round((microtime(true) - $batch_start_time) * 1000);
+            AITRFOEL_Logger::log(sprintf('[TIMING] Cache check done in %dms: %d cached, %d uncached', $cache_elapsed, count($cached_translations), count($uncached_items)), 'info', $page_id);
             // OPTIMIZED: Process all strings together for maximum batch efficiency
             // No grouping by widget - creates larger batches = faster translation
             $batches = array_chunk($uncached_items, $this->batch_size);
@@ -540,7 +567,9 @@ class AITRFOEL_Translation_Engine {
         $word_count = 0;
         foreach ($strings_to_translate as $string_data) {
             if (isset($string_data['original'])) {
-                $word_count += str_word_count(wp_strip_all_tags($string_data['original']));
+                $text = wp_strip_all_tags($string_data['original']);
+                $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $word_count += str_word_count($text);
             }
         }
         
@@ -689,8 +718,33 @@ class AITRFOEL_Translation_Engine {
             $page_id
         );
         
+        $total_batch_elapsed = round((microtime(true) - $batch_start_time) * 1000);
+        AITRFOEL_Logger::log(sprintf('[TIMING] Total batch_translate_strings: %dms', $total_batch_elapsed), 'info', $page_id);
+        
         // Merge cached and newly translated results
         $translations = array_merge($cached_translations, $translations);
+
+        // Extract pre-translated title BEFORE gap-filler and apply_translations
+        // so the parser doesn't try to set __aitrfoel_post_title__ as an Elementor data path
+        if ($original_post && !empty($original_post->post_title)) {
+            if (isset($translations[$title_batch_key])) {
+                $pre_translated_title = wp_strip_all_tags($translations[$title_batch_key]);
+                unset($translations[$title_batch_key]);
+            } elseif ($title_already_in_batch) {
+                foreach ($strings_to_translate as $s) {
+                    $stripped = trim(wp_strip_all_tags($s['original'] ?? ''));
+                    if ($stripped === trim($original_post->post_title) && isset($translations[$s['path']])) {
+                        $pre_translated_title = wp_strip_all_tags($translations[$s['path']]);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Remove title entry from strings before gap-filler processes them
+        $strings_to_translate = array_values(array_filter($strings_to_translate, function($s) use ($title_batch_key) {
+            return ($s['path'] ?? '') !== $title_batch_key;
+        }));
 
         // Gap-Filler second pass: fix missed/under-translated strings before applying
         if (class_exists('AITRFOEL_Gap_Filler')) {
@@ -758,17 +812,6 @@ class AITRFOEL_Translation_Engine {
             $this->localize_internal_links($translated_data, $target_lang);
         } catch (Exception $e) {
             AITRFOEL_Logger::log('URL localization failed: ' . $e->getMessage(), 'warning', $page_id);
-        }
-
-        // Extract pre-translated title from batch results (avoids separate API call)
-        if ($original_post && !empty($original_post->post_title)) {
-            // Check both path-keyed and source-text-keyed results
-            if (isset($translations[$title_batch_key])) {
-                $pre_translated_title = wp_strip_all_tags($translations[$title_batch_key]);
-                unset($translations[$title_batch_key]); // Don't apply to Elementor data
-            } elseif (isset($translations[$original_post->post_title])) {
-                $pre_translated_title = wp_strip_all_tags($translations[$original_post->post_title]);
-            }
         }
 
         // Create new page with translations
@@ -862,6 +905,21 @@ class AITRFOEL_Translation_Engine {
             ]);
         }
         
+        // Record in translation history
+        $translation_duration = microtime(true) - $translation_start_time;
+        if (class_exists('AITRFOEL_Translation_History')) {
+            AITRFOEL_Translation_History::record([
+                'original_post_id'   => $page_id,
+                'translated_post_id' => $new_page_id,
+                'source_lang'        => $detected_lang,
+                'target_lang'        => $target_lang,
+                'content_type'       => 'elementor',
+                'word_count'         => $this->last_translation_stats['word_count'] ?? 0,
+                'status'             => 'success',
+                'duration'           => round($translation_duration, 2),
+            ]);
+        }
+        
         return $new_page_id;
     }
     
@@ -942,13 +1000,24 @@ class AITRFOEL_Translation_Engine {
         // Include post title in batch to avoid a separate API call
         $post_title = $post->post_title;
         $title_key = '__aitrfoel_post_title__';
+        $title_already_included = false;
         if (!empty($post_title)) {
-            $strings_to_translate[] = [
-                'original' => $post_title,
-                'path' => $title_key,
-                'type' => 'title',
-                'widget_type' => 'gutenberg',
-            ];
+            // Check if title already exists in parsed content (e.g. as H1)
+            foreach ($strings_to_translate as $s) {
+                $stripped = trim(wp_strip_all_tags($s['original'] ?? ''));
+                if ($stripped === trim($post_title)) {
+                    $title_already_included = true;
+                    break;
+                }
+            }
+            if (!$title_already_included) {
+                $strings_to_translate[] = [
+                    'original' => $post_title,
+                    'path' => $title_key,
+                    'type' => 'title',
+                    'widget_type' => 'gutenberg',
+                ];
+            }
         }
         
         // Translate strings (title included in batch)
@@ -964,13 +1033,25 @@ class AITRFOEL_Translation_Engine {
         }
         
         // Extract translated title from batch results
+        // batch_translate_strings keys results by original text, not by path
         $translated_title = null;
-        if (isset($translations[$post_title])) {
+        if (!$title_already_included && isset($translations[$post_title])) {
+            // Title was added as a separate batch entry — keyed by original text
             $translated_title = $translations[$post_title];
+            unset($translations[$post_title]); // Don't pass to apply_translations
+        } elseif ($title_already_included) {
+            // Title was already in content (e.g. as H1) — extract translated version
+            foreach ($strings_to_translate as $s) {
+                $stripped = trim(wp_strip_all_tags($s['original'] ?? ''));
+                if ($stripped === trim($post_title) && isset($translations[$s['original']])) {
+                    $translated_title = wp_strip_all_tags($translations[$s['original']]);
+                    break;
+                }
+            }
         }
         
         AITRFOEL_Logger::log(
-            sprintf('Received %d translations from API', count($translations)),
+            sprintf('Received %d translations from API (translated_title: %s)', count($translations), $translated_title ? 'yes' : 'no'),
             'info',
             $page_id
         );
@@ -1058,12 +1139,23 @@ class AITRFOEL_Translation_Engine {
         $post_title = $post->post_title;
         $title_key = '__aitrfoel_post_title__';
         if (!empty($post_title)) {
-            $strings_to_translate[] = [
-                'original' => $post_title,
-                'path' => $title_key,
-                'type' => 'title',
-                'widget_type' => 'classic_editor',
-            ];
+            // Check if title already exists in parsed content (e.g. as H1)
+            $title_already_included = false;
+            foreach ($strings_to_translate as $s) {
+                $stripped = trim(wp_strip_all_tags($s['original'] ?? ''));
+                if ($stripped === trim($post_title)) {
+                    $title_already_included = true;
+                    break;
+                }
+            }
+            if (!$title_already_included) {
+                $strings_to_translate[] = [
+                    'original' => $post_title,
+                    'path' => $title_key,
+                    'type' => 'title',
+                    'widget_type' => 'classic_editor',
+                ];
+            }
         }
         
         // Translate strings (title included in batch)
@@ -1075,8 +1167,18 @@ class AITRFOEL_Translation_Engine {
         
         // Extract translated title from batch results
         $translated_title = null;
-        if (isset($translations[$post_title])) {
-            $translated_title = $translations[$post_title];
+        if (isset($translations[$title_key])) {
+            // Title was added as a separate batch entry
+            $translated_title = $translations[$title_key];
+        } elseif (!empty($title_already_included)) {
+            // Title was already in content (e.g. as H1) — extract translated version
+            foreach ($strings_to_translate as $s) {
+                $stripped = trim(wp_strip_all_tags($s['original'] ?? ''));
+                if ($stripped === trim($post_title) && isset($translations[$s['path']])) {
+                    $translated_title = wp_strip_all_tags($translations[$s['path']]);
+                    break;
+                }
+            }
         }
         
         // Apply translations to content
@@ -1244,7 +1346,9 @@ class AITRFOEL_Translation_Engine {
         $source_words = 0;
         foreach ($strings_to_translate as $string_data) {
             if (isset($string_data['original'])) {
-                $source_words += str_word_count(wp_strip_all_tags($string_data['original']));
+                $text = wp_strip_all_tags($string_data['original']);
+                $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $source_words += str_word_count($text);
             }
         }
         $server_factor = defined('AITRFOEL_Translate_All::SERVER_USAGE_FACTOR') ? AITRFOEL_Translate_All::SERVER_USAGE_FACTOR : 2;
@@ -1813,19 +1917,41 @@ class AITRFOEL_Translation_Engine {
     AITRFOEL_Logger::log("Original text: " . substr((string)$original_text, 0, 200) . (strlen((string)$original_text) > 200 ? '...' : ''), 'debug');
     AITRFOEL_Logger::log("Translated text: " . substr((string)$translated_text, 0, 200) . (strlen((string)$translated_text) > 200 ? '...' : ''), 'debug');
         
-        // CRITICAL: Strip any HTML that the AI might have added to the translation
-        // The AI should only return plain text, but sometimes adds its own HTML interpretation
-        $cleaned_translated = wp_strip_all_tags($translated_text);
-        if ($cleaned_translated !== $translated_text) {
-            AITRFOEL_Logger::log("WARNING: AI added HTML to translation, stripping it", 'warning');
-            AITRFOEL_Logger::log("Original AI response: " . $translated_text, 'warning');
-            AITRFOEL_Logger::log("Cleaned response: " . $cleaned_translated, 'debug');
+        // If no HTML in original, strip any HTML the AI added and return
+        if ($original_text === wp_strip_all_tags($original_text)) {
+            $cleaned = wp_strip_all_tags($translated_text);
+            if ($cleaned !== $translated_text) {
+                AITRFOEL_Logger::log("No HTML in original, stripping AI-added HTML", 'debug');
+            }
+            AITRFOEL_Logger::log("No HTML in original text, returning cleaned translation", 'debug');
+            return $cleaned;
         }
         
-        // If no HTML in original, return cleaned translation
-        if ($original_text === wp_strip_all_tags($original_text)) {
-            AITRFOEL_Logger::log("No HTML in original text, returning cleaned translation", 'debug');
-            return $cleaned_translated;
+        // Original HAS HTML. Check if AI preserved the block-level structure.
+        // Extract block-level tag sequence from original and translated.
+        $block_tags = 'p|h[1-6]|ul|ol|li|div|blockquote|table|tr|td|th|thead|tbody|section|article|header|footer|figure|figcaption|pre';
+        preg_match_all('/<(\/?)(' . $block_tags . ')[\s>]/i', $original_text, $orig_blocks);
+        preg_match_all('/<(\/?)(' . $block_tags . ')[\s>]/i', $translated_text, $tr_blocks);
+        
+        $orig_sequence = implode(',', array_map(function($close, $tag) {
+            return ($close ? '/' : '') . strtolower($tag);
+        }, $orig_blocks[1], $orig_blocks[2]));
+        
+        $tr_sequence = implode(',', array_map(function($close, $tag) {
+            return ($close ? '/' : '') . strtolower($tag);
+        }, $tr_blocks[1], $tr_blocks[2]));
+        
+        if (!empty($orig_sequence) && $orig_sequence === $tr_sequence) {
+            // AI preserved the same block-level HTML structure — use AI's response directly
+            AITRFOEL_Logger::log("AI preserved block-level HTML structure, using AI response directly", 'info');
+            return $translated_text;
+        }
+        
+        // Block structure doesn't match — fall back to stripping and restoring
+        $cleaned_translated = wp_strip_all_tags($translated_text);
+        if ($cleaned_translated !== $translated_text) {
+            AITRFOEL_Logger::log("WARNING: AI changed HTML structure, stripping it", 'warning');
+            AITRFOEL_Logger::log("Cleaned response: " . substr($cleaned_translated, 0, 200), 'debug');
         }
         
         // If we have stored HTML placeholders, restore them

@@ -370,10 +370,13 @@ class AITRFOEL_Ajax_Handler {
             }
             
             // Estimate word count for limit validation
+            // Apply server usage factor (server counts both source + translated words)
+            $server_factor = defined('AITRFOEL_Translate_All::SERVER_USAGE_FACTOR') ? AITRFOEL_Translate_All::SERVER_USAGE_FACTOR : 2;
             $estimated_words = 0;
             foreach ($strings_to_translate as $string) {
                 $estimated_words += str_word_count($string);
             }
+            $estimated_words *= $server_factor;
             
             // Check word limits before proceeding - WITH DEBUGGING
             
@@ -853,7 +856,9 @@ class AITRFOEL_Ajax_Handler {
                 }
                 
                 // Calculate total for this page across all languages
-                $page_total_words = $page_word_count * count($target_langs);
+                // Apply server usage factor (server counts both source + translated words)
+                $server_factor = defined('AITRFOEL_Translate_All::SERVER_USAGE_FACTOR') ? AITRFOEL_Translate_All::SERVER_USAGE_FACTOR : 2;
+                $page_total_words = $page_word_count * count($target_langs) * $server_factor;
                 $total_words += $page_total_words;
                 
                 // Add to breakdown
@@ -1040,13 +1045,16 @@ class AITRFOEL_Ajax_Handler {
                 }
             }
             
-            // Multiply by number of languages
-            $total_estimated_words *= count($target_langs);
+            // Multiply by number of languages and apply server usage factor
+            // Server counts both source + translated words, so multiply by factor
+            $server_factor = defined('AITRFOEL_Translate_All::SERVER_USAGE_FACTOR') ? AITRFOEL_Translate_All::SERVER_USAGE_FACTOR : 2;
+            $total_estimated_words *= count($target_langs) * $server_factor;
             
             AITRFOEL_Logger::log(sprintf(
-                'Bulk translation pre-flight check: %d pages × %d languages = %d estimated words',
+                'Bulk translation pre-flight check: %d pages × %d languages × %d factor = %d estimated words',
                 count($page_ids),
                 count($target_langs),
+                $server_factor,
                 $total_estimated_words
             ), 'info');
             
@@ -1197,8 +1205,21 @@ class AITRFOEL_Ajax_Handler {
                         $new_page_id = $engine->translate_page($page_id, $target_lang, $source_language);
                         
                         if (is_wp_error($new_page_id)) {
+                            $error_code = $new_page_id->get_error_code();
                             $results[] = ['error' => $new_page_id->get_error_message()];
                             $error_count++;
+                            
+                            // If word limit error, stop the entire batch — no point continuing
+                            if (in_array($error_code, ['insufficient_words', 'cooldown_active'], true)) {
+                                $queue->update_job($job_id, [
+                                    'status' => 'paused',
+                                    'completed_items' => $completed_jobs,
+                                    'current_step' => '⚠️ Stopped: Word limit reached',
+                                    'details' => wp_strip_all_tags($new_page_id->get_error_message()),
+                                    'error_type' => $error_code
+                                ]);
+                                break 2; // Exit both foreach loops
+                            }
                             
                             // Show error state
                             $queue->update_job($job_id, [

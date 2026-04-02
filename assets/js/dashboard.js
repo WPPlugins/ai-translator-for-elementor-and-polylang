@@ -225,6 +225,7 @@ jQuery(document).ready(function($) {
             this.stopFlipLoader();
             this.stopStageProgress();
             this.stopElapsedTimer();
+            this.stopAnimatedProgress();
             
             // Clear active translation
             this.clearActiveTranslation();
@@ -1169,6 +1170,9 @@ jQuery(document).ready(function($) {
                 // Generic error
                 this.showError(errorData.message || __('translation_failed_start', __('translation_failed_start', 'Translation failed to start.')));
             }
+            
+            // Stop animated progress interval so it doesn't overwrite the reset
+            this.stopAnimatedProgress();
             
             // Reset estimated words text
             $('#eat-estimated-words')

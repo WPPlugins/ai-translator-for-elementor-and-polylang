@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.11
+Stable tag: 1.4.12
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,24 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.12 =
+* Fixed: Word count overcounting due to HTML entities not being decoded before counting
+* Fixed: Classic Editor translation speed improved by removing duplicate regex processing
+* Fixed: Post title no longer double-counted when it appears as H1 in content
+* Fixed: Title extraction from batch translation results (was never matching due to path-keyed lookup)
+* Fixed: Plain permalink support — translated pages now use ?lang= parameter instead of URL prefix
+* Fixed: Pages without explicit language assignment now correctly show as default language instead of "(?)"
+* Fixed: Pre-flight word limit check now applies the same server factor as the engine (no more false "fits" then block)
+* Fixed: Bulk translation now stops all loops when word limit or cooldown is hit
+* Fixed: Translation status text no longer keeps cycling after an error occurs
+* Fixed: "Clear History" button now works (AJAX handler was not registered during AJAX requests)
+* Fixed: Elementor translations now recorded in translation history
+* Fixed: AI-preserved HTML no longer stripped and re-translated unnecessarily (major speed improvement)
+* Fixed: Gutenberg post title now correctly translated (batch results keyed by text, not path)
+* Fixed: Elementor title extraction moved before gap-filler to prevent path errors
+* Fixed: Gap-filler no longer falsely re-translates content with valid HTML closing tags
+* Added: Language badges in history tab are now clickable to filter by language
+
 = 1.4.11 =
 * Fixed: Translated pages now get proper translated slugs instead of reusing the source language slug
 * Added: Exclude Words tab in Settings page for managing terms that should not be translated

@@ -113,12 +113,9 @@ class AITRFOEL_Classic_Parser {
         // Match: optional whitespace, opening tag, content (greedy), closing tag
         $pattern = '#(<(?:' . $block_tags . ')(?:\s[^>]*)?>[\s\S]*?</(?:' . $block_tags . ')>)#i';
         
-        // First try: split by block elements
-        if (preg_match_all($pattern, $html, $matches)) {
+        // Split by block elements, capturing positions in a single pass
+        if (preg_match_all($pattern, $html, $positioned_matches, PREG_OFFSET_CAPTURE)) {
             $last_end = 0;
-            
-            // Use preg_match_all with PREG_OFFSET_CAPTURE to get positions
-            preg_match_all($pattern, $html, $positioned_matches, PREG_OFFSET_CAPTURE);
             
             foreach ($positioned_matches[0] as $match) {
                 $match_text = $match[0];

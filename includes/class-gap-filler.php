@@ -64,7 +64,7 @@ final class AITRFOEL_Gap_Filler {
                 ? !self::notAlmostSame($orig, $tr, $L)
                 : false;
             $hasResidue = ($tr !== '' && @preg_match($RES, $tr) === 1);
-            $hasEscaped = (bool)preg_match('/\\<\/[a-z]+>/i', $tr) || (strpos($tr, '<\\ph') !== false);
+            $hasEscaped = (bool)preg_match('/\\\\<\/[a-z]+>/i', $tr) || (strpos($tr, '<\\ph') !== false);
 
             if ($isEmpty || $isAlmostSame || $hasResidue || $hasEscaped) {
                 $candidates[] = $row + [

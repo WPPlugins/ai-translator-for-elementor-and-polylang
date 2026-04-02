@@ -149,10 +149,13 @@ class AITRFOEL_Translation_History {
                 <?php if (!empty($summary['languages'])): ?>
                 <div class="aitrfoel-history-card" style="background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 16px 24px; flex: 1; min-width: 200px;">
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <?php foreach ($summary['languages'] as $code => $cnt): ?>
-                            <span style="display: inline-block; background: #f0f6fc; border: 1px solid #c3d7ef; border-radius: 4px; padding: 2px 8px; font-size: 12px; font-weight: 600;">
-                                <?php echo esc_html(strtoupper($code)); ?> <span style="color: #646970; font-weight: 400;">(<?php echo $cnt; ?>)</span>
-                            </span>
+                        <?php foreach ($summary['languages'] as $code => $cnt):
+                            $filter_url = add_query_arg(['page' => 'ai-translator-for-elementor-and-polylang-history', 'lang' => $code], admin_url('admin.php'));
+                            $is_active = (isset($_GET['lang']) && $_GET['lang'] === $code);
+                        ?>
+                            <a href="<?php echo esc_url($filter_url); ?>" style="display: inline-block; background: <?php echo $is_active ? '#2271b1' : '#f0f6fc'; ?>; border: 1px solid <?php echo $is_active ? '#2271b1' : '#c3d7ef'; ?>; border-radius: 4px; padding: 2px 8px; font-size: 12px; font-weight: 600; text-decoration: none; color: <?php echo $is_active ? '#fff' : 'inherit'; ?>;" title="<?php echo esc_attr(sprintf(__('Filter by %s', 'ai-translator-for-elementor-and-polylang'), strtoupper($code))); ?>">
+                                <?php echo esc_html(strtoupper($code)); ?> <span style="color: <?php echo $is_active ? 'rgba(255,255,255,0.7)' : '#646970'; ?>; font-weight: 400;">(<?php echo $cnt; ?>)</span>
+                            </a>
                         <?php endforeach; ?>
                     </div>
                     <div style="color: #646970; font-size: 13px; margin-top: 6px;"><?php esc_html_e('Per Language', 'ai-translator-for-elementor-and-polylang'); ?></div>
@@ -250,7 +253,8 @@ class AITRFOEL_Translation_History {
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <span class="eat-lang-flag eat-lang-exists"><?php echo esc_html(strtoupper($row->target_lang)); ?></span>
+                                    <?php $lang_filter_url = add_query_arg(['page' => 'ai-translator-for-elementor-and-polylang-history', 'lang' => $row->target_lang], admin_url('admin.php')); ?>
+                                    <a href="<?php echo esc_url($lang_filter_url); ?>" class="eat-lang-flag eat-lang-exists" style="text-decoration: none; cursor: pointer;" title="<?php echo esc_attr(sprintf(__('Filter by %s', 'ai-translator-for-elementor-and-polylang'), strtoupper($row->target_lang))); ?>"><?php echo esc_html(strtoupper($row->target_lang)); ?></a>
                                 </td>
                                 <td>
                                     <span style="display: inline-block; background: <?php echo esc_attr($badge_bg); ?>; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 3px; font-weight: 500;">
