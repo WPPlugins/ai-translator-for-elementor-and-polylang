@@ -2235,3 +2235,96 @@ msgstr "🚫 Исключить слова"
 
 msgid "🛒 WooCommerce"
 msgstr "🛒 WooCommerce"
+
+
+# --- Setup checklist, info card & metabox translations (2026-04-02) ---
+
+msgid "Setup Checklist"
+msgstr "Список проверки настройки"
+
+msgid "%1$d of %2$d completed"
+msgstr "%1$d из %2$d завершено"
+
+msgid "Dismiss checklist"
+msgstr "Закрыть список проверки"
+
+msgid "Skip"
+msgstr "Пропустить"
+
+msgid "At least two languages are set up for translation."
+msgstr "Для перевода настроены как минимум два языка."
+
+msgid "Configure Languages"
+msgstr "Настроить языки"
+
+msgid "First Translation"
+msgstr "Первый перевод"
+
+msgid "Translate your first page or post into another language."
+msgstr "Переведите свою первую страницу или запись на другой язык."
+
+msgid "Let visitors switch between languages on the front end."
+msgstr "Позвольте посетителям переключаться между языками на фронтенде."
+
+msgid "Set Up Switcher"
+msgstr "Настроить переключатель"
+
+msgid "If you enjoy using Meep AI Translator, please take a moment to rate us on WordPress.org! Your feedback helps us improve the plugin and reach more users who could benefit from it."
+msgstr "Если вам нравится использовать Meep AI Translator, пожалуйста, уделите минуту, чтобы оценить нас на WordPress.org! Ваши отзывы помогают нам улучшать плагин и достигать большего числа пользователей, которые могут извлечь из него пользу."
+
+msgid "Please select at least one language."
+msgstr "Пожалуйста, выберите как минимум один язык."
+
+msgid "Start translating to the selected languages?"
+msgstr "Начать перевод на выбранные языки?"
+
+msgid "Set up a multilingual plugin to enable quick translations."
+msgstr "Настройте многоязычный плагин для быстрого перевода."
+
+msgid "No translatable content detected."
+msgstr "Не обнаружено переводимого контента."
+
+msgid "Word limit reached. Please upgrade your plan."
+msgstr "Достигнут лимит слов. Пожалуйста, обновите ваш тарифный план."
+
+msgid "Set up your languages for quick translations. %1$sGo to Dashboard%2$s"
+msgstr "Настройте ваши языки для быстрого перевода. %1$sПерейти в Панель управления%2$s"
+
+msgid "Please %sconfigure your languages%s first."
+msgstr "Пожалуйста, %sсначала настройте ваши языки%s."
+
+msgid "Not set"
+msgstr "Не установлено"
+
+msgid "Content:"
+msgstr "Содержимое:"
+
+msgid "Translations:"
+msgstr "Переводы:"
+
+msgid "Quick Translate:"
+msgstr "Быстрый перевод:"
+
+msgid "Will create a new translation (overwrites existing)"
+msgstr "Создаст новый перевод (перезаписывает существующий)"
+
+msgid "Quick Translate is available on the source post."
+msgstr "Быстрый перевод доступен на исходной записи."
+
+msgid "Go to Source Post →"
+msgstr "Перейти к исходной записи →"
+
+msgid "Open Translation Dashboard →"
+msgstr "Открыть панель перевода →"
+
+msgid "Missing required parameters."
+msgstr "Отсутствуют обязательные параметры."
+
+msgid "Invalid post."
+msgstr "Недействительная запись."
+
+msgid "All translations failed."
+msgstr "Все переводы не удались."
+
+msgid "%d translation(s) completed successfully."
+msgstr "%d перевод(а) успешно завершены."

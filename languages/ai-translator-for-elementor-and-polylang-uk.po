@@ -1665,3 +1665,108 @@ msgstr "🚫 Виключити слова"
 
 msgid "🛒 WooCommerce"
 msgstr "🛒 WooCommerce"
+
+
+# --- Setup checklist, info card & metabox translations (2026-04-02) ---
+
+msgid "Setup Checklist"
+msgstr "Список перевірки налаштування"
+
+msgid "%1$d of %2$d completed"
+msgstr "%1$d з %2$d завершено"
+
+msgid "Dismiss checklist"
+msgstr "Приховати список перевірки"
+
+msgid "Skip"
+msgstr "Пропустити"
+
+msgid "At least two languages are set up for translation."
+msgstr "Принаймні дві мови налаштовані для перекладу."
+
+msgid "Configure Languages"
+msgstr "Налаштувати мови"
+
+msgid "First Translation"
+msgstr "Перший переклад"
+
+msgid "Translate your first page or post into another language."
+msgstr "Перекладіть свою першу сторінку або допис на іншу мову."
+
+msgid "Let visitors switch between languages on the front end."
+msgstr "Дозвольте відвідувачам перемикатися між мовами на фронтенді."
+
+msgid "Set Up Switcher"
+msgstr "Налаштувати перемикач"
+
+msgid "Rate Our Plugin"
+msgstr "Оцініть наш плагін"
+
+msgid "If you enjoy using Meep AI Translator, please take a moment to rate us on WordPress.org! Your feedback helps us improve the plugin and reach more users who could benefit from it."
+msgstr "Якщо вам подобається використовувати Meep AI Translator, будь ласка, витратьте хвилину, щоб оцінити нас на WordPress.org! Ваші відгуки допомагають нам покращити плагін і досягти більшої кількості користувачів, які можуть отримати від нього користь."
+
+msgid "Leave a Review"
+msgstr "Залишити відгук"
+
+msgid "Translation engine is not ideal - errors can be spotted in translated pages. We are constantly updating algorithm to provide you with the best experience. If you spot a bug in translation contact us via feedback form."
+msgstr "Перекладний механізм не ідеальний - помилки можуть бути помічені в перекладених сторінках. Ми постійно оновлюємо алгоритм, щоб надати вам найкращий досвід. Якщо ви помітили помилку в перекладі, зв'яжіться з нами через форму зворотного зв'язку."
+
+msgid "Please select at least one language."
+msgstr "Будь ласка, виберіть принаймні одну мову."
+
+msgid "Start translating to the selected languages?"
+msgstr "Розпочати переклад на вибрані мови?"
+
+msgid "Set up a multilingual plugin to enable quick translations."
+msgstr "Налаштуйте багатомовний плагін для швидких перекладів."
+
+msgid "No translatable content detected."
+msgstr "Не виявлено перекладного контенту."
+
+msgid "Word limit reached. Please upgrade your plan."
+msgstr "Досягнуто ліміту слів. Будь ласка, оновіть свій план."
+
+msgid "Set up your languages for quick translations. %1$sGo to Dashboard%2$s"
+msgstr "Налаштуйте свої мови для швидких перекладів. %1$sПерейти до панелі управління%2$s"
+
+msgid "Please %sconfigure your languages%s first."
+msgstr "Будь ласка, спочатку %sналаштуйте свої мови%s."
+
+msgid "Not set"
+msgstr "Не налаштовано"
+
+msgid "Content:"
+msgstr "Контент:"
+
+msgid "Translations:"
+msgstr "Переклади:"
+
+msgid "Quick Translate:"
+msgstr "Швидкий переклад:"
+
+msgid "Will create a new translation (overwrites existing)"
+msgstr "Створить новий переклад (перезаписує існуючий)"
+
+msgid "Quick Translate is available on the source post."
+msgstr "Швидкий переклад доступний на вихідному дописі."
+
+msgid "Go to Source Post →"
+msgstr "Перейти до вихідного допису →"
+
+msgid "Open Translation Dashboard →"
+msgstr "Відкрити панель перекладу →"
+
+msgid "Missing required parameters."
+msgstr "Відсутні обов'язкові параметри."
+
+msgid "Invalid post."
+msgstr "Недійсний допис."
+
+msgid "All translations failed."
+msgstr "Усі переклади не вдалися."
+
+msgid "%d translation(s) completed successfully."
+msgstr "%d переклад(и) успішно завершено."
+
+msgid "Private"
+msgstr "Приватний"

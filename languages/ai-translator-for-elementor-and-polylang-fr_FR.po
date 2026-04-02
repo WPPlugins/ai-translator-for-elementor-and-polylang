@@ -1665,3 +1665,108 @@ msgstr "🚫 Exclure des mots"
 
 msgid "🛒 WooCommerce"
 msgstr "🛒 WooCommerce"
+
+
+# --- Setup checklist, info card & metabox translations (2026-04-02) ---
+
+msgid "Setup Checklist"
+msgstr "Liste de vérification de configuration"
+
+msgid "%1$d of %2$d completed"
+msgstr "%1$d sur %2$d complété"
+
+msgid "Dismiss checklist"
+msgstr "Ignorer la liste de vérification"
+
+msgid "Skip"
+msgstr "Passer"
+
+msgid "At least two languages are set up for translation."
+msgstr "Au moins deux langues sont configurées pour la traduction."
+
+msgid "Configure Languages"
+msgstr "Configurer les langues"
+
+msgid "First Translation"
+msgstr "Première traduction"
+
+msgid "Translate your first page or post into another language."
+msgstr "Traduisez votre première page ou publication dans une autre langue."
+
+msgid "Let visitors switch between languages on the front end."
+msgstr "Permettez aux visiteurs de passer d'une langue à l'autre sur le front-end."
+
+msgid "Set Up Switcher"
+msgstr "Configurer le sélecteur"
+
+msgid "Rate Our Plugin"
+msgstr "Évaluez notre plugin"
+
+msgid "If you enjoy using Meep AI Translator, please take a moment to rate us on WordPress.org! Your feedback helps us improve the plugin and reach more users who could benefit from it."
+msgstr "Si vous aimez utiliser Meep AI Translator, veuillez prendre un moment pour nous évaluer sur WordPress.org ! Vos commentaires nous aident à améliorer le plugin et à atteindre plus d'utilisateurs qui pourraient en bénéficier."
+
+msgid "Leave a Review"
+msgstr "Laissez un avis"
+
+msgid "Translation engine is not ideal - errors can be spotted in translated pages. We are constantly updating algorithm to provide you with the best experience. If you spot a bug in translation contact us via feedback form."
+msgstr "Le moteur de traduction n'est pas idéal - des erreurs peuvent être détectées dans les pages traduites. Nous mettons constamment à jour l'algorithme pour vous offrir la meilleure expérience. Si vous repérez un bug dans la traduction, contactez-nous via le formulaire de retour."
+
+msgid "Please select at least one language."
+msgstr "Veuillez sélectionner au moins une langue."
+
+msgid "Start translating to the selected languages?"
+msgstr "Commencer à traduire vers les langues sélectionnées ?"
+
+msgid "Set up a multilingual plugin to enable quick translations."
+msgstr "Configurez un plugin multilingue pour permettre des traductions rapides."
+
+msgid "No translatable content detected."
+msgstr "Aucun contenu traduisible détecté."
+
+msgid "Word limit reached. Please upgrade your plan."
+msgstr "Limite de mots atteinte. Veuillez mettre à niveau votre plan."
+
+msgid "Set up your languages for quick translations. %1$sGo to Dashboard%2$s"
+msgstr "Configurez vos langues pour des traductions rapides. %1$sAllez au tableau de bord%2$s"
+
+msgid "Please %sconfigure your languages%s first."
+msgstr "Veuillez %sconfigurer vos langues%s d'abord."
+
+msgid "Not set"
+msgstr "Non défini"
+
+msgid "Content:"
+msgstr "Contenu :"
+
+msgid "Translations:"
+msgstr "Traductions :"
+
+msgid "Quick Translate:"
+msgstr "Traduction rapide :"
+
+msgid "Will create a new translation (overwrites existing)"
+msgstr "Créera une nouvelle traduction (écrase l'existante)"
+
+msgid "Quick Translate is available on the source post."
+msgstr "La traduction rapide est disponible sur la publication source."
+
+msgid "Go to Source Post →"
+msgstr "Aller à la publication source →"
+
+msgid "Open Translation Dashboard →"
+msgstr "Ouvrir le tableau de bord de traduction →"
+
+msgid "Missing required parameters."
+msgstr "Paramètres requis manquants."
+
+msgid "Invalid post."
+msgstr "Publication invalide."
+
+msgid "All translations failed."
+msgstr "Toutes les traductions ont échoué."
+
+msgid "%d translation(s) completed successfully."
+msgstr "%d traduction(s) complétée(s) avec succès."
+
+msgid "Private"
+msgstr "Privé"

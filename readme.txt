@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.13
+Stable tag: 1.4.14
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,9 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.14 =
+* Added: Translations for setup checklist, info card, and metabox strings (34 new strings across 9 languages)
+
 = 1.4.13 =
 * Fixed: Word count accuracy for languages with apostrophes (French, Italian, etc.) — no longer splits contractions into separate words
 * Fixed: Classic Editor post title now correctly translated (batch results keyed by text, not path)

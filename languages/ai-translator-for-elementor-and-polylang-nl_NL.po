@@ -1499,3 +1499,108 @@ msgstr "🚫 Uitsluiten Woorden"
 
 msgid "🛒 WooCommerce"
 msgstr "🛒 WooCommerce"
+
+
+# --- Setup checklist, info card & metabox translations (2026-04-02) ---
+
+msgid "Setup Checklist"
+msgstr "Installatie Checklist"
+
+msgid "%1$d of %2$d completed"
+msgstr "%1$d van %2$d voltooid"
+
+msgid "Dismiss checklist"
+msgstr "Checklist negeren"
+
+msgid "Skip"
+msgstr "Overslaan"
+
+msgid "At least two languages are set up for translation."
+msgstr "Er zijn minstens twee talen ingesteld voor vertaling."
+
+msgid "Configure Languages"
+msgstr "Talen Configureren"
+
+msgid "First Translation"
+msgstr "Eerste Vertaling"
+
+msgid "Translate your first page or post into another language."
+msgstr "Vertaal uw eerste pagina of bericht naar een andere taal."
+
+msgid "Let visitors switch between languages on the front end."
+msgstr "Laat bezoekers tussen talen schakelen op de voorkant."
+
+msgid "Set Up Switcher"
+msgstr "Schakelaar Instellen"
+
+msgid "Rate Our Plugin"
+msgstr "Beoordeel Onze Plugin"
+
+msgid "If you enjoy using Meep AI Translator, please take a moment to rate us on WordPress.org! Your feedback helps us improve the plugin and reach more users who could benefit from it."
+msgstr "Als u geniet van het gebruik van Meep AI Translator, neem dan een moment om ons te beoordelen op WordPress.org! Uw feedback helpt ons de plugin te verbeteren en meer gebruikers te bereiken die er baat bij kunnen hebben."
+
+msgid "Leave a Review"
+msgstr "Laat een Beoordeling Achter"
+
+msgid "Translation engine is not ideal - errors can be spotted in translated pages. We are constantly updating algorithm to provide you with the best experience. If you spot a bug in translation contact us via feedback form."
+msgstr "Vertaalmachine is niet ideaal - fouten kunnen worden opgemerkt in vertaalde pagina's. We zijn voortdurend bezig met het bijwerken van het algoritme om u de beste ervaring te bieden. Als u een bug in de vertaling opmerkt, neem dan contact met ons op via het feedbackformulier."
+
+msgid "Please select at least one language."
+msgstr "Selecteer alstublieft minstens één taal."
+
+msgid "Start translating to the selected languages?"
+msgstr "Begin met vertalen naar de geselecteerde talen?"
+
+msgid "Set up a multilingual plugin to enable quick translations."
+msgstr "Stel een meertalige plugin in om snelle vertalingen mogelijk te maken."
+
+msgid "No translatable content detected."
+msgstr "Geen vertaalbare inhoud gedetecteerd."
+
+msgid "Word limit reached. Please upgrade your plan."
+msgstr "Limiet voor woorden bereikt. Upgrade alstublieft uw plan."
+
+msgid "Set up your languages for quick translations. %1$sGo to Dashboard%2$s"
+msgstr "Stel uw talen in voor snelle vertalingen. %1$sGa naar Dashboard%2$s"
+
+msgid "Please %sconfigure your languages%s first."
+msgstr "Configureer alstublieft eerst uw talen %s."
+
+msgid "Not set"
+msgstr "Niet ingesteld"
+
+msgid "Content:"
+msgstr "Inhoud:"
+
+msgid "Translations:"
+msgstr "Vertalingen:"
+
+msgid "Quick Translate:"
+msgstr "Snelle Vertaling:"
+
+msgid "Will create a new translation (overwrites existing)"
+msgstr "Zal een nieuwe vertaling aanmaken (overschrijft bestaande)"
+
+msgid "Quick Translate is available on the source post."
+msgstr "Snelle Vertaling is beschikbaar op de bronpost."
+
+msgid "Go to Source Post →"
+msgstr "Ga naar Bronpost →"
+
+msgid "Open Translation Dashboard →"
+msgstr "Open Vertaal Dashboard →"
+
+msgid "Missing required parameters."
+msgstr "Vereiste parameters ontbreken."
+
+msgid "Invalid post."
+msgstr "Ongeldige post."
+
+msgid "All translations failed."
+msgstr "Alle vertalingen zijn mislukt."
+
+msgid "%d translation(s) completed successfully."
+msgstr "%d vertaling(en) succesvol voltooid."
+
+msgid "Private"
+msgstr "Privé"
