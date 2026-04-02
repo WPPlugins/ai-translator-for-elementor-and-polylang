@@ -856,3 +856,812 @@ msgstr "API ключі або облікові дані"
 
 msgid "Data is never shared with third parties."
 msgstr "Дані ніколи не передаються третім особам."
+
+
+# --- Added by add-missing-translations.php (2026-04-02) ---
+
+msgid "%s items"
+msgstr "%s елементів"
+
+msgid "(no title)"
+msgstr "(без заголовка)"
+
+msgid "Active Plugin"
+msgstr "Активний плагін"
+
+msgid "Add Language"
+msgstr "Додати мову"
+
+msgid "Add custom CSS to override the default language switcher styles. This CSS is loaded on the frontend wherever the shortcode or widget is used."
+msgstr "Додайте власний CSS, щоб переоприділити стилі перемикача мов за замовчуванням. Цей CSS завантажується на фронтенді, де б не використовувався шорткод або віджет."
+
+msgid "Additional Meta Fields"
+msgstr "Додаткові мета-поля"
+
+msgid "Advanced"
+msgstr "Розширений"
+
+msgid "Advanced setting. Add comma-separated meta field keys here if the auto-detection misses something for your theme."
+msgstr "Розширене налаштування. Додайте ключі мета-полів, розділені комами, якщо автоматичне виявлення пропускає щось для вашої теми."
+
+msgid "All Languages"
+msgstr "Усі мови"
+
+msgid "All Statuses"
+msgstr "Усі статуси"
+
+msgid "All Types"
+msgstr "Усі типи"
+
+msgid "All menu locations"
+msgstr "Усі місця меню"
+
+msgid "Already Translated"
+msgstr "Вже перекладено"
+
+msgid "Alternative Ways to Add:"
+msgstr "Альтернативні способи додавання:"
+
+msgid "An error occurred."
+msgstr "Сталася помилка."
+
+msgid "Appearance → Widgets"
+msgstr "Зовнішній вигляд → Віджети"
+
+msgid "Are you sure you want to clear all cached translations? This cannot be undone."
+msgstr "Ви впевнені, що хочете очистити всі кешовані переклади? Це не можна скасувати."
+
+msgid "Are you sure you want to clear all translation history? This cannot be undone."
+msgstr "Ви впевнені, що хочете очистити всю історію перекладів? Це не можна скасувати."
+
+msgid "Are you sure you want to disable the built-in language system? You will need Polylang or WPML to manage translations."
+msgstr "Ви впевнені, що хочете вимкнути вбудовану мовну систему? Вам знадобляться Polylang або WPML для управління перекладами."
+
+msgid ""
+"Are you sure you want to reset all plugin data? This will:\n"
+"\n"
+"• Disable the built-in language system\n"
+"• Remove all configured languages\n"
+"• Reset the onboarding/welcome screen\n"
+"• Clear dependency status cache\n"
+"\n"
+"Your API key, translated pages, and other settings will be preserved.\n"
+"\n"
+"Continue?"
+msgstr ""
+"Ви впевнені, що хочете скинути всі дані плагіна? Це:\n"
+"\n"
+"• Вимкне вбудовану мовну систему\n"
+"• Видалить усі налаштовані мови\n"
+"• Скине екран onboarding/вітання\n"
+"• Очистить кеш статусу залежностей\n"
+"\n"
+"Ваш API-ключ, перекладені сторінки та інші налаштування будуть збережені.\n"
+"\n"
+"Продовжити?"
+
+msgid "Assign translated product categories"
+msgstr "Призначити перекладені категорії продуктів"
+
+msgid "Assign translated product tags"
+msgstr "Призначити перекладені теги продуктів"
+
+msgid "Automatically add language switcher to a navigation menu"
+msgstr "Автоматично додати перемикач мов до навігаційного меню"
+
+msgid "Automatically translates SEO meta title, description, and focus keywords when translating pages."
+msgstr "Автоматично перекладає SEO мета заголовок, опис та ключові слова при перекладі сторінок."
+
+msgid "Available CSS classes:"
+msgstr "Доступні CSS класи:"
+
+msgid "Available Languages:"
+msgstr "Доступні мови:"
+
+msgid "Cache"
+msgstr "Кеш"
+
+msgid "Cancel Scheduled Translation"
+msgstr "Скасувати запланований переклад"
+
+msgid "Choose which languages to translate your content into. Your default language content will be used as source."
+msgstr "Виберіть, на які мови перекладати ваш контент. Ваш контент за замовчуванням буде використано як джерело."
+
+msgid "Choose which menu location gets the language switcher appended, or select \"All\" to add to every menu."
+msgstr "Виберіть, до якого місця меню додати перемикач мов, або виберіть \"Усі\", щоб додати до кожного меню."
+
+msgid "Choose which types of content to translate."
+msgstr "Виберіть, які типи контенту перекладати."
+
+msgid "Clear"
+msgstr "Очистити"
+
+msgid "Clear History"
+msgstr "Очистити історію"
+
+msgid "Clearing..."
+msgstr "Очищення..."
+
+msgid "Code"
+msgstr "Код"
+
+msgid "Compatibility Status"
+msgstr "Статус сумісності"
+
+msgid "Configure the language switcher that visitors use to change the language on your site. You can add it using a shortcode, a WordPress widget, or a nav menu integration."
+msgstr "Налаштуйте перемикач мов, який відвідувачі використовують для зміни мови на вашому сайті. Ви можете додати його за допомогою шорткоду, віджету WordPress або інтеграції в меню навігації."
+
+msgid "Connection error"
+msgstr "Помилка з'єднання"
+
+msgid "Content Type"
+msgstr "Тип контенту"
+
+msgid "Content exceeds your current word allowance. Schedule translation to process over multiple billing cycles using your monthly word limit."
+msgstr "Контент перевищує вашу поточну дозволену кількість слів. Заплануйте переклад, щоб обробити за кілька платіжних циклів, використовуючи ваш місячний ліміт слів."
+
+msgid "Content you translate is sent to OpenAI for translation processing. Review their"
+msgstr "Вміст, який ви перекладаєте, надсилається до OpenAI для обробки перекладу. Перегляньте їх"
+
+msgid "Cooldown saved"
+msgstr "Охолодження збережено"
+
+msgid "Copied!"
+msgstr "Скопійовано!"
+
+msgid "Copy"
+msgstr "Копіювати"
+
+msgid "Copy this shortcode and paste it into any page, post, or text widget where you want the language switcher to appear."
+msgstr "Скопіюйте цей шорткод і вставте його на будь-яку сторінку, запис або текстовий віджет, де ви хочете, щоб перемикач мови з'явився."
+
+msgid "Creates translated variations for variable products, preserving parent-child relationships, pricing, and per-variation data (SKU, stock, dimensions)."
+msgstr "Створює перекладені варіації для змінних продуктів, зберігаючи відносини батьків-дитина, ціни та дані по варіаціях (SKU, запас, розміри)."
+
+msgid "Current Plan"
+msgstr "Поточний план"
+
+msgid "Custom CSS"
+msgstr "Користувацький CSS"
+
+msgid "Data sent to our server:"
+msgstr "Дані, надіслані на наш сервер:"
+
+msgid "Debug Mode"
+msgstr "Режим налагодження"
+
+msgid "Default"
+msgstr "За замовчуванням"
+
+msgid "Default Language:"
+msgstr "Мова за замовчуванням:"
+
+msgid "Define terms that should always be translated a specific way. The AI will follow these rules for every translation to ensure consistency across your site."
+msgstr "Визначте терміни, які завжди повинні перекладатися певним чином. ШІ буде дотримуватися цих правил для кожного перекладу, щоб забезпечити узгодженість на вашому сайті."
+
+msgid "Deselect All"
+msgstr "Скасувати вибір всіх"
+
+msgid "Disable Built-in Language System"
+msgstr "Вимкнути вбудовану мовну систему"
+
+msgid "Display Options"
+msgstr "Параметри відображення"
+
+msgid "Dropdown"
+msgstr "Випадний список"
+
+msgid "Editor"
+msgstr "Редактор"
+
+msgid "Elementor:"
+msgstr "Elementor:"
+
+msgid "Enable WooCommerce product translation"
+msgstr "Увімкнути переклад продуктів WooCommerce"
+
+msgid "Enable debug logging"
+msgstr "Увімкнути ведення журналу налагодження"
+
+msgid "Enforce monthly word limits based on your plan"
+msgstr "Забезпечити місячні обмеження слів відповідно до вашого плану"
+
+msgid "Error clearing cache: "
+msgstr "Помилка очищення кешу: "
+
+msgid "Error detecting multilingual plugin"
+msgstr "Помилка виявлення багатомовного плагіна"
+
+msgid "Error resetting plugin data: "
+msgstr "Помилка скидання даних плагіна: "
+
+msgid "Estimated time remaining"
+msgstr "Оцінковий час, що залишився"
+
+msgid "Example:"
+msgstr "Приклад:"
+
+msgid "Exclude Words"
+msgstr "Виключити слова"
+
+msgid "Excluded Terms"
+msgstr "Виключені терміни"
+
+msgid "Failed to clear cache. Please try again."
+msgstr "Не вдалося очистити кеш. Будь ласка, спробуйте ще раз."
+
+msgid "Filter by %s"
+msgstr "Фільтрувати за %s"
+
+msgid "Flags + Language Code"
+msgstr "Прапори + Код мови"
+
+msgid "Flags Only"
+msgstr "Тільки прапори"
+
+msgid "Fully Translated"
+msgstr "Повністю перекладено"
+
+msgid "Gallery & Image ALT"
+msgstr "Галерея та ALT зображення"
+
+msgid "Get a bigger word allowance to translate all your content at once."
+msgstr "Отримайте більший ліміт слів, щоб перекласти весь ваш вміст одразу."
+
+msgid "Get your License from:"
+msgstr "Отримайте вашу ліцензію з:"
+
+msgid "Glossary"
+msgstr "Глосарій"
+
+msgid "Glossary Terms"
+msgstr "Терміни глосарію"
+
+msgid "Go to %s and add the \"AI Translator – Language Switcher\" widget to any sidebar or widget area."
+msgstr "Перейдіть до %s і додайте віджет \"AI Translator – Language Switcher\" до будь-якої бічної панелі або області віджетів."
+
+msgid "Hide languages that have no translation for the current page"
+msgstr "Сховати мови, для яких немає перекладу для поточної сторінки"
+
+msgid "History table not found. Please deactivate and reactivate the plugin to create it, or translate a page to start recording."
+msgstr "Таблиця історії не знайдена. Будь ласка, деактивуйте та активуйте плагін, щоб створити її, або перекладіть сторінку, щоб почати запис."
+
+msgid "Horizontal List"
+msgstr "Горизонтальний список"
+
+msgid "How long to keep translations in cache before refreshing."
+msgstr "Як довго зберігати переклади в кеші перед оновленням."
+
+msgid "IP addresses (beyond standard server logs)"
+msgstr "IP-адреси (поза стандартними журналами сервера)"
+
+msgid "Inherit from Original"
+msgstr "Спадкувати з оригіналу"
+
+msgid "Insufficient permissions."
+msgstr "Недостатньо прав."
+
+msgid "Items"
+msgstr "Елементи"
+
+msgid "Job not found."
+msgstr "Роботу не знайдено."
+
+msgid "Lang"
+msgstr "Мова"
+
+msgid "License key (if applicable)"
+msgstr "Ліцензійний ключ (якщо застосовно)"
+
+msgid "LiteSpeed Cache optimizations only apply to published pages viewed by visitors."
+msgstr "Оптимізації LiteSpeed Cache застосовуються лише до опублікованих сторінок, які переглядають відвідувачі."
+
+msgid "Loading status..."
+msgstr "Стан завантаження..."
+
+msgid "Manage Languages"
+msgstr "Керувати мовами"
+
+msgid "Menu Location:"
+msgstr "Місце розташування меню:"
+
+msgid "Monthly Limit"
+msgstr "Щомісячний ліміт"
+
+msgid "Multilingual"
+msgstr "Багатомовний"
+
+msgid "Nav Menu Integration"
+msgstr "Інтеграція навігаційного меню"
+
+msgid "Needs Translation"
+msgstr "Потребує перекладу"
+
+msgid "Next run:"
+msgstr "Наступний запуск:"
+
+msgid "No content or languages selected."
+msgstr "Не вибрано контенту або мов."
+
+msgid "No content types selected."
+msgstr "Не вибрано типів контенту."
+
+msgid "No languages configured yet. Add languages in the Multilingual Plugin section above."
+msgstr "Ще не налаштовано мов. Додайте мови в розділі Багатомовний плагін вище."
+
+msgid "No languages configured. Please set up languages in your multilingual plugin first."
+msgstr "Мови не налаштовані. Будь ласка, спочатку налаштуйте мови у вашому багатомовному плагіні."
+
+msgid "No multilingual plugin active. Configure one first."
+msgstr "Неактивний багатомовний плагін. Спочатку налаштуйте один."
+
+msgid "No multilingual plugin detected"
+msgstr "Багатомовний плагін не виявлено"
+
+msgid "No supported SEO plugin detected. Install Yoast SEO or Rank Math to enable SEO meta translation."
+msgstr "Не виявлено підтримуваного SEO плагіна. Встановіть Yoast SEO або Rank Math, щоб увімкнути переклад мета SEO."
+
+msgid "No target languages selected."
+msgstr "Не вибрано цільових мов."
+
+msgid "No translatable content found for the selected types."
+msgstr "Не знайдено перекладного контенту для вибраних типів."
+
+msgid "No translation history yet. Translations will appear here as you translate pages."
+msgstr "Ще немає історії перекладів. Переклади з'являться тут, коли ви будете перекладати сторінки."
+
+msgid "Note:"
+msgstr "Примітка:"
+
+msgid "One term per line. Format:"
+msgstr "Один термін на рядок. Формат:"
+
+msgid "One word or phrase per line. These terms will be preserved as-is during translation."
+msgstr "Одне слово або фраза на рядок. Ці терміни будуть збережені без змін під час перекладу."
+
+msgid "Open Graph Tags"
+msgstr "Теги Open Graph"
+
+msgid "Original Page"
+msgstr "Оригінальна сторінка"
+
+msgid "Page-by-Page Breakdown"
+msgstr "Розподіл по сторінках"
+
+msgid "Pages"
+msgstr "Сторінки"
+
+msgid "Pause"
+msgstr "Пауза"
+
+msgid "Per Language"
+msgstr "На мову"
+
+msgid "Personal information or email addresses"
+msgstr "Особиста інформація або адреси електронної пошти"
+
+msgid "Please install and activate either Polylang or WPML, or use the built-in language system."
+msgstr "Будь ласка, встановіть та активуйте або Polylang, або WPML, або використовуйте вбудовану мовну систему."
+
+msgid "Please select at least one content type."
+msgstr "Будь ласка, виберіть принаймні один тип контенту."
+
+msgid "Please select at least one target language."
+msgstr "Будь ласка, виберіть принаймні одну цільову мову."
+
+msgid "Plugin data reset successfully! Redirecting to welcome screen..."
+msgstr "Дані плагіна успішно скинуті! Перенаправлення на екран привітання..."
+
+msgid "Posts"
+msgstr "Публікації"
+
+msgid "Powered by"
+msgstr "Підтримується"
+
+msgid "Preview"
+msgstr "Попередній перегляд"
+
+msgid "Privacy"
+msgstr "Конфіденційність"
+
+msgid "Process AI-powered translations"
+msgstr "Обробка перекладів на основі ШІ"
+
+msgid "Product Attributes"
+msgstr "Атрибути продукту"
+
+msgid "Product Categories"
+msgstr "Категорії продуктів"
+
+msgid "Product Support"
+msgstr "Підтримка продукту"
+
+msgid "Product Tags"
+msgstr "Теги продукту"
+
+msgid "Progress:"
+msgstr "Прогрес:"
+
+msgid "Published (Auto-publish)"
+msgstr "Опубліковано (Авто-публікація)"
+
+msgid "Remove"
+msgstr "Видалити"
+
+msgid "Remove all cached translations. Useful when you want to regenerate translations with updated content or settings."
+msgstr "Видалити всі кешовані переклади. Корисно, коли ви хочете згенерувати переклади з оновленим контентом або налаштуваннями."
+
+msgid "Remove this language? Existing translations in this language will remain but will no longer be managed."
+msgstr "Видалити цю мову? Існуючі переклади цією мовою залишаться, але більше не будуть керуватися."
+
+msgid "Reset Plugin Data"
+msgstr "Скинути дані плагіна"
+
+msgid "Resetting..."
+msgstr "Скидання..."
+
+msgid "Resume"
+msgstr "Продовжити"
+
+msgid "SEO"
+msgstr "SEO"
+
+msgid "SEO Meta Translation"
+msgstr "Переклад метаданих SEO"
+
+msgid "Same as categories — assigns translated product tag equivalents to the translated product."
+msgstr "Те ж саме, що й категорії — призначає перекладені еквіваленти тегів продукту до перекладеного продукту."
+
+msgid "Scan Results"
+msgstr "Результати сканування"
+
+msgid "Scan complete"
+msgstr "Сканування завершено"
+
+msgid "Scan your content to calculate word counts and estimate translation effort."
+msgstr "Скануйте свій контент, щоб підрахувати кількість слів та оцінити зусилля на переклад."
+
+msgid "Scanning content..."
+msgstr "Сканування контенту..."
+
+msgid "Scheduled Translation"
+msgstr "Запланований переклад"
+
+msgid "Scheduled translation created. It will process content using your monthly word allowance."
+msgstr "Запланований переклад створено. Він обробить контент, використовуючи ваш місячний ліміт слів."
+
+msgid "Scheduled translation started! It will process content using your monthly word allowance."
+msgstr "Запланований переклад розпочато! Він обробить контент, використовуючи ваш місячний ліміт слів."
+
+msgid "Scheduled translation will process content over multiple billing cycles using your monthly word allowance."
+msgstr "Запланований переклад обробить контент протягом кількох платіжних циклів, використовуючи ваш місячний ліміт слів."
+
+msgid "Select Untranslated"
+msgstr "Вибрати неперекладене"
+
+msgid "Select all"
+msgstr "Вибрати все"
+
+msgid "Set Up Built-in"
+msgstr "Налаштувати вбудовану"
+
+msgid "Set as default"
+msgstr "Встановити за замовчуванням"
+
+msgid "Shortcode"
+msgstr "Код короткого запису"
+
+msgid "Show country flags"
+msgstr "Показати прапори країн"
+
+msgid "Show language names"
+msgstr "Показати назви мов"
+
+msgid "Source language: %s (default)"
+msgstr "Мова джерела: %s (за замовчуванням)"
+
+msgid "Start translation? This will translate all selected content."
+msgstr "Розпочати переклад? Це перекладе весь вибраний контент."
+
+msgid "Status for newly created translated pages. Draft is recommended for review before publishing."
+msgstr "Статус для новостворених перекладених сторінок. Рекомендується використовувати чернетку для перегляду перед публікацією."
+
+msgid "Status:"
+msgstr "Статус:"
+
+msgid "Step 1: Select Content Types"
+msgstr "Крок 1: Виберіть типи контенту"
+
+msgid "Step 2: Select Target Languages"
+msgstr "Крок 2: Виберіть цільові мови"
+
+msgid "Step 3: Scan & Calculate"
+msgstr "Крок 3: Сканувати та розрахувати"
+
+msgid "Step 4: Start Translation"
+msgstr "Крок 4: Розпочати переклад"
+
+msgid "Supported plugins: Yoast SEO, Rank Math. Both are auto-detected at runtime."
+msgstr "Підтримувані плагіни: Yoast SEO, Rank Math. Обидва автоматично виявляються під час виконання."
+
+msgid "Switch to Polylang or WPML instead."
+msgstr "Перейти на Polylang або WPML."
+
+msgid "Switcher"
+msgstr "Перемикач"
+
+msgid "Switcher Style"
+msgstr "Стиль перемикача"
+
+msgid "Sync Plan"
+msgstr "План синхронізації"
+
+msgid "Syncing..."
+msgstr "Синхронізація..."
+
+msgid "Theme Header/Footer:"
+msgstr "Заголовок/футер теми:"
+
+msgid "Third-party services:"
+msgstr "Служби третіх сторін:"
+
+msgid "This plugin connects to our translation API at"
+msgstr "Цей плагін підключається до нашого API перекладу за адресою"
+
+msgid "This will reset all built-in language settings, disable the built-in system, and clear the onboarding state. Useful for re-testing the welcome screen and language setup. Your API key and other settings will be preserved. Translated pages will NOT be deleted."
+msgstr "Це скине всі вбудовані налаштування мови, вимкне вбудовану систему та очистить стан введення. Корисно для повторного тестування вітальної сторінки та налаштування мови. Ваш ключ API та інші налаштування будуть збережені. Перекладені сторінки НЕ будуть видалені."
+
+msgid "Tip: You can also quickly add/remove words from the ⚙️ Settings button on the main plugin page."
+msgstr "Порада: Ви також можете швидко додавати/видаляти слова за допомогою кнопки ⚙️ Налаштування на головній сторінці плагіна."
+
+msgid "Total Words"
+msgstr "Загальна кількість слів"
+
+msgid "Total words exceed your plan limit."
+msgstr "Загальна кількість слів перевищує ліміт вашого плану."
+
+msgid "Track word usage for plan limits and licensing"
+msgstr "Відстежуйте використання слів для лімітів плану та ліцензування"
+
+msgid "Translate All"
+msgstr "Перекласти все"
+
+msgid "Translate Now"
+msgstr "Перекласти зараз"
+
+msgid "Translate Open Graph title & description"
+msgstr "Перекласти заголовок та опис Open Graph"
+
+msgid "Translate SEO title & meta description"
+msgstr "Перекласти SEO заголовок та мета опис"
+
+msgid "Translate Twitter card title & description"
+msgstr "Перекласти заголовок та опис картки Twitter"
+
+msgid "Translate all your website content at once. Select content types and target languages, then start translating."
+msgstr "Перекладіть весь контент вашого веб-сайту одночасно. Виберіть типи контенту та цільові мови, а потім розпочніть переклад."
+
+msgid "Translate product attributes"
+msgstr "Перекласти атрибути продукту"
+
+msgid "Translate product image alt text"
+msgstr "Перекласти альтернативний текст зображення продукту"
+
+msgid "Translate product variations"
+msgstr "Перекласти варіації продукту"
+
+msgid "Translated Page"
+msgstr "Перекладена сторінка"
+
+msgid "Translates alt text, captions, and descriptions of product images and gallery images for multilingual SEO."
+msgstr "Перекладає альтернативний текст, підписи та описи зображень продуктів та галерей для багатомовного SEO."
+
+msgid "Translates custom product attribute labels and values (e.g., Color, Size). For global taxonomy attributes (pa_*), assigns translated terms if available."
+msgstr "Перекладає етикетки та значення користувацьких атрибутів продукту (наприклад, Колір, Розмір). Для глобальних таксономічних атрибутів (pa_*), призначає перекладені терміни, якщо вони доступні."
+
+msgid "Translates og:title and og:description for Facebook/social sharing previews."
+msgstr "Перекладає og:title та og:description для попередніх переглядів Facebook/соціального обміну."
+
+msgid "Translates product descriptions, short descriptions, and copies product data (price, SKU, stock, etc.) to translated products."
+msgstr "Перекладає описи продуктів, короткі описи та копіює дані продукту (ціна, артикул, наявність тощо) до перекладених продуктів."
+
+msgid "Translates twitter:title and twitter:description for Twitter/X sharing."
+msgstr "Перекладає twitter:title та twitter:description для обміну в Twitter/X."
+
+msgid "Translation History"
+msgstr "Історія перекладів"
+
+msgid "Translation Progress"
+msgstr "Прогрес перекладу"
+
+msgid "Translation cache cleared successfully!"
+msgstr "Кеш перекладу успішно очищено!"
+
+msgid "Translation cancelled."
+msgstr "Переклад скасовано."
+
+msgid "Translation completed!"
+msgstr "Переклад завершено!"
+
+msgid "Translation engine not available."
+msgstr "Двигун перекладу недоступний."
+
+msgid "Translation paused."
+msgstr "Переклад призупинено."
+
+msgid "Translation resumed."
+msgstr "Переклад відновлено."
+
+msgid "Translation started."
+msgstr "Переклад розпочато."
+
+msgid "Translations"
+msgstr "Переклади"
+
+msgid "Twitter Card Tags"
+msgstr "Теги карток Twitter"
+
+msgid "Type"
+msgstr "Тип"
+
+msgid "Upgrade License"
+msgstr "Оновити ліцензію"
+
+msgid "Upgrade page"
+msgstr "Сторінка оновлення"
+
+msgid "Upgrade your plan for more words or use scheduled translation."
+msgstr "Оновіть свій план для більшої кількості слів або використовуйте запланований переклад."
+
+msgid "Use do_shortcode() in your theme template:"
+msgstr "Використовуйте do_shortcode() у шаблоні вашої теми:"
+
+msgid "Use the \"Shortcode\" widget in Elementor and paste the shortcode above."
+msgstr "Використовуйте віджет \"Shortcode\" в Elementor і вставте вище наведений шорткод."
+
+msgid "User or visitor data"
+msgstr "Дані користувача або відвідувача"
+
+msgid "Variable Products"
+msgstr "Змінні продукти"
+
+msgid "WP_DEBUG and WP_DEBUG_LOG must be enabled in wp-config.php for logging to work."
+msgstr "WP_DEBUG та WP_DEBUG_LOG повинні бути увімкнені у wp-config.php для роботи журналювання."
+
+msgid "We DO NOT collect:"
+msgstr "Ми НЕ збираємо:"
+
+msgid "When enabled, detailed debug information will be written to the WordPress debug.log file."
+msgstr "При увімкненні детальна інформація для налагодження буде записана у файл debug.log WordPress."
+
+msgid "When enabled, only languages with an existing translation of the current page will appear in the language switcher. The default language is always shown."
+msgstr "При увімкненні лише мови з існуючим перекладом поточної сторінки з'являться у перемикачі мов. Мова за замовчуванням завжди відображається."
+
+msgid "When translating products, automatically assigns the translated category equivalents (if they exist in the target language via Polylang/WPML)."
+msgstr "При перекладі продуктів автоматично призначає перекладені категорії-еквіваленти (якщо вони існують у цільовій мові через Polylang/WPML)."
+
+msgid "WooCommerce"
+msgstr "WooCommerce"
+
+msgid "WooCommerce is not active. These settings will apply when WooCommerce is installed and activated."
+msgstr "WooCommerce не активний. Ці налаштування застосовуватимуться, коли WooCommerce буде встановлено та активовано."
+
+msgid "Word count validated"
+msgstr "Кількість слів перевірено"
+
+msgid "Word counts and language pairs (for usage tracking)"
+msgstr "Кількість слів та мовні пари (для відстеження використання)"
+
+msgid "Word limit exceeded"
+msgstr "Перевищено ліміт слів"
+
+msgid "WordPress Widget:"
+msgstr "Віджет WordPress:"
+
+msgid "Words Remaining"
+msgstr "Залишилося слів"
+
+msgid "Words Used"
+msgstr "Використано слів"
+
+msgid "Words or terms listed here will never be translated — they will be kept exactly as-is in every language. Use this for brand names, product names, technical terms, or any text that should remain untranslated."
+msgstr "Слова або терміни, вказані тут, ніколи не будуть перекладені — вони залишаться точно такими ж у кожній мові. Використовуйте це для брендових назв, назв продуктів, технічних термінів або будь-якого тексту, який має залишитися неперекладеним."
+
+msgid "You can also use a simple format without language codes — the AI will apply the term to the closest matching language:"
+msgstr "Ви також можете використовувати простий формат без кодів мов — ШІ застосує термін до найближчої відповідної мови:"
+
+msgid "Your actual translated content"
+msgstr "Ваш фактичний перекладений контент"
+
+msgid "Your content fits within your current word allowance. Translate everything now."
+msgstr "Ваш контент вписується у ваш поточний ліміт слів. Перекладіть все зараз."
+
+msgid "Your current theme has no registered navigation menu locations. The switcher will be appended to all menus when enabled."
+msgstr "У вашій поточній темі немає зареєстрованих місць для навігаційного меню. Перемикач буде додано до всіх меню, коли буде увімкнено."
+
+msgid "Your website URL (for service authentication)"
+msgstr "URL вашого веб-сайту (для автентифікації сервісу)"
+
+msgid "already translated"
+msgstr "вже перекладено"
+
+msgid "detected — SEO meta fields will be translated automatically."
+msgstr "виявлено — SEO мета-поля будуть перекладені автоматично."
+
+msgid "detected — product translation support is available."
+msgstr "виявлено — підтримка перекладу продуктів доступна."
+
+msgid "estimated API words"
+msgstr "оцінені слова API"
+
+msgid "items"
+msgstr "елементи"
+
+msgid "needs translation"
+msgstr "потребує перекладу"
+
+msgid "of"
+msgstr "з"
+
+msgid "pages"
+msgstr "сторінок"
+
+msgid "pages selected"
+msgstr "вибрані сторінки"
+
+msgid "posts"
+msgstr "публікації"
+
+msgid "privacy policy"
+msgstr "політика конфіденційності"
+
+msgid "to:"
+msgstr "до:"
+
+msgid "used"
+msgstr "використано"
+
+msgid "words"
+msgstr "слова"
+
+msgid "— Select a language to add —"
+msgstr "— Виберіть мову для додавання —"
+
+msgid "⏰ Start Scheduled Translation"
+msgstr "⏰ Розпочати запланований переклад"
+
+msgid "⬆️ Upgrade Plan"
+msgstr "⬆️ Оновити план"
+
+msgid "🌍 Language Switcher"
+msgstr "🌍 Перемикач мови"
+
+msgid "🌐 Multilingual Plugin"
+msgstr "🌐 Багатомовний плагін"
+
+msgid "📅 Active Scheduled Translation"
+msgstr "📅 Активний запланований переклад"
+
+msgid "📊 Plan & Usage"
+msgstr "📊 План та використання"
+
+msgid "📖 Translation Glossary"
+msgstr "📖 Глосарій перекладів"
+
+msgid "🔍 SEO Translation"
+msgstr "🔍 SEO переклад"
+
+msgid "🔍 Scan Content"
+msgstr "🔍 Сканувати вміст"
+
+msgid "🔧 Advanced Settings"
+msgstr "🔧 Розширені налаштування"
+
+msgid "🚀 Translate All Now"
+msgstr "🚀 Перекласти все зараз"
+
+msgid "🚫 Exclude Words"
+msgstr "🚫 Виключити слова"
+
+msgid "🛒 WooCommerce"
+msgstr "🛒 WooCommerce"

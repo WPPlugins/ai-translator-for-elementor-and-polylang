@@ -441,7 +441,7 @@ class AITRFOEL_Translate_All {
                 <a href="https://meeptech.com" target="_blank" rel="noopener noreferrer">
                     <img src="<?php echo esc_url(AITRFOEL_PLUGIN_URL . 'assets/img/meeptech.svg'); ?>" alt="Meep Tech" class="aitrfoel-footer-logo">
                 </a>
-                <span class="aitrfoel-footer-text"><?php esc_html_e('Powered by', 'ai-translator-for-elementor-and-polylang'); ?> <a href="https://meeptech.com" target="_blank" rel="noopener noreferrer">Meep Tech</a></span>
+                <span class="aitrfoel-footer-text"><?php esc_html_e('Powered by', 'ai-translator-for-elementor-and-polylang'); ?> <a href="https://meeptech.com" target="_blank" rel="noopener noreferrer">Meep Tech</a> &middot; v<?php echo esc_html(AITRFOEL_VERSION); ?></span>
             </div>
         </div>
         <?php
@@ -735,14 +735,14 @@ class AITRFOEL_Translate_All {
         foreach ($translation_map as $entry) {
             $text = is_array($entry) ? ($entry['original'] ?? '') : $entry;
             if (is_string($text) && !empty($text)) {
-                $word_count += str_word_count(wp_strip_all_tags($text));
+                $word_count += AITRFOEL_Translation_Engine::count_words(wp_strip_all_tags($text));
             }
         }
 
         // Add title words
         $post = get_post($post_id);
         if ($post && !empty($post->post_title)) {
-            $word_count += str_word_count(wp_strip_all_tags($post->post_title));
+            $word_count += AITRFOEL_Translation_Engine::count_words(wp_strip_all_tags($post->post_title));
         }
 
         return $word_count;

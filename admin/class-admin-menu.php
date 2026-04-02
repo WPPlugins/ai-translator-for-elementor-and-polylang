@@ -1938,7 +1938,7 @@ class AITRFOEL_Admin_Menu {
                 <a href="https://meeptech.com" target="_blank" rel="noopener noreferrer">
                     <img src="<?php echo esc_url(AITRFOEL_PLUGIN_URL . 'assets/img/meeptech.svg'); ?>" alt="Meep Tech" class="aitrfoel-footer-logo">
                 </a>
-                <span class="aitrfoel-footer-text"><?php esc_html_e('Powered by', 'ai-translator-for-elementor-and-polylang'); ?> <a href="https://meeptech.com" target="_blank" rel="noopener noreferrer">Meep Tech</a></span>
+                <span class="aitrfoel-footer-text"><?php esc_html_e('Powered by', 'ai-translator-for-elementor-and-polylang'); ?> <a href="https://meeptech.com" target="_blank" rel="noopener noreferrer">Meep Tech</a> &middot; v<?php echo esc_html(AITRFOEL_VERSION); ?></span>
             </div>
         </div>
         
@@ -2587,13 +2587,13 @@ class AITRFOEL_Admin_Menu {
         foreach ($pages as $page) {
             // Get basic word count from post content and title
             $content = $page->post_content . ' ' . $page->post_title;
-            $basic_words = str_word_count(wp_strip_all_tags($content));
+            $basic_words = AITRFOEL_Translation_Engine::count_words(wp_strip_all_tags($content));
             
             // Try to get more accurate count from Elementor data if available
             $elementor_data = get_post_meta($page->ID, '_elementor_data', true);
             if (!empty($elementor_data)) {
                 // This is a simplified estimation - in reality you'd want to parse Elementor data
-                $elementor_words = str_word_count(wp_strip_all_tags($elementor_data));
+                $elementor_words = AITRFOEL_Translation_Engine::count_words(wp_strip_all_tags($elementor_data));
                 $total_words += max($basic_words, $elementor_words);
             } else {
                 $total_words += $basic_words;

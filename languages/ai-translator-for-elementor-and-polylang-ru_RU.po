@@ -1495,3 +1495,743 @@ msgstr "Обновить план"
 
 msgid "Close"
 msgstr "Закрыть"
+
+
+# --- Added by add-missing-translations.php (2026-04-02) ---
+
+msgid "%s items"
+msgstr "%s элементов"
+
+msgid "(no title)"
+msgstr "(без названия)"
+
+msgid "Active Plugin"
+msgstr "Активный плагин"
+
+msgid "Add Language"
+msgstr "Добавить язык"
+
+msgid "Add custom CSS to override the default language switcher styles. This CSS is loaded on the frontend wherever the shortcode or widget is used."
+msgstr "Добавьте пользовательский CSS, чтобы переопределить стили переключателя языков по умолчанию. Этот CSS загружается на фронтенде, где бы ни использовался шорткод или виджет."
+
+msgid "Advanced"
+msgstr "Расширенный"
+
+msgid "All"
+msgstr "Все"
+
+msgid "All Languages"
+msgstr "Все языки"
+
+msgid "All Statuses"
+msgstr "Все статусы"
+
+msgid "All Types"
+msgstr "Все типы"
+
+msgid "All menu locations"
+msgstr "Все места меню"
+
+msgid "Already Translated"
+msgstr "Уже переведено"
+
+msgid "Alternative Ways to Add:"
+msgstr "Альтернативные способы добавления:"
+
+msgid "An error occurred."
+msgstr "Произошла ошибка."
+
+msgid "Appearance → Widgets"
+msgstr "Внешний вид → Виджеты"
+
+msgid "Are you sure you want to clear all cached translations? This cannot be undone."
+msgstr "Вы уверены, что хотите очистить все кэшированные переводы? Это действие нельзя отменить."
+
+msgid "Are you sure you want to clear all translation history? This cannot be undone."
+msgstr "Вы уверены, что хотите очистить всю историю переводов? Это действие нельзя отменить."
+
+msgid "Are you sure you want to disable the built-in language system? You will need Polylang or WPML to manage translations."
+msgstr "Вы уверены, что хотите отключить встроенную языковую систему? Вам понадобятся Polylang или WPML для управления переводами."
+
+msgid ""
+"Are you sure you want to reset all plugin data? This will:\n"
+"\n"
+"• Disable the built-in language system\n"
+"• Remove all configured languages\n"
+"• Reset the onboarding/welcome screen\n"
+"• Clear dependency status cache\n"
+"\n"
+"Your API key, translated pages, and other settings will be preserved.\n"
+"\n"
+"Continue?"
+msgstr ""
+"Вы уверены, что хотите сбросить все данные плагина? Это приведет к:\n"
+"\n"
+"• Отключению встроенной языковой системы\n"
+"• Удалению всех настроенных языков\n"
+"• Сбросу экрана приветствия/вводного экрана\n"
+"• Очистке кэша статуса зависимостей\n"
+"\n"
+"Ваш API-ключ, переведенные страницы и другие настройки будут сохранены.\n"
+"\n"
+"Продолжить?"
+
+msgid "Assign translated product categories"
+msgstr "Назначить переведенные категории продуктов"
+
+msgid "Assign translated product tags"
+msgstr "Назначить переведенные теги продуктов"
+
+msgid "Automatically add language switcher to a navigation menu"
+msgstr "Автоматически добавлять переключатель языка в навигационное меню"
+
+msgid "Automatically translates SEO meta title, description, and focus keywords when translating pages."
+msgstr "Автоматически переводит SEO мета заголовок, описание и ключевые слова при переводе страниц."
+
+msgid "Available CSS classes:"
+msgstr "Доступные CSS классы:"
+
+msgid "Available Languages:"
+msgstr "Доступные языки:"
+
+msgid "Cache"
+msgstr "Кэш"
+
+msgid "Cancel"
+msgstr "Отмена"
+
+msgid "Cancel Scheduled Translation"
+msgstr "Отменить запланированный перевод"
+
+msgid "Choose which languages to translate your content into. Your default language content will be used as source."
+msgstr "Выберите, на какие языки переводить ваш контент. Контент на вашем языке по умолчанию будет использоваться в качестве источника."
+
+msgid "Choose which menu location gets the language switcher appended, or select \"All\" to add to every menu."
+msgstr "Выберите, в какое место меню добавить переключатель языка, или выберите \"Все\", чтобы добавить его в каждое меню."
+
+msgid "Choose which types of content to translate."
+msgstr "Выберите, какие типы контента переводить."
+
+msgid "Clear"
+msgstr "Очистить"
+
+msgid "Clear History"
+msgstr "Очистить историю"
+
+msgid "Clearing..."
+msgstr "Очистка..."
+
+msgid "Code"
+msgstr "Код"
+
+msgid "Configure the language switcher that visitors use to change the language on your site. You can add it using a shortcode, a WordPress widget, or a nav menu integration."
+msgstr "Настройте переключатель языка, который посетители используют для изменения языка на вашем сайте. Вы можете добавить его с помощью шорткода, виджета WordPress или интеграции в меню навигации."
+
+msgid "Connection error"
+msgstr "Ошибка подключения"
+
+msgid "Content Type"
+msgstr "Тип контента"
+
+msgid "Content exceeds your current word allowance. Schedule translation to process over multiple billing cycles using your monthly word limit."
+msgstr "Контент превышает ваш текущий лимит слов. Запланируйте перевод, чтобы обработать его за несколько расчетных периодов, используя ваш месячный лимит слов."
+
+msgid "Cooldown saved"
+msgstr "Кулдаун сохранен"
+
+msgid "Copied!"
+msgstr "Скопировано!"
+
+msgid "Copy"
+msgstr "Копировать"
+
+msgid "Copy this shortcode and paste it into any page, post, or text widget where you want the language switcher to appear."
+msgstr "Скопируйте этот шорткод и вставьте его на любую страницу, запись или текстовый виджет, где вы хотите, чтобы переключатель языков появился."
+
+msgid "Creates translated variations for variable products, preserving parent-child relationships, pricing, and per-variation data (SKU, stock, dimensions)."
+msgstr "Создает переведенные вариации для переменных продуктов, сохраняя родительско-дочерние отношения, цены и данные по каждой вариации (SKU, запасы, размеры)."
+
+msgid "Current Plan"
+msgstr "Текущий план"
+
+msgid "Custom CSS"
+msgstr "Пользовательский CSS"
+
+msgid "Date"
+msgstr "Дата"
+
+msgid "Debug Mode"
+msgstr "Режим отладки"
+
+msgid "Default"
+msgstr "По умолчанию"
+
+msgid "Default Language:"
+msgstr "Язык по умолчанию:"
+
+msgid "Define terms that should always be translated a specific way. The AI will follow these rules for every translation to ensure consistency across your site."
+msgstr "Определите термины, которые всегда должны переводиться определенным образом. ИИ будет следовать этим правилам для каждого перевода, чтобы обеспечить согласованность на вашем сайте."
+
+msgid "Deselect All"
+msgstr "Снять выделение со всех"
+
+msgid "Disable Built-in Language System"
+msgstr "Отключить встроенную языковую систему"
+
+msgid "Display Options"
+msgstr "Параметры отображения"
+
+msgid "Dropdown"
+msgstr "Выпадающий список"
+
+msgid "Editor"
+msgstr "Редактор"
+
+msgid "Elementor:"
+msgstr "Elementor:"
+
+msgid "Enable WooCommerce product translation"
+msgstr "Включить перевод продуктов WooCommerce"
+
+msgid "Enable debug logging"
+msgstr "Включить ведение журнала отладки"
+
+msgid "Error"
+msgstr "Ошибка"
+
+msgid "Error clearing cache: "
+msgstr "Ошибка очистки кэша: "
+
+msgid "Error detecting multilingual plugin"
+msgstr "Ошибка обнаружения многоязычного плагина"
+
+msgid "Error resetting plugin data: "
+msgstr "Ошибка сброса данных плагина: "
+
+msgid "Estimated time remaining"
+msgstr "Оставшееся время"
+
+msgid "Example:"
+msgstr "Пример:"
+
+msgid "Exclude Words"
+msgstr "Исключить слова"
+
+msgid "Excluded Terms"
+msgstr "Исключенные термины"
+
+msgid "Failed to clear cache. Please try again."
+msgstr "Не удалось очистить кэш. Пожалуйста, попробуйте еще раз."
+
+msgid "Filter"
+msgstr "Фильтр"
+
+msgid "Filter by %s"
+msgstr "Фильтровать по %s"
+
+msgid "Flags + Language Code"
+msgstr "Флаги + Код языка"
+
+msgid "Flags Only"
+msgstr "Только флаги"
+
+msgid "Fully Translated"
+msgstr "Полностью переведено"
+
+msgid "Gallery & Image ALT"
+msgstr "Галерея и ALT изображений"
+
+msgid "Get a bigger word allowance to translate all your content at once."
+msgstr "Получите большее количество слов для перевода всего вашего контента сразу."
+
+msgid "Glossary"
+msgstr "Глоссарий"
+
+msgid "Glossary Terms"
+msgstr "Термины глоссария"
+
+msgid "Go to %s and add the \"AI Translator – Language Switcher\" widget to any sidebar or widget area."
+msgstr "Перейдите к %s и добавьте виджет \"AI Translator – Language Switcher\" в любую боковую панель или область виджетов."
+
+msgid "Hide languages that have no translation for the current page"
+msgstr "Скрыть языки, для которых нет перевода для текущей страницы"
+
+msgid "History table not found. Please deactivate and reactivate the plugin to create it, or translate a page to start recording."
+msgstr "Таблица истории не найдена. Пожалуйста, деактивируйте и повторно активируйте плагин, чтобы создать ее, или переведите страницу, чтобы начать запись."
+
+msgid "Horizontal List"
+msgstr "Горизонтальный список"
+
+msgid "Insufficient permissions."
+msgstr "Недостаточно прав."
+
+msgid "Items"
+msgstr "Элементы"
+
+msgid "Job not found."
+msgstr "Работа не найдена."
+
+msgid "Lang"
+msgstr "Язык"
+
+msgid "Language"
+msgstr "Язык"
+
+msgid "Manage Languages"
+msgstr "Управление языками"
+
+msgid "Menu Location:"
+msgstr "Место расположения меню:"
+
+msgid "Monthly Limit"
+msgstr "Ежемесячный лимит"
+
+msgid "Multilingual"
+msgstr "Многоязычный"
+
+msgid "Nav Menu Integration"
+msgstr "Интеграция навигационного меню"
+
+msgid "Needs Translation"
+msgstr "Требуется перевод"
+
+msgid "Next run:"
+msgstr "Следующий запуск:"
+
+msgid "No content or languages selected."
+msgstr "Не выбрано ни содержимого, ни языков."
+
+msgid "No content types selected."
+msgstr "Не выбраны типы содержимого."
+
+msgid "No languages configured yet. Add languages in the Multilingual Plugin section above."
+msgstr "Языки еще не настроены. Добавьте языки в разделе Многоязычный плагин выше."
+
+msgid "No languages configured. Please set up languages in your multilingual plugin first."
+msgstr "Языки не настроены. Пожалуйста, сначала настройте языки в вашем многоязычном плагине."
+
+msgid "No multilingual plugin active. Configure one first."
+msgstr "Нет активного многоязычного плагина. Сначала настройте один."
+
+msgid "No multilingual plugin detected"
+msgstr "Не обнаружен многоязычный плагин"
+
+msgid "No supported SEO plugin detected. Install Yoast SEO or Rank Math to enable SEO meta translation."
+msgstr "Не обнаружен поддерживаемый SEO плагин. Установите Yoast SEO или Rank Math для включения перевода метаданных SEO."
+
+msgid "No target languages selected."
+msgstr "Не выбраны целевые языки."
+
+msgid "No translatable content found for the selected types."
+msgstr "Не найдено переводимого содержимого для выбранных типов."
+
+msgid "No translation history yet. Translations will appear here as you translate pages."
+msgstr "История переводов еще отсутствует. Переводы появятся здесь по мере перевода страниц."
+
+msgid "One term per line. Format:"
+msgstr "Один термин на строку. Формат:"
+
+msgid "One word or phrase per line. These terms will be preserved as-is during translation."
+msgstr "Одно слово или фраза на строку. Эти термины будут сохранены без изменений во время перевода."
+
+msgid "Open Graph Tags"
+msgstr "Теги Open Graph"
+
+msgid "Original Page"
+msgstr "Оригинальная страница"
+
+msgid "Page-by-Page Breakdown"
+msgstr "Разбивка по страницам"
+
+msgid "Pages"
+msgstr "Страницы"
+
+msgid "Pause"
+msgstr "Пауза"
+
+msgid "Per Language"
+msgstr "На язык"
+
+msgid "Please install and activate either Polylang or WPML, or use the built-in language system."
+msgstr "Пожалуйста, установите и активируйте либо Polylang, либо WPML, или используйте встроенную языковую систему."
+
+msgid "Please select at least one content type."
+msgstr "Пожалуйста, выберите хотя бы один тип содержимого."
+
+msgid "Plugin data reset successfully! Redirecting to welcome screen..."
+msgstr "Данные плагина успешно сброшены! Перенаправление на экран приветствия..."
+
+msgid "Posts"
+msgstr "Записи"
+
+msgid "Powered by"
+msgstr "Работает на"
+
+msgid "Preview"
+msgstr "Предварительный просмотр"
+
+msgid "Privacy"
+msgstr "Конфиденциальность"
+
+msgid "Processing..."
+msgstr "Обработка..."
+
+msgid "Product Attributes"
+msgstr "Атрибуты продукта"
+
+msgid "Product Categories"
+msgstr "Категории продуктов"
+
+msgid "Product Support"
+msgstr "Поддержка продукта"
+
+msgid "Product Tags"
+msgstr "Теги продукта"
+
+msgid "Progress:"
+msgstr "Прогресс:"
+
+msgid "Remove"
+msgstr "Удалить"
+
+msgid "Remove this language? Existing translations in this language will remain but will no longer be managed."
+msgstr "Удалить этот язык? Существующие переводы на этом языке останутся, но больше не будут управляться."
+
+msgid "Reset Plugin Data"
+msgstr "Сбросить данные плагина"
+
+msgid "Resetting..."
+msgstr "Сброс..."
+
+msgid "Resume"
+msgstr "Возобновить"
+
+msgid "SEO"
+msgstr "SEO"
+
+msgid "SEO Meta Translation"
+msgstr "Перевод метаданных SEO"
+
+msgid "Same as categories — assigns translated product tag equivalents to the translated product."
+msgstr "То же самое, что и категории — назначает переведенные эквиваленты тегов продукта переведенному продукту."
+
+msgid "Scan Results"
+msgstr "Результаты сканирования"
+
+msgid "Scan complete"
+msgstr "Сканирование завершено"
+
+msgid "Scan your content to calculate word counts and estimate translation effort."
+msgstr "Сканируйте ваш контент, чтобы подсчитать количество слов и оценить усилия по переводу."
+
+msgid "Scanning content..."
+msgstr "Сканирование контента..."
+
+msgid "Scheduled Translation"
+msgstr "Запланированный перевод"
+
+msgid "Scheduled translation created. It will process content using your monthly word allowance."
+msgstr "Запланированный перевод создан. Он будет обрабатывать контент, используя ваш месячный лимит слов."
+
+msgid "Scheduled translation started! It will process content using your monthly word allowance."
+msgstr "Запланированный перевод начат! Он будет обрабатывать контент, используя ваш месячный лимит слов."
+
+msgid "Scheduled translation will process content over multiple billing cycles using your monthly word allowance."
+msgstr "Запланированный перевод будет обрабатывать контент в течение нескольких расчетных периодов, используя ваш месячный лимит слов."
+
+msgid "Select Untranslated"
+msgstr "Выбрать непереведенные"
+
+msgid "Select all"
+msgstr "Выбрать все"
+
+msgid "Set Up Built-in"
+msgstr "Настроить встроенный"
+
+msgid "Set as default"
+msgstr "Установить по умолчанию"
+
+msgid "Shortcode"
+msgstr "Короткий код"
+
+msgid "Show country flags"
+msgstr "Показать флаги стран"
+
+msgid "Show language names"
+msgstr "Показать названия языков"
+
+msgid "Source language: %s (default)"
+msgstr "Исходный язык: %s (по умолчанию)"
+
+msgid "Start translation? This will translate all selected content."
+msgstr "Начать перевод? Это переведет весь выбранный контент."
+
+msgid "Status:"
+msgstr "Статус:"
+
+msgid "Step 1: Select Content Types"
+msgstr "Шаг 1: Выберите типы контента"
+
+msgid "Step 2: Select Target Languages"
+msgstr "Шаг 2: Выберите целевые языки"
+
+msgid "Step 3: Scan & Calculate"
+msgstr "Шаг 3: Сканировать и подсчитать"
+
+msgid "Step 4: Start Translation"
+msgstr "Шаг 4: Начать перевод"
+
+msgid "Success"
+msgstr "Успех"
+
+msgid "Supported plugins: Yoast SEO, Rank Math. Both are auto-detected at runtime."
+msgstr "Поддерживаемые плагины: Yoast SEO, Rank Math. Оба автоматически определяются во время выполнения."
+
+msgid "Switch to Polylang or WPML instead."
+msgstr "Переключитесь на Polylang или WPML вместо этого."
+
+msgid "Switcher"
+msgstr "Переключатель"
+
+msgid "Switcher Style"
+msgstr "Стиль переключателя"
+
+msgid "Sync Plan"
+msgstr "План синхронизации"
+
+msgid "Syncing..."
+msgstr "Синхронизация..."
+
+msgid "Theme Header/Footer:"
+msgstr "Заголовок/Подвал темы:"
+
+msgid "This will reset all built-in language settings, disable the built-in system, and clear the onboarding state. Useful for re-testing the welcome screen and language setup. Your API key and other settings will be preserved. Translated pages will NOT be deleted."
+msgstr "Это сбросит все встроенные языковые настройки, отключит встроенную систему и очистит состояние начальной настройки. Полезно для повторного тестирования приветственного экрана и настройки языка. Ваш API-ключ и другие настройки будут сохранены. Переведенные страницы НЕ будут удалены."
+
+msgid "Time"
+msgstr "Время"
+
+msgid "Tip: You can also quickly add/remove words from the ⚙️ Settings button on the main plugin page."
+msgstr "Совет: Вы также можете быстро добавлять/удалять слова с помощью кнопки ⚙️ Настройки на главной странице плагина."
+
+msgid "Title"
+msgstr "Заголовок"
+
+msgid "Total Words"
+msgstr "Всего слов"
+
+msgid "Total words exceed your plan limit."
+msgstr "Общее количество слов превышает лимит вашего плана."
+
+msgid "Translate All"
+msgstr "Перевести все"
+
+msgid "Translate Now"
+msgstr "Перевести сейчас"
+
+msgid "Translate Open Graph title & description"
+msgstr "Перевести заголовок и описание Open Graph"
+
+msgid "Translate SEO title & meta description"
+msgstr "Перевести заголовок SEO и мета-описание"
+
+msgid "Translate Twitter card title & description"
+msgstr "Перевести заголовок и описание карточки Twitter"
+
+msgid "Translate all your website content at once. Select content types and target languages, then start translating."
+msgstr "Переведите весь контент вашего сайта сразу. Выберите типы контента и целевые языки, затем начните перевод."
+
+msgid "Translate product attributes"
+msgstr "Перевести атрибуты продукта"
+
+msgid "Translate product image alt text"
+msgstr "Перевести альтернативный текст изображения продукта"
+
+msgid "Translate product variations"
+msgstr "Перевести вариации продукта"
+
+msgid "Translated Page"
+msgstr "Переведенная страница"
+
+msgid "Translates alt text, captions, and descriptions of product images and gallery images for multilingual SEO."
+msgstr "Переводит альтернативный текст, подписи и описания изображений продуктов и галерей для многоязычного SEO."
+
+msgid "Translates custom product attribute labels and values (e.g., Color, Size). For global taxonomy attributes (pa_*), assigns translated terms if available."
+msgstr "Переводит пользовательские метки и значения атрибутов продукта (например, Цвет, Размер). Для глобальных таксономических атрибутов (pa_*), назначает переведенные термины, если они доступны."
+
+msgid "Translates og:title and og:description for Facebook/social sharing previews."
+msgstr "Переводит og:title и og:description для предварительных просмотров Facebook/социального обмена."
+
+msgid "Translates product descriptions, short descriptions, and copies product data (price, SKU, stock, etc.) to translated products."
+msgstr "Переводит описания продуктов, краткие описания и копирует данные о продукте (цена, артикул, наличие и т.д.) в переведенные продукты."
+
+msgid "Translates twitter:title and twitter:description for Twitter/X sharing."
+msgstr "Переводит twitter:title и twitter:description для обмена в Twitter/X."
+
+msgid "Translation History"
+msgstr "История переводов"
+
+msgid "Translation Progress"
+msgstr "Прогресс перевода"
+
+msgid "Translation cache cleared successfully!"
+msgstr "Кэш перевода успешно очищен!"
+
+msgid "Translation cancelled."
+msgstr "Перевод отменен."
+
+msgid "Translation completed!"
+msgstr "Перевод завершен!"
+
+msgid "Translation engine not available."
+msgstr "Движок перевода недоступен."
+
+msgid "Translation paused."
+msgstr "Перевод приостановлен."
+
+msgid "Translation resumed."
+msgstr "Перевод возобновлен."
+
+msgid "Translation started."
+msgstr "Перевод начат."
+
+msgid "Translations"
+msgstr "Переводы"
+
+msgid "Twitter Card Tags"
+msgstr "Теги карточки Twitter"
+
+msgid "Type"
+msgstr "Тип"
+
+msgid "Upgrade your plan for more words or use scheduled translation."
+msgstr "Обновите свой план для большего количества слов или используйте запланированный перевод."
+
+msgid "Use do_shortcode() in your theme template:"
+msgstr "Используйте do_shortcode() в шаблоне вашей темы:"
+
+msgid "Use the \"Shortcode\" widget in Elementor and paste the shortcode above."
+msgstr "Используйте виджет \"Шорткод\" в Elementor и вставьте шорткод выше."
+
+msgid "Variable Products"
+msgstr "Переменные продукты"
+
+msgid "WP_DEBUG and WP_DEBUG_LOG must be enabled in wp-config.php for logging to work."
+msgstr "WP_DEBUG и WP_DEBUG_LOG должны быть включены в wp-config.php для работы логирования."
+
+msgid "When enabled, detailed debug information will be written to the WordPress debug.log file."
+msgstr "При включении подробная информация отладки будет записана в файл debug.log WordPress."
+
+msgid "When enabled, only languages with an existing translation of the current page will appear in the language switcher. The default language is always shown."
+msgstr "При включении в переключателе языков будут отображаться только языки с существующим переводом текущей страницы. Язык по умолчанию всегда отображается."
+
+msgid "When translating products, automatically assigns the translated category equivalents (if they exist in the target language via Polylang/WPML)."
+msgstr "При переводе продуктов автоматически назначает переведенные эквиваленты категорий (если они существуют на целевом языке через Polylang/WPML)."
+
+msgid "WooCommerce"
+msgstr "WooCommerce"
+
+msgid "WooCommerce is not active. These settings will apply when WooCommerce is installed and activated."
+msgstr "WooCommerce не активен. Эти настройки будут применены, когда WooCommerce будет установлен и активирован."
+
+msgid "Word count validated"
+msgstr "Количество слов подтверждено"
+
+msgid "Word limit exceeded"
+msgstr "Превышен лимит слов"
+
+msgid "WordPress Widget:"
+msgstr "Виджет WordPress:"
+
+msgid "Words Remaining"
+msgstr "Осталось слов"
+
+msgid "Words Used"
+msgstr "Использовано слов"
+
+msgid "Words or terms listed here will never be translated — they will be kept exactly as-is in every language. Use this for brand names, product names, technical terms, or any text that should remain untranslated."
+msgstr "Слова или термины, указанные здесь, никогда не будут переведены — они останутся точно такими же на всех языках. Используйте это для названий брендов, названий продуктов, технических терминов или любого текста, который должен остаться непереведенным."
+
+msgid "You can also use a simple format without language codes — the AI will apply the term to the closest matching language:"
+msgstr "Вы также можете использовать простой формат без языковых кодов — ИИ применит термин к ближайшему соответствующему языку:"
+
+msgid "Your content fits within your current word allowance. Translate everything now."
+msgstr "Ваш контент укладывается в текущий лимит слов. Переведите все сейчас."
+
+msgid "Your current theme has no registered navigation menu locations. The switcher will be appended to all menus when enabled."
+msgstr "В вашей текущей теме нет зарегистрированных местоположений навигационного меню. Переключатель будет добавлен ко всем меню при включении."
+
+msgid "already translated"
+msgstr "уже переведено"
+
+msgid "detected — SEO meta fields will be translated automatically."
+msgstr "обнаружено — метаполя SEO будут переведены автоматически."
+
+msgid "detected — product translation support is available."
+msgstr "обнаружено — поддержка перевода продуктов доступна."
+
+msgid "estimated API words"
+msgstr "оценочные слова API"
+
+msgid "items"
+msgstr "элементы"
+
+msgid "needs translation"
+msgstr "нуждается в переводе"
+
+msgid "of"
+msgstr "из"
+
+msgid "pages"
+msgstr "страниц"
+
+msgid "pages selected"
+msgstr "выбранные страницы"
+
+msgid "posts"
+msgstr "посты"
+
+msgid "used"
+msgstr "использовано"
+
+msgid "— Select a language to add —"
+msgstr "— Выберите язык для добавления —"
+
+msgid "⏰ Start Scheduled Translation"
+msgstr "⏰ Начать запланированный перевод"
+
+msgid "⬆️ Upgrade Plan"
+msgstr "⬆️ Обновить план"
+
+msgid "🌍 Language Switcher"
+msgstr "🌍 Переключатель языков"
+
+msgid "🌐 Multilingual Plugin"
+msgstr "🌐 Многоязычный плагин"
+
+msgid "📅 Active Scheduled Translation"
+msgstr "📅 Активный запланированный перевод"
+
+msgid "📊 Plan & Usage"
+msgstr "📊 План и использование"
+
+msgid "📖 Translation Glossary"
+msgstr "📖 Глоссарий переводов"
+
+msgid "🔍 SEO Translation"
+msgstr "🔍 SEO перевод"
+
+msgid "🔍 Scan Content"
+msgstr "🔍 Сканировать контент"
+
+msgid "🔧 Advanced Settings"
+msgstr "🔧 Расширенные настройки"
+
+msgid "🚀 Translate All Now"
+msgstr "🚀 Перевести все сейчас"
+
+msgid "🚫 Exclude Words"
+msgstr "🚫 Исключить слова"
+
+msgid "🛒 WooCommerce"
+msgstr "🛒 WooCommerce"

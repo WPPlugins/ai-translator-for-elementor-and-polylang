@@ -226,7 +226,7 @@ class AITRFOEL_OpenAI_API {
                 'Content-Type' => 'application/json',
             ],
             'body' => json_encode($body),
-            'timeout' => 120,
+            'timeout' => 300,
         ];
         
         $response = wp_remote_post(self::MEEPTECH_TRANSLATE_ENDPOINT, $args);
@@ -309,7 +309,155 @@ class AITRFOEL_OpenAI_API {
         // Always use MeepTech server for batch translation
         return $this->translate_batch_via_meeptech($texts, $target_lang, $source_lang);
     }
-    
+
+    /**
+     * Translate multiple batches in parallel using WordPress's bundled Requests library.
+     * Falls back to sequential processing if parallel requests are unavailable.
+     *
+     * @param array $batches Array of text arrays (each sub-array is one batch)
+     * @param string $target_lang Target language code
+     * @param string $source_lang Source language code
+     * @return array Combined original => translated mapping
+     */
+    public function translate_batches_parallel($batches, $target_lang, $source_lang = 'auto') {
+        if (count($batches) < 2) {
+            // Single batch — no benefit from parallel, use normal path
+            return $this->translate_batch($batches[0], $target_lang, $source_lang);
+        }
+
+        // Resolve the Requests class (WP 6.2+ uses namespaced version)
+        $requests_class = class_exists('WpOrg\Requests\Requests') ? 'WpOrg\Requests\Requests' : (class_exists('Requests') ? 'Requests' : null);
+        if (!$requests_class || !method_exists($requests_class, 'request_multiple')) {
+            // Fallback to sequential
+            AITRFOEL_Logger::log('Parallel requests unavailable, falling back to sequential', 'warning');
+            $combined = [];
+            foreach ($batches as $batch) {
+                $result = $this->translate_batch($batch, $target_lang, $source_lang);
+                if (!is_wp_error($result)) {
+                    $combined = array_merge($combined, $result);
+                }
+            }
+            return $combined;
+        }
+
+        // Build common request parameters (license, languages, instructions)
+        static $license_info_cache = null;
+        if ($license_info_cache === null) {
+            $license_manager = AITRFOEL_License_Manager::get_instance();
+            $license_info_cache = $license_manager->get_license_status();
+        }
+
+        $source_language = ($source_lang === 'auto') ? 'auto' : AITRFOEL_Language_Mapper::get_language_name($source_lang);
+        $target_language = AITRFOEL_Language_Mapper::get_language_name($target_lang);
+        $lang_instructions = AITRFOEL_Language_Mapper::get_language_specific_instructions($target_lang);
+        $general_instructions = "CRITICAL: If a string is already in the target language or contains only numbers/symbols/short codes (e.g. 36K, 500+, 24/7, 100%, ★, →), return it EXACTLY as-is. NEVER add explanations, commentary, or notes. Your output for each string must be ONLY the translated text (or the original if no translation is needed). Never say 'this text does not need translation' or similar.";
+        $lang_instructions = !empty($lang_instructions) ? $general_instructions . "\n" . $lang_instructions : $general_instructions;
+
+        $url = self::MEEPTECH_TRANSLATE_ENDPOINT . '/batch';
+        $headers = ['Content-Type' => 'application/json'];
+
+        // Build parallel request definitions
+        $requests = [];
+        $batch_texts = []; // Keep reference to original texts per batch index
+        foreach ($batches as $idx => $texts) {
+            // Normalize NFC
+            if (class_exists('Normalizer')) {
+                foreach ($texts as $i => $t) {
+                    if (is_string($t)) {
+                        $texts[$i] = Normalizer::normalize($t, Normalizer::FORM_C);
+                    }
+                }
+            }
+            $batch_texts[$idx] = $texts;
+
+            $body = [
+                'texts' => $texts,
+                'source_language' => $source_language,
+                'target_language' => $target_language,
+                'target_lang_code' => $target_lang,
+                'language_instructions' => $lang_instructions,
+                'site_url' => home_url(),
+                'plan' => $license_info_cache['plan'],
+                'license_key' => $license_info_cache['license_key'],
+            ];
+
+            $requests[$idx] = [
+                'url' => $url,
+                'headers' => $headers,
+                'data' => json_encode($body),
+                'type' => 'POST',
+                'options' => ['timeout' => 300],
+            ];
+        }
+
+        AITRFOEL_Logger::log(
+            sprintf('Sending %d batches in PARALLEL to MeepTech (%s → %s)', count($requests), $source_language, $target_language),
+            'info'
+        );
+
+        // Fire all requests in parallel
+        $responses = $requests_class::request_multiple($requests, []);
+
+        // Process responses
+        $combined = [];
+        foreach ($responses as $idx => $response) {
+            $texts = $batch_texts[$idx];
+
+            if ($response instanceof \Exception || (is_object($response) && property_exists($response, 'success') && !$response->success)) {
+                $error_msg = $response instanceof \Exception ? $response->getMessage() : 'Request failed';
+                AITRFOEL_Logger::log("Parallel batch $idx failed: $error_msg, falling back to individual for this batch", 'warning');
+                $fallback = $this->fallback_individual_translation($texts, $target_lang, $source_lang);
+                $combined = array_merge($combined, $fallback);
+                continue;
+            }
+
+            $status = $response->status_code;
+            $data = json_decode($response->body, true);
+
+            if ($status !== 200 || !isset($data['success']) || !$data['success']) {
+                $error_msg = $data['error'] ?? 'Unknown error';
+                AITRFOEL_Logger::log("Parallel batch $idx error ($status): $error_msg, falling back to individual", 'warning');
+                $fallback = $this->fallback_individual_translation($texts, $target_lang, $source_lang);
+                $combined = array_merge($combined, $fallback);
+                continue;
+            }
+
+            AITRFOEL_Logger::log("Parallel batch $idx successful - Words used: " . ($data['words_used'] ?? 'unknown'), 'debug');
+
+            // Track analytics
+            if (function_exists('aitrfoel_analytics')) {
+                $tokens_used = $data['tokens_used'] ?? ($data['words_used'] ?? 0) * 1.3;
+                aitrfoel_analytics()->capture_llm_generation([
+                    'model' => $data['model'] ?? 'gpt-4o-mini',
+                    'input_tokens' => isset($data['input_tokens']) ? $data['input_tokens'] : round($tokens_used * 0.6),
+                    'output_tokens' => isset($data['output_tokens']) ? $data['output_tokens'] : round($tokens_used * 0.4),
+                    'latency_ms' => isset($data['latency_ms']) ? $data['latency_ms'] : 0,
+                    'success' => true,
+                ]);
+            }
+
+            $translated_texts = $data['translations'] ?? $data['translated_texts'] ?? [];
+
+            // Normalize NFC
+            if (class_exists('Normalizer')) {
+                foreach ($translated_texts as $i => $t) {
+                    if (is_string($t)) {
+                        $translated_texts[$i] = Normalizer::normalize($t, Normalizer::FORM_C);
+                    }
+                }
+            }
+
+            // Map back to original => translated
+            foreach ($texts as $index => $original_text) {
+                if (isset($translated_texts[$index])) {
+                    $combined[$original_text] = $this->sanitize_chatty_response($original_text, $translated_texts[$index]);
+                }
+            }
+        }
+
+        return $combined;
+    }
+
     /**
      * Translate multiple texts via MeepTech server in batch
      */
@@ -371,7 +519,7 @@ class AITRFOEL_OpenAI_API {
             'method' => 'POST',
             'headers' => ['Content-Type' => 'application/json'],
             'body' => json_encode($body),
-            'timeout' => 120,
+            'timeout' => 300,
         ];
         
         $response = wp_remote_post(self::MEEPTECH_TRANSLATE_ENDPOINT . '/batch', $args);

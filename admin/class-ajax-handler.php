@@ -196,7 +196,7 @@ class AITRFOEL_Ajax_Handler {
             // Calculate basic word and character counts
             $word_count = 0;
             foreach ($translatable_strings as $string) {
-                $word_count += str_word_count($string);
+                $word_count += AITRFOEL_Translation_Engine::count_words($string);
             }
             
             $character_count = array_sum(array_map('strlen', $translatable_strings));
@@ -374,7 +374,7 @@ class AITRFOEL_Ajax_Handler {
             $server_factor = defined('AITRFOEL_Translate_All::SERVER_USAGE_FACTOR') ? AITRFOEL_Translate_All::SERVER_USAGE_FACTOR : 2;
             $estimated_words = 0;
             foreach ($strings_to_translate as $string) {
-                $estimated_words += str_word_count($string);
+                $estimated_words += AITRFOEL_Translation_Engine::count_words($string);
             }
             $estimated_words *= $server_factor;
             
@@ -851,7 +851,7 @@ class AITRFOEL_Ajax_Handler {
                 $page_word_count = 0;
                 foreach ($translation_map as $item) {
                     if (isset($item['original']) && is_string($item['original'])) {
-                        $page_word_count += str_word_count(wp_strip_all_tags($item['original']));
+                        $page_word_count += AITRFOEL_Translation_Engine::count_words(wp_strip_all_tags($item['original']));
                     }
                 }
                 
@@ -1040,7 +1040,7 @@ class AITRFOEL_Ajax_Handler {
                 
                 foreach ($translation_map as $item) {
                     if (isset($item['original']) && is_string($item['original'])) {
-                        $total_estimated_words += str_word_count(wp_strip_all_tags($item['original']));
+                        $total_estimated_words += AITRFOEL_Translation_Engine::count_words(wp_strip_all_tags($item['original']));
                     }
                 }
             }
@@ -1522,7 +1522,7 @@ class AITRFOEL_Ajax_Handler {
                     // Get basic post content
                     $content = wp_strip_all_tags($post->post_content);
                     $title = wp_strip_all_tags($post->post_title);
-                    $basic_words = str_word_count($content . ' ' . $title);
+                    $basic_words = AITRFOEL_Translation_Engine::count_words($content . ' ' . $title);
                     
                     // Try to get Elementor content
                     $elementor_words = 0;
@@ -1536,7 +1536,7 @@ class AITRFOEL_Ajax_Handler {
                                 
                                 foreach ($translatable_strings as $string_data) {
                                     if (!empty($string_data['original'])) {
-                                        $elementor_words += str_word_count(wp_strip_all_tags($string_data['original']));
+                                        $elementor_words += AITRFOEL_Translation_Engine::count_words(wp_strip_all_tags($string_data['original']));
                                     }
                                 }
                             }
@@ -1546,7 +1546,7 @@ class AITRFOEL_Ajax_Handler {
                     }
                     
                     // Use the higher count (basic or elementor + basic)
-                    $total_words += max($basic_words, $elementor_words + str_word_count($title));
+                    $total_words += max($basic_words, $elementor_words + AITRFOEL_Translation_Engine::count_words($title));
                 }
             }
 

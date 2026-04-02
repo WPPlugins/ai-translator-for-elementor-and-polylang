@@ -690,3 +690,812 @@ msgstr "API-sleutels of referenties"
 
 msgid "Data is never shared with third parties."
 msgstr "Gegevens worden nooit gedeeld met derden."
+
+
+# --- Added by add-missing-translations.php (2026-04-02) ---
+
+msgid "%s items"
+msgstr "%s items"
+
+msgid "(no title)"
+msgstr "(geen titel)"
+
+msgid "Active Plugin"
+msgstr "Actieve Plugin"
+
+msgid "Add Language"
+msgstr "Voeg Taal Toe"
+
+msgid "Add custom CSS to override the default language switcher styles. This CSS is loaded on the frontend wherever the shortcode or widget is used."
+msgstr "Voeg aangepaste CSS toe om de standaard stijlen van de taalwisselaar te overschrijven. Deze CSS wordt geladen op de frontend waar de shortcode of widget wordt gebruikt."
+
+msgid "Additional Meta Fields"
+msgstr "Aanvullende Meta Velden"
+
+msgid "Advanced"
+msgstr "Geavanceerd"
+
+msgid "Advanced setting. Add comma-separated meta field keys here if the auto-detection misses something for your theme."
+msgstr "Geavanceerde instelling. Voeg hier komma-gescheiden sleutels voor meta-velden toe als de autodetectie iets mist voor uw thema."
+
+msgid "All Languages"
+msgstr "Alle Talen"
+
+msgid "All Statuses"
+msgstr "Alle Statussen"
+
+msgid "All Types"
+msgstr "Alle Typen"
+
+msgid "All menu locations"
+msgstr "Alle menu locaties"
+
+msgid "Already Translated"
+msgstr "Al Vertaald"
+
+msgid "Alternative Ways to Add:"
+msgstr "Alternatieve Manieren om Toe te Voegen:"
+
+msgid "An error occurred."
+msgstr "Er is een fout opgetreden."
+
+msgid "Appearance → Widgets"
+msgstr "Weergave → Widgets"
+
+msgid "Are you sure you want to clear all cached translations? This cannot be undone."
+msgstr "Weet u zeker dat u alle gecachte vertalingen wilt wissen? Dit kan niet ongedaan gemaakt worden."
+
+msgid "Are you sure you want to clear all translation history? This cannot be undone."
+msgstr "Weet u zeker dat u alle vertaalgeschiedenis wilt wissen? Dit kan niet ongedaan gemaakt worden."
+
+msgid "Are you sure you want to disable the built-in language system? You will need Polylang or WPML to manage translations."
+msgstr "Weet u zeker dat u het ingebouwde taalsysteem wilt uitschakelen? U heeft Polylang of WPML nodig om vertalingen te beheren."
+
+msgid ""
+"Are you sure you want to reset all plugin data? This will:\n"
+"\n"
+"• Disable the built-in language system\n"
+"• Remove all configured languages\n"
+"• Reset the onboarding/welcome screen\n"
+"• Clear dependency status cache\n"
+"\n"
+"Your API key, translated pages, and other settings will be preserved.\n"
+"\n"
+"Continue?"
+msgstr ""
+"Weet u zeker dat u alle plugin-gegevens wilt resetten? Dit zal:\n"
+"\n"
+"• Het ingebouwde taalsysteem uitschakelen\n"
+"• Alle geconfigureerde talen verwijderen\n"
+"• Het onboarding/welkomstscherm resetten\n"
+"• De cache voor afhankelijkheidsstatus wissen\n"
+"\n"
+"Uw API-sleutel, vertaalde pagina's en andere instellingen blijven behouden.\n"
+"\n"
+"Doorgaan?"
+
+msgid "Assign translated product categories"
+msgstr "Toegewezen vertaalde productcategorieën"
+
+msgid "Assign translated product tags"
+msgstr "Toegewezen vertaalde producttags"
+
+msgid "Automatically add language switcher to a navigation menu"
+msgstr "Voeg automatisch een taalwisselaar toe aan een navigatiemenu"
+
+msgid "Automatically translates SEO meta title, description, and focus keywords when translating pages."
+msgstr "Vertegenwoordigt automatisch de SEO-meta titel, beschrijving en focus zoekwoorden bij het vertalen van pagina's."
+
+msgid "Available CSS classes:"
+msgstr "Beschikbare CSS-klassen:"
+
+msgid "Available Languages:"
+msgstr "Beschikbare Talen:"
+
+msgid "Cache"
+msgstr "Cache"
+
+msgid "Cancel Scheduled Translation"
+msgstr "Geplande Vertaling Annuleren"
+
+msgid "Choose which languages to translate your content into. Your default language content will be used as source."
+msgstr "Kies in welke talen u uw inhoud wilt vertalen. De inhoud in uw standaardtaal wordt als bron gebruikt."
+
+msgid "Choose which menu location gets the language switcher appended, or select \"All\" to add to every menu."
+msgstr "Kies welke menu locatie de taalwisselaar krijgt toegevoegd, of selecteer \"Alle\" om aan elk menu toe te voegen."
+
+msgid "Choose which types of content to translate."
+msgstr "Kies welke soorten inhoud u wilt vertalen."
+
+msgid "Clear"
+msgstr "Wissen"
+
+msgid "Clear History"
+msgstr "Geschiedenis Wissen"
+
+msgid "Clearing..."
+msgstr "Wissen..."
+
+msgid "Code"
+msgstr "Code"
+
+msgid "Compatibility Status"
+msgstr "Compatibiliteitsstatus"
+
+msgid "Configure the language switcher that visitors use to change the language on your site. You can add it using a shortcode, a WordPress widget, or a nav menu integration."
+msgstr "Configureer de taalwisselaar die bezoekers gebruiken om de taal op uw site te wijzigen. U kunt deze toevoegen met een shortcode, een WordPress-widget of een nav-menu-integratie."
+
+msgid "Connection error"
+msgstr "Verbindingsfout"
+
+msgid "Content Type"
+msgstr "Inhoudstype"
+
+msgid "Content exceeds your current word allowance. Schedule translation to process over multiple billing cycles using your monthly word limit."
+msgstr "De inhoud overschrijdt uw huidige woordlimiet. Plan vertaling om over meerdere factureringscycli te verwerken met uw maandelijkse woordlimiet."
+
+msgid "Content you translate is sent to OpenAI for translation processing. Review their"
+msgstr "Inhoud die u vertaalt, wordt naar OpenAI gestuurd voor vertaalverwerking. Bekijk hun"
+
+msgid "Cooldown saved"
+msgstr "Cooldown opgeslagen"
+
+msgid "Copied!"
+msgstr "Gekopieerd!"
+
+msgid "Copy"
+msgstr "Kopieer"
+
+msgid "Copy this shortcode and paste it into any page, post, or text widget where you want the language switcher to appear."
+msgstr "Kopieer deze shortcode en plak deze in elke pagina, bericht of tekstwidget waar u de taalswitcher wilt laten verschijnen."
+
+msgid "Creates translated variations for variable products, preserving parent-child relationships, pricing, and per-variation data (SKU, stock, dimensions)."
+msgstr "Maakt vertaalde variaties voor variabele producten, waarbij de ouder-kindrelaties, prijzen en per-variatie gegevens (SKU, voorraad, afmetingen) behouden blijven."
+
+msgid "Current Plan"
+msgstr "Huidig Plan"
+
+msgid "Custom CSS"
+msgstr "Aangepaste CSS"
+
+msgid "Data sent to our server:"
+msgstr "Gegevens verzonden naar onze server:"
+
+msgid "Debug Mode"
+msgstr "Debugmodus"
+
+msgid "Default"
+msgstr "Standaard"
+
+msgid "Default Language:"
+msgstr "Standaardtaal:"
+
+msgid "Define terms that should always be translated a specific way. The AI will follow these rules for every translation to ensure consistency across your site."
+msgstr "Definieer termen die altijd op een specifieke manier moeten worden vertaald. De AI zal deze regels volgen voor elke vertaling om consistentie op uw site te waarborgen."
+
+msgid "Deselect All"
+msgstr "Deselecteer Alles"
+
+msgid "Disable Built-in Language System"
+msgstr "Schakel ingebouwd taalsysteem uit"
+
+msgid "Display Options"
+msgstr "Weergave-opties"
+
+msgid "Dropdown"
+msgstr "Dropdown"
+
+msgid "Editor"
+msgstr "Editor"
+
+msgid "Elementor:"
+msgstr "Elementor:"
+
+msgid "Enable WooCommerce product translation"
+msgstr "Schakel WooCommerce productvertaling in"
+
+msgid "Enable debug logging"
+msgstr "Schakel debuglogging in"
+
+msgid "Enforce monthly word limits based on your plan"
+msgstr "Handhaaf maandelijkse limieten voor woorden op basis van uw plan"
+
+msgid "Error clearing cache: "
+msgstr "Fout bij het wissen van de cache: "
+
+msgid "Error detecting multilingual plugin"
+msgstr "Fout bij het detecteren van meertalige plugin"
+
+msgid "Error resetting plugin data: "
+msgstr "Fout bij het resetten van plugingegevens: "
+
+msgid "Estimated time remaining"
+msgstr "Geschatte resterende tijd"
+
+msgid "Example:"
+msgstr "Voorbeeld:"
+
+msgid "Exclude Words"
+msgstr "Sluit Woorden uit"
+
+msgid "Excluded Terms"
+msgstr "Uitgesloten Termen"
+
+msgid "Failed to clear cache. Please try again."
+msgstr "Het is niet gelukt om de cache te wissen. Probeer het opnieuw."
+
+msgid "Filter by %s"
+msgstr "Filter op %s"
+
+msgid "Flags + Language Code"
+msgstr "Vlaggen + Taalcode"
+
+msgid "Flags Only"
+msgstr "Alleen Vlaggen"
+
+msgid "Fully Translated"
+msgstr "Volledig Vertaald"
+
+msgid "Gallery & Image ALT"
+msgstr "Galerij & Afbeelding ALT"
+
+msgid "Get a bigger word allowance to translate all your content at once."
+msgstr "Krijg een grotere woordtoewijzing om al uw inhoud in één keer te vertalen."
+
+msgid "Get your License from:"
+msgstr "Krijg uw Licentie van:"
+
+msgid "Glossary"
+msgstr "Woordenlijst"
+
+msgid "Glossary Terms"
+msgstr "Woordenlijst Termen"
+
+msgid "Go to %s and add the \"AI Translator – Language Switcher\" widget to any sidebar or widget area."
+msgstr "Ga naar %s en voeg de \"AI Translator – Language Switcher\" widget toe aan een zijbalk of widgetgebied."
+
+msgid "Hide languages that have no translation for the current page"
+msgstr "Verberg talen zonder vertaling voor de huidige pagina"
+
+msgid "History table not found. Please deactivate and reactivate the plugin to create it, or translate a page to start recording."
+msgstr "Geschiedenis tabel niet gevonden. Deactiveer en activeer de plugin opnieuw om deze te creëren, of vertaal een pagina om te beginnen met registreren."
+
+msgid "Horizontal List"
+msgstr "Horizontale Lijst"
+
+msgid "How long to keep translations in cache before refreshing."
+msgstr "Hoe lang vertalingen in de cache moeten blijven voordat ze worden vernieuwd."
+
+msgid "IP addresses (beyond standard server logs)"
+msgstr "IP-adressen (buiten standaard serverlogs)"
+
+msgid "Inherit from Original"
+msgstr "Overnemen van Origineel"
+
+msgid "Insufficient permissions."
+msgstr "Onvoldoende rechten."
+
+msgid "Items"
+msgstr "Items"
+
+msgid "Job not found."
+msgstr "Taak niet gevonden."
+
+msgid "Lang"
+msgstr "Taal"
+
+msgid "License key (if applicable)"
+msgstr "Licentiesleutel (indien van toepassing)"
+
+msgid "LiteSpeed Cache optimizations only apply to published pages viewed by visitors."
+msgstr "LiteSpeed Cache-optimalisaties zijn alleen van toepassing op gepubliceerde pagina's die door bezoekers worden bekeken."
+
+msgid "Loading status..."
+msgstr "Status aan het laden..."
+
+msgid "Manage Languages"
+msgstr "Beheer Talen"
+
+msgid "Menu Location:"
+msgstr "Menu Locatie:"
+
+msgid "Monthly Limit"
+msgstr "Maandelijkse Limiet"
+
+msgid "Multilingual"
+msgstr "Meertalig"
+
+msgid "Nav Menu Integration"
+msgstr "Navigatiemenu Integratie"
+
+msgid "Needs Translation"
+msgstr "Heeft Vertaling Nodig"
+
+msgid "Next run:"
+msgstr "Volgende uitvoering:"
+
+msgid "No content or languages selected."
+msgstr "Geen inhoud of talen geselecteerd."
+
+msgid "No content types selected."
+msgstr "Geen inhoudstypen geselecteerd."
+
+msgid "No languages configured yet. Add languages in the Multilingual Plugin section above."
+msgstr "Geen talen geconfigureerd. Voeg talen toe in de sectie Meertalige Plugin hierboven."
+
+msgid "No languages configured. Please set up languages in your multilingual plugin first."
+msgstr "Geen talen geconfigureerd. Stel eerst talen in uw meertalige plugin in."
+
+msgid "No multilingual plugin active. Configure one first."
+msgstr "Geen meertalige plugin actief. Configureer er eerst een."
+
+msgid "No multilingual plugin detected"
+msgstr "Geen meertalige plugin gedetecteerd"
+
+msgid "No supported SEO plugin detected. Install Yoast SEO or Rank Math to enable SEO meta translation."
+msgstr "Geen ondersteunde SEO-plugin gedetecteerd. Installeer Yoast SEO of Rank Math om SEO-meta-vertaling in te schakelen."
+
+msgid "No target languages selected."
+msgstr "Geen doeltalen geselecteerd."
+
+msgid "No translatable content found for the selected types."
+msgstr "Geen vertaalbare inhoud gevonden voor de geselecteerde types."
+
+msgid "No translation history yet. Translations will appear here as you translate pages."
+msgstr "Geen vertaalgeschiedenis nog. Vertalingen zullen hier verschijnen terwijl u pagina's vertaalt."
+
+msgid "Note:"
+msgstr "Opmerking:"
+
+msgid "One term per line. Format:"
+msgstr "Één term per regel. Formaat:"
+
+msgid "One word or phrase per line. These terms will be preserved as-is during translation."
+msgstr "Één woord of zin per regel. Deze termen worden tijdens de vertaling als-is behouden."
+
+msgid "Open Graph Tags"
+msgstr "Open Graph Tags"
+
+msgid "Original Page"
+msgstr "Originele Pagina"
+
+msgid "Page-by-Page Breakdown"
+msgstr "Pagina-voor-Pagina Uiteenzetting"
+
+msgid "Pages"
+msgstr "Pagina's"
+
+msgid "Pause"
+msgstr "Pauze"
+
+msgid "Per Language"
+msgstr "Per Taal"
+
+msgid "Personal information or email addresses"
+msgstr "Persoonlijke informatie of e-mailadressen"
+
+msgid "Please install and activate either Polylang or WPML, or use the built-in language system."
+msgstr "Installeer en activeer alstublieft ofwel Polylang of WPML, of gebruik het ingebouwde taalsysteem."
+
+msgid "Please select at least one content type."
+msgstr "Selecteer alstublieft ten minste één inhoudstype."
+
+msgid "Please select at least one target language."
+msgstr "Selecteer alstublieft ten minste één doeltaal."
+
+msgid "Plugin data reset successfully! Redirecting to welcome screen..."
+msgstr "Plugingegevens succesvol gereset! Wordt doorgestuurd naar het welkomstscherm..."
+
+msgid "Posts"
+msgstr "Berichten"
+
+msgid "Powered by"
+msgstr "Aangedreven door"
+
+msgid "Preview"
+msgstr "Voorbeeld"
+
+msgid "Privacy"
+msgstr "Privacy"
+
+msgid "Process AI-powered translations"
+msgstr "Verwerk AI-gestuurde vertalingen"
+
+msgid "Product Attributes"
+msgstr "Productattributen"
+
+msgid "Product Categories"
+msgstr "Productcategorieën"
+
+msgid "Product Support"
+msgstr "Productondersteuning"
+
+msgid "Product Tags"
+msgstr "Producttags"
+
+msgid "Progress:"
+msgstr "Voortgang:"
+
+msgid "Published (Auto-publish)"
+msgstr "Gepubliceerd (Automatisch publiceren)"
+
+msgid "Remove"
+msgstr "Verwijderen"
+
+msgid "Remove all cached translations. Useful when you want to regenerate translations with updated content or settings."
+msgstr "Verwijder alle gecachte vertalingen. Handig wanneer u vertalingen wilt regenereren met bijgewerkte inhoud of instellingen."
+
+msgid "Remove this language? Existing translations in this language will remain but will no longer be managed."
+msgstr "Deze taal verwijderen? Bestaande vertalingen in deze taal blijven bestaan, maar worden niet langer beheerd."
+
+msgid "Reset Plugin Data"
+msgstr "Reset Plugingegevens"
+
+msgid "Resetting..."
+msgstr "Bezig met resetten..."
+
+msgid "Resume"
+msgstr "Hervatten"
+
+msgid "SEO"
+msgstr "SEO"
+
+msgid "SEO Meta Translation"
+msgstr "SEO Meta Vertaling"
+
+msgid "Same as categories — assigns translated product tag equivalents to the translated product."
+msgstr "Zelfde als categorieën — wijst vertaalde producttag-equivalenten toe aan het vertaalde product."
+
+msgid "Scan Results"
+msgstr "Scanresultaten"
+
+msgid "Scan complete"
+msgstr "Scan voltooid"
+
+msgid "Scan your content to calculate word counts and estimate translation effort."
+msgstr "Scan uw inhoud om het aantal woorden te berekenen en de vertaalinspanning te schatten."
+
+msgid "Scanning content..."
+msgstr "Inhoud aan het scannen..."
+
+msgid "Scheduled Translation"
+msgstr "Geplande Vertaling"
+
+msgid "Scheduled translation created. It will process content using your monthly word allowance."
+msgstr "Geplande vertaling aangemaakt. Het zal inhoud verwerken met uw maandelijkse woordtoewijzing."
+
+msgid "Scheduled translation started! It will process content using your monthly word allowance."
+msgstr "Geplande vertaling gestart! Het zal inhoud verwerken met uw maandelijkse woordtoewijzing."
+
+msgid "Scheduled translation will process content over multiple billing cycles using your monthly word allowance."
+msgstr "Geplande vertaling zal inhoud verwerken over meerdere factureringscycli met uw maandelijkse woordtoewijzing."
+
+msgid "Select Untranslated"
+msgstr "Selecteer Ongeschreven"
+
+msgid "Select all"
+msgstr "Selecteer alles"
+
+msgid "Set Up Built-in"
+msgstr "Ingebouwd instellen"
+
+msgid "Set as default"
+msgstr "Instellen als standaard"
+
+msgid "Shortcode"
+msgstr "Shortcode"
+
+msgid "Show country flags"
+msgstr "Toon landvlaggen"
+
+msgid "Show language names"
+msgstr "Toon taalnamen"
+
+msgid "Source language: %s (default)"
+msgstr "Brontaal: %s (standaard)"
+
+msgid "Start translation? This will translate all selected content."
+msgstr "Start vertaling? Dit zal alle geselecteerde inhoud vertalen."
+
+msgid "Status for newly created translated pages. Draft is recommended for review before publishing."
+msgstr "Status voor nieuw aangemaakte vertaalde pagina's. Concept wordt aanbevolen voor beoordeling voordat het gepubliceerd wordt."
+
+msgid "Status:"
+msgstr "Status:"
+
+msgid "Step 1: Select Content Types"
+msgstr "Stap 1: Selecteer Inhoudstypen"
+
+msgid "Step 2: Select Target Languages"
+msgstr "Stap 2: Selecteer Doeltalen"
+
+msgid "Step 3: Scan & Calculate"
+msgstr "Stap 3: Scannen & Berekenen"
+
+msgid "Step 4: Start Translation"
+msgstr "Stap 4: Start Vertaling"
+
+msgid "Supported plugins: Yoast SEO, Rank Math. Both are auto-detected at runtime."
+msgstr "Ondersteunde plugins: Yoast SEO, Rank Math. Beide worden automatisch gedetecteerd tijdens runtime."
+
+msgid "Switch to Polylang or WPML instead."
+msgstr "Schakel in plaats daarvan over naar Polylang of WPML."
+
+msgid "Switcher"
+msgstr "Schakelaar"
+
+msgid "Switcher Style"
+msgstr "Schakelaarstijl"
+
+msgid "Sync Plan"
+msgstr "Synchronisatieplan"
+
+msgid "Syncing..."
+msgstr "Synchroniseren..."
+
+msgid "Theme Header/Footer:"
+msgstr "Thema Header/Footer:"
+
+msgid "Third-party services:"
+msgstr "Derden diensten:"
+
+msgid "This plugin connects to our translation API at"
+msgstr "Deze plugin maakt verbinding met onze vertaal-API op"
+
+msgid "This will reset all built-in language settings, disable the built-in system, and clear the onboarding state. Useful for re-testing the welcome screen and language setup. Your API key and other settings will be preserved. Translated pages will NOT be deleted."
+msgstr "Dit zal alle ingebouwde taalinstellingen resetten, het ingebouwde systeem uitschakelen en de onboardingstatus wissen. Handig voor het opnieuw testen van het welkomstscherm en de taalinstelling. Uw API-sleutel en andere instellingen worden bewaard. Vertaalde pagina's zullen NIET worden verwijderd."
+
+msgid "Tip: You can also quickly add/remove words from the ⚙️ Settings button on the main plugin page."
+msgstr "Tip: U kunt ook snel woorden toevoegen/verwijderen via de ⚙️ Instellingen knop op de hoofdpagina van de plugin."
+
+msgid "Total Words"
+msgstr "Totaal aantal woorden"
+
+msgid "Total words exceed your plan limit."
+msgstr "Totaal aantal woorden overschrijdt uw planningslimiet."
+
+msgid "Track word usage for plan limits and licensing"
+msgstr "Volg het gebruik van woorden voor planningslimieten en licenties"
+
+msgid "Translate All"
+msgstr "Vertaal Alles"
+
+msgid "Translate Now"
+msgstr "Vertaal Nu"
+
+msgid "Translate Open Graph title & description"
+msgstr "Vertaal Open Graph titel & beschrijving"
+
+msgid "Translate SEO title & meta description"
+msgstr "Vertaal SEO titel & meta beschrijving"
+
+msgid "Translate Twitter card title & description"
+msgstr "Vertaal Twitter kaart titel & beschrijving"
+
+msgid "Translate all your website content at once. Select content types and target languages, then start translating."
+msgstr "Vertaal al uw website-inhoud in één keer. Selecteer inhoudstypen en doeltalen, en begin met vertalen."
+
+msgid "Translate product attributes"
+msgstr "Vertaal productattributen"
+
+msgid "Translate product image alt text"
+msgstr "Vertaal alt-tekst van productafbeeldingen"
+
+msgid "Translate product variations"
+msgstr "Vertaal productvariaties"
+
+msgid "Translated Page"
+msgstr "Vertaald Pagina"
+
+msgid "Translates alt text, captions, and descriptions of product images and gallery images for multilingual SEO."
+msgstr "Vertalen alt-tekst, bijschriften en beschrijvingen van productafbeeldingen en galerijafbeeldingen voor meertalige SEO."
+
+msgid "Translates custom product attribute labels and values (e.g., Color, Size). For global taxonomy attributes (pa_*), assigns translated terms if available."
+msgstr "Vertalen aangepaste productattribuutlabels en waarden (bijv. Kleur, Maat). Voor globale taxonomie-attributen (pa_*), worden vertaalde termen toegewezen indien beschikbaar."
+
+msgid "Translates og:title and og:description for Facebook/social sharing previews."
+msgstr "Vertalen og:title en og:description voor Facebook/sociale deelvoorbeelden."
+
+msgid "Translates product descriptions, short descriptions, and copies product data (price, SKU, stock, etc.) to translated products."
+msgstr "Vertalen productbeschrijvingen, korte beschrijvingen en kopieert productgegevens (prijs, SKU, voorraad, enz.) naar vertaalde producten."
+
+msgid "Translates twitter:title and twitter:description for Twitter/X sharing."
+msgstr "Vertalen twitter:title en twitter:description voor Twitter/X delen."
+
+msgid "Translation History"
+msgstr "Vertaalgeschiedenis"
+
+msgid "Translation Progress"
+msgstr "Vertaalvoortgang"
+
+msgid "Translation cache cleared successfully!"
+msgstr "Vertaalcache succesvol gewist!"
+
+msgid "Translation cancelled."
+msgstr "Vertaling geannuleerd."
+
+msgid "Translation completed!"
+msgstr "Vertaling voltooid!"
+
+msgid "Translation engine not available."
+msgstr "Vertaalmachine niet beschikbaar."
+
+msgid "Translation paused."
+msgstr "Vertaling gepauzeerd."
+
+msgid "Translation resumed."
+msgstr "Vertaling hervat."
+
+msgid "Translation started."
+msgstr "Vertaling gestart."
+
+msgid "Translations"
+msgstr "Vertalingen"
+
+msgid "Twitter Card Tags"
+msgstr "Twitter Card Tags"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Upgrade License"
+msgstr "Upgrade Licentie"
+
+msgid "Upgrade page"
+msgstr "Upgrade pagina"
+
+msgid "Upgrade your plan for more words or use scheduled translation."
+msgstr "Upgrade uw plan voor meer woorden of gebruik geplande vertaling."
+
+msgid "Use do_shortcode() in your theme template:"
+msgstr "Gebruik do_shortcode() in uw themasjabloon:"
+
+msgid "Use the \"Shortcode\" widget in Elementor and paste the shortcode above."
+msgstr "Gebruik de \"Shortcode\" widget in Elementor en plak de shortcode hierboven."
+
+msgid "User or visitor data"
+msgstr "Gebruikers- of bezoekersgegevens"
+
+msgid "Variable Products"
+msgstr "Variabele Producten"
+
+msgid "WP_DEBUG and WP_DEBUG_LOG must be enabled in wp-config.php for logging to work."
+msgstr "WP_DEBUG en WP_DEBUG_LOG moeten ingeschakeld zijn in wp-config.php om logging te laten werken."
+
+msgid "We DO NOT collect:"
+msgstr "Wij VERZAMELEN GEEN:"
+
+msgid "When enabled, detailed debug information will be written to the WordPress debug.log file."
+msgstr "Wanneer ingeschakeld, worden gedetailleerde foutopsporingsinformatie geschreven naar het WordPress debug.log bestand."
+
+msgid "When enabled, only languages with an existing translation of the current page will appear in the language switcher. The default language is always shown."
+msgstr "Wanneer ingeschakeld, verschijnen alleen talen met een bestaande vertaling van de huidige pagina in de taalwisselaar. De standaardtaal wordt altijd weergegeven."
+
+msgid "When translating products, automatically assigns the translated category equivalents (if they exist in the target language via Polylang/WPML)."
+msgstr "Bij het vertalen van producten worden automatisch de vertaalde categorie-equivalenten toegewezen (indien deze bestaan in de doeltaal via Polylang/WPML)."
+
+msgid "WooCommerce"
+msgstr "WooCommerce"
+
+msgid "WooCommerce is not active. These settings will apply when WooCommerce is installed and activated."
+msgstr "WooCommerce is niet actief. Deze instellingen worden toegepast wanneer WooCommerce is geïnstalleerd en geactiveerd."
+
+msgid "Word count validated"
+msgstr "Aantal woorden gevalideerd"
+
+msgid "Word counts and language pairs (for usage tracking)"
+msgstr "Aantal woorden en taalparen (voor gebruiksregistratie)"
+
+msgid "Word limit exceeded"
+msgstr "Woordenlimiet overschreden"
+
+msgid "WordPress Widget:"
+msgstr "WordPress Widget:"
+
+msgid "Words Remaining"
+msgstr "Overgebleven Woorden"
+
+msgid "Words Used"
+msgstr "Gebruikte Woorden"
+
+msgid "Words or terms listed here will never be translated — they will be kept exactly as-is in every language. Use this for brand names, product names, technical terms, or any text that should remain untranslated."
+msgstr "Woorden of termen die hier worden vermeld, zullen nooit worden vertaald — ze blijven precies zoals ze zijn in elke taal. Gebruik dit voor merknamen, productnamen, technische termen of enige tekst die onvertaald moet blijven."
+
+msgid "You can also use a simple format without language codes — the AI will apply the term to the closest matching language:"
+msgstr "U kunt ook een eenvoudig formaat zonder taalcodes gebruiken — de AI zal de term toepassen op de dichtstbijzijnde overeenkomende taal:"
+
+msgid "Your actual translated content"
+msgstr "Uw daadwerkelijke vertaalde inhoud"
+
+msgid "Your content fits within your current word allowance. Translate everything now."
+msgstr "Uw inhoud past binnen uw huidige woordtoewijzing. Vertaal alles nu."
+
+msgid "Your current theme has no registered navigation menu locations. The switcher will be appended to all menus when enabled."
+msgstr "Uw huidige thema heeft geen geregistreerde navigatiemenu-locaties. De wisselaar zal aan alle menu's worden toegevoegd wanneer ingeschakeld."
+
+msgid "Your website URL (for service authentication)"
+msgstr "Uw website-URL (voor service-authenticatie)"
+
+msgid "already translated"
+msgstr "al vertaald"
+
+msgid "detected — SEO meta fields will be translated automatically."
+msgstr "gedetecteerd — SEO meta-velden zullen automatisch worden vertaald."
+
+msgid "detected — product translation support is available."
+msgstr "gedetecteerd — productvertalingsondersteuning is beschikbaar."
+
+msgid "estimated API words"
+msgstr "geschatte API-woorden"
+
+msgid "items"
+msgstr "items"
+
+msgid "needs translation"
+msgstr "heeft vertaling nodig"
+
+msgid "of"
+msgstr "of"
+
+msgid "pages"
+msgstr "pagina's"
+
+msgid "pages selected"
+msgstr "pagina's geselecteerd"
+
+msgid "posts"
+msgstr "berichten"
+
+msgid "privacy policy"
+msgstr "privacybeleid"
+
+msgid "to:"
+msgstr "naar:"
+
+msgid "used"
+msgstr "gebruikt"
+
+msgid "words"
+msgstr "woorden"
+
+msgid "— Select a language to add —"
+msgstr "— Selecteer een taal om toe te voegen —"
+
+msgid "⏰ Start Scheduled Translation"
+msgstr "⏰ Start Geplande Vertaling"
+
+msgid "⬆️ Upgrade Plan"
+msgstr "⬆️ Upgrade Plan"
+
+msgid "🌍 Language Switcher"
+msgstr "🌍 Taalwisselaar"
+
+msgid "🌐 Multilingual Plugin"
+msgstr "🌐 Meertalig Plugin"
+
+msgid "📅 Active Scheduled Translation"
+msgstr "📅 Actieve Geplande Vertaling"
+
+msgid "📊 Plan & Usage"
+msgstr "📊 Plan & Gebruik"
+
+msgid "📖 Translation Glossary"
+msgstr "📖 Vertaalwoordenlijst"
+
+msgid "🔍 SEO Translation"
+msgstr "🔍 SEO Vertaling"
+
+msgid "🔍 Scan Content"
+msgstr "🔍 Scan Inhoud"
+
+msgid "🔧 Advanced Settings"
+msgstr "🔧 Geavanceerde Instellingen"
+
+msgid "🚀 Translate All Now"
+msgstr "🚀 Vertaal Alles Nu"
+
+msgid "🚫 Exclude Words"
+msgstr "🚫 Uitsluiten Woorden"
+
+msgid "🛒 WooCommerce"
+msgstr "🛒 WooCommerce"

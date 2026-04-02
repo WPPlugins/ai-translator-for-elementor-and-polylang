@@ -47,6 +47,22 @@ class AITRFOEL_Translation_Engine {
     }
 
     /**
+     * Count words in text using Unicode-aware regex.
+     * Unlike PHP's str_word_count(), this correctly handles apostrophes
+     * inside words (e.g. French "l'eau", "d'une" count as 1 word each).
+     *
+     * @param string $text Plain text (should be HTML-stripped before calling)
+     * @return int Word count
+     */
+    public static function count_words($text) {
+        if (empty($text)) {
+            return 0;
+        }
+        $count = preg_match_all('/[\p{L}\p{N}][\p{L}\p{N}\x{2019}\x{2018}\'-]*/u', $text, $matches);
+        return $count ?: 0;
+    }
+
+    /**
      * Main translation function
      * Supports Elementor, Gutenberg, and Classic Editor content
      * 
@@ -151,7 +167,7 @@ class AITRFOEL_Translation_Engine {
             if (isset($string_data['original'])) {
                 $text = wp_strip_all_tags($string_data['original']);
                 $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                $wc = str_word_count($text);
+                $wc = self::count_words($text);
                 $source_words += $wc;
                 $debug_word_breakdown[] = $wc . ':' . mb_substr($text, 0, 60);
             }
@@ -569,7 +585,7 @@ class AITRFOEL_Translation_Engine {
             if (isset($string_data['original'])) {
                 $text = wp_strip_all_tags($string_data['original']);
                 $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                $word_count += str_word_count($text);
+                $word_count += self::count_words($text);
             }
         }
         
@@ -1166,16 +1182,16 @@ class AITRFOEL_Translation_Engine {
         }
         
         // Extract translated title from batch results
+        // batch_translate_strings() keys translations by original text, not path
         $translated_title = null;
-        if (isset($translations[$title_key])) {
-            // Title was added as a separate batch entry
-            $translated_title = $translations[$title_key];
+        if (isset($translations[$post_title])) {
+            $translated_title = $translations[$post_title];
         } elseif (!empty($title_already_included)) {
             // Title was already in content (e.g. as H1) — extract translated version
             foreach ($strings_to_translate as $s) {
                 $stripped = trim(wp_strip_all_tags($s['original'] ?? ''));
-                if ($stripped === trim($post_title) && isset($translations[$s['path']])) {
-                    $translated_title = wp_strip_all_tags($translations[$s['path']]);
+                if ($stripped === trim($post_title) && isset($translations[$s['original']])) {
+                    $translated_title = wp_strip_all_tags($translations[$s['original']]);
                     break;
                 }
             }
@@ -1348,7 +1364,7 @@ class AITRFOEL_Translation_Engine {
             if (isset($string_data['original'])) {
                 $text = wp_strip_all_tags($string_data['original']);
                 $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                $source_words += str_word_count($text);
+                $source_words += self::count_words($text);
             }
         }
         $server_factor = defined('AITRFOEL_Translate_All::SERVER_USAGE_FACTOR') ? AITRFOEL_Translate_All::SERVER_USAGE_FACTOR : 2;
@@ -1450,46 +1466,78 @@ class AITRFOEL_Translation_Engine {
         
         // Batch translate uncached strings
         if (!empty($uncached_strings)) {
-            $batches = array_chunk($uncached_strings, $this->batch_size);
+            // Split by word count (~1500 words per batch) to avoid API timeouts on large content
+            $max_words_per_batch = 1500;
+            $batches = [];
+            $current_batch = [];
+            $current_words = 0;
+            
+            foreach ($uncached_strings as $str) {
+                $wc = self::count_words(wp_strip_all_tags($str));
+                if (!empty($current_batch) && ($current_words + $wc) > $max_words_per_batch) {
+                    $batches[] = $current_batch;
+                    $current_batch = [];
+                    $current_words = 0;
+                }
+                $current_batch[] = $str;
+                $current_words += $wc;
+            }
+            if (!empty($current_batch)) {
+                $batches[] = $current_batch;
+            }
             
             AITRFOEL_Logger::log(
-                sprintf('batch_translate_strings: Sending %d batches to API', count($batches)),
+                sprintf('batch_translate_strings: %d batches (~%d words/batch)%s', count($batches), $max_words_per_batch, count($batches) > 1 ? ' — using PARALLEL requests' : ''),
                 'info',
                 $page_id
             );
             
-            foreach ($batches as $batch_index => $batch) {
+            // Use parallel requests when multiple batches exist
+            if (count($batches) > 1) {
+                $parallel_result = $api->translate_batches_parallel($batches, $target_lang, $source_lang);
+                
+                if (!is_wp_error($parallel_result)) {
+                    foreach ($parallel_result as $original => $translated) {
+                        $translations[$original] = $translated;
+                        
+                        if ($this->cache_enabled && !empty($translated)) {
+                            $cache->set_to_cache($original, $translated, $target_lang, $source_lang, 'gpt-4o-mini');
+                        }
+                    }
+                } else {
+                    AITRFOEL_Logger::log('Parallel batch error: ' . $parallel_result->get_error_message(), 'error', $page_id);
+                }
+            } else {
+                // Single batch — use normal sequential path
+                $batch = $batches[0];
+                $batch_wc = 0;
+                foreach ($batch as $s) { $batch_wc += self::count_words(wp_strip_all_tags($s)); }
                 AITRFOEL_Logger::log(
-                    sprintf('batch_translate_strings: Processing batch %d with %d strings', $batch_index + 1, count($batch)),
+                    sprintf('batch_translate_strings: Processing 1 batch with %d strings (~%d words)', count($batch), $batch_wc),
                     'info',
                     $page_id
                 );
                 
                 $result = $api->translate_batch($batch, $target_lang, $source_lang);
                 
-                if (is_wp_error($result)) {
-                    AITRFOEL_Logger::log('Batch translation error: ' . $result->get_error_message(), 'error', $page_id);
-                    continue;
-                }
-                
-                // Process results
-                foreach ($result as $original => $translated) {
-                    $translations[$original] = $translated;
-                    
-                    // Save to cache
-                    if ($this->cache_enabled && !empty($translated)) {
-                        $cache->set_to_cache($original, $translated, $target_lang, $source_lang, 'gpt-4o-mini');
+                if (!is_wp_error($result)) {
+                    foreach ($result as $original => $translated) {
+                        $translations[$original] = $translated;
+                        
+                        if ($this->cache_enabled && !empty($translated)) {
+                            $cache->set_to_cache($original, $translated, $target_lang, $source_lang, 'gpt-4o-mini');
+                        }
                     }
+                } else {
+                    AITRFOEL_Logger::log('Batch translation error: ' . $result->get_error_message(), 'error', $page_id);
                 }
-                
-                // No delay between batches - server handles rate limiting
             }
         }
         
         // Track word count
         $word_count = 0;
         foreach ($translations as $original => $translated) {
-            $word_count += str_word_count(wp_strip_all_tags($original));
+            $word_count += self::count_words(wp_strip_all_tags($original));
         }
         $this->last_translation_stats['word_count'] = $word_count;
         $this->last_translation_stats['strings_count'] = count($translations);
@@ -3428,7 +3476,7 @@ class AITRFOEL_Translation_Engine {
             if (isset($element['settings'])) {
                 foreach ($element['settings'] as $value) {
                     if (is_string($value)) {
-                        $words += str_word_count(wp_strip_all_tags($value));
+                        $words += self::count_words(wp_strip_all_tags($value));
                     }
                 }
             }

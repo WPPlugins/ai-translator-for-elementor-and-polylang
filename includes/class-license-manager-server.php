@@ -379,7 +379,7 @@ class AITRFOEL_License_Manager_Server {
         
         if (class_exists('AITRFOEL_Logger')) {
             AITRFOEL_Logger::log('Sending translation request to server', 'info', [
-                'word_count' => str_word_count($text),
+                'word_count' => AITRFOEL_Translation_Engine::count_words($text),
                 'plan' => $license_status['plan'],
                 'text_preview' => substr($text, 0, 100) . '...'
             ]);
