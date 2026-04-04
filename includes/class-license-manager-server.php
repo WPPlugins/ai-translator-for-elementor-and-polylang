@@ -159,7 +159,9 @@ class AITRFOEL_License_Manager_Server {
             'words_left' => $words_left,
             'license_key' => $license_key,
             'freemius_validated' => isset($server_usage['freemius_validated']) ? $server_usage['freemius_validated'] : false,
-            'license_expired' => isset($server_usage['license_expired']) ? $server_usage['license_expired'] : false
+            'license_expired' => isset($server_usage['license_expired']) ? $server_usage['license_expired'] : false,
+            'addon_active' => isset($server_usage['addon_active']) ? (bool) $server_usage['addon_active'] : false,
+            'addon_words' => isset($server_usage['addon_words']) ? intval($server_usage['addon_words']) : 0,
         ];
         
         return $this->cached_license_status;
@@ -174,6 +176,17 @@ class AITRFOEL_License_Manager_Server {
                 'license_key' => $license_key,
                 'site_url' => home_url()
             ];
+            
+            // Include addon license key if the 50K Words Pack addon is active
+            if (function_exists('e50wp_fs')) {
+                $addon_fs = e50wp_fs();
+                if (method_exists($addon_fs, '_get_license')) {
+                    $addon_license = $addon_fs->_get_license();
+                    if ($addon_license && !empty($addon_license->secret_key)) {
+                        $request_data['addon_license_key'] = $addon_license->secret_key;
+                    }
+                }
+            }
             
             if (class_exists('AITRFOEL_Logger')) {
                 AITRFOEL_Logger::log('🔍 Requesting usage from server: ' . $this->api_base_url . '/get-usage', 'info');
@@ -251,6 +264,14 @@ class AITRFOEL_License_Manager_Server {
                         // License is valid, clear any expired notice
                         delete_transient('aitrfoel_license_expired');
                     }
+                }
+                
+                // Handle addon boost fields
+                if (isset($data['addon_active'])) {
+                    $result['addon_active'] = (bool) $data['addon_active'];
+                }
+                if (isset($data['addon_words'])) {
+                    $result['addon_words'] = intval($data['addon_words']);
                 }
                 
                 // Handle cooldown status from server (syncs when admin resets usage)

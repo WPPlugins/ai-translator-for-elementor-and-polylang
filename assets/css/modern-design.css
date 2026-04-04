@@ -167,6 +167,17 @@
     box-shadow: 0 4px 12px rgba(20, 71, 230, 0.3) !important;
 }
 
+.eat-compact-addon-badge {
+    display: inline-block !important;
+    background: linear-gradient(135deg, #e8f5e9, #c8e6c9) !important;
+    color: #2e7d32 !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 2px 8px !important;
+    border-radius: 6px !important;
+    border: 1px solid #a5d6a7 !important;
+}
+
 .button-primary,
 .aitrfoel-admin-wrapper .button-primary,
 .aitrfoel-dashboard-wrapper .button-primary {

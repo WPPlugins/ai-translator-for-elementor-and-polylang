@@ -371,7 +371,7 @@ class AITRFOEL_Settings {
                                 <?php endif; ?>
                                 
                                 <?php if (function_exists('eatp_fs') && eatp_fs()->is_registered() && !eatp_fs()->is_free_plan()): ?>
-                                    <button type="button" id="aitrfoel-sync-plan" class="button button-secondary" style="margin-left: 10px;">
+                                    <button type="button" id="aitrfoel-sync-plan" class="button button-secondary">
                                         <?php esc_html_e('Sync Plan', 'ai-translator-for-elementor-and-polylang'); ?>
                                     </button>
                                     <span id="aitrfoel-sync-plan-status" style="margin-left: 10px; display: none;"></span>

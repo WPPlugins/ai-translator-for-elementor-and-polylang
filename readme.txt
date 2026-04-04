@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.14
+Stable tag: 1.4.15
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,11 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.15 =
+* Added Extra 50,000 Words Pack addon support
+* Addon license detection and word limit boost
+* Dashboard badge for active addon
+
 = 1.4.14 =
 * Added: Translations for setup checklist, info card, and metabox strings (34 new strings across 9 languages)
 

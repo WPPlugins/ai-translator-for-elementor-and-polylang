@@ -2570,7 +2570,9 @@ class AITRFOEL_Admin_Menu {
             'name' => $license_status,
             'is_active' => (function_exists('eatp_fs') && eatp_fs()->is_registered()),
             'license_expired' => $license_expired,
-            'freemius_validated' => isset($server_status['freemius_validated']) ? $server_status['freemius_validated'] : false
+            'freemius_validated' => isset($server_status['freemius_validated']) ? $server_status['freemius_validated'] : false,
+            'addon_active' => isset($server_status['addon_active']) ? $server_status['addon_active'] : false,
+            'addon_words' => isset($server_status['addon_words']) ? $server_status['addon_words'] : 0,
         ];
     }
 
@@ -2678,6 +2680,11 @@ class AITRFOEL_Admin_Menu {
                                              $is_unlimited ? esc_attr__('Unlimited', 'ai-translator-for-elementor-and-polylang') : number_format($license_info['limit'])); ?>">
                             <?php echo esc_html($license_info['name']); ?>
                         </span>
+                        <?php if (!empty($license_info['addon_active'])): ?>
+                            <span class="eat-compact-addon-badge" title="<?php /* translators: %s: Number of extra words */ printf(esc_attr__('Extra %s words pack activated', 'ai-translator-for-elementor-and-polylang'), number_format($license_info['addon_words'])); ?>">
+                                +<?php echo esc_html(number_format($license_info['addon_words'])); ?> <?php esc_html_e('bonus', 'ai-translator-for-elementor-and-polylang'); ?>
+                            </span>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
                 <div class="eat-compact-actions">
