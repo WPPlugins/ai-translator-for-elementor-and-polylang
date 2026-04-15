@@ -145,6 +145,18 @@ class AITRFOEL_Settings {
             'default' => true
         ]);
 
+        // Taxonomy name translation (built-in language system)
+        register_setting('aitrfoel_settings_group', 'aitrfoel_translate_taxonomy_names', [
+            'sanitize_callback' => 'boolval',
+            'default' => true
+        ]);
+
+        // Default language URL prefix
+        register_setting('aitrfoel_settings_group', 'aitrfoel_default_lang_prefix', [
+            'sanitize_callback' => 'boolval',
+            'default' => false
+        ]);
+
         // Theme Compatibility Settings
         register_setting('aitrfoel_settings_group', 'aitrfoel_custom_meta_fields', [
             'sanitize_callback' => 'sanitize_textarea_field',
@@ -158,6 +170,11 @@ class AITRFOEL_Settings {
         ]);
         
         // Language Switcher Settings
+        register_setting('aitrfoel_settings_group', 'aitrfoel_switcher_enabled', [
+            'sanitize_callback' => 'boolval',
+            'default' => true
+        ]);
+        
         register_setting('aitrfoel_settings_group', 'aitrfoel_switcher_style', [
             'sanitize_callback' => function($value) {
                 $allowed = ['dropdown', 'list', 'flags', 'flags-text'];
@@ -561,6 +578,22 @@ class AITRFOEL_Settings {
                     <table class="form-table">
                         <tr>
                             <th scope="row">
+                                <label for="aitrfoel_switcher_enabled"><?php esc_html_e('Enable Switcher', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <?php $switcher_enabled = get_option('aitrfoel_switcher_enabled', true); ?>
+                                <label>
+                                    <input type="checkbox" id="aitrfoel_switcher_enabled" name="aitrfoel_switcher_enabled" value="1" <?php checked($switcher_enabled); ?> />
+                                    <?php esc_html_e('Output the language switcher on the frontend (shortcode, widget, and nav menu)', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </label>
+                                <p class="description">
+                                    <?php esc_html_e('Uncheck to completely disable all language switcher output on your site.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <th scope="row">
                                 <label for="aitrfoel_switcher_style"><?php esc_html_e('Switcher Style', 'ai-translator-for-elementor-and-polylang'); ?></label>
                             </th>
                             <td>
@@ -759,7 +792,27 @@ class AITRFOEL_Settings {
                                 <?php endif; ?>
                             </td>
                         </tr>
+                        
+                        <tr>
+                            <th scope="row"><?php esc_html_e('Default Language URL Prefix', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                            <td>
+                                <?php $default_lang_prefix = get_option('aitrfoel_default_lang_prefix', false); ?>
+                                <label>
+                                    <input type="checkbox" name="aitrfoel_default_lang_prefix" value="1" <?php checked($default_lang_prefix); ?> />
+                                    <?php esc_html_e('Add language prefix to the default language URLs (e.g., /fr/page/ instead of /page/)', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </label>
+                                <p class="description">
+                                    <?php esc_html_e('When enabled, the default language will also get a URL prefix like other languages. Visitors accessing pages without a prefix will be redirected to the prefixed version. Only works with the built-in language system.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
                     </table>
+
+                    <!-- Inline Save (after Switcher) -->
+                    <div class="aitrfoel-inline-save">
+                        <?php submit_button(__('Save Settings', 'ai-translator-for-elementor-and-polylang'), 'primary', 'submit', false); ?>
+                        <button type="button" class="button aitrfoel-reset-defaults" data-sections="switcher" title="<?php esc_attr_e('Reset Language Switcher settings to defaults', 'ai-translator-for-elementor-and-polylang'); ?>"><?php esc_html_e('Reset Switcher Defaults', 'ai-translator-for-elementor-and-polylang'); ?></button>
+                    </div>
                 </div>
 
                 <!-- Cache Settings -->
@@ -921,9 +974,14 @@ class AITRFOEL_Settings {
                         </tr>
                     </table>
                     
-                    <p class="description" style="margin-top: 8px;">
+                    <p class="description" style="margin-top: 8px; margin-bottom: 0;">
                         💡 <?php esc_html_e('Supported plugins: Yoast SEO, Rank Math. Both are auto-detected at runtime.', 'ai-translator-for-elementor-and-polylang'); ?>
                     </p>
+                    <!-- Inline Save (after SEO / before WooCommerce) -->
+                    <div class="aitrfoel-inline-save">
+                        <?php submit_button(__('Save Settings', 'ai-translator-for-elementor-and-polylang'), 'primary', 'submit', false); ?>
+                        <button type="button" class="button aitrfoel-reset-defaults" data-sections="cache,page-creation,seo" title="<?php esc_attr_e('Reset Cache, Page Creation, and SEO settings to defaults', 'ai-translator-for-elementor-and-polylang'); ?>"><?php esc_html_e('Reset Cache/Pages/SEO Defaults', 'ai-translator-for-elementor-and-polylang'); ?></button>
+                    </div>
                 </div>
 
                 <!-- WooCommerce Settings -->
@@ -1047,7 +1105,29 @@ class AITRFOEL_Settings {
                                 </p>
                             </td>
                         </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_translate_taxonomy_names"><?php esc_html_e('Translate Category & Tag Names', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <?php $translate_tax_names = get_option('aitrfoel_translate_taxonomy_names', true); ?>
+                                <input type="checkbox" 
+                                       id="aitrfoel_translate_taxonomy_names" 
+                                       name="aitrfoel_translate_taxonomy_names" 
+                                       value="1" 
+                                       <?php checked($translate_tax_names); ?> />
+                                <label for="aitrfoel_translate_taxonomy_names"><?php esc_html_e('Translate taxonomy term names into the target language', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                                <p class="description">
+                                    <?php esc_html_e('When translating posts or products, category and tag names are translated via AI and displayed in the correct language on the frontend. Works with WooCommerce product categories/tags and regular post categories/tags. Requires the built-in language system.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
                     </table>
+                    <!-- Inline Save (after WooCommerce) -->
+                    <div class="aitrfoel-inline-save">
+                        <?php submit_button(__('Save Settings', 'ai-translator-for-elementor-and-polylang'), 'primary', 'submit', false); ?>
+                        <button type="button" class="button aitrfoel-reset-defaults" data-sections="woocommerce" title="<?php esc_attr_e('Reset WooCommerce settings to defaults', 'ai-translator-for-elementor-and-polylang'); ?>"><?php esc_html_e('Reset WooCommerce Defaults', 'ai-translator-for-elementor-and-polylang'); ?></button>
+                    </div>
                 </div>
 
                 <!-- Exclude Words -->
@@ -1287,6 +1367,72 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
             
             <script>
             jQuery(document).ready(function($) {
+                // Reset to defaults handler
+                var sectionDefaults = {
+                    switcher: {
+                        'aitrfoel_switcher_enabled': {type: 'checkbox', val: true},
+                        'aitrfoel_switcher_style': {type: 'select', val: 'flags-text'},
+                        'aitrfoel_switcher_show_flags': {type: 'checkbox', val: true},
+                        'aitrfoel_switcher_show_names': {type: 'checkbox', val: true},
+                        'aitrfoel_switcher_custom_css': {type: 'textarea', val: ''},
+                        'aitrfoel_switcher_hide_untranslated': {type: 'checkbox', val: false},
+                        'aitrfoel_nav_menu_switcher': {type: 'checkbox', val: false},
+                        'aitrfoel_nav_menu_location': {type: 'select', val: ''},
+                        'aitrfoel_default_lang_prefix': {type: 'checkbox', val: false}
+                    },
+                    cache: {
+                        'aitrfoel_cache_enabled': {type: 'checkbox', val: true},
+                        'aitrfoel_cache_duration': {type: 'number', val: 30}
+                    },
+                    'page-creation': {
+                        'aitrfoel_translated_page_status': {type: 'select', val: 'draft'}
+                    },
+                    seo: {
+                        'aitrfoel_seo_translate_meta': {type: 'checkbox', val: true},
+                        'aitrfoel_seo_translate_og': {type: 'checkbox', val: true},
+                        'aitrfoel_seo_translate_twitter': {type: 'checkbox', val: true}
+                    },
+                    woocommerce: {
+                        'aitrfoel_woocommerce_support': {type: 'checkbox', val: true},
+                        'aitrfoel_woo_translate_categories': {type: 'checkbox', val: true},
+                        'aitrfoel_woo_translate_tags': {type: 'checkbox', val: true},
+                        'aitrfoel_woo_translate_attributes': {type: 'checkbox', val: true},
+                        'aitrfoel_woo_translate_variations': {type: 'checkbox', val: true},
+                        'aitrfoel_woo_translate_gallery_alt': {type: 'checkbox', val: true},
+                        'aitrfoel_translate_taxonomy_names': {type: 'checkbox', val: true}
+                    }
+                };
+
+                $('.aitrfoel-reset-defaults').on('click', function() {
+                    var sections = $(this).data('sections').split(',');
+                    var label = $(this).text().trim();
+                    if (!confirm('<?php echo esc_js(__('Reset these settings to their defaults?', 'ai-translator-for-elementor-and-polylang')); ?>\n\n' + label)) return;
+
+                    sections.forEach(function(section) {
+                        var fields = sectionDefaults[section.trim()];
+                        if (!fields) return;
+                        $.each(fields, function(name, cfg) {
+                            var $el = $('[name="' + name + '"]');
+                            if (!$el.length) return;
+                            if (cfg.type === 'checkbox') {
+                                $el.prop('checked', cfg.val);
+                            } else if (cfg.type === 'select') {
+                                $el.val(cfg.val);
+                            } else if (cfg.type === 'textarea') {
+                                $el.val(cfg.val);
+                            } else {
+                                $el.val(cfg.val);
+                            }
+                        });
+                    });
+
+                    // Visual flash feedback
+                    var $btn = $(this);
+                    var orig = $btn.text();
+                    $btn.text('<?php echo esc_js(__('✓ Reset — click Save to apply', 'ai-translator-for-elementor-and-polylang')); ?>');
+                    setTimeout(function() { $btn.text(orig); }, 3000);
+                });
+
                 // Dynamically update shortcode display when settings change
                 function updateShortcodePreview() {
                     var style = $('#aitrfoel_switcher_style').val() || 'flags-text';
@@ -1679,7 +1825,7 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
         jQuery(document).ready(function($) {
             var nonce = '<?php echo esc_js($nonce); ?>';
 
-            function builtinLangAjax(operation, code, callback) {
+            function builtinLangAjax(operation, code, langName, callback) {
                 var $status = $('#aitrfoel-builtin-lang-status');
                 $status.hide();
                 $.ajax({
@@ -1689,7 +1835,8 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                         action: 'aitrfoel_manage_builtin_language',
                         nonce: nonce,
                         operation: operation,
-                        language_code: code || ''
+                        language_code: code || '',
+                        language_name: langName || ''
                     },
                     success: function(resp) {
                         if (resp.success) {
@@ -1708,10 +1855,12 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
 
             // Add language
             $('#aitrfoel-add-lang-btn').on('click', function() {
-                var code = $('#aitrfoel-add-lang-select').val();
+                var $select = $('#aitrfoel-add-lang-select');
+                var code = $select.val();
                 if (!code) return;
+                var langName = $select.find('option:selected').text().replace(/\s*\([A-Z]{2,}\)\s*$/, '').trim();
                 $(this).prop('disabled', true);
-                builtinLangAjax('add', code);
+                builtinLangAjax('add', code, langName);
             });
 
             // Remove language
@@ -1719,21 +1868,21 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                 var code = $(this).data('code');
                 if (!confirm('<?php echo esc_js(__('Remove this language? Existing translations in this language will remain but will no longer be managed.', 'ai-translator-for-elementor-and-polylang')); ?>')) return;
                 $(this).prop('disabled', true);
-                builtinLangAjax('remove', code);
+                builtinLangAjax('remove', code, '');
             });
 
             // Set default
             $(document).on('click', '.aitrfoel-set-default-lang', function() {
                 var code = $(this).data('code');
                 $(this).prop('disabled', true);
-                builtinLangAjax('set_default', code);
+                builtinLangAjax('set_default', code, '');
             });
 
             // Disable built-in
             $('#aitrfoel-disable-builtin').on('click', function() {
                 if (!confirm('<?php echo esc_js(__('Are you sure you want to disable the built-in language system? You will need Polylang or WPML to manage translations.', 'ai-translator-for-elementor-and-polylang')); ?>')) return;
                 $(this).prop('disabled', true);
-                builtinLangAjax('disable', '');
+                builtinLangAjax('disable', '', '');
             });
         });
         </script>

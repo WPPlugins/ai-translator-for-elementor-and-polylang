@@ -3,7 +3,7 @@
  * Plugin Name: Meep AI Translator
  * Plugin URI: https://meeptech.com/products/ai-translator-for-elementor-polylang
  * Description: AI-powered translation for Elementor, Gutenberg, Classic & WooCommerce. Preserves your design perfectly. Built-in languages or Polylang/WPML.
- * Version: 1.4.15
+ * Version: 1.4.16
  * Author: Meep Tech
  * Author URI: https://meeptech.com
  * License: GPL v2 or later
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('AITRFOEL_VERSION', '1.4.15');
+define('AITRFOEL_VERSION', '1.4.16');
 define('AITRFOEL_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AITRFOEL_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AITRFOEL_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -341,6 +341,10 @@ class AITRFOEL_Main {
             add_action('init', function() {
                 if (!shortcode_exists('aitrfoel_language_switcher')) {
                     add_shortcode('aitrfoel_language_switcher', function($atts) {
+                        if (!get_option('aitrfoel_switcher_enabled', true)) {
+                            return '';
+                        }
+                        
                         $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
                         if (!$multilingual->is_active()) {
                             return '';

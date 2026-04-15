@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.15
+Stable tag: 1.4.16
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,21 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.16 =
+* Added: Language Switcher disable toggle — hide the switcher without removing it
+* Added: Default language URL prefix option — adds /en/ prefix to default language URLs
+* Added: Taxonomy term name translation — category and tag names translated via AI and displayed in the correct language (stored as term meta)
+* Added: Inline save buttons in settings sections — save without scrolling
+* Added: Reset-to-default buttons for Switcher, Cache/Pages/SEO, and WooCommerce settings
+* Fixed: Slug translation now preserved on re-translation (both Elementor and generic paths)
+* Fixed: Default language URL prefix causing redirect loop (WordPress canonical redirect conflict)
+* Fixed: Default language root URL (/en/) now correctly shows static front page instead of blog
+* Fixed: Settings checkbox styling — reverted to native browser checkmarks with accent-color
+* Fixed: Add language dialog error "Language code and name are required" — JS now sends language_name
+* Fixed: Duplicate setting registration for default language prefix
+* Improved: Batch translation 429 handling — retries with smaller sub-batches instead of falling back to slow individual API calls
+* Improved: Server-side batch route now resolves word limits from plan instead of stale DB values
+
 = 1.4.15 =
 * Added Extra 50,000 Words Pack addon support
 * Addon license detection and word limit boost

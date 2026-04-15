@@ -558,6 +558,13 @@ class AITRFOEL_OpenAI_API {
                 AITRFOEL_Logger::log('MeepTech batch limit info - Used: ' . $data['words_used'] . ', Limit: ' . $data['word_limit'] . ', Plan: ' . ($data['plan'] ?? 'unknown'), 'debug');
             }
             
+            // On 429 with words_remaining info, retry with smaller sub-batches
+            if ($response_code === 429 && isset($data['words_remaining']) && $data['words_remaining'] > 0) {
+                $remaining = (int) $data['words_remaining'];
+                AITRFOEL_Logger::log('MeepTech batch 429: splitting into sub-batches of ~' . $remaining . ' words', 'info');
+                return $this->fallback_subbatch_translation($texts, $target_lang, $source_lang, $remaining);
+            }
+            
             AITRFOEL_Logger::log('MeepTech batch error: ' . $error_msg . ', falling back to individual', 'warning');
             // Fallback to individual translations
             return $this->fallback_individual_translation($texts, $target_lang, $source_lang);
@@ -1133,6 +1140,46 @@ Return ONLY valid JSON (no code fences, no comments), exactly: {\"t\":[\"...\", 
 
         // Log and fail
         return new WP_Error('parse_error', __('Failed to parse translation response', 'ai-translator-for-elementor-and-polylang'));
+    }
+    
+    /**
+     * Fallback: split texts into smaller sub-batches and retry via batch API
+     */
+    private function fallback_subbatch_translation($texts, $target_lang, $source_lang, $max_words) {
+        $batches = [];
+        $current_batch = [];
+        $current_words = 0;
+        
+        foreach ($texts as $text) {
+            $wc = str_word_count(wp_strip_all_tags($text));
+            if (!empty($current_batch) && ($current_words + $wc) > $max_words) {
+                $batches[] = $current_batch;
+                $current_batch = [];
+                $current_words = 0;
+            }
+            $current_batch[] = $text;
+            $current_words += $wc;
+        }
+        if (!empty($current_batch)) {
+            $batches[] = $current_batch;
+        }
+        
+        AITRFOEL_Logger::log(sprintf('Sub-batch fallback: splitting %d texts into %d batches (~%d words each)', count($texts), count($batches), $max_words), 'info');
+        
+        $translations = [];
+        foreach ($batches as $i => $batch) {
+            $result = $this->translate_batch($batch, $target_lang, $source_lang);
+            if (!is_wp_error($result)) {
+                $translations = array_merge($translations, $result);
+            } else {
+                AITRFOEL_Logger::log('Sub-batch ' . ($i + 1) . ' failed: ' . $result->get_error_message(), 'warning');
+                // Fall back to individual for this sub-batch only
+                $individual = $this->fallback_individual_translation($batch, $target_lang, $source_lang);
+                $translations = array_merge($translations, $individual);
+            }
+        }
+        
+        return $translations;
     }
     
     /**

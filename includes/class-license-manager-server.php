@@ -1132,7 +1132,7 @@ class AITRFOEL_License_Manager_Server {
         $server_plan = isset($server_usage['plan']) ? $server_usage['plan'] : 'Unknown';
         
         // If plans don't match and Freemius has a valid paid plan, sync it
-        if ($freemius_plan !== 'Free' && $freemius_plan !== $server_plan) {
+        if ($freemius_plan !== 'Free' && strcasecmp($freemius_plan, $server_plan) !== 0) {
             AITRFOEL_Logger::log(sprintf(
                 'Plan mismatch detected! Freemius: %s, Server: %s - Auto-syncing...',
                 $freemius_plan,

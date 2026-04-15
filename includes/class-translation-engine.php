@@ -1599,6 +1599,11 @@ class AITRFOEL_Translation_Engine {
             ];
             if (!is_wp_error($translated_title) && !empty($translated_title)) {
                 $update_args['post_title'] = $translated_title;
+                // Update slug to match the new translated title
+                $translated_slug = sanitize_title($translated_title);
+                if (!empty($translated_slug)) {
+                    $update_args['post_name'] = $translated_slug;
+                }
             }
             wp_update_post($update_args);
             
@@ -1629,6 +1634,9 @@ class AITRFOEL_Translation_Engine {
 
             // Translate product gallery image alt text/captions
             $this->translate_product_gallery_meta($original_page_id, $existing_page_id, $target_lang, $source_lang);
+
+            // Translate and assign post categories/tags (non-WooCommerce)
+            $this->translate_post_taxonomies($original_page_id, $existing_page_id, $target_lang);
             
             return $existing_page_id;
         }
@@ -1731,6 +1739,9 @@ class AITRFOEL_Translation_Engine {
 
         // Translate product gallery image alt text/captions
         $this->translate_product_gallery_meta($original_page_id, $new_page_id, $target_lang, $source_lang);
+
+        // Translate and assign post categories/tags (non-WooCommerce)
+        $this->translate_post_taxonomies($original_page_id, $new_page_id, $target_lang);
         
         AITRFOEL_Logger::log(
             sprintf('Created %s translated page: %d -> %d (%s)', $content_type, $original_page_id, $new_page_id, $target_lang),
@@ -2555,10 +2566,16 @@ class AITRFOEL_Translation_Engine {
                 }
             }
             if ($translated_title) {
-                wp_update_post([
+                $update_args = [
                     'ID' => $existing_page_id,
                     'post_title' => $translated_title,
-                ]);
+                ];
+                // Update slug to match the new translated title
+                $translated_slug = sanitize_title($translated_title);
+                if (!empty($translated_slug)) {
+                    $update_args['post_name'] = $translated_slug;
+                }
+                wp_update_post($update_args);
             }
             
             // Copy theme/layout meta from original to keep in sync
@@ -2600,6 +2617,9 @@ class AITRFOEL_Translation_Engine {
 
             // Translate product gallery image alt text/captions
             $this->translate_product_gallery_meta($original_page_id, $existing_page_id, $target_lang, $detected_lang);
+
+            // Translate and assign post categories/tags (non-WooCommerce)
+            $this->translate_post_taxonomies($original_page_id, $existing_page_id, $target_lang);
 
             AITRFOEL_Logger::log(
                 sprintf('Successfully updated existing translation (ID %d)', $existing_page_id),
@@ -2736,6 +2756,9 @@ class AITRFOEL_Translation_Engine {
         // Translate product gallery image alt text/captions
         $this->translate_product_gallery_meta($original_page_id, $new_page_id, $target_lang, $detected_lang);
 
+        // Translate and assign post categories/tags (non-WooCommerce)
+        $this->translate_post_taxonomies($original_page_id, $new_page_id, $target_lang);
+
         // Clear Elementor cache
         if (class_exists('\Elementor\Plugin')) {
             \Elementor\Plugin::$instance->files_manager->clear_cache();
@@ -2867,6 +2890,7 @@ class AITRFOEL_Translation_Engine {
     /**
      * Assign translated WooCommerce product categories and tags to a translated product.
      * Uses Polylang/WPML term translation lookup to find equivalent terms.
+     * For the built-in language system, assigns original terms and translates their names.
      *
      * @param int    $original_id  Source product ID
      * @param int    $translated_id Translated product ID
@@ -2894,6 +2918,22 @@ class AITRFOEL_Translation_Engine {
             return;
         }
 
+        $this->assign_and_translate_terms($original_id, $translated_id, $target_lang, $taxonomies);
+    }
+
+    /**
+     * Assign and translate taxonomy terms (categories/tags) for any post type.
+     * Handles Polylang/WPML term lookups, and for the built-in language system
+     * assigns the original terms and stores translated names as term meta.
+     *
+     * @param int    $original_id   Source post ID
+     * @param int    $translated_id Translated post ID
+     * @param string $target_lang   Target language code (2-letter)
+     * @param array  $taxonomies    List of taxonomy slugs to process
+     */
+    private function assign_and_translate_terms($original_id, $translated_id, $target_lang, $taxonomies) {
+        $terms_to_translate = []; // Collect term names for batch translation
+
         foreach ($taxonomies as $taxonomy) {
             $terms = wp_get_post_terms($original_id, $taxonomy, ['fields' => 'all']);
             if (empty($terms) || is_wp_error($terms)) {
@@ -2920,6 +2960,17 @@ class AITRFOEL_Translation_Engine {
                     }
                 }
 
+                // Built-in language system fallback: assign original term
+                if (!$translated_term_id) {
+                    $translated_term_id = $term->term_id;
+
+                    // Queue term name for translation if not already translated
+                    $existing = get_term_meta($term->term_id, '_aitrfoel_name_' . $target_lang, true);
+                    if (empty($existing) && get_option('aitrfoel_translate_taxonomy_names', true)) {
+                        $terms_to_translate[$term->term_id] = $term->name;
+                    }
+                }
+
                 if ($translated_term_id) {
                     $translated_term_ids[] = (int) $translated_term_id;
                 }
@@ -2928,11 +2979,85 @@ class AITRFOEL_Translation_Engine {
             if (!empty($translated_term_ids)) {
                 wp_set_post_terms($translated_id, $translated_term_ids, $taxonomy);
                 AITRFOEL_Logger::log(
-                    sprintf('Assigned %d translated %s terms to product %d', count($translated_term_ids), $taxonomy, $translated_id),
+                    sprintf('Assigned %d %s terms to post %d', count($translated_term_ids), $taxonomy, $translated_id),
                     'info', $original_id, $translated_id
                 );
             }
         }
+
+        // Batch-translate collected term names
+        if (!empty($terms_to_translate)) {
+            $this->translate_term_names_batch($terms_to_translate, $target_lang);
+        }
+    }
+
+    /**
+     * Translate term names via API and store as term meta.
+     *
+     * @param array  $terms_map   [term_id => term_name] pairs
+     * @param string $target_lang Target language code
+     */
+    private function translate_term_names_batch($terms_map, $target_lang) {
+        $api = AITRFOEL_OpenAI_API::get_instance();
+        $names = array_values($terms_map);
+        $term_ids = array_keys($terms_map);
+
+        $translated = $api->translate_batch($names, $target_lang);
+        if (is_wp_error($translated) || !is_array($translated)) {
+            AITRFOEL_Logger::log(
+                'Failed to translate taxonomy term names: ' . (is_wp_error($translated) ? $translated->get_error_message() : 'unknown error'),
+                'warning'
+            );
+            return;
+        }
+
+        // translate_batch returns [original => translated] mapping
+        foreach ($names as $i => $original_name) {
+            if (!isset($term_ids[$i])) continue;
+            $term_id = $term_ids[$i];
+            $translated_name = isset($translated[$original_name]) ? $translated[$original_name] : null;
+
+            if ($translated_name && !is_wp_error($translated_name) && $translated_name !== $original_name) {
+                update_term_meta($term_id, '_aitrfoel_name_' . $target_lang, sanitize_text_field($translated_name));
+                AITRFOEL_Logger::log(
+                    sprintf('Translated term "%s" → "%s" (%s, term ID %d)', $original_name, $translated_name, $target_lang, $term_id),
+                    'info'
+                );
+            }
+        }
+    }
+
+    /**
+     * Translate and assign regular post categories and tags.
+     * Called for non-WooCommerce posts during translation.
+     *
+     * @param int    $original_id   Source post ID
+     * @param int    $translated_id Translated post ID
+     * @param string $target_lang   Target language code
+     */
+    private function translate_post_taxonomies($original_id, $translated_id, $target_lang) {
+        $post_type = get_post_type($original_id);
+
+        // Skip WooCommerce products (handled by translate_product_taxonomies)
+        if ($post_type === 'product') {
+            return;
+        }
+
+        $taxonomies = get_object_taxonomies($post_type, 'names');
+        // Filter to only public, non-internal taxonomies
+        $translatable = [];
+        foreach ($taxonomies as $tax) {
+            $tax_obj = get_taxonomy($tax);
+            if ($tax_obj && $tax_obj->public && $tax_obj->show_ui && $tax !== 'aitrfoel_language') {
+                $translatable[] = $tax;
+            }
+        }
+
+        if (empty($translatable)) {
+            return;
+        }
+
+        $this->assign_and_translate_terms($original_id, $translated_id, $target_lang, $translatable);
     }
 
     /**

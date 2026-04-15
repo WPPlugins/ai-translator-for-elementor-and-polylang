@@ -96,10 +96,20 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         // Frontend query filtering
         if (!is_admin()) {
             add_action('pre_get_posts', [$this, 'filter_frontend_queries']);
+            
+            // Filter taxonomy term names to show translated versions
+            add_filter('get_term', [$this, 'filter_term_name'], 10, 2);
+            add_filter('get_terms', [$this, 'filter_terms_names'], 10, 4);
         }
         
         // SEO: hreflang tags
         add_action('wp_head', [$this, 'output_hreflang_tags']);
+        
+        // Redirect unprefixed default-language URLs to prefixed when option is enabled
+        add_action('template_redirect', [$this, 'maybe_redirect_default_lang_prefix']);
+        
+        // Prevent WordPress canonical redirect from stripping language prefix
+        add_filter('redirect_canonical', [$this, 'filter_redirect_canonical'], 10, 2);
         
         // Preload language switcher CSS in <head> for all frontend pages
         add_action('wp_head', [$this, 'maybe_preload_switcher_css'], 99);
@@ -776,6 +786,9 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             } elseif ($lang->slug !== $default_lang) {
                 // Link to the language homepage
                 $url = home_url('/' . $lang->slug . '/');
+            } elseif ($lang->slug === $default_lang && get_option('aitrfoel_default_lang_prefix', false)) {
+                // Default language with prefix enabled
+                $url = home_url('/' . $lang->slug . '/');
             }
             
             $switcher_data[] = [
@@ -816,10 +829,11 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         $languages = $this->get_stored_languages();
         $default_lang = $this->get_default_language();
+        $include_default_prefix = get_option('aitrfoel_default_lang_prefix', false);
         
         $lang_codes = [];
         foreach ($languages as $lang) {
-            if ($lang['code'] !== $default_lang) {
+            if ($lang['code'] !== $default_lang || $include_default_prefix) {
                 $lang_codes[] = preg_quote($lang['code'], '/');
             }
         }
@@ -832,7 +846,7 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         // Auto-flush rewrite rules when version changes OR when stored rules
         // are missing our language patterns (can happen after AJAX setup, reinstall, etc.)
-        $rules_version = '1.4.0'; // Bump this when rewrite rules change
+        $rules_version = '1.5.0'; // Bump this when rewrite rules change
         $stored_version = get_option('aitrfoel_rewrite_rules_version', '');
         $needs_flush = ($stored_version !== $rules_version);
         
@@ -983,6 +997,26 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             }
         }
         
+        // Language-root URL (e.g. /en/) with a static front page configured:
+        // WordPress doesn't know to show the front page because the rewrite rule
+        // only sets lang=. Manually point to the static front page.
+        if (isset($wp->query_vars['lang'])
+            && !isset($wp->query_vars['name'])
+            && !isset($wp->query_vars['pagename'])
+            && !isset($wp->query_vars['page_id'])
+            && !isset($wp->query_vars['p'])
+            && !isset($wp->query_vars['post_type'])
+            && !isset($wp->query_vars['category_name'])
+            && !isset($wp->query_vars['tag'])
+            && !isset($wp->query_vars['s'])
+            && get_option('show_on_front') === 'page'
+        ) {
+            $front_page_id = (int) get_option('page_on_front');
+            if ($front_page_id) {
+                $wp->query_vars['page_id'] = $front_page_id;
+            }
+        }
+
         if (!$this->current_language) {
             $this->current_language = $this->get_default_language();
         }
@@ -997,6 +1031,93 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             return $this->current_language;
         }
         return $this->get_default_language();
+    }
+    
+    /**
+     * Redirect unprefixed default-language URLs to their prefixed version
+     * when the aitrfoel_default_lang_prefix option is enabled.
+     * E.g., /my-page/ → /fr/my-page/ if French is the default language.
+     */
+    public function maybe_redirect_default_lang_prefix() {
+        if (is_admin() || wp_doing_ajax() || wp_doing_cron()) {
+            return;
+        }
+        
+        if (!get_option('aitrfoel_default_lang_prefix', false)) {
+            return;
+        }
+        
+        if (!$this->is_active()) {
+            return;
+        }
+        
+        $default_lang = $this->get_default_language();
+        
+        // If we already detected a language from URL prefix, no redirect needed
+        if ($this->current_language && $this->current_language !== $default_lang) {
+            return;
+        }
+        
+        // Check if the URL already has a language prefix
+        $request_uri = isset($_SERVER['REQUEST_URI']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'])) : '/';
+        $home_path = wp_parse_url(home_url(), PHP_URL_PATH) ?: '';
+        $relative = $request_uri;
+        if ($home_path && strpos($relative, $home_path) === 0) {
+            $relative = substr($relative, strlen($home_path));
+        }
+        $relative = ltrim($relative, '/');
+        
+        // If already prefixed with default lang, no redirect
+        if (strpos($relative, $default_lang . '/') === 0 || $relative === $default_lang) {
+            return;
+        }
+        
+        // Check if prefixed with any other language
+        $languages = $this->get_stored_languages();
+        foreach ($languages as $lang) {
+            if ($lang['code'] !== $default_lang && (strpos($relative, $lang['code'] . '/') === 0 || $relative === $lang['code'])) {
+                return; // Already has a different language prefix
+            }
+        }
+        
+        // This is an unprefixed URL that should be the default language — redirect
+        $redirect_url = home_url('/' . $default_lang . '/' . $relative);
+        wp_safe_redirect($redirect_url, 301);
+        exit;
+    }
+    
+    /**
+     * Prevent WordPress canonical redirect from stripping the language prefix.
+     * Without this, /en/ (front page) gets redirected to / by WordPress core,
+     * causing a redirect loop with maybe_redirect_default_lang_prefix().
+     *
+     * @param string $redirect_url  The canonical redirect URL.
+     * @param string $requested_url The original requested URL.
+     * @return string|false
+     */
+    public function filter_redirect_canonical($redirect_url, $requested_url) {
+        if (!$this->is_active() || !$this->current_language) {
+            return $redirect_url;
+        }
+        
+        // If the current URL has a language prefix, don't let WP strip it
+        $request_uri = isset($_SERVER['REQUEST_URI']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'])) : '/';
+        $home_path = wp_parse_url(home_url(), PHP_URL_PATH) ?: '';
+        $relative = $request_uri;
+        if ($home_path && strpos($relative, $home_path) === 0) {
+            $relative = substr($relative, strlen($home_path));
+        }
+        $relative = ltrim($relative, '/');
+        
+        $languages = $this->get_stored_languages();
+        foreach ($languages as $lang) {
+            if (strpos($relative, $lang['code'] . '/') === 0 || $relative === $lang['code']) {
+                // URL has a valid language prefix — block canonical redirect
+                return false;
+            }
+        }
+        
+        return $redirect_url;
     }
     
     /**
@@ -1074,7 +1195,11 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         $lang = $this->get_post_language($post_id);
         $default_lang = $this->get_default_language();
         
-        if (!$lang || $lang === $default_lang) {
+        if (!$lang) {
+            return $permalink;
+        }
+        
+        if ($lang === $default_lang && !get_option('aitrfoel_default_lang_prefix', false)) {
             return $permalink;
         }
         
@@ -1113,7 +1238,11 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         $lang = $this->get_post_language($page_id);
         $default_lang = $this->get_default_language();
         
-        if (!$lang || $lang === $default_lang) {
+        if (!$lang) {
+            return $permalink;
+        }
+        
+        if ($lang === $default_lang && !get_option('aitrfoel_default_lang_prefix', false)) {
             return $permalink;
         }
         
@@ -1164,6 +1293,81 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         // For single posts/pages: if language prefix is in URL but post is in a different language,
         // WordPress will handle the 404 naturally. We just ensure the current language is set.
+    }
+    
+    /**
+     * Filter a single term to show its translated name on the frontend.
+     * Reads from term meta `_aitrfoel_name_{lang}` set during translation.
+     *
+     * @param WP_Term $term     Term object.
+     * @param string  $taxonomy Taxonomy slug.
+     * @return WP_Term
+     */
+    public function filter_term_name($term, $taxonomy) {
+        if (!is_object($term) || !isset($term->term_id)) {
+            return $term;
+        }
+        
+        // Skip our own language taxonomy
+        if ($taxonomy === self::TAXONOMY) {
+            return $term;
+        }
+        
+        $current_lang = $this->get_current_language();
+        $default_lang = $this->get_default_language();
+        
+        // No need to filter for the default language
+        if (!$current_lang || $current_lang === $default_lang) {
+            return $term;
+        }
+        
+        $translated_name = get_term_meta($term->term_id, '_aitrfoel_name_' . $current_lang, true);
+        if (!empty($translated_name)) {
+            $term->name = $translated_name;
+        }
+        
+        return $term;
+    }
+    
+    /**
+     * Filter an array of terms to show translated names on the frontend.
+     *
+     * @param array         $terms      Array of found terms.
+     * @param array|null    $taxonomies Array of taxonomy slugs (may be null).
+     * @param array         $query_vars Query variables.
+     * @param WP_Term_Query $term_query Term query object.
+     * @return array
+     */
+    public function filter_terms_names($terms, $taxonomies, $query_vars, $term_query = null) {
+        if (empty($terms)) {
+            return $terms;
+        }
+        
+        $current_lang = $this->get_current_language();
+        $default_lang = $this->get_default_language();
+        
+        if (!$current_lang || $current_lang === $default_lang) {
+            return $terms;
+        }
+        
+        foreach ($terms as &$term) {
+            if (!is_object($term) || !isset($term->term_id)) {
+                continue;
+            }
+            
+            // Skip our language taxonomy
+            if (isset($term->taxonomy) && $term->taxonomy === self::TAXONOMY) {
+                continue;
+            }
+            
+            $translated_name = get_term_meta($term->term_id, '_aitrfoel_name_' . $current_lang, true);
+            if (!empty($translated_name)) {
+                $term->name = $translated_name;
+            }
+        }
+        unset($term);
+        
+        return $terms;
     }
     
     // =========================================================================
@@ -1360,6 +1564,10 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             return $items;
         }
         
+        if (!get_option('aitrfoel_switcher_enabled', true)) {
+            return $items;
+        }
+        
         // Only add to menus if enabled via option
         $enabled = get_option('aitrfoel_nav_menu_switcher', false);
         if (!$enabled) {
@@ -1449,6 +1657,10 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
      * @return string HTML output
      */
     public function render_language_switcher_shortcode($atts = []) {
+        if (!get_option('aitrfoel_switcher_enabled', true)) {
+            return '';
+        }
+        
         $atts = shortcode_atts([
             'style' => get_option('aitrfoel_switcher_style', 'flags-text'),
             'show_names' => get_option('aitrfoel_switcher_show_names', true) ? 'true' : 'false',
@@ -1794,6 +2006,10 @@ class AITRFOEL_Language_Switcher_Widget extends WP_Widget {
      * @param array $instance Saved values from database.
      */
     public function widget($args, $instance) {
+        if (!get_option('aitrfoel_switcher_enabled', true)) {
+            return;
+        }
+        
         if (!class_exists('AITRFOEL_Builtin_Integration') || !AITRFOEL_Builtin_Integration::is_enabled()) {
             return;
         }
