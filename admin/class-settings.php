@@ -564,6 +564,19 @@ class AITRFOEL_Settings {
                                 ?>
                             </td>
                         </tr>
+                        <tr>
+                            <th scope="row"><?php esc_html_e('Default Language URL Prefix', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                            <td>
+                                <?php $default_lang_prefix = get_option('aitrfoel_default_lang_prefix', false); ?>
+                                <label>
+                                    <input type="checkbox" name="aitrfoel_default_lang_prefix" value="1" <?php checked($default_lang_prefix); ?> />
+                                    <?php esc_html_e('Add language prefix to the default language URLs (e.g., /fr/page/ instead of /page/)', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </label>
+                                <p class="description">
+                                    <?php esc_html_e('When enabled, the default language will also get a URL prefix like other languages. Visitors accessing pages without a prefix will be redirected to the prefixed version. Only works with the built-in language system.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
                     </table>
                 </div>
                 
@@ -793,19 +806,6 @@ class AITRFOEL_Settings {
                             </td>
                         </tr>
                         
-                        <tr>
-                            <th scope="row"><?php esc_html_e('Default Language URL Prefix', 'ai-translator-for-elementor-and-polylang'); ?></th>
-                            <td>
-                                <?php $default_lang_prefix = get_option('aitrfoel_default_lang_prefix', false); ?>
-                                <label>
-                                    <input type="checkbox" name="aitrfoel_default_lang_prefix" value="1" <?php checked($default_lang_prefix); ?> />
-                                    <?php esc_html_e('Add language prefix to the default language URLs (e.g., /fr/page/ instead of /page/)', 'ai-translator-for-elementor-and-polylang'); ?>
-                                </label>
-                                <p class="description">
-                                    <?php esc_html_e('When enabled, the default language will also get a URL prefix like other languages. Visitors accessing pages without a prefix will be redirected to the prefixed version. Only works with the built-in language system.', 'ai-translator-for-elementor-and-polylang'); ?>
-                                </p>
-                            </td>
-                        </tr>
                     </table>
 
                     <!-- Inline Save (after Switcher) -->
@@ -865,6 +865,11 @@ class AITRFOEL_Settings {
                             </td>
                         </tr>
                     </table>
+                    <!-- Inline Save (after Cache) -->
+                    <div class="aitrfoel-inline-save">
+                        <?php submit_button(__('Save Settings', 'ai-translator-for-elementor-and-polylang'), 'primary', 'submit', false); ?>
+                        <button type="button" class="button aitrfoel-reset-defaults" data-sections="cache" title="<?php esc_attr_e('Reset Cache settings to defaults', 'ai-translator-for-elementor-and-polylang'); ?>"><?php esc_html_e('Reset Cache Defaults', 'ai-translator-for-elementor-and-polylang'); ?></button>
+                    </div>
                 </div>
                 
 
@@ -898,6 +903,11 @@ class AITRFOEL_Settings {
                             </td>
                         </tr>
                     </table>
+                    <!-- Inline Save (after Pages) -->
+                    <div class="aitrfoel-inline-save">
+                        <?php submit_button(__('Save Settings', 'ai-translator-for-elementor-and-polylang'), 'primary', 'submit', false); ?>
+                        <button type="button" class="button aitrfoel-reset-defaults" data-sections="page-creation" title="<?php esc_attr_e('Reset Page Creation settings to defaults', 'ai-translator-for-elementor-and-polylang'); ?>"><?php esc_html_e('Reset Pages Defaults', 'ai-translator-for-elementor-and-polylang'); ?></button>
+                    </div>
                 </div>
                 
                 <!-- SEO Translation Settings -->
@@ -980,7 +990,7 @@ class AITRFOEL_Settings {
                     <!-- Inline Save (after SEO / before WooCommerce) -->
                     <div class="aitrfoel-inline-save">
                         <?php submit_button(__('Save Settings', 'ai-translator-for-elementor-and-polylang'), 'primary', 'submit', false); ?>
-                        <button type="button" class="button aitrfoel-reset-defaults" data-sections="cache,page-creation,seo" title="<?php esc_attr_e('Reset Cache, Page Creation, and SEO settings to defaults', 'ai-translator-for-elementor-and-polylang'); ?>"><?php esc_html_e('Reset Cache/Pages/SEO Defaults', 'ai-translator-for-elementor-and-polylang'); ?></button>
+                        <button type="button" class="button aitrfoel-reset-defaults" data-sections="seo" title="<?php esc_attr_e('Reset SEO settings to defaults', 'ai-translator-for-elementor-and-polylang'); ?>"><?php esc_html_e('Reset SEO Defaults', 'ai-translator-for-elementor-and-polylang'); ?></button>
                     </div>
                 </div>
 
@@ -1377,7 +1387,9 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                         'aitrfoel_switcher_custom_css': {type: 'textarea', val: ''},
                         'aitrfoel_switcher_hide_untranslated': {type: 'checkbox', val: false},
                         'aitrfoel_nav_menu_switcher': {type: 'checkbox', val: false},
-                        'aitrfoel_nav_menu_location': {type: 'select', val: ''},
+                        'aitrfoel_nav_menu_location': {type: 'select', val: ''}
+                    },
+                    multilingual: {
                         'aitrfoel_default_lang_prefix': {type: 'checkbox', val: false}
                     },
                     cache: {

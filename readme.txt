@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.16
+Stable tag: 1.4.17
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,10 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.17 =
+* Fixed: Moved "Default Language URL Prefix" setting from Language Switcher to Multilingual Plugin section where it belongs
+* Improved: Individual reset-to-default buttons for Cache, Pages, and SEO sections (previously combined into one)
+
 = 1.4.16 =
 * Added: Language Switcher disable toggle — hide the switcher without removing it
 * Added: Default language URL prefix option — adds /en/ prefix to default language URLs
