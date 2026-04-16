@@ -412,8 +412,8 @@
     function pollStatus() {
         if (!state.jobId || state.done || state.paused) return;
 
-        // Abort any previous in-flight poll before starting new one
-        if (state.pollXhr) state.pollXhr.abort();
+        // Skip if a poll is already in flight — wait for it to finish
+        if (state.pollXhr) return;
 
         state.pollXhr = $.ajax({
             url: TA.ajax_url,
@@ -508,13 +508,18 @@
                             var $reviewPrompt = $(
                                 '<div class="aitrfoel-ta-review-prompt" style="margin-top: 15px; padding: 12px 16px; background: linear-gradient(135deg, #fef9e7, #fdf2d1); border: 1px solid #f0d78c; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">' +
                                     '<span style="font-size: 0.95em; color: #5a4e2f;">⭐ Enjoying Meep AI Translator? A quick review helps us a lot!</span>' +
-                                    '<span style="white-space: nowrap;">' +
-                                        '<a href="https://wordpress.org/support/plugin/ai-translator-for-elementor-and-polylang/reviews/#new-post" target="_blank" class="button button-small button-primary" style="margin-right: 6px;">Leave a Review</a>' +
-                                        '<button type="button" class="button button-small aitrfoel-ta-dismiss-review">No thanks</button>' +
+                                    '<span style="white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">' +
+                                        '<a href="https://wordpress.org/support/plugin/ai-translator-for-elementor-and-polylang/reviews/#new-post" target="_blank" class="button button-primary">Leave a Review</a>' +
+                                        '<button type="button" class="button aitrfoel-ta-dismiss-review">No thanks</button>' +
                                     '</span>' +
                                 '</div>'
                             );
                             $('#ta-progress-area').append($reviewPrompt);
+                        }
+
+                        // Auto-translate menus & widgets (built-in language system only)
+                        if (TA.builtin_active && state.scanData && state.scanData.target_languages) {
+                            translateMenusAndWidgets(state.scanData.target_languages);
                         }
                     } else if (d.status === 'cancelled') {
                         addLogEntry(escHtml(TA.strings.cancelled), 'info');
@@ -534,6 +539,57 @@
             },
         });
     }
+    /* ── Auto-translate menus & widgets after page translation ── */
+
+    function translateMenusAndWidgets(languages) {
+        var langIndex = 0;
+
+        addLogEntry('Translating menus & widgets...', 'info');
+
+        function processNextLang() {
+            if (langIndex >= languages.length) {
+                addLogEntry('Menus & widgets translation completed!', 'success');
+                return;
+            }
+            var lang = languages[langIndex];
+            langIndex++;
+
+            // Menus first
+            $.post(TA.ajax_url, {
+                action: 'aitrfoel_auto_translate_menus',
+                nonce: TA.ajax_nonce,
+                target_lang: lang,
+            }).done(function (res) {
+                if (res.success) {
+                    addLogEntry('Menus → ' + lang.toUpperCase() + ': ' + (res.data.message || 'OK'), 'success');
+                } else {
+                    addLogEntry('Menus → ' + lang.toUpperCase() + ': ' + (res.data || 'Error'), 'error');
+                }
+            }).fail(function () {
+                addLogEntry('Menus → ' + lang.toUpperCase() + ': request failed', 'error');
+            }).always(function () {
+                // Then widgets
+                $.post(TA.ajax_url, {
+                    action: 'aitrfoel_auto_translate_widgets',
+                    nonce: TA.ajax_nonce,
+                    target_lang: lang,
+                }).done(function (res) {
+                    if (res.success) {
+                        addLogEntry('Widgets → ' + lang.toUpperCase() + ': ' + (res.data.message || 'OK'), 'success');
+                    } else {
+                        addLogEntry('Widgets → ' + lang.toUpperCase() + ': ' + (res.data || 'Error'), 'error');
+                    }
+                }).fail(function () {
+                    addLogEntry('Widgets → ' + lang.toUpperCase() + ': request failed', 'error');
+                }).always(function () {
+                    processNextLang();
+                });
+            });
+        }
+
+        processNextLang();
+    }
+
     /* ── Translated Pages List ────────────────────────── */
 
     function renderTranslatedList(results, errors) {

@@ -212,8 +212,21 @@ abstract class AITRFOEL_Multilingual_Interface {
             return strtolower($language);
         }
         
-        // Otherwise, try to map from full name
-        return $this->get_code_from_name($language);
+        // Try the local name map first
+        $code = $this->get_code_from_name($language);
+        if ($code) {
+            return $code;
+        }
+        
+        // Fallback: reverse-lookup via Language Mapper (has 100+ languages)
+        if (class_exists('AITRFOEL_Language_Mapper')) {
+            $code = AITRFOEL_Language_Mapper::get_code_from_language_name($language);
+            if ($code) {
+                return $code;
+            }
+        }
+        
+        return null;
     }
     
     /**

@@ -192,6 +192,31 @@ class AITRFOEL_Language_Mapper {
     }
     
     /**
+     * Reverse lookup: get language code from a full language name.
+     *
+     * @param string $name Full language name (e.g. 'Luxembourgish')
+     * @return string|null ISO language code or null
+     */
+    public static function get_code_from_language_name($name) {
+        $name_lower = strtolower(trim($name));
+        foreach (self::$language_map as $code => $mapped_name) {
+            if (strtolower($mapped_name) === $name_lower) {
+                // Prefer shortest code (e.g. 'lb' over 'lb-lu')
+                if (strlen($code) <= 3 || !strpos($code, '-') && !strpos($code, '_')) {
+                    return $code;
+                }
+            }
+        }
+        // Second pass: accept regional variants if no short code found
+        foreach (self::$language_map as $code => $mapped_name) {
+            if (strtolower($mapped_name) === $name_lower) {
+                return $code;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Generate a reasonable fallback name for unmapped language codes
      * 
      * @param string $lang_code The language code

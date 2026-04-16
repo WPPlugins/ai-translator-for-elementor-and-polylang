@@ -63,9 +63,13 @@ class AITRFOEL_Translate_All {
         // Get license info for JS
         $license_info = $this->get_license_info();
 
+        $builtin_active = class_exists('AITRFOEL_Builtin_Integration') && AITRFOEL_Builtin_Integration::is_enabled();
+
         wp_localize_script('aitrfoel-translate-all', 'aitrfoel_translate_all', [
             'ajax_url'  => admin_url('admin-ajax.php'),
             'nonce'     => wp_create_nonce('aitrfoel_translate_all_nonce'),
+            'ajax_nonce' => wp_create_nonce('aitrfoel_ajax_nonce'),
+            'builtin_active' => $builtin_active,
             'plan'      => $license_info['plan'],
             'word_limit' => $license_info['word_limit'],
             'words_used' => $license_info['words_used'],
@@ -453,20 +457,31 @@ class AITRFOEL_Translate_All {
     private function get_translatable_post_types() {
         $types = [];
 
+        // When built-in integration is active, only count default-language posts
+        $builtin_active = class_exists('AITRFOEL_Builtin_Integration') && AITRFOEL_Builtin_Integration::is_enabled();
+        $non_default_langs = [];
+        if ($builtin_active) {
+            $builtin = AITRFOEL_Builtin_Integration::get_instance();
+            $default_lang = $builtin->get_default_language();
+            foreach ($builtin->get_available_languages() as $l) {
+                if ($l->code !== $default_lang) {
+                    $non_default_langs[] = $l->code;
+                }
+            }
+        }
+
         // Pages
-        $page_count = wp_count_posts('page');
         $types['page'] = [
             'label' => __('Pages', 'ai-translator-for-elementor-and-polylang'),
             'icon'  => '📄',
-            'count' => isset($page_count->publish) ? (int) $page_count->publish : 0,
+            'count' => $this->count_default_language_posts('page', $non_default_langs),
         ];
 
         // Posts
-        $post_count = wp_count_posts('post');
         $types['post'] = [
             'label' => __('Posts', 'ai-translator-for-elementor-and-polylang'),
             'icon'  => '📝',
-            'count' => isset($post_count->publish) ? (int) $post_count->publish : 0,
+            'count' => $this->count_default_language_posts('post', $non_default_langs),
         ];
 
         // Custom post types that support editor
@@ -477,8 +492,7 @@ class AITRFOEL_Translate_All {
 
         foreach ($custom_types as $cpt) {
             if (!post_type_supports($cpt->name, 'editor')) continue;
-            $cpt_count = wp_count_posts($cpt->name);
-            $count = isset($cpt_count->publish) ? (int) $cpt_count->publish : 0;
+            $count = $this->count_default_language_posts($cpt->name, $non_default_langs);
             if ($count === 0) continue; // Hide empty custom post types
             $types[$cpt->name] = [
                 'label' => $cpt->label,
@@ -488,6 +502,34 @@ class AITRFOEL_Translate_All {
         }
 
         return $types;
+    }
+
+    /**
+     * Count published posts of a given type, excluding non-default language translations.
+     */
+    private function count_default_language_posts($post_type, $non_default_langs) {
+        if (empty($non_default_langs)) {
+            $counts = wp_count_posts($post_type);
+            return isset($counts->publish) ? (int) $counts->publish : 0;
+        }
+
+        $query = new WP_Query([
+            'post_type'      => $post_type,
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'no_found_rows'  => false,
+            'tax_query'      => [
+                [
+                    'taxonomy' => 'aitrfoel_language',
+                    'field'    => 'slug',
+                    'terms'    => $non_default_langs,
+                    'operator' => 'NOT IN',
+                ],
+            ],
+        ]);
+
+        return (int) $query->found_posts;
     }
 
     /**

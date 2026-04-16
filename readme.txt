@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.18
+Stable tag: 1.4.19
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,15 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.19 =
+* Fixed: Admin trash view now shows all languages by default and language filter works correctly in trash
+* Fixed: Post status counts (All/Published/Draft/Trash) now reflect language filter selection
+* Fixed: Translation cache no longer stores untranslated results preventing poisoned cache entries
+* Fixed: Gap-filler no longer skips common headings like "Our Story" or "Our Services" as proper nouns
+* Fixed: Gap-filler best-candidate detection no longer fooled by HTML entity encoding differences
+* Improved: Gap-filler corrections now update the translation cache for future use
+* Improved: Admin bar language switcher and dropdown preserve post_status when switching languages
+
 = 1.4.18 =
 * Added: One-click auto-translate for menus — clones default menus, translates all item labels, and assigns per language automatically
 * Added: One-click auto-translate for widget content — translates block widget text and widget titles per language

@@ -362,6 +362,16 @@ class AITRFOEL_Translation_Engine {
             $cached = null;
             if ($this->cache_enabled) {
                 $cached = $cache->get_from_cache($prepared_text, $target_lang, $detected_lang);
+                // Validate cached entry: reject if translation is too similar to source
+                // This prevents using stale cache from earlier failed translations
+                if ($cached !== null) {
+                    $cached_clean = strtolower(trim(html_entity_decode(wp_strip_all_tags($cached), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+                    $source_clean = strtolower(trim(html_entity_decode(wp_strip_all_tags($prepared_text), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+                    if ($cached_clean === $source_clean) {
+                        $cached = null; // Reject: cached translation is identical to source
+                        AITRFOEL_Logger::log(sprintf('Cache rejected (identical to source): "%s"', mb_substr($prepared_text, 0, 60)), 'debug', $page_id);
+                    }
+                }
             }
                 if ($cached) {
                 // Restore placeholders before applying
@@ -420,13 +430,24 @@ class AITRFOEL_Translation_Engine {
                     }
                 
                 if (is_wp_error($batch_results)) {
+                    $batch_error_msg = $batch_results->get_error_message();
                     AITRFOEL_Logger::log(
-                        'Batch translation failed, falling back to individual: ' . $batch_results->get_error_message(),
+                        'Batch translation failed, falling back to individual: ' . $batch_error_msg,
                         'warning',
                         $page_id
                     );
                     
+                    // If batch failed due to word limit, abort immediately — don't try individual calls
+                    if (
+                        strpos($batch_error_msg, 'Word limit') !== false ||
+                        strpos($batch_error_msg, 'word limit') !== false ||
+                        strpos($batch_error_msg, 'words remaining') !== false
+                    ) {
+                        return new WP_Error('word_limit_exceeded', $batch_error_msg);
+                    }
+                    
                     // Fallback to individual translation
+                    $consecutive_limit_errors = 0;
                     foreach ($batch_items as $item) {
                         $text = $item['src'];
                         $translated = $api->translate_text($text, $target_lang, $detected_lang);
@@ -515,14 +536,19 @@ class AITRFOEL_Translation_Engine {
                             $ph_map = $item['ph_map'];
                             
                             // Cache the translation (only if enabled)
+                            // But DON'T cache if translation is identical to source (failed translation)
                             if ($this->cache_enabled) {
-                                $cache->set_to_cache(
-                                    $text,
-                                    $translated, // raw model output (placeholders still present)
-                                    $target_lang,
-                                    $detected_lang,
-                                    get_option('aitrfoel_openai_model', 'gpt-3.5-turbo')
-                                );
+                                $tr_clean = strtolower(trim(html_entity_decode(wp_strip_all_tags($translated), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+                                $src_clean = strtolower(trim(html_entity_decode(wp_strip_all_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+                                if ($tr_clean !== $src_clean) {
+                                    $cache->set_to_cache(
+                                        $text,
+                                        $translated, // raw model output (placeholders still present)
+                                        $target_lang,
+                                        $detected_lang,
+                                        get_option('aitrfoel_openai_model', 'gpt-3.5-turbo')
+                                    );
+                                }
                             }
                             
                             // Restore placeholders (primary) or formatting (fallback)
@@ -786,6 +812,30 @@ class AITRFOEL_Translation_Engine {
             ];
             $metrics = AITRFOEL_Gap_Filler::run($strings, $translations, $target_lang, $detected_lang, $opts);
             AITRFOEL_Logger::log(sprintf('[EAT gap-filler] page=%d lang=%s retried=%d fixed=%d failed=%d', $page_id, $target_lang, $metrics['retried'] ?? 0, $metrics['fixed'] ?? 0, $metrics['failed'] ?? 0), 'info', $page_id);
+            
+            // Update cache with gap-filler corrections so future translations use good values
+            if ($this->cache_enabled && ($metrics['fixed'] ?? 0) > 0) {
+                $model = get_option('aitrfoel_openai_model', 'gpt-3.5-turbo');
+                foreach ($strings as $s) {
+                    $p = $s['path'] ?? '';
+                    if (isset($translations[$p]) && !empty($translations[$p])) {
+                        $src = $s['original'] ?? '';
+                        $tr = $translations[$p];
+                        // Only update cache if translation is meaningfully different from source
+                        $src_c = strtolower(trim(html_entity_decode(wp_strip_all_tags($src), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+                        $tr_c = strtolower(trim(html_entity_decode(wp_strip_all_tags($tr), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+                        if ($src_c !== $tr_c) {
+                            // Re-extract placeholders to get the cache key
+                            if (method_exists($parser, 'i18n_extract_with_placeholders')) {
+                                list($prepared_src, ) = $parser->i18n_extract_with_placeholders($src);
+                            } else {
+                                $prepared_src = $src;
+                            }
+                            $cache->set_to_cache($prepared_src, $tr, $target_lang, $detected_lang, $model);
+                        }
+                    }
+                }
+            }
         }
         
     // Apply translations back to Elementor data
@@ -1572,7 +1622,16 @@ class AITRFOEL_Translation_Engine {
         // Check if a translation already exists for this language — update instead of duplicating
         $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
         $existing_translations = $multilingual->is_active() ? $multilingual->get_post_translations($original_page_id) : [];
-        $existing_page_id = isset($existing_translations[$target_lang]) ? (int) $existing_translations[$target_lang] : 0;
+        
+        // Normalize target_lang to code for lookup (translations are keyed by code)
+        $target_code = $target_lang;
+        if (strlen($target_lang) > 3 && class_exists('AITRFOEL_Language_Mapper')) {
+            $resolved = AITRFOEL_Language_Mapper::get_code_from_language_name($target_lang);
+            if ($resolved) {
+                $target_code = $resolved;
+            }
+        }
+        $existing_page_id = isset($existing_translations[$target_code]) ? (int) $existing_translations[$target_code] : 0;
         
         if ($existing_page_id && get_post($existing_page_id)) {
             AITRFOEL_Logger::log(
@@ -2544,7 +2603,16 @@ class AITRFOEL_Translation_Engine {
         // Check if a translation already exists for this language — update it instead of creating a duplicate
         $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
         $existing_translations = $multilingual->is_active() ? $multilingual->get_post_translations($original_page_id) : [];
-        $existing_page_id = isset($existing_translations[$target_lang]) ? (int) $existing_translations[$target_lang] : 0;
+        
+        // Normalize target_lang to code for lookup (translations are keyed by code)
+        $target_code = $target_lang;
+        if (strlen($target_lang) > 3 && class_exists('AITRFOEL_Language_Mapper')) {
+            $resolved = AITRFOEL_Language_Mapper::get_code_from_language_name($target_lang);
+            if ($resolved) {
+                $target_code = $resolved;
+            }
+        }
+        $existing_page_id = isset($existing_translations[$target_code]) ? (int) $existing_translations[$target_code] : 0;
         
         if ($existing_page_id && get_post($existing_page_id)) {
             AITRFOEL_Logger::log(

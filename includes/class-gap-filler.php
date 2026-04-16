@@ -140,8 +140,11 @@ final class AITRFOEL_Gap_Filler {
                 $notSame = self::notAlmostSame($orig, (string)$tmp, $L);
                 $residueLeft = (@preg_match($RES, (string)$tmp) === 1);
 
-                // Store as best candidate if it's not empty and different from original
-                if ($okNotEmpty && $tmp !== $orig) {
+                // Store as best candidate if it's not empty and meaningfully different from original
+                // Use html_entity_decode to avoid entity encoding false positives (& vs &amp;)
+                $orig_decoded = strtolower(trim(html_entity_decode(wp_strip_all_tags($orig), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+                $tmp_decoded = strtolower(trim(html_entity_decode(wp_strip_all_tags((string)$tmp), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+                if ($okNotEmpty && $tmp_decoded !== $orig_decoded) {
                     $best_candidate = (string)$tmp;
                 }
 
@@ -240,10 +243,28 @@ final class AITRFOEL_Gap_Filler {
             return true;
         }
         
-        // Pattern: 1-3 capitalized words (likely a person's name)
+        // Pattern: 2-3 capitalized words where NONE are common English words (likely a person's name)
+        // Must be at least 2 words to be a name. Single capitalized words could be headings.
         // Matches: "John Smith", "Mary Jane Watson", "Juan Soto"
-        if (preg_match('/^[A-Z][a-z]+(\s+[A-Z][a-z]+){0,2}$/', $text)) {
-            return true;
+        // Does NOT match: "Our Story", "Contact Us", "About Us", "Read More"
+        if (preg_match('/^[A-Z][a-z]+(\s+[A-Z][a-z]+){1,2}$/', $text)) {
+            $common_words = [
+                'our', 'my', 'your', 'the', 'a', 'an', 'and', 'or', 'for', 'with', 'about',
+                'from', 'this', 'that', 'all', 'new', 'more', 'get', 'read', 'see', 'view',
+                'how', 'why', 'what', 'where', 'when', 'who', 'which',
+                'contact', 'home', 'story', 'services', 'products', 'blog', 'news',
+                'team', 'work', 'portfolio', 'gallery', 'pricing', 'plans', 'features',
+                'crafting', 'building', 'creating', 'designing', 'making', 'growing',
+                'gardens', 'landscapes', 'expertise', 'care', 'quality', 'best',
+                'free', 'quote', 'call', 'now', 'today', 'here', 'us', 'them',
+            ];
+            $words = preg_split('/\s+/', strtolower($text));
+            foreach ($words as $word) {
+                if (in_array($word, $common_words, true)) {
+                    return false; // Contains a common word — it's a heading, not a name
+                }
+            }
+            return true; // All words look like proper nouns
         }
         
         return false;

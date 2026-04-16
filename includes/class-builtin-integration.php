@@ -160,6 +160,12 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             add_action('manage_posts_custom_column', [$this, 'render_language_column'], 10, 2);
             add_action('manage_pages_custom_column', [$this, 'render_language_column'], 10, 2);
             add_action('admin_head', [$this, 'language_column_css']);
+            // Language filter dropdown and query filtering
+            add_action('restrict_manage_posts', [$this, 'admin_language_filter_dropdown']);
+            add_action('pre_get_posts', [$this, 'admin_filter_posts_by_language']);
+            // Adjust status counts (All/Published/Draft/Trash) when language filter is active
+            add_filter('views_edit-post', [$this, 'filter_post_status_counts_by_language']);
+            add_filter('views_edit-page', [$this, 'filter_post_status_counts_by_language']);
         }
     }
     
@@ -1601,6 +1607,223 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         echo '<style>.column-aitrfoel_language{width:50px!important;text-align:center;}</style>';
     }
     
+    /**
+     * Add a language filter dropdown to the admin posts/pages list.
+     */
+    public function admin_language_filter_dropdown() {
+        if (!$this->is_active()) {
+            return;
+        }
+        
+        global $typenow;
+        if (!in_array($typenow, ['post', 'page'], true)) {
+            return;
+        }
+        
+        $languages = $this->get_stored_languages();
+        if (empty($languages)) {
+            return;
+        }
+        
+        $selected = isset($_GET['aitrfoel_lang']) ? sanitize_text_field($_GET['aitrfoel_lang']) : '';
+        $default_lang = $this->get_default_language();
+        $default_name = strtoupper($default_lang);
+        foreach ($languages as $lang) {
+            if ($lang['code'] === $default_lang) {
+                $default_name = $lang['name'];
+                break;
+            }
+        }
+        
+        // Preserve post_status when changing language filter (e.g. in Trash view)
+        $post_status = isset($_GET['post_status']) ? sanitize_text_field($_GET['post_status']) : '';
+        
+        // In Trash with no explicit language filter, default to "All Languages"
+        if ($post_status === 'trash' && $selected === '') {
+            $selected = 'all';
+        }
+        if ($post_status) {
+            echo '<input type="hidden" name="post_status" value="' . esc_attr($post_status) . '">';
+        }
+        
+        echo '<select name="aitrfoel_lang">';
+        echo '<option value="">' . esc_html($default_name) . ' (' . esc_html__('default', 'ai-translator-for-elementor-and-polylang') . ')</option>';
+        $all_sel = selected($selected, 'all', false);
+        echo '<option value="all"' . $all_sel . '>' . esc_html__('All Languages', 'ai-translator-for-elementor-and-polylang') . '</option>';
+        foreach ($languages as $lang) {
+            if ($lang['code'] === $default_lang) {
+                continue; // Already shown as default option
+            }
+            $sel = selected($selected, $lang['code'], false);
+            echo '<option value="' . esc_attr($lang['code']) . '"' . $sel . '>' . esc_html($lang['name']) . '</option>';
+        }
+        echo '</select>';
+    }
+    
+    /**
+     * Filter admin post queries by selected language.
+     */
+    public function admin_filter_posts_by_language($query) {
+        if (!$this->is_active() || !is_admin() || !$query->is_main_query()) {
+            return;
+        }
+        
+        $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+        if (!$screen || $screen->base !== 'edit') {
+            return;
+        }
+        
+        $lang = isset($_GET['aitrfoel_lang']) ? sanitize_text_field($_GET['aitrfoel_lang']) : '';
+        
+        if ($lang === 'all') {
+            // Show everything, no filtering
+            return;
+        }
+        
+        if (!empty($lang) && $this->language_exists($lang)) {
+            // Specific language selected — filter by that taxonomy term
+            $tax_query = $query->get('tax_query') ?: [];
+            $tax_query[] = [
+                'taxonomy' => self::TAXONOMY,
+                'field'    => 'slug',
+                'terms'    => $lang,
+                'include_children' => false,
+            ];
+            $query->set('tax_query', $tax_query);
+            return;
+        }
+        
+        // In Trash view with no language filter, show all languages by default
+        $post_status = isset($_GET['post_status']) ? sanitize_text_field($_GET['post_status']) : '';
+        if ($post_status === 'trash') {
+            return;
+        }
+        
+        // Default view (no param): exclude non-default language posts
+        // This hides translations while showing default-language posts
+        // (including untagged legacy posts)
+        $non_default_langs = [];
+        $default_lang = $this->get_default_language();
+        foreach ($this->get_stored_languages() as $l) {
+            if ($l['code'] !== $default_lang) {
+                $non_default_langs[] = $l['code'];
+            }
+        }
+        if (!empty($non_default_langs)) {
+            $tax_query = $query->get('tax_query') ?: [];
+            $tax_query[] = [
+                'taxonomy' => self::TAXONOMY,
+                'field'    => 'slug',
+                'terms'    => $non_default_langs,
+                'operator' => 'NOT IN',
+                'include_children' => false,
+            ];
+            $query->set('tax_query', $tax_query);
+        }
+    }
+    
+    /**
+     * Adjust post status view counts when a language filter is active.
+     * Without this, the All/Published/Draft/Trash counts show totals across all languages.
+     *
+     * @param array $views Associative array of status links (HTML).
+     * @return array Modified views with corrected counts.
+     */
+    public function filter_post_status_counts_by_language($views) {
+        if (!$this->is_active()) {
+            return $views;
+        }
+        
+        $lang = isset($_GET['aitrfoel_lang']) ? sanitize_text_field($_GET['aitrfoel_lang']) : '';
+        $post_status = isset($_GET['post_status']) ? sanitize_text_field($_GET['post_status']) : '';
+        
+        // Only adjust counts when filtering by a specific language or default view
+        if ($lang === 'all') {
+            return $views;
+        }
+        
+        global $typenow;
+        $post_type = $typenow ?: 'post';
+        $default_lang = $this->get_default_language();
+        
+        // In Trash with no lang filter, show all — no need to adjust
+        if ($post_status === 'trash' && empty($lang)) {
+            return $views;
+        }
+        
+        // Build the tax_query for counting
+        if (!empty($lang) && $this->language_exists($lang)) {
+            // Specific language: count posts with this taxonomy term
+            $tax_query = [
+                [
+                    'taxonomy' => self::TAXONOMY,
+                    'field'    => 'slug',
+                    'terms'    => $lang,
+                    'include_children' => false,
+                ],
+            ];
+        } else {
+            // Default view: count posts NOT in non-default languages
+            $non_default_langs = [];
+            foreach ($this->get_stored_languages() as $l) {
+                if ($l['code'] !== $default_lang) {
+                    $non_default_langs[] = $l['code'];
+                }
+            }
+            if (empty($non_default_langs)) {
+                return $views;
+            }
+            $tax_query = [
+                [
+                    'taxonomy' => self::TAXONOMY,
+                    'field'    => 'slug',
+                    'terms'    => $non_default_langs,
+                    'operator' => 'NOT IN',
+                    'include_children' => false,
+                ],
+            ];
+        }
+        
+        // Count posts per status with language filter
+        $statuses = ['publish', 'draft', 'pending', 'trash', 'private'];
+        $counts = [];
+        $total = 0;
+        
+        foreach ($statuses as $status) {
+            $q = new \WP_Query([
+                'post_type'      => $post_type,
+                'post_status'    => $status,
+                'tax_query'      => $tax_query,
+                'posts_per_page' => -1,
+                'fields'         => 'ids',
+                'no_found_rows'  => false,
+            ]);
+            $counts[$status] = $q->found_posts;
+            if ($status !== 'trash') {
+                $total += $q->found_posts;
+            }
+        }
+        
+        // Update view links with corrected counts
+        foreach ($views as $key => &$html) {
+            if ($key === 'all') {
+                $html = preg_replace('/\(<span class="count">\(?\d+\)?\s*<\/span>\)/', '(<span class="count">(' . $total . ')</span>)', $html);
+                // Also fix plain count format
+                $html = preg_replace('/class="count">\(\d+\)/', 'class="count">(' . $total . ')', $html);
+            } elseif (isset($counts[$key])) {
+                $html = preg_replace('/class="count">\(\d+\)/', 'class="count">(' . $counts[$key] . ')', $html);
+            }
+            
+            // Remove status links with zero count (except current)
+            if ($key !== 'all' && isset($counts[$key]) && $counts[$key] === 0) {
+                unset($views[$key]);
+            }
+        }
+        unset($html);
+        
+        return $views;
+    }
+    
     // =========================================================================
     // CLEANUP
     // =========================================================================
@@ -1987,7 +2210,19 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         $current_lang = $default_lang;
         
         // Detect current language from the request
-        if (!is_admin()) {
+        if (is_admin()) {
+            if (isset($_GET['aitrfoel_lang'])) {
+                $admin_lang = sanitize_text_field($_GET['aitrfoel_lang']);
+                if ($admin_lang === 'all') {
+                    $current_lang = 'all';
+                } elseif ($this->language_exists($admin_lang)) {
+                    $current_lang = $admin_lang;
+                }
+            } elseif (isset($_GET['post_status']) && $_GET['post_status'] === 'trash') {
+                // In Trash with no explicit language filter, show as "All Languages"
+                $current_lang = 'all';
+            }
+        } else {
             $queried_lang = get_query_var('lang', '');
             if ($queried_lang && $this->language_exists($queried_lang)) {
                 $current_lang = $queried_lang;
@@ -1995,17 +2230,23 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         }
         
         // Find current language info
-        $current_lang_name = strtoupper($current_lang);
-        foreach ($languages as $lang) {
-            if ($lang['code'] === $current_lang) {
-                $current_lang_name = $lang['name'];
-                break;
+        if ($current_lang === 'all') {
+            $current_lang_name = __('All Languages', 'ai-translator-for-elementor-and-polylang');
+        } else {
+            $current_lang_name = strtoupper($current_lang);
+            foreach ($languages as $lang) {
+                if ($lang['code'] === $current_lang) {
+                    $current_lang_name = $lang['name'];
+                    break;
+                }
             }
         }
         
         // Get flag HTML for the current language
         $flag_html = '';
-        if (class_exists('AITRFOEL_Language_Mapper')) {
+        if ($current_lang === 'all') {
+            $flag_html = '🌐 ';
+        } elseif (class_exists('AITRFOEL_Language_Mapper')) {
             $flag_url = AITRFOEL_Language_Mapper::get_flag_url($current_lang, 20);
             $flag_html = '<img src="' . esc_url($flag_url) . '" alt="" style="vertical-align:middle;margin-right:4px;width:16px;height:12px;border-radius:2px;">';
         }
@@ -2021,11 +2262,18 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         ]);
         
         // "All Languages" option (first item)
+        $all_href = home_url('/');
+        if (is_admin()) {
+            $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+            $post_type = ($screen && $screen->post_type) ? $screen->post_type : 'post';
+            $admin_status = isset($_GET['post_status']) ? '&post_status=' . sanitize_text_field($_GET['post_status']) : '';
+            $all_href = admin_url('edit.php?post_type=' . $post_type . '&aitrfoel_lang=all' . $admin_status);
+        }
         $wp_admin_bar->add_node([
             'id'     => 'aitrfoel-lang-all',
             'parent' => 'aitrfoel-lang-switcher',
             'title'  => '🌐 ' . esc_html__('All Languages', 'ai-translator-for-elementor-and-polylang'),
-            'href'   => is_admin() ? admin_url('edit.php?page=ai-translator-for-elementor-and-polylang') : home_url('/'),
+            'href'   => $all_href,
             'meta'   => [
                 'class' => 'aitrfoel-lang-all',
             ],
@@ -2041,11 +2289,14 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             
             // Build URL for this language
             if (is_admin()) {
-                // In admin, link to the frontend home in this language
+                // In admin, filter the posts list by language
+                $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+                $post_type = ($screen && $screen->post_type) ? $screen->post_type : 'post';
+                $admin_status = isset($_GET['post_status']) ? '&post_status=' . sanitize_text_field($_GET['post_status']) : '';
                 if ($lang['code'] === $default_lang) {
-                    $url = home_url('/');
+                    $url = admin_url('edit.php?post_type=' . $post_type . $admin_status);
                 } else {
-                    $url = home_url('/' . $lang['code'] . '/');
+                    $url = admin_url('edit.php?post_type=' . $post_type . '&aitrfoel_lang=' . $lang['code'] . $admin_status);
                 }
             } else {
                 // On frontend, try to get the same page in this language
@@ -2107,14 +2358,51 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             return $args;
         }
         
+        // Try by theme location first
         $location = isset($args['theme_location']) ? $args['theme_location'] : '';
-        if (empty($location) || !isset($assignments[$location][$current_lang])) {
+        if (!empty($location) && isset($assignments[$location][$current_lang])) {
+            $menu_id = intval($assignments[$location][$current_lang]);
+            if ($menu_id > 0) {
+                $args['menu'] = $menu_id;
+            }
             return $args;
         }
         
-        $menu_id = intval($assignments[$location][$current_lang]);
-        if ($menu_id > 0) {
-            $args['menu'] = $menu_id;
+        // Fallback: match by menu ID/slug/object across all location assignments
+        $nav_menu_locations = get_nav_menu_locations();
+        $requested_menu = isset($args['menu']) ? $args['menu'] : '';
+        if (!empty($requested_menu)) {
+            $requested_menu_obj = wp_get_nav_menu_object($requested_menu);
+            $requested_menu_id = $requested_menu_obj ? $requested_menu_obj->term_id : 0;
+            
+            if ($requested_menu_id) {
+                // Check location assignments
+                foreach ($nav_menu_locations as $loc => $loc_menu_id) {
+                    if ((int) $loc_menu_id === $requested_menu_id && isset($assignments[$loc][$current_lang])) {
+                        $translated_menu_id = intval($assignments[$loc][$current_lang]);
+                        if ($translated_menu_id > 0) {
+                            $args['menu'] = $translated_menu_id;
+                            return $args;
+                        }
+                    }
+                }
+                
+                // Check widget translations for nav_menu widgets
+                $widget_translations = get_option('aitrfoel_widget_translations', []);
+                foreach ($widget_translations as $wid => $lang_data) {
+                    if (isset($lang_data[$current_lang]['nav_menu'])) {
+                        // Verify this widget's source menu matches the requested menu
+                        if (preg_match('/^nav_menu-(\d+)$/', $wid, $wm)) {
+                            $widget_instances = get_option('widget_nav_menu', []);
+                            $widget_num = (int) $wm[1];
+                            if (isset($widget_instances[$widget_num]['nav_menu']) && (int) $widget_instances[$widget_num]['nav_menu'] === $requested_menu_id) {
+                                $args['menu'] = intval($lang_data[$current_lang]['nav_menu']);
+                                return $args;
+                            }
+                        }
+                    }
+                }
+            }
         }
         
         return $args;
@@ -2148,17 +2436,21 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             }
             
             $object_id = (int) $item->object_id;
-            $post_lang = $this->get_post_language($object_id);
             
-            // If the menu item points to a post NOT in the current language,
-            // try to find the translation
-            if ($post_lang !== $current_lang) {
-                $translations = $this->get_post_translations($object_id);
-                if (isset($translations[$current_lang])) {
-                    $translated_id = $translations[$current_lang];
-                    $item->object_id = $translated_id;
-                    $item->url = get_permalink($translated_id);
+            // Try to find the translation for the current language
+            $translations = $this->get_post_translations($object_id);
+            if (isset($translations[$current_lang]) && (int) $translations[$current_lang] !== $object_id) {
+                $translated_id = (int) $translations[$current_lang];
+                $item->object_id = $translated_id;
+                $item->url = get_permalink($translated_id);
+                // Swap label to translated post title
+                $translated_title = get_the_title($translated_id);
+                if ($translated_title) {
+                    $item->title = $translated_title;
                 }
+            } elseif (!isset($translations[$current_lang])) {
+                // No translation exists — still fix the URL to include language prefix
+                $item->url = get_permalink($object_id);
             }
         }
         
@@ -2267,6 +2559,10 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
                 // Swap widget title
                 if (isset($tr['title']) && isset($instance['title'])) {
                     $instance['title'] = $tr['title'];
+                }
+                // Swap nav_menu widget to translated menu
+                if (isset($tr['nav_menu']) && isset($instance['nav_menu'])) {
+                    $instance['nav_menu'] = $tr['nav_menu'];
                 }
             }
         }
