@@ -93,6 +93,11 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         add_filter('page_link', [$this, 'filter_page_permalink'], 10, 2);
         add_filter('post_type_link', [$this, 'filter_permalink'], 10, 2);
         
+        // Filter home_url to include language prefix (fixes logo link etc.)
+        if (!is_admin()) {
+            add_filter('home_url', [$this, 'filter_home_url'], 10, 4);
+        }
+        
         // Frontend query filtering
         if (!is_admin()) {
             add_action('pre_get_posts', [$this, 'filter_frontend_queries']);
@@ -122,6 +127,22 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         // Nav menu language switcher items
         add_filter('wp_nav_menu_items', [$this, 'add_language_switcher_to_menu'], 20, 2);
+        
+        // Per-language menu assignment: swap nav menu based on current language
+        if (!is_admin()) {
+            add_filter('wp_nav_menu_args', [$this, 'filter_nav_menu_by_language'], 10, 1);
+            // Runtime: swap menu item URLs to translated posts
+            add_filter('wp_nav_menu_objects', [$this, 'filter_menu_item_urls'], 10, 2);
+            // Redirect untranslated pages to default language
+            add_action('template_redirect', [$this, 'maybe_redirect_untranslated_page']);
+        }
+        
+        // Per-language widget visibility
+        if (!is_admin()) {
+            add_filter('widget_display_callback', [$this, 'filter_widget_by_language'], 10, 3);
+        }
+        add_action('in_widget_form', [$this, 'widget_language_form'], 10, 3);
+        add_filter('widget_update_callback', [$this, 'widget_language_save'], 10, 4);
         
         // REST API language fields
         add_action('rest_api_init', [$this, 'register_rest_fields']);
@@ -778,17 +799,31 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
                 continue;
             }
             
-            $url = home_url('/');
+            $url = trailingslashit(get_option('home'));
             
             // If we have a translation of the current page, link to it
             if ($has_translation) {
                 $url = $this->get_post_permalink($translations[$lang->slug]);
+            } elseif ($lang->slug === $default_lang && $current_post_id) {
+                // Switching to default language: link to the original post
+                // Find the default-language post in the translation group
+                if (isset($translations[$default_lang])) {
+                    $url = get_permalink($translations[$default_lang]);
+                } else {
+                    // Current post might be the default-language post itself
+                    $post_lang = $this->get_post_language($current_post_id);
+                    if ($post_lang === $default_lang) {
+                        $url = get_permalink($current_post_id);
+                    }
+                }
             } elseif ($lang->slug !== $default_lang) {
                 // Link to the language homepage
-                $url = home_url('/' . $lang->slug . '/');
+                $raw_home = trailingslashit(get_option('home'));
+                $url = $raw_home . $lang->slug . '/';
             } elseif ($lang->slug === $default_lang && get_option('aitrfoel_default_lang_prefix', false)) {
                 // Default language with prefix enabled
-                $url = home_url('/' . $lang->slug . '/');
+                $raw_home = trailingslashit(get_option('home'));
+                $url = $raw_home . $lang->slug . '/';
             }
             
             $switcher_data[] = [
@@ -999,7 +1034,7 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         // Language-root URL (e.g. /en/) with a static front page configured:
         // WordPress doesn't know to show the front page because the rewrite rule
-        // only sets lang=. Manually point to the static front page.
+        // only sets lang=. Manually point to the static front page (or its translation).
         if (isset($wp->query_vars['lang'])
             && !isset($wp->query_vars['name'])
             && !isset($wp->query_vars['pagename'])
@@ -1013,6 +1048,17 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         ) {
             $front_page_id = (int) get_option('page_on_front');
             if ($front_page_id) {
+                $request_lang = sanitize_text_field($wp->query_vars['lang']);
+                $default_lang = $this->get_default_language();
+                
+                // If visiting a non-default language root, find the translated front page
+                if ($request_lang && $request_lang !== $default_lang) {
+                    $translations = $this->get_post_translations($front_page_id);
+                    if (isset($translations[$request_lang])) {
+                        $front_page_id = $translations[$request_lang];
+                    }
+                }
+                
                 $wp->query_vars['page_id'] = $front_page_id;
             }
         }
@@ -1181,6 +1227,48 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
     }
     
     /**
+     * Filter home_url to include current language prefix.
+     * Ensures logo links, home links etc. point to the correct language.
+     *
+     * @param string $url
+     * @param string $path
+     * @param string|null $orig_scheme
+     * @param int|null $blog_id
+     * @return string
+     */
+    public function filter_home_url($url, $path, $orig_scheme = null, $blog_id = null) {
+        if (!$this->is_active()) {
+            return $url;
+        }
+        
+        // Only prefix the root home URL (empty path or just "/").
+        // Do NOT prefix when WordPress is building post/page permalinks
+        // (e.g. home_url('/my-page/')) — our permalink filters handle those.
+        $trimmed_path = trim($path, '/');
+        if ($trimmed_path !== '') {
+            return $url;
+        }
+        
+        $current_lang = $this->get_current_language();
+        $default_lang = $this->get_default_language();
+        
+        // Don't prefix for default language
+        if (!$current_lang || $current_lang === $default_lang) {
+            return $url;
+        }
+        
+        // Only for pretty permalinks
+        if (empty(get_option('permalink_structure', ''))) {
+            return add_query_arg('lang', $current_lang, $url);
+        }
+        
+        // Use raw home option to avoid recursion
+        $raw_home = trailingslashit(get_option('home'));
+        
+        return $raw_home . $current_lang . '/';
+    }
+    
+    /**
      * Filter permalink to add language prefix (for posts)
      * @param string $permalink
      * @param WP_Post|int $post
@@ -1208,7 +1296,8 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             return add_query_arg('lang', $lang, $permalink);
         }
         
-        $home_url = home_url('/');
+        // Use raw home URL to avoid double-prefix from filter_home_url
+        $home_url = trailingslashit(get_option('home'));
         if (strpos($permalink, $home_url) === 0) {
             // Don't double-add language prefix
             $relative = substr($permalink, strlen($home_url));
@@ -1251,7 +1340,18 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             return add_query_arg('lang', $lang, $permalink);
         }
         
-        $home_url = home_url('/');
+        // If this page is a translation of the static front page, use /lang/ as permalink
+        $front_page_id = (int) get_option('page_on_front');
+        if ($front_page_id && get_option('show_on_front') === 'page') {
+            $translations = $this->get_post_translations($front_page_id);
+            if ($page_id == $front_page_id || in_array($page_id, $translations, false)) {
+                $raw_home = trailingslashit(get_option('home'));
+                return $raw_home . $lang . '/';
+            }
+        }
+        
+        // Use raw home URL to avoid double-prefix from filter_home_url
+        $home_url = trailingslashit(get_option('home'));
         if (strpos($permalink, $home_url) === 0) {
             $relative = substr($permalink, strlen($home_url));
             $lang_codes = array_column($this->get_stored_languages(), 'code');
@@ -1974,6 +2074,270 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
                 ],
             ]);
         }
+    }
+    
+    // =========================================================================
+    // PER-LANGUAGE MENU ASSIGNMENT
+    // =========================================================================
+    
+    /**
+     * Filter wp_nav_menu_args to swap the menu based on current language.
+     * Uses option 'aitrfoel_menu_assignments' which stores:
+     * [ 'primary' => ['de' => 42, 'fr' => 43], 'footer' => ['de' => 44] ]
+     * where keys are theme_location slugs and values map lang code → menu term_id.
+     *
+     * @param array $args wp_nav_menu arguments.
+     * @return array
+     */
+    public function filter_nav_menu_by_language($args) {
+        if (!$this->is_active()) {
+            return $args;
+        }
+        
+        $current_lang = $this->get_current_language();
+        $default_lang = $this->get_default_language();
+        
+        // Only swap for non-default languages
+        if ($current_lang === $default_lang) {
+            return $args;
+        }
+        
+        $assignments = get_option('aitrfoel_menu_assignments', []);
+        if (empty($assignments) || !is_array($assignments)) {
+            return $args;
+        }
+        
+        $location = isset($args['theme_location']) ? $args['theme_location'] : '';
+        if (empty($location) || !isset($assignments[$location][$current_lang])) {
+            return $args;
+        }
+        
+        $menu_id = intval($assignments[$location][$current_lang]);
+        if ($menu_id > 0) {
+            $args['menu'] = $menu_id;
+        }
+        
+        return $args;
+    }
+    
+    /**
+     * Runtime filter: swap menu item URLs to point to the correct translated post
+     * for the current language. This handles cases where translations were created
+     * after the menu was built.
+     *
+     * @param array $items Menu item objects.
+     * @param object $args Menu args.
+     * @return array
+     */
+    public function filter_menu_item_urls($items, $args) {
+        if (!$this->is_active()) {
+            return $items;
+        }
+        
+        $current_lang = $this->get_current_language();
+        $default_lang = $this->get_default_language();
+        
+        if ($current_lang === $default_lang) {
+            return $items;
+        }
+        
+        foreach ($items as &$item) {
+            // Only process post_type items (pages, posts, custom post types)
+            if ($item->type !== 'post_type' || empty($item->object_id)) {
+                continue;
+            }
+            
+            $object_id = (int) $item->object_id;
+            $post_lang = $this->get_post_language($object_id);
+            
+            // If the menu item points to a post NOT in the current language,
+            // try to find the translation
+            if ($post_lang !== $current_lang) {
+                $translations = $this->get_post_translations($object_id);
+                if (isset($translations[$current_lang])) {
+                    $translated_id = $translations[$current_lang];
+                    $item->object_id = $translated_id;
+                    $item->url = get_permalink($translated_id);
+                }
+            }
+        }
+        
+        return $items;
+    }
+    
+    /**
+     * Redirect untranslated pages to their default language version.
+     * If a user visits /de/services/ but no German translation exists,
+     * redirect to /services/ (the default language page).
+     */
+    public function maybe_redirect_untranslated_page() {
+        if (is_admin() || wp_doing_ajax() || wp_doing_cron()) {
+            return;
+        }
+        
+        if (!$this->is_active() || !is_singular()) {
+            return;
+        }
+        
+        $current_lang = $this->get_current_language();
+        $default_lang = $this->get_default_language();
+        
+        if ($current_lang === $default_lang) {
+            return;
+        }
+        
+        $post_id = get_queried_object_id();
+        if (!$post_id) {
+            return;
+        }
+        
+        // Check if the current post is actually in the current language
+        $post_lang = $this->get_post_language($post_id);
+        
+        if ($post_lang !== $current_lang) {
+            // This post is not translated to the current language
+            // Redirect to the default language version
+            $default_url = get_permalink($post_id);
+            
+            // If permalink filters add the lang prefix, get the raw permalink
+            // by temporarily removing our filter
+            remove_filter('page_link', [$this, 'filter_page_permalink'], 10);
+            remove_filter('post_link', [$this, 'filter_permalink'], 10);
+            remove_filter('post_type_link', [$this, 'filter_permalink'], 10);
+            $default_url = get_permalink($post_id);
+            add_filter('post_link', [$this, 'filter_permalink'], 10, 2);
+            add_filter('page_link', [$this, 'filter_page_permalink'], 10, 2);
+            add_filter('post_type_link', [$this, 'filter_permalink'], 10, 2);
+            
+            if ($default_url) {
+                wp_safe_redirect($default_url, 302);
+                exit;
+            }
+        }
+    }
+    
+    // =========================================================================
+    // PER-LANGUAGE WIDGET VISIBILITY
+    // =========================================================================
+    
+    /**
+     * Filter widget display: hide widget if it's restricted to languages
+     * that don't include the current language.
+     *
+     * @param array     $instance Widget instance settings.
+     * @param WP_Widget $widget   Widget object.
+     * @param array     $args     Widget area arguments.
+     * @return array|false False to prevent display.
+     */
+    public function filter_widget_by_language($instance, $widget, $args) {
+        if (!$this->is_active() || empty($instance)) {
+            return $instance;
+        }
+        
+        $current_lang = $this->get_current_language();
+        $default_lang = $this->get_default_language();
+        
+        // Check settings-based widget language assignments (from plugin settings page)
+        $widget_id = $widget->id; // e.g. "text-2"
+        $widget_lang_settings = get_option('aitrfoel_widget_languages', []);
+        if (!empty($widget_lang_settings[$widget_id])) {
+            $langs = (array) $widget_lang_settings[$widget_id];
+            if (!in_array($current_lang, $langs, true)) {
+                return false; // Hide widget
+            }
+        }
+        
+        // Fallback: check per-widget instance setting (classic widgets form)
+        if (!empty($instance['aitrfoel_languages'])) {
+            $langs = (array) $instance['aitrfoel_languages'];
+            if (!in_array($current_lang, $langs, true)) {
+                return false; // Hide widget
+            }
+        }
+        
+        // Swap translated content if viewing a non-default language
+        if ($current_lang !== $default_lang) {
+            $translations = get_option('aitrfoel_widget_translations', []);
+            if (!empty($translations[$widget_id][$current_lang])) {
+                $tr = $translations[$widget_id][$current_lang];
+                // Swap block widget content
+                if (isset($tr['content']) && isset($instance['content'])) {
+                    $instance['content'] = $tr['content'];
+                }
+                // Swap widget title
+                if (isset($tr['title']) && isset($instance['title'])) {
+                    $instance['title'] = $tr['title'];
+                }
+            }
+        }
+        
+        return $instance;
+    }
+    
+    /**
+     * Add language visibility controls to every widget's admin form.
+     *
+     * @param WP_Widget $widget   Widget object.
+     * @param null      $return   Unused.
+     * @param array     $instance Current widget instance settings.
+     */
+    public function widget_language_form($widget, $return, $instance) {
+        if (!$this->is_active()) {
+            return;
+        }
+        
+        $languages = $this->get_available_languages();
+        if (empty($languages)) {
+            return;
+        }
+        
+        $selected = isset($instance['aitrfoel_languages']) ? (array) $instance['aitrfoel_languages'] : [];
+        $field_name = $widget->get_field_name('aitrfoel_languages');
+        ?>
+        <div style="margin: 8px 0; padding: 8px; background: #f0f6fc; border-left: 3px solid #2271b1; border-radius: 3px;">
+            <p style="margin: 0 0 6px; font-weight: 600; font-size: 12px;">
+                🌍 <?php esc_html_e('Show in Languages:', 'ai-translator-for-elementor-and-polylang'); ?>
+            </p>
+            <label style="display: block; margin-bottom: 4px;">
+                <input type="checkbox" class="aitrfoel-widget-lang-all"
+                       <?php checked(empty($selected)); ?>
+                       onchange="var c=this.closest('div').querySelectorAll('.aitrfoel-widget-lang-cb');c.forEach(function(x){x.checked=false;});" />
+                <?php esc_html_e('All languages', 'ai-translator-for-elementor-and-polylang'); ?>
+            </label>
+            <?php foreach ($languages as $lang): ?>
+            <label style="display: inline-block; margin-right: 10px; margin-bottom: 4px;">
+                <input type="checkbox" class="aitrfoel-widget-lang-cb"
+                       name="<?php echo esc_attr($field_name); ?>[]"
+                       value="<?php echo esc_attr($lang->code); ?>"
+                       <?php checked(in_array($lang->code, $selected, true)); ?>
+                       onchange="this.closest('div').querySelector('.aitrfoel-widget-lang-all').checked=false;" />
+                <?php echo esc_html(strtoupper($lang->code) . ' — ' . $lang->name); ?>
+            </label>
+            <?php endforeach; ?>
+            <p class="description" style="margin: 4px 0 0; font-size: 11px;">
+                <?php esc_html_e('Select specific languages to show this widget only for those languages, or leave "All" checked.', 'ai-translator-for-elementor-and-polylang'); ?>
+            </p>
+        </div>
+        <?php
+    }
+    
+    /**
+     * Save the language visibility setting when widget is updated.
+     *
+     * @param array     $instance     New widget instance.
+     * @param array     $new_instance Values from the form.
+     * @param array     $old_instance Previously saved values.
+     * @param WP_Widget $widget       Widget object.
+     * @return array
+     */
+    public function widget_language_save($instance, $new_instance, $old_instance, $widget) {
+        if (isset($new_instance['aitrfoel_languages']) && is_array($new_instance['aitrfoel_languages'])) {
+            $valid_codes = array_keys($this->get_available_languages());
+            $instance['aitrfoel_languages'] = array_values(array_intersect($new_instance['aitrfoel_languages'], $valid_codes));
+        } else {
+            $instance['aitrfoel_languages'] = []; // All languages
+        }
+        return $instance;
     }
 }
 

@@ -214,6 +214,18 @@ class AITRFOEL_Settings {
             'default' => ''
         ]);
 
+        // Per-language menu assignments
+        register_setting('aitrfoel_settings_group', 'aitrfoel_menu_assignments', [
+            'sanitize_callback' => [self::class, 'sanitize_menu_assignments'],
+            'default' => []
+        ]);
+
+        // Per-language widget visibility
+        register_setting('aitrfoel_settings_group', 'aitrfoel_widget_languages', [
+            'sanitize_callback' => [self::class, 'sanitize_widget_languages'],
+            'default' => []
+        ]);
+
         // Glossary settings
         register_setting('aitrfoel_settings_group', 'aitrfoel_glossary_terms', [
             'sanitize_callback' => [self::class, 'sanitize_glossary_terms'],
@@ -296,6 +308,7 @@ class AITRFOEL_Settings {
                     <a href="#section-license">🔑 <?php esc_html_e('License', 'ai-translator-for-elementor-and-polylang'); ?></a>
                     <a href="#section-multilingual">🌍 <?php esc_html_e('Multilingual', 'ai-translator-for-elementor-and-polylang'); ?></a>
                     <a href="#section-switcher">🔄 <?php esc_html_e('Switcher', 'ai-translator-for-elementor-and-polylang'); ?></a>
+                    <a href="#section-menus-widgets">📋 <?php esc_html_e('Menus & Widgets', 'ai-translator-for-elementor-and-polylang'); ?></a>
                     <a href="#section-cache">💾 <?php esc_html_e('Cache', 'ai-translator-for-elementor-and-polylang'); ?></a>
                     <a href="#section-page-creation">📄 <?php esc_html_e('Pages', 'ai-translator-for-elementor-and-polylang'); ?></a>
                     <a href="#section-seo">🔍 <?php esc_html_e('SEO', 'ai-translator-for-elementor-and-polylang'); ?></a>
@@ -812,6 +825,238 @@ class AITRFOEL_Settings {
                     <div class="aitrfoel-inline-save">
                         <?php submit_button(__('Save Settings', 'ai-translator-for-elementor-and-polylang'), 'primary', 'submit', false); ?>
                         <button type="button" class="button aitrfoel-reset-defaults" data-sections="switcher" title="<?php esc_attr_e('Reset Language Switcher settings to defaults', 'ai-translator-for-elementor-and-polylang'); ?>"><?php esc_html_e('Reset Switcher Defaults', 'ai-translator-for-elementor-and-polylang'); ?></button>
+                    </div>
+                </div>
+
+                <!-- Menus & Widgets Settings -->
+                <div class="aitrfoel-settings-section" id="section-menus-widgets">
+                    <h3><?php esc_html_e('📋 Menus & Widgets', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                    
+                    <p class="description" style="margin-bottom: 15px; font-size: 13px;">
+                        <?php esc_html_e('Assign different navigation menus and control widget visibility per language. Only available when the built-in language system is active.', 'ai-translator-for-elementor-and-polylang'); ?>
+                    </p>
+                    
+                    <?php
+                    $mw_builtin_active = class_exists('AITRFOEL_Builtin_Integration') && AITRFOEL_Builtin_Integration::is_enabled();
+                    if (!$mw_builtin_active): ?>
+                        <div style="padding: 20px; background: #f6f7f7; border: 1px solid #dcdcde; border-radius: 4px; text-align: center; color: #666;">
+                            <?php esc_html_e('Enable the built-in language system in the Multilingual section to use per-language menus and widget visibility.', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </div>
+                    <?php else:
+                        $mw_builtin = AITRFOEL_Builtin_Integration::get_instance();
+                        $mw_all_languages = $mw_builtin->get_available_languages();
+                        $mw_default_lang = $mw_builtin->get_default_language();
+                        $mw_secondary = array_filter($mw_all_languages, function($l) use ($mw_default_lang) {
+                            return $l->code !== $mw_default_lang;
+                        });
+                    ?>
+                    
+                    <?php if (empty($mw_secondary)): ?>
+                        <div style="padding: 20px; background: #f6f7f7; border: 1px solid #dcdcde; border-radius: 4px; text-align: center; color: #666;">
+                            <?php esc_html_e('Add at least one additional language in the Multilingual section to configure per-language menus and widgets.', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </div>
+                    <?php else: ?>
+                    
+                    <!-- Auto-Translate & Assign -->
+                    <div style="margin-bottom: 20px; padding: 16px; background: linear-gradient(135deg, #f0f6fc 0%, #e8f0fe 100%); border: 1px solid #c3d9f0; border-radius: 6px;">
+                        <h4 style="margin: 0 0 8px; font-size: 14px;">🚀 <?php esc_html_e('Auto-Translate & Assign', 'ai-translator-for-elementor-and-polylang'); ?></h4>
+                        <p class="description" style="margin: 0 0 12px; font-size: 12px;">
+                            <?php esc_html_e('Automatically clone your menus, translate menu item labels and widget content, and assign everything per language. Uses your translation credits.', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </p>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                            <?php foreach ($mw_secondary as $lang): ?>
+                            <button type="button" class="button aitrfoel-auto-translate-lang" data-lang="<?php echo esc_attr($lang->code); ?>" data-name="<?php echo esc_attr($lang->name); ?>">
+                                <?php echo AITRFOEL_Language_Mapper::get_flag_html($lang->code, 16, 'vertical-align: middle; margin-right: 4px;'); ?>
+                                <?php echo esc_html(sprintf(
+                                    __('Translate → %s', 'ai-translator-for-elementor-and-polylang'),
+                                    strtoupper($lang->code)
+                                )); ?>
+                            </button>
+                            <?php endforeach; ?>
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <button type="button" class="button button-primary aitrfoel-auto-translate-all">
+                                🌍 <?php esc_html_e('Translate All Languages', 'ai-translator-for-elementor-and-polylang'); ?>
+                            </button>
+                        </div>
+                        <div class="aitrfoel-auto-translate-status" style="margin-top: 10px; display: none;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="spinner" style="float: none; visibility: visible; margin: 0;"></span>
+                                <span class="aitrfoel-auto-translate-msg" style="font-size: 13px; color: #1d2327;"></span>
+                            </div>
+                            <div class="aitrfoel-auto-translate-log" style="margin-top: 8px; max-height: 200px; overflow-y: auto; font-size: 12px; color: #555; font-family: monospace; background: #fff; padding: 8px; border-radius: 3px; border: 1px solid #dcdcde;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Advanced: Per-Language Menu & Widget Assignment (collapsible) -->
+                    <div style="margin-top: 20px; margin-bottom: 20px;">
+                        <a href="#" id="aitrfoel-toggle-advanced-mw" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #646970; text-decoration: none; padding: 6px 0;">
+                            <span class="dashicons dashicons-admin-generic" style="font-size: 16px; width: 16px; height: 16px;"></span>
+                            <?php esc_html_e('Advanced: Manual Menu & Widget Assignment', 'ai-translator-for-elementor-and-polylang'); ?>
+                            <span class="dashicons dashicons-arrow-down-alt2" id="aitrfoel-advanced-mw-arrow" style="font-size: 14px; width: 14px; height: 14px; transition: transform 0.2s;"></span>
+                        </a>
+                    </div>
+                    <div id="aitrfoel-advanced-mw" style="display: none; margin-bottom: 24px; padding: 16px; background: #fafafa; border: 1px solid #e2e4e7; border-radius: 4px;">
+                    
+                    <!-- Per-Language Menu Assignment -->
+                    <table class="form-table" style="margin-top: 0;">
+                        <tr>
+                            <th scope="row"><?php esc_html_e('Per-Language Menus', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                            <td>
+                                <?php
+                                $mw_menu_locations = get_registered_nav_menus();
+                                $mw_all_menus = wp_get_nav_menus();
+                                $mw_menu_assignments = get_option('aitrfoel_menu_assignments', []);
+                                
+                                if (empty($mw_menu_locations)): ?>
+                                    <p class="description">
+                                        <?php esc_html_e('Your current theme has no registered navigation menu locations. Menu assignment per language is not available.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </p>
+                                <?php elseif (empty($mw_all_menus)): ?>
+                                    <p class="description">
+                                        <?php printf(
+                                            esc_html__('No menus found. %sCreate menus%s in Appearance → Menus first, then assign them per language here.', 'ai-translator-for-elementor-and-polylang'),
+                                            '<a href="' . esc_url(admin_url('nav-menus.php')) . '">',
+                                            '</a>'
+                                        ); ?>
+                                    </p>
+                                <?php else: ?>
+                                    <p class="description" style="margin-bottom: 12px;">
+                                        <?php esc_html_e('The default language uses the menu assigned in Appearance → Menus. Select a different menu for each additional language below.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </p>
+                                    <?php foreach ($mw_menu_locations as $loc_slug => $loc_name): ?>
+                                    <div style="margin-bottom: 14px; padding: 10px; background: #f6f7f7; border: 1px solid #dcdcde; border-radius: 4px;">
+                                        <strong><?php echo esc_html($loc_name); ?></strong>
+                                        <span style="color: #666; font-size: 12px;">(<?php echo esc_html($loc_slug); ?>)</span>
+                                        <div style="margin-top: 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px;">
+                                        <?php foreach ($mw_secondary as $lang): ?>
+                                            <label style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
+                                                <?php echo AITRFOEL_Language_Mapper::get_flag_html($lang->code, 16); ?>
+                                                <span><?php echo esc_html(strtoupper($lang->code)); ?>:</span>
+                                                <select name="aitrfoel_menu_assignments[<?php echo esc_attr($loc_slug); ?>][<?php echo esc_attr($lang->code); ?>]" style="flex: 1; min-width: 0;">
+                                                    <option value="0"><?php esc_html_e('— Same as default —', 'ai-translator-for-elementor-and-polylang'); ?></option>
+                                                    <?php foreach ($mw_all_menus as $menu_obj): ?>
+                                                    <option value="<?php echo esc_attr($menu_obj->term_id); ?>"
+                                                        <?php selected(
+                                                            isset($mw_menu_assignments[$loc_slug][$lang->code]) ? $mw_menu_assignments[$loc_slug][$lang->code] : 0,
+                                                            $menu_obj->term_id
+                                                        ); ?>>
+                                                        <?php echo esc_html($menu_obj->name); ?>
+                                                    </option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </label>
+                                        <?php endforeach; ?>
+                                        </div>
+                                    </div>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #dcdcde;">
+                    
+                    <!-- Per-Language Widget Visibility -->
+                    <h4 style="margin-top: 0;"><?php esc_html_e('Widget Language Visibility', 'ai-translator-for-elementor-and-polylang'); ?></h4>
+                    <p class="description" style="margin-bottom: 12px;">
+                        <?php esc_html_e('Control which language(s) each widget is displayed for. Widgets with no language selected will show for all languages. Duplicate your footer/sidebar widgets and assign each copy to a specific language.', 'ai-translator-for-elementor-and-polylang'); ?>
+                    </p>
+                    
+                    <?php
+                    $mw_sidebars = wp_get_sidebars_widgets();
+                    $mw_widget_assignments = get_option('aitrfoel_widget_languages', []);
+                    $registered_sidebars = $GLOBALS['wp_registered_sidebars'] ?? [];
+                    $has_widgets = false;
+                    
+                    foreach ($mw_sidebars as $sidebar_id => $widgets) {
+                        if ($sidebar_id === 'wp_inactive_widgets' || empty($widgets)) {
+                            continue;
+                        }
+                        $sidebar_name = isset($registered_sidebars[$sidebar_id]['name']) ? $registered_sidebars[$sidebar_id]['name'] : $sidebar_id;
+                        $has_widgets = true;
+                    ?>
+                    <div style="margin-bottom: 16px; padding: 12px; background: #f6f7f7; border: 1px solid #dcdcde; border-radius: 4px;">
+                        <strong style="font-size: 13px;"><?php echo esc_html($sidebar_name); ?></strong>
+                        <table class="widefat" style="margin-top: 8px; border: none;">
+                            <thead>
+                                <tr>
+                                    <th style="padding: 6px 8px; font-size: 12px; width: 40%;"><?php esc_html_e('Widget', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                                    <th style="padding: 6px 8px; font-size: 12px;"><?php esc_html_e('Show in Languages', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ($widgets as $widget_id):
+                                // Parse widget ID to get type and number (e.g., "text-2" → type="text", number=2)
+                                $widget_title = $widget_id;
+                                if (preg_match('/^(.+)-(\d+)$/', $widget_id, $m)) {
+                                    $widget_type = $m[1];
+                                    $widget_number = $m[2];
+                                    // Try to get widget display name
+                                    global $wp_widget_factory;
+                                    if (isset($wp_widget_factory->widgets)) {
+                                        foreach ($wp_widget_factory->widgets as $widget_obj) {
+                                            if ($widget_obj->id_base === $widget_type) {
+                                                $widget_title = $widget_obj->name;
+                                                // Try to get instance title
+                                                $all_instances = get_option('widget_' . $widget_type, []);
+                                                if (isset($all_instances[$widget_number]['title']) && $all_instances[$widget_number]['title'] !== '') {
+                                                    $widget_title .= ': ' . $all_instances[$widget_number]['title'];
+                                                }
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                $selected_langs = isset($mw_widget_assignments[$widget_id]) ? (array) $mw_widget_assignments[$widget_id] : [];
+                            ?>
+                                <tr>
+                                    <td style="padding: 6px 8px; font-size: 13px; vertical-align: middle;">
+                                        <?php echo esc_html($widget_title); ?>
+                                        <span style="color: #999; font-size: 11px;">(<?php echo esc_html($widget_id); ?>)</span>
+                                    </td>
+                                    <td style="padding: 6px 8px;">
+                                        <label style="margin-right: 10px; font-size: 12px;">
+                                            <input type="radio" name="aitrfoel_widget_languages[<?php echo esc_attr($widget_id); ?>][_mode]" value="all"
+                                                <?php checked(empty($selected_langs)); ?> />
+                                            <?php esc_html_e('All', 'ai-translator-for-elementor-and-polylang'); ?>
+                                        </label>
+                                        <?php foreach ($mw_all_languages as $lang): ?>
+                                        <label style="margin-right: 8px; font-size: 12px; white-space: nowrap;">
+                                            <input type="checkbox" name="aitrfoel_widget_languages[<?php echo esc_attr($widget_id); ?>][<?php echo esc_attr($lang->code); ?>]" value="1"
+                                                <?php checked(in_array($lang->code, $selected_langs, true)); ?>
+                                                onchange="this.closest('td').querySelector('input[type=radio]').checked=false;" />
+                                            <?php echo AITRFOEL_Language_Mapper::get_flag_html($lang->code, 14, 'vertical-align: middle; margin-right: 2px;'); ?>
+                                            <?php echo esc_html(strtoupper($lang->code)); ?>
+                                        </label>
+                                        <?php endforeach; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <?php } // end sidebar loop ?>
+                    
+                    <?php if (!$has_widgets): ?>
+                        <div style="padding: 16px; background: #f6f7f7; border: 1px solid #dcdcde; border-radius: 4px; text-align: center; color: #666;">
+                            <?php printf(
+                                esc_html__('No active widgets found. %sAdd widgets%s to your sidebars first, then configure their language visibility here.', 'ai-translator-for-elementor-and-polylang'),
+                                '<a href="' . esc_url(admin_url('widgets.php')) . '">',
+                                '</a>'
+                            ); ?>
+                        </div>
+                    <?php endif; ?>
+                    
+                    </div><!-- /#aitrfoel-advanced-mw -->
+                    
+                    <?php endif; // end secondary languages check ?>
+                    <?php endif; // end builtin check ?>
+                    
+                    <!-- Inline Save (after Menus & Widgets) -->
+                    <div class="aitrfoel-inline-save">
+                        <?php submit_button(__('Save Settings', 'ai-translator-for-elementor-and-polylang'), 'primary', 'submit', false); ?>
+                        <button type="button" class="button aitrfoel-reset-defaults" data-sections="menus-widgets" title="<?php esc_attr_e('Reset Menus & Widgets settings to defaults', 'ai-translator-for-elementor-and-polylang'); ?>"><?php esc_html_e('Reset Menus & Widgets Defaults', 'ai-translator-for-elementor-and-polylang'); ?></button>
                     </div>
                 </div>
 
@@ -1412,7 +1657,8 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                         'aitrfoel_woo_translate_variations': {type: 'checkbox', val: true},
                         'aitrfoel_woo_translate_gallery_alt': {type: 'checkbox', val: true},
                         'aitrfoel_translate_taxonomy_names': {type: 'checkbox', val: true}
-                    }
+                    },
+                    'menus-widgets': {}
                 };
 
                 $('.aitrfoel-reset-defaults').on('click', function() {
@@ -1436,6 +1682,12 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                                 $el.val(cfg.val);
                             }
                         });
+                        // Reset per-language menu assignments when resetting menus-widgets section
+                        if (section.trim() === 'menus-widgets') {
+                            $('select[name^="aitrfoel_menu_assignments"]').val('0');
+                            $('#section-menus-widgets input[type=radio][value=all]').prop('checked', true);
+                            $('#section-menus-widgets input[type=checkbox][name^="aitrfoel_widget_languages"]').prop('checked', false);
+                        }
                     });
 
                     // Visual flash feedback
@@ -1456,6 +1708,116 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                 
                 $('#aitrfoel_switcher_style').on('change', updateShortcodePreview);
                 $('input[name="aitrfoel_switcher_show_flags"], input[name="aitrfoel_switcher_show_names"]').on('change', updateShortcodePreview);
+
+                // --- Auto-Translate Menus & Widgets ---
+                var autoTranslateRunning = false;
+                var $atStatus = $('.aitrfoel-auto-translate-status');
+                var $atMsg = $('.aitrfoel-auto-translate-msg');
+                var $atLog = $('.aitrfoel-auto-translate-log');
+
+                function atLog(msg) {
+                    var time = new Date().toLocaleTimeString();
+                    $atLog.append('[' + time + '] ' + msg + '\n');
+                    $atLog.scrollTop($atLog[0].scrollHeight);
+                }
+
+                function autoTranslateLang(lang, name) {
+                    return new Promise(function(resolve, reject) {
+                        $atMsg.text('<?php echo esc_js(__('Translating menus for', 'ai-translator-for-elementor-and-polylang')); ?> ' + name + '...');
+                        atLog('→ <?php echo esc_js(__('Translating menus →', 'ai-translator-for-elementor-and-polylang')); ?> ' + name);
+
+                        $.post(ajaxurl, {
+                            action: 'aitrfoel_auto_translate_menus',
+                            nonce: '<?php echo wp_create_nonce('aitrfoel_ajax_nonce'); ?>',
+                            target_lang: lang
+                        }).done(function(r) {
+                            if (r.success) {
+                                var menus = r.data.menus || [];
+                                menus.forEach(function(m) {
+                                    atLog('  ✓ ' + m.location + ': ' + m.menu_name + (m.skipped ? ' (<?php echo esc_js(__('already assigned', 'ai-translator-for-elementor-and-polylang')); ?>)' : ' (' + (m.items || 0) + ' <?php echo esc_js(__('items', 'ai-translator-for-elementor-and-polylang')); ?>)'));
+                                });
+                            } else {
+                                atLog('  ⚠ <?php echo esc_js(__('Menus', 'ai-translator-for-elementor-and-polylang')); ?>: ' + (r.data || '<?php echo esc_js(__('Error', 'ai-translator-for-elementor-and-polylang')); ?>'));
+                            }
+                        }).fail(function() {
+                            atLog('  ✗ <?php echo esc_js(__('Menu translation request failed', 'ai-translator-for-elementor-and-polylang')); ?>');
+                        }).then(function() {
+                            $atMsg.text('<?php echo esc_js(__('Translating widgets for', 'ai-translator-for-elementor-and-polylang')); ?> ' + name + '...');
+                            atLog('→ <?php echo esc_js(__('Translating widgets →', 'ai-translator-for-elementor-and-polylang')); ?> ' + name);
+
+                            return $.post(ajaxurl, {
+                                action: 'aitrfoel_auto_translate_widgets',
+                                nonce: '<?php echo wp_create_nonce('aitrfoel_ajax_nonce'); ?>',
+                                target_lang: lang
+                            });
+                        }).done(function(r) {
+                            if (r.success) {
+                                atLog('  ✓ ' + r.data.message);
+                            } else {
+                                atLog('  ⚠ <?php echo esc_js(__('Widgets', 'ai-translator-for-elementor-and-polylang')); ?>: ' + (r.data || '<?php echo esc_js(__('Error', 'ai-translator-for-elementor-and-polylang')); ?>'));
+                            }
+                            resolve();
+                        }).fail(function() {
+                            atLog('  ✗ <?php echo esc_js(__('Widget translation request failed', 'ai-translator-for-elementor-and-polylang')); ?>');
+                            resolve();
+                        });
+                    });
+                }
+
+                function startAutoTranslate(langs) {
+                    if (autoTranslateRunning) return;
+                    autoTranslateRunning = true;
+                    $atStatus.show();
+                    $atLog.empty();
+                    $('.aitrfoel-auto-translate-lang, .aitrfoel-auto-translate-all').prop('disabled', true);
+
+                    var chain = Promise.resolve();
+                    langs.forEach(function(l) {
+                        chain = chain.then(function() {
+                            return autoTranslateLang(l.code, l.name);
+                        });
+                    });
+
+                    chain.then(function() {
+                        $atMsg.text('<?php echo esc_js(__('Done! Reload the page to see updated assignments.', 'ai-translator-for-elementor-and-polylang')); ?>');
+                        $atStatus.find('.spinner').css('visibility', 'hidden');
+                        atLog('✓ <?php echo esc_js(__('All translations complete.', 'ai-translator-for-elementor-and-polylang')); ?>');
+                        autoTranslateRunning = false;
+                        $('.aitrfoel-auto-translate-lang, .aitrfoel-auto-translate-all').prop('disabled', false);
+                        // Auto-reload after 2s so the assignment dropdowns refresh
+                        setTimeout(function() { location.reload(); }, 2000);
+                    });
+                }
+
+                $(document).on('click', '.aitrfoel-auto-translate-lang', function() {
+                    var lang = $(this).data('lang');
+                    var name = $(this).data('name');
+                    if (!confirm('<?php echo esc_js(__('This will translate and assign menus + widget content for', 'ai-translator-for-elementor-and-polylang')); ?> ' + name + '. <?php echo esc_js(__('Uses translation credits. Continue?', 'ai-translator-for-elementor-and-polylang')); ?>')) return;
+                    startAutoTranslate([{code: lang, name: name}]);
+                });
+
+                $(document).on('click', '.aitrfoel-auto-translate-all', function() {
+                    var langs = [];
+                    $('.aitrfoel-auto-translate-lang').each(function() {
+                        langs.push({code: $(this).data('lang'), name: $(this).data('name')});
+                    });
+                    if (!langs.length) return;
+                    if (!confirm('<?php echo esc_js(__('This will translate and assign menus + widget content for ALL languages. Uses translation credits. Continue?', 'ai-translator-for-elementor-and-polylang')); ?>')) return;
+                    startAutoTranslate(langs);
+                });
+
+                // Toggle advanced menu/widget assignment section
+                $('#aitrfoel-toggle-advanced-mw').on('click', function(e) {
+                    e.preventDefault();
+                    var $panel = $('#aitrfoel-advanced-mw');
+                    var $arrow = $('#aitrfoel-advanced-mw-arrow');
+                    $panel.slideToggle(200);
+                    if ($panel.is(':visible')) {
+                        $arrow.css('transform', 'rotate(180deg)');
+                    } else {
+                        $arrow.css('transform', 'rotate(0deg)');
+                    }
+                });
             });
             </script>
             
@@ -1471,6 +1833,63 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
         <?php
     }
     
+    /**
+     * Sanitize per-language menu assignments
+     */
+    public static function sanitize_menu_assignments($input) {
+        if (empty($input) || !is_array($input)) {
+            return [];
+        }
+        $clean = [];
+        foreach ($input as $location => $langs) {
+            $location = sanitize_key($location);
+            if (empty($location) || !is_array($langs)) {
+                continue;
+            }
+            foreach ($langs as $lang_code => $menu_id) {
+                $lang_code = sanitize_key($lang_code);
+                $menu_id = intval($menu_id);
+                if ($menu_id > 0) {
+                    $clean[$location][$lang_code] = $menu_id;
+                }
+            }
+        }
+        return $clean;
+    }
+
+    /**
+     * Sanitize per-language widget visibility assignments
+     */
+    public static function sanitize_widget_languages($input) {
+        if (empty($input) || !is_array($input)) {
+            return [];
+        }
+        $clean = [];
+        foreach ($input as $widget_id => $data) {
+            $widget_id = sanitize_text_field($widget_id);
+            if (empty($widget_id) || !is_array($data)) {
+                continue;
+            }
+            // If "all" mode is selected, store empty array (show for all)
+            if (isset($data['_mode']) && $data['_mode'] === 'all') {
+                continue;
+            }
+            // Collect checked language codes
+            $langs = [];
+            foreach ($data as $key => $val) {
+                if ($key === '_mode') continue;
+                $key = sanitize_key($key);
+                if ($val && !empty($key)) {
+                    $langs[] = $key;
+                }
+            }
+            if (!empty($langs)) {
+                $clean[$widget_id] = $langs;
+            }
+        }
+        return $clean;
+    }
+
     /**
      * Sanitize glossary terms textarea
      */

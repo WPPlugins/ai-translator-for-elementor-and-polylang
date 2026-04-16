@@ -67,6 +67,10 @@ class AITRFOEL_Ajax_Handler {
         // Legacy support
         add_action('wp_ajax_aitrfoel_publish_translation', [$this, 'handle_publish_translation']);
         add_action('wp_ajax_aitrfoel_get_preview_url', [$this, 'handle_get_preview_url']);
+
+        // Auto-translate menus & widgets
+        add_action('wp_ajax_aitrfoel_auto_translate_menus', [$this, 'handle_auto_translate_menus']);
+        add_action('wp_ajax_aitrfoel_auto_translate_widgets', [$this, 'handle_auto_translate_widgets']);
     }
 
     /**
@@ -2299,6 +2303,395 @@ class AITRFOEL_Ajax_Handler {
             AITRFOEL_Logger::log('❌ Test server usage failed: ' . $e->getMessage(), 'error');
             $this->handle_error($e);
         }
+    }
+
+    /**
+     * Auto-translate menus: clone default-language menus, translate items, assign per language.
+     */
+    public function handle_auto_translate_menus() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+
+            if (!current_user_can('manage_options')) {
+                throw new Exception(__('You do not have permission to perform this action.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            if (!class_exists('AITRFOEL_Builtin_Integration') || !AITRFOEL_Builtin_Integration::is_enabled()) {
+                throw new Exception(__('Built-in language system is not active.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            $target_lang = sanitize_text_field($_POST['target_lang'] ?? '');
+            if (empty($target_lang)) {
+                throw new Exception(__('Target language is required.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            $builtin = AITRFOEL_Builtin_Integration::get_instance();
+            $default_lang = $builtin->get_default_language();
+            $source_lang = $default_lang;
+
+            if ($target_lang === $default_lang) {
+                throw new Exception(__('Cannot translate to the default language.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            $api = AITRFOEL_OpenAI_API::get_instance();
+            $menu_locations = get_registered_nav_menus();
+            $nav_menu_locations = get_nav_menu_locations();
+            $assignments = get_option('aitrfoel_menu_assignments', []);
+            $created_menus = [];
+            $lang_upper = strtoupper($target_lang);
+
+            foreach ($menu_locations as $loc_slug => $loc_name) {
+                // Get the menu assigned to this location
+                $menu_id = isset($nav_menu_locations[$loc_slug]) ? $nav_menu_locations[$loc_slug] : 0;
+                if (!$menu_id) {
+                    continue;
+                }
+
+                $source_menu = wp_get_nav_menu_object($menu_id);
+                if (!$source_menu) {
+                    continue;
+                }
+
+                $source_items = wp_get_nav_menu_items($menu_id);
+                if (empty($source_items)) {
+                    continue;
+                }
+
+                // Check if a translated menu already exists for this location/lang
+                $existing_id = isset($assignments[$loc_slug][$target_lang]) ? intval($assignments[$loc_slug][$target_lang]) : 0;
+                if ($existing_id > 0 && wp_get_nav_menu_object($existing_id)) {
+                    // Already assigned — skip
+                    $created_menus[] = [
+                        'location' => $loc_name,
+                        'menu_name' => wp_get_nav_menu_object($existing_id)->name,
+                        'skipped' => true,
+                    ];
+                    continue;
+                }
+
+                // Collect labels to translate in batch
+                $labels = [];
+                foreach ($source_items as $item) {
+                    $label = trim($item->title);
+                    if ($label !== '' && !in_array($label, $labels, true)) {
+                        $labels[] = $label;
+                    }
+                }
+
+                // Batch translate
+                $translations = [];
+                if (!empty($labels)) {
+                    $result = $api->translate_batch($labels, $target_lang, $source_lang);
+                    if (!is_wp_error($result)) {
+                        $translations = $result;
+                    }
+                }
+
+                // Create new menu
+                $new_menu_name = $source_menu->name . ' ' . $lang_upper;
+                // Avoid duplicates
+                $existing = wp_get_nav_menu_object($new_menu_name);
+                if ($existing) {
+                    $new_menu_id = $existing->term_id;
+                    // Clear existing items
+                    $old_items = wp_get_nav_menu_items($new_menu_id);
+                    if ($old_items) {
+                        foreach ($old_items as $old_item) {
+                            wp_delete_post($old_item->ID, true);
+                        }
+                    }
+                } else {
+                    $new_menu_id = wp_create_nav_menu($new_menu_name);
+                    if (is_wp_error($new_menu_id)) {
+                        continue;
+                    }
+                }
+
+                // Clone menu items with translated labels, pointing to translated posts
+                $id_map = []; // old DB_ID => new DB_ID for parent mapping
+                foreach ($source_items as $item) {
+                    $translated_title = isset($translations[$item->title]) ? $translations[$item->title] : $item->title;
+
+                    // Find translated post/page for this menu item
+                    $object_id = $item->object_id;
+                    $item_url = $item->url;
+                    if (in_array($item->type, ['post_type', 'taxonomy'], true) && $object_id) {
+                        $post_translations = $builtin->get_post_translations($object_id);
+                        if (isset($post_translations[$target_lang])) {
+                            $object_id = $post_translations[$target_lang];
+                            $item_url = ''; // Let WordPress generate from object_id
+                        }
+                    }
+
+                    $args = [
+                        'menu-item-title'     => $translated_title,
+                        'menu-item-url'       => $item_url,
+                        'menu-item-object'    => $item->object,
+                        'menu-item-object-id' => $object_id,
+                        'menu-item-type'      => $item->type,
+                        'menu-item-status'    => 'publish',
+                        'menu-item-target'    => $item->target,
+                        'menu-item-classes'   => implode(' ', (array) $item->classes),
+                        'menu-item-xfn'       => $item->xfn,
+                        'menu-item-position'  => $item->menu_order,
+                    ];
+
+                    // Handle parent mapping
+                    if ($item->menu_item_parent && isset($id_map[$item->menu_item_parent])) {
+                        $args['menu-item-parent-id'] = $id_map[$item->menu_item_parent];
+                    }
+
+                    $new_item_id = wp_update_nav_menu_item($new_menu_id, 0, $args);
+                    if (!is_wp_error($new_item_id)) {
+                        $id_map[$item->db_id] = $new_item_id;
+                    }
+                }
+
+                // Auto-assign
+                if (!isset($assignments[$loc_slug])) {
+                    $assignments[$loc_slug] = [];
+                }
+                $assignments[$loc_slug][$target_lang] = $new_menu_id;
+
+                $created_menus[] = [
+                    'location' => $loc_name,
+                    'menu_name' => $new_menu_name,
+                    'items' => count($source_items),
+                    'skipped' => false,
+                ];
+            }
+
+            update_option('aitrfoel_menu_assignments', $assignments);
+
+            wp_send_json_success([
+                'message' => sprintf(
+                    __('Menus translated and assigned for %s.', 'ai-translator-for-elementor-and-polylang'),
+                    $lang_upper
+                ),
+                'menus' => $created_menus,
+            ]);
+
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+
+    /**
+     * Auto-translate widget content for a target language.
+     * Parses block widget markup and standard widget instance titles,
+     * translates text, and stores in aitrfoel_widget_translations option.
+     */
+    public function handle_auto_translate_widgets() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+
+            if (!current_user_can('manage_options')) {
+                throw new Exception(__('You do not have permission to perform this action.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            if (!class_exists('AITRFOEL_Builtin_Integration') || !AITRFOEL_Builtin_Integration::is_enabled()) {
+                throw new Exception(__('Built-in language system is not active.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            $target_lang = sanitize_text_field($_POST['target_lang'] ?? '');
+            if (empty($target_lang)) {
+                throw new Exception(__('Target language is required.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            $builtin = AITRFOEL_Builtin_Integration::get_instance();
+            $default_lang = $builtin->get_default_language();
+
+            if ($target_lang === $default_lang) {
+                throw new Exception(__('Cannot translate to the default language.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            $api = AITRFOEL_OpenAI_API::get_instance();
+            $sidebars = wp_get_sidebars_widgets();
+            $translations = get_option('aitrfoel_widget_translations', []);
+            $translated_count = 0;
+            $texts_to_translate = [];
+            $text_sources = []; // track where each text came from
+
+            // Phase 1: collect all translatable texts
+            foreach ($sidebars as $sidebar_id => $widgets) {
+                if ($sidebar_id === 'wp_inactive_widgets' || empty($widgets)) {
+                    continue;
+                }
+
+                foreach ($widgets as $widget_id) {
+                    if (!preg_match('/^(.+)-(\d+)$/', $widget_id, $m)) {
+                        continue;
+                    }
+                    $widget_type = $m[1];
+                    $widget_number = (int) $m[2];
+
+                    // Block widgets (type = "block")
+                    if ($widget_type === 'block') {
+                        $all_instances = get_option('widget_block', []);
+                        if (isset($all_instances[$widget_number]['content'])) {
+                            $content = $all_instances[$widget_number]['content'];
+                            // Extract text from block markup
+                            $block_texts = $this->extract_block_widget_texts($content);
+                            foreach ($block_texts as $text) {
+                                if (!in_array($text, $texts_to_translate, true)) {
+                                    $texts_to_translate[] = $text;
+                                    $text_sources[$text][] = ['widget_id' => $widget_id, 'type' => 'block'];
+                                }
+                            }
+                        }
+                    }
+
+                    // Standard widgets with titles
+                    $all_instances = get_option('widget_' . $widget_type, []);
+                    if (isset($all_instances[$widget_number]['title']) && trim($all_instances[$widget_number]['title']) !== '') {
+                        $title = trim($all_instances[$widget_number]['title']);
+                        if (!in_array($title, $texts_to_translate, true)) {
+                            $texts_to_translate[] = $title;
+                        }
+                        $text_sources[$title][] = ['widget_id' => $widget_id, 'type' => 'title', 'widget_type' => $widget_type, 'number' => $widget_number];
+                    }
+
+                    // Nav menu widgets — translate the menu items too
+                    if ($widget_type === 'nav_menu') {
+                        $menu_id = isset($all_instances[$widget_number]['nav_menu']) ? intval($all_instances[$widget_number]['nav_menu']) : 0;
+                        if ($menu_id > 0) {
+                            $menu_items = wp_get_nav_menu_items($menu_id);
+                            if ($menu_items) {
+                                foreach ($menu_items as $mi) {
+                                    $label = trim($mi->title);
+                                    if ($label !== '' && !in_array($label, $texts_to_translate, true)) {
+                                        $texts_to_translate[] = $label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (empty($texts_to_translate)) {
+                wp_send_json_success([
+                    'message' => __('No translatable widget content found.', 'ai-translator-for-elementor-and-polylang'),
+                    'translated' => 0,
+                ]);
+                return;
+            }
+
+            // Phase 2: batch translate
+            $result = $api->translate_batch($texts_to_translate, $target_lang, $default_lang);
+            if (is_wp_error($result)) {
+                throw new Exception($result->get_error_message());
+            }
+
+            // Phase 3: store translations keyed by widget_id and language
+            foreach ($sidebars as $sidebar_id => $widgets) {
+                if ($sidebar_id === 'wp_inactive_widgets' || empty($widgets)) {
+                    continue;
+                }
+
+                foreach ($widgets as $widget_id) {
+                    if (!preg_match('/^(.+)-(\d+)$/', $widget_id, $m)) {
+                        continue;
+                    }
+                    $widget_type = $m[1];
+                    $widget_number = (int) $m[2];
+
+                    // Block widget content translation
+                    if ($widget_type === 'block') {
+                        $all_instances = get_option('widget_block', []);
+                        if (isset($all_instances[$widget_number]['content'])) {
+                            $content = $all_instances[$widget_number]['content'];
+                            $translated_content = $this->replace_block_widget_texts($content, $result);
+                            if ($translated_content !== $content) {
+                                if (!isset($translations[$widget_id])) {
+                                    $translations[$widget_id] = [];
+                                }
+                                $translations[$widget_id][$target_lang] = [
+                                    'content' => $translated_content,
+                                ];
+                                $translated_count++;
+                            }
+                        }
+                    }
+
+                    // Widget title translation
+                    $all_instances = get_option('widget_' . $widget_type, []);
+                    if (isset($all_instances[$widget_number]['title']) && trim($all_instances[$widget_number]['title']) !== '') {
+                        $original_title = trim($all_instances[$widget_number]['title']);
+                        if (isset($result[$original_title])) {
+                            if (!isset($translations[$widget_id])) {
+                                $translations[$widget_id] = [];
+                            }
+                            if (!isset($translations[$widget_id][$target_lang])) {
+                                $translations[$widget_id][$target_lang] = [];
+                            }
+                            $translations[$widget_id][$target_lang]['title'] = $result[$original_title];
+                            $translated_count++;
+                        }
+                    }
+                }
+            }
+
+            update_option('aitrfoel_widget_translations', $translations);
+
+            wp_send_json_success([
+                'message' => sprintf(
+                    __('Widget content translated for %s: %d items.', 'ai-translator-for-elementor-and-polylang'),
+                    strtoupper($target_lang),
+                    $translated_count
+                ),
+                'translated' => $translated_count,
+            ]);
+
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+
+    /**
+     * Extract visible text from block widget HTML content.
+     */
+    private function extract_block_widget_texts($html) {
+        $texts = [];
+        // Strip block comments
+        $stripped = preg_replace('/<!--.*?-->/', '', $html);
+        // Match text content inside HTML tags
+        if (preg_match_all('/>([^<]+)</', $stripped, $matches)) {
+            foreach ($matches[1] as $text) {
+                $text = trim(html_entity_decode($text, ENT_QUOTES, 'UTF-8'));
+                // Skip empty, numbers-only, or very short strings
+                if ($text !== '' && !preg_match('/^[\d\s\.\,\-\+\%\$\€\£\¥\#\@\!\?]+$/', $text) && mb_strlen($text) >= 2) {
+                    $texts[] = $text;
+                }
+            }
+        }
+        return array_unique($texts);
+    }
+
+    /**
+     * Replace original texts in block widget HTML with translated versions.
+     */
+    private function replace_block_widget_texts($html, $translations) {
+        foreach ($translations as $original => $translated) {
+            if ($original === $translated || empty($translated)) {
+                continue;
+            }
+            // Replace inside tag content, preserving HTML structure
+            $escaped_original = preg_quote(htmlspecialchars($original, ENT_QUOTES, 'UTF-8'), '/');
+            $html = preg_replace(
+                '/(>)(' . $escaped_original . ')(<)/',
+                '$1' . htmlspecialchars($translated, ENT_QUOTES, 'UTF-8') . '$3',
+                $html
+            );
+            // Also try with the raw text (not HTML-encoded)
+            $escaped_raw = preg_quote($original, '/');
+            $html = preg_replace(
+                '/(>)(' . $escaped_raw . ')(<)/',
+                '$1' . $translated . '$3',
+                $html
+            );
+        }
+        return $html;
     }
 
 }

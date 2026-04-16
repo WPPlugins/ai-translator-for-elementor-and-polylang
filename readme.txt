@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.17
+Stable tag: 1.4.18
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,22 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.18 =
+* Added: One-click auto-translate for menus — clones default menus, translates all item labels, and assigns per language automatically
+* Added: One-click auto-translate for widget content — translates block widget text and widget titles per language
+* Added: Frontend widget content swap — block widgets automatically display translated content based on current language
+* Added: Home URL language prefix filter — logo and home links now point to the correct language URL (builtin integration)
+* Added: Untranslated page redirect — visiting a non-translated page in another language redirects to the default language version
+* Added: Runtime menu item URL swap — menu items automatically resolve to translated post URLs without re-translating menus
+* Fixed: Translated front page now served correctly at language root URL (e.g. /cs/ shows Czech home page)
+* Fixed: Front page permalink for translated versions uses clean /lang/ URL instead of /lang/slug/
+* Fixed: Menu items now link to translated posts instead of original language posts
+* Fixed: Double language prefix in permalinks (e.g. /fr/fr/page/) when home_url filter was active
+* Fixed: Language switcher now correctly links to default language version of the current page
+* Fixed: Redirect loop when switching languages on untranslated pages
+* Improved: Menus & Widgets settings — manual assignment sections collapsed into an Advanced toggle for cleaner UI
+* Improved: Auto-translate button layout with progress log and per-language status
+
 = 1.4.17 =
 * Fixed: Moved "Default Language URL Prefix" setting from Language Switcher to Multilingual Plugin section where it belongs
 * Improved: Individual reset-to-default buttons for Cache, Pages, and SEO sections (previously combined into one)
