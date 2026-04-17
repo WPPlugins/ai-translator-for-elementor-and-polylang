@@ -501,6 +501,20 @@ class AITRFOEL_Translate_All {
             ];
         }
 
+        // Elementor templates (headers, footers, sections, etc.)
+        // These are stored as post_type=elementor_library with _elementor_template_type meta.
+        // They are private CPTs so they won't appear in the generic loop above.
+        if (post_type_exists('elementor_library')) {
+            $count = $this->count_elementor_templates($non_default_langs);
+            if ($count > 0) {
+                $types['elementor_library'] = [
+                    'label' => __('Elementor Templates', 'ai-translator-for-elementor-and-polylang'),
+                    'icon'  => '🧩',
+                    'count' => $count,
+                ];
+            }
+        }
+
         return $types;
     }
 
@@ -529,6 +543,41 @@ class AITRFOEL_Translate_All {
             ],
         ]);
 
+        return (int) $query->found_posts;
+    }
+
+    /**
+     * Count published Elementor templates (headers, footers, sections, etc.)
+     * that have Elementor data and are not already translations.
+     */
+    private function count_elementor_templates($non_default_langs) {
+        $args = [
+            'post_type'      => 'elementor_library',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'no_found_rows'  => false,
+            'meta_query'     => [
+                [
+                    'key'     => '_elementor_data',
+                    'compare' => 'EXISTS',
+                ],
+            ],
+        ];
+
+        // If built-in language system is active, exclude non-default language posts
+        if (!empty($non_default_langs)) {
+            $args['tax_query'] = [
+                [
+                    'taxonomy' => 'aitrfoel_language',
+                    'field'    => 'slug',
+                    'terms'    => $non_default_langs,
+                    'operator' => 'NOT IN',
+                ],
+            ];
+        }
+
+        $query = new \WP_Query($args);
         return (int) $query->found_posts;
     }
 

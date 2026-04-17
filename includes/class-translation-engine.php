@@ -880,6 +880,15 @@ class AITRFOEL_Translation_Engine {
             AITRFOEL_Logger::log('URL localization failed: ' . $e->getMessage(), 'warning', $page_id);
         }
 
+        // Swap nav_menu IDs in Elementor Nav Menu widgets to point to translated menus
+        $menu_id_map = get_option('aitrfoel_menu_id_map', []);
+        if (!empty($menu_id_map)) {
+            $swapped = $this->swap_menu_ids_in_elementor_data($translated_data, $menu_id_map, $target_lang);
+            if ($swapped > 0) {
+                AITRFOEL_Logger::log("Swapped $swapped nav menu IDs to translated menus for $target_lang", 'info', $page_id);
+            }
+        }
+
         // Create new page with translations
         $new_page_id = $this->create_translated_page($page_id, $translated_data, $target_lang, $detected_lang, $pre_translated_title);
         
@@ -2493,6 +2502,39 @@ class AITRFOEL_Translation_Engine {
     }
 
     /**
+     * Swap nav menu IDs in Elementor data to point to translated menus.
+     * Handles Elementor Nav Menu widgets which store 'menu' as a term_id in settings.
+     *
+     * @param array  &$data       Elementor data array (modified in place).
+     * @param array  $menu_id_map Map of source_menu_id => [lang => translated_menu_id].
+     * @param string $target_lang Target language code.
+     * @return int Number of menu IDs swapped.
+     */
+    private function swap_menu_ids_in_elementor_data(&$data, $menu_id_map, $target_lang) {
+        $swapped = 0;
+        foreach ($data as &$element) {
+            if (!is_array($element)) continue;
+
+            // Check if this is a nav-menu widget
+            $widget_type = isset($element['widgetType']) ? $element['widgetType'] : '';
+            if ($widget_type === 'nav-menu' && isset($element['settings']['menu'])) {
+                $source_menu_id = (int) $element['settings']['menu'];
+                if ($source_menu_id > 0 && isset($menu_id_map[$source_menu_id][$target_lang])) {
+                    $element['settings']['menu'] = (string) $menu_id_map[$source_menu_id][$target_lang];
+                    $swapped++;
+                }
+            }
+
+            // Recurse into child elements
+            if (isset($element['elements']) && is_array($element['elements'])) {
+                $swapped += $this->swap_menu_ids_in_elementor_data($element['elements'], $menu_id_map, $target_lang);
+            }
+        }
+        unset($element);
+        return $swapped;
+    }
+
+    /**
      * Walk Elementor translated data and localize internal links for target language.
      */
     private function localize_internal_links(&$data, $target_lang) {
@@ -2762,7 +2804,8 @@ class AITRFOEL_Translation_Engine {
             '_elementor_version',
             '_elementor_pro_version',
             '_elementor_page_settings',
-            '_elementor_controls_usage'
+            '_elementor_controls_usage',
+            '_elementor_conditions',         // Elementor Pro display conditions (header/footer/section)
         ];
         
         // Copy Astra theme meta fields to preserve page layout settings

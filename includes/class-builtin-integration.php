@@ -144,6 +144,19 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         add_action('in_widget_form', [$this, 'widget_language_form'], 10, 3);
         add_filter('widget_update_callback', [$this, 'widget_language_save'], 10, 4);
         
+        // Elementor Pro: swap header/footer/section templates to translated versions
+        if (!is_admin()) {
+            add_action('elementor/theme/before_do_header', [$this, 'swap_elementor_template_location'], 10);
+            add_action('elementor/theme/before_do_footer', [$this, 'swap_elementor_template_location'], 10);
+            // Generic filter for all Elementor Pro template locations
+            add_filter('elementor/theme/get_location_templates/header', [$this, 'filter_elementor_location_templates'], 10, 1);
+            add_filter('elementor/theme/get_location_templates/footer', [$this, 'filter_elementor_location_templates'], 10, 1);
+            add_filter('elementor/theme/get_location_templates/single', [$this, 'filter_elementor_location_templates'], 10, 1);
+            add_filter('elementor/theme/get_location_templates/archive', [$this, 'filter_elementor_location_templates'], 10, 1);
+            // Fallback: intercept Elementor data loading for any template
+            add_filter('elementor/frontend/builder_content_data', [$this, 'filter_elementor_template_data'], 10, 2);
+        }
+        
         // REST API language fields
         add_action('rest_api_init', [$this, 'register_rest_fields']);
         
@@ -2645,6 +2658,114 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             $instance['aitrfoel_languages'] = []; // All languages
         }
         return $instance;
+    }
+
+    /**
+     * Filter Elementor Pro location templates to swap to translated versions.
+     * Called via elementor/theme/get_location_templates/{location} filter.
+     *
+     * @param array $templates Array of template documents for this location.
+     * @return array
+     */
+    public function filter_elementor_location_templates($templates) {
+        if (!$this->is_active() || empty($templates)) {
+            return $templates;
+        }
+
+        $current_lang = $this->get_current_language();
+        $default_lang = $this->get_default_language();
+
+        if ($current_lang === $default_lang) {
+            return $templates;
+        }
+
+        $swapped = [];
+        foreach ($templates as $template) {
+            $template_id = 0;
+            if (is_array($template) && isset($template['id'])) {
+                $template_id = (int) $template['id'];
+            } elseif (is_object($template) && method_exists($template, 'get_post')) {
+                $post = $template->get_post();
+                $template_id = $post ? (int) $post->ID : 0;
+            }
+
+            if ($template_id > 0) {
+                $translations = $this->get_post_translations($template_id);
+                if (isset($translations[$current_lang])) {
+                    $translated_id = (int) $translations[$current_lang];
+                    if ($translated_id > 0 && get_post_status($translated_id) === 'publish') {
+                        // Swap the template to the translated version
+                        if (is_array($template)) {
+                            $template['id'] = $translated_id;
+                        }
+                        // For document objects, we can't easily swap — fallback handled below
+                    }
+                }
+            }
+            $swapped[] = $template;
+        }
+
+        return $swapped;
+    }
+
+    /**
+     * Swap Elementor template data when rendering a template in a non-default language.
+     * This is a fallback/complement to filter_elementor_location_templates.
+     * Called via elementor/frontend/builder_content_data filter.
+     *
+     * @param array $data    Elementor data array.
+     * @param int   $post_id Post ID of the template being rendered.
+     * @return array
+     */
+    public function filter_elementor_template_data($data, $post_id) {
+        if (!$this->is_active() || empty($data)) {
+            return $data;
+        }
+
+        $current_lang = $this->get_current_language();
+        $default_lang = $this->get_default_language();
+
+        if ($current_lang === $default_lang) {
+            return $data;
+        }
+
+        // Only swap for elementor_library posts (templates)
+        $post_type = get_post_type($post_id);
+        if ($post_type !== 'elementor_library') {
+            return $data;
+        }
+
+        // Check if this template has a translation for the current language
+        $translations = $this->get_post_translations($post_id);
+        if (!isset($translations[$current_lang])) {
+            return $data;
+        }
+
+        $translated_id = (int) $translations[$current_lang];
+        if ($translated_id <= 0 || get_post_status($translated_id) !== 'publish') {
+            return $data;
+        }
+
+        // Load the translated template's Elementor data instead
+        $translated_data_json = get_post_meta($translated_id, '_elementor_data', true);
+        if (empty($translated_data_json)) {
+            return $data;
+        }
+
+        $translated_data = json_decode($translated_data_json, true);
+        if (!is_array($translated_data) || empty($translated_data)) {
+            return $data;
+        }
+
+        return $translated_data;
+    }
+
+    /**
+     * Placeholder for before_do_header / before_do_footer actions.
+     * Currently a no-op; the actual swap happens via the data filter above.
+     */
+    public function swap_elementor_template_location() {
+        // Reserved for future use if direct template ID injection is needed.
     }
 }
 
