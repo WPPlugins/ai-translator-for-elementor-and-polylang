@@ -309,6 +309,9 @@ class AITRFOEL_Settings {
                     <a href="#section-multilingual">🌍 <?php esc_html_e('Multilingual', 'ai-translator-for-elementor-and-polylang'); ?></a>
                     <a href="#section-switcher">🔄 <?php esc_html_e('Switcher', 'ai-translator-for-elementor-and-polylang'); ?></a>
                     <a href="#section-menus-widgets">📋 <?php esc_html_e('Menus & Widgets', 'ai-translator-for-elementor-and-polylang'); ?></a>
+                    <?php if (post_type_exists('elementor_library')): ?>
+                    <a href="#section-elementor-templates">🧩 <?php esc_html_e('Templates', 'ai-translator-for-elementor-and-polylang'); ?></a>
+                    <?php endif; ?>
                     <a href="#section-cache">💾 <?php esc_html_e('Cache', 'ai-translator-for-elementor-and-polylang'); ?></a>
                     <a href="#section-page-creation">📄 <?php esc_html_e('Pages', 'ai-translator-for-elementor-and-polylang'); ?></a>
                     <a href="#section-seo">🔍 <?php esc_html_e('SEO', 'ai-translator-for-elementor-and-polylang'); ?></a>
@@ -1059,6 +1062,144 @@ class AITRFOEL_Settings {
                         <button type="button" class="button aitrfoel-reset-defaults" data-sections="menus-widgets" title="<?php esc_attr_e('Reset Menus & Widgets settings to defaults', 'ai-translator-for-elementor-and-polylang'); ?>"><?php esc_html_e('Reset Menus & Widgets Defaults', 'ai-translator-for-elementor-and-polylang'); ?></button>
                     </div>
                 </div>
+
+                <!-- Elementor Templates -->
+                <?php if (post_type_exists('elementor_library')): ?>
+                <div class="aitrfoel-settings-section" id="section-elementor-templates">
+                    <h3><?php esc_html_e('🧩 Elementor Templates', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+                    
+                    <p class="description" style="margin-bottom: 15px; font-size: 13px;">
+                        <?php esc_html_e('Translate your Elementor headers, footers, and section templates. The translated content will automatically display on pages in the corresponding language.', 'ai-translator-for-elementor-and-polylang'); ?>
+                    </p>
+                    
+                    <?php
+                    $et_builtin_active = class_exists('AITRFOEL_Builtin_Integration') && AITRFOEL_Builtin_Integration::is_enabled();
+                    if (!$et_builtin_active): ?>
+                        <div style="padding: 20px; background: #f6f7f7; border: 1px solid #dcdcde; border-radius: 4px; text-align: center; color: #666;">
+                            <?php esc_html_e('Enable the built-in language system in the Multilingual section to translate Elementor templates.', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </div>
+                    <?php else:
+                        $et_builtin = AITRFOEL_Builtin_Integration::get_instance();
+                        $et_all_languages = $et_builtin->get_available_languages();
+                        $et_default_lang = $et_builtin->get_default_language();
+                        $et_secondary = array_filter($et_all_languages, function($l) use ($et_default_lang) {
+                            return $l->code !== $et_default_lang;
+                        });
+                        
+                        // List existing templates
+                        $et_templates = get_posts([
+                            'post_type'      => 'elementor_library',
+                            'post_status'    => 'publish',
+                            'posts_per_page' => -1,
+                            'meta_query'     => [
+                                ['key' => '_elementor_data', 'compare' => 'EXISTS'],
+                            ],
+                            'tax_query'      => !empty($et_secondary) ? [
+                                [
+                                    'taxonomy' => 'aitrfoel_language',
+                                    'field'    => 'slug',
+                                    'terms'    => array_map(function($l) { return $l->code; }, $et_secondary),
+                                    'operator' => 'NOT IN',
+                                ],
+                            ] : [],
+                        ]);
+                    ?>
+                    
+                    <?php if (empty($et_secondary)): ?>
+                        <div style="padding: 20px; background: #f6f7f7; border: 1px solid #dcdcde; border-radius: 4px; text-align: center; color: #666;">
+                            <?php esc_html_e('Add at least one additional language in the Multilingual section first.', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </div>
+                    <?php elseif (empty($et_templates)): ?>
+                        <div style="padding: 20px; background: #f6f7f7; border: 1px solid #dcdcde; border-radius: 4px; text-align: center; color: #666;">
+                            <?php esc_html_e('No Elementor templates (headers/footers/sections) found.', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </div>
+                    <?php else: ?>
+                    
+                    <!-- Template list -->
+                    <table class="widefat" style="margin-bottom: 16px;">
+                        <thead>
+                            <tr>
+                                <th style="padding: 8px; width: 35%;"><?php esc_html_e('Template', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                                <th style="padding: 8px; width: 15%;"><?php esc_html_e('Type', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                                <th style="padding: 8px;"><?php esc_html_e('Translations', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($et_templates as $tpl):
+                            $tpl_type = get_post_meta($tpl->ID, '_elementor_template_type', true);
+                            $tpl_translations = $et_builtin->get_post_translations($tpl->ID);
+                            $type_labels = [
+                                'header'  => __('Header', 'ai-translator-for-elementor-and-polylang'),
+                                'footer'  => __('Footer', 'ai-translator-for-elementor-and-polylang'),
+                                'section' => __('Section', 'ai-translator-for-elementor-and-polylang'),
+                                'page'    => __('Page', 'ai-translator-for-elementor-and-polylang'),
+                                'popup'   => __('Popup', 'ai-translator-for-elementor-and-polylang'),
+                            ];
+                            $type_label = isset($type_labels[$tpl_type]) ? $type_labels[$tpl_type] : ucfirst($tpl_type ?: 'Template');
+                        ?>
+                            <tr>
+                                <td style="padding: 8px;">
+                                    <strong><?php echo esc_html($tpl->post_title ?: __('(no title)', 'ai-translator-for-elementor-and-polylang')); ?></strong>
+                                    <span style="color: #999; font-size: 11px;">#<?php echo esc_html($tpl->ID); ?></span>
+                                </td>
+                                <td style="padding: 8px;">
+                                    <span style="background: #e8f0fe; color: #1a56db; padding: 2px 8px; border-radius: 3px; font-size: 12px;"><?php echo esc_html($type_label); ?></span>
+                                </td>
+                                <td style="padding: 8px;">
+                                    <?php foreach ($et_secondary as $lang):
+                                        $has = isset($tpl_translations[$lang->code]) && $tpl_translations[$lang->code] != $tpl->ID;
+                                    ?>
+                                        <span style="display: inline-flex; align-items: center; gap: 3px; margin-right: 8px; font-size: 12px;">
+                                            <?php echo AITRFOEL_Language_Mapper::get_flag_html($lang->code, 14); ?>
+                                            <?php echo esc_html(strtoupper($lang->code)); ?>
+                                            <?php if ($has): ?>
+                                                <span style="color: #16a34a;">✓</span>
+                                            <?php else: ?>
+                                                <span style="color: #dc2626;">✗</span>
+                                            <?php endif; ?>
+                                        </span>
+                                    <?php endforeach; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                    
+                    <!-- Translate buttons -->
+                    <div style="padding: 16px; background: linear-gradient(135deg, #f0f6fc 0%, #e8f0fe 100%); border: 1px solid #c3d9f0; border-radius: 6px;">
+                        <h4 style="margin: 0 0 8px; font-size: 14px;">🚀 <?php esc_html_e('Translate Templates', 'ai-translator-for-elementor-and-polylang'); ?></h4>
+                        <p class="description" style="margin: 0 0 12px; font-size: 12px;">
+                            <?php esc_html_e('Translate all Elementor headers, footers, and section templates. Already translated templates will be skipped. Uses your translation credits.', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </p>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                            <?php foreach ($et_secondary as $lang): ?>
+                            <button type="button" class="button aitrfoel-translate-tpl-lang" data-lang="<?php echo esc_attr($lang->code); ?>" data-name="<?php echo esc_attr($lang->name); ?>">
+                                <?php echo AITRFOEL_Language_Mapper::get_flag_html($lang->code, 16, 'vertical-align: middle; margin-right: 4px;'); ?>
+                                <?php echo esc_html(sprintf(
+                                    __('Translate → %s', 'ai-translator-for-elementor-and-polylang'),
+                                    strtoupper($lang->code)
+                                )); ?>
+                            </button>
+                            <?php endforeach; ?>
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <button type="button" class="button button-primary aitrfoel-translate-tpl-all">
+                                🌍 <?php esc_html_e('Translate All Languages', 'ai-translator-for-elementor-and-polylang'); ?>
+                            </button>
+                        </div>
+                        <div class="aitrfoel-tpl-translate-status" style="margin-top: 10px; display: none;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="spinner" style="float: none; visibility: visible; margin: 0;"></span>
+                                <span class="aitrfoel-tpl-translate-msg" style="font-size: 13px; color: #1d2327;"></span>
+                            </div>
+                            <div class="aitrfoel-tpl-translate-log" style="margin-top: 8px; max-height: 200px; overflow-y: auto; font-size: 12px; color: #555; font-family: monospace; background: #fff; padding: 8px; border-radius: 3px; border: 1px solid #dcdcde;"></div>
+                        </div>
+                    </div>
+                    
+                    <?php endif; // end templates check ?>
+                    <?php endif; // end builtin check ?>
+                </div>
+                <?php endif; // end elementor_library check ?>
 
                 <!-- Cache Settings -->
                 <div class="aitrfoel-settings-section" id="section-cache">
@@ -1817,6 +1958,87 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                     } else {
                         $arrow.css('transform', 'rotate(0deg)');
                     }
+                });
+
+                // --- Translate Elementor Templates ---
+                var tplRunning = false;
+                var $tplStatus = $('.aitrfoel-tpl-translate-status');
+                var $tplMsg = $('.aitrfoel-tpl-translate-msg');
+                var $tplLog = $('.aitrfoel-tpl-translate-log');
+
+                function tplLog(msg) {
+                    var time = new Date().toLocaleTimeString();
+                    $tplLog.append('<div>[' + time + '] ' + msg + '</div>');
+                    $tplLog.scrollTop($tplLog[0].scrollHeight);
+                }
+
+                function translateTemplatesLang(lang, name) {
+                    return new Promise(function(resolve) {
+                        $tplMsg.text('<?php echo esc_js(__('Translating templates for', 'ai-translator-for-elementor-and-polylang')); ?> ' + name + '...');
+                        tplLog('→ <?php echo esc_js(__('Translating templates →', 'ai-translator-for-elementor-and-polylang')); ?> ' + name);
+
+                        $.post(ajaxurl, {
+                            action: 'aitrfoel_auto_translate_templates',
+                            nonce: '<?php echo wp_create_nonce('aitrfoel_ajax_nonce'); ?>',
+                            target_lang: lang
+                        }).done(function(r) {
+                            if (r.success) {
+                                tplLog('  ' + r.data.message);
+                                if (r.data.details && r.data.details.length) {
+                                    r.data.details.forEach(function(d) {
+                                        tplLog('    ' + d);
+                                    });
+                                }
+                            } else {
+                                tplLog('  ⚠ ' + (r.data || '<?php echo esc_js(__('Error', 'ai-translator-for-elementor-and-polylang')); ?>'));
+                            }
+                            resolve();
+                        }).fail(function() {
+                            tplLog('  ✗ <?php echo esc_js(__('Request failed', 'ai-translator-for-elementor-and-polylang')); ?>');
+                            resolve();
+                        });
+                    });
+                }
+
+                function startTemplateTranslate(langs) {
+                    if (tplRunning) return;
+                    tplRunning = true;
+                    $tplStatus.show();
+                    $tplLog.empty();
+                    $('.aitrfoel-translate-tpl-lang, .aitrfoel-translate-tpl-all').prop('disabled', true);
+
+                    var chain = Promise.resolve();
+                    langs.forEach(function(l) {
+                        chain = chain.then(function() {
+                            return translateTemplatesLang(l.code, l.name);
+                        });
+                    });
+
+                    chain.then(function() {
+                        $tplMsg.text('<?php echo esc_js(__('Done! Reload to see updated status.', 'ai-translator-for-elementor-and-polylang')); ?>');
+                        $tplStatus.find('.spinner').css('visibility', 'hidden');
+                        tplLog('✓ <?php echo esc_js(__('All template translations complete.', 'ai-translator-for-elementor-and-polylang')); ?>');
+                        tplRunning = false;
+                        $('.aitrfoel-translate-tpl-lang, .aitrfoel-translate-tpl-all').prop('disabled', false);
+                        setTimeout(function() { location.reload(); }, 3000);
+                    });
+                }
+
+                $(document).on('click', '.aitrfoel-translate-tpl-lang', function() {
+                    var lang = $(this).data('lang');
+                    var name = $(this).data('name');
+                    if (!confirm('<?php echo esc_js(__('This will translate all Elementor templates (headers, footers, sections) for', 'ai-translator-for-elementor-and-polylang')); ?> ' + name + '. <?php echo esc_js(__('Uses translation credits. Continue?', 'ai-translator-for-elementor-and-polylang')); ?>')) return;
+                    startTemplateTranslate([{code: lang, name: name}]);
+                });
+
+                $(document).on('click', '.aitrfoel-translate-tpl-all', function() {
+                    var langs = [];
+                    $('.aitrfoel-translate-tpl-lang').each(function() {
+                        langs.push({code: $(this).data('lang'), name: $(this).data('name')});
+                    });
+                    if (!langs.length) return;
+                    if (!confirm('<?php echo esc_js(__('This will translate all Elementor templates for ALL languages. Uses translation credits. Continue?', 'ai-translator-for-elementor-and-polylang')); ?>')) return;
+                    startTemplateTranslate(langs);
                 });
             });
             </script>

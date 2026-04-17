@@ -71,6 +71,9 @@ class AITRFOEL_Ajax_Handler {
         // Auto-translate menus & widgets
         add_action('wp_ajax_aitrfoel_auto_translate_menus', [$this, 'handle_auto_translate_menus']);
         add_action('wp_ajax_aitrfoel_auto_translate_widgets', [$this, 'handle_auto_translate_widgets']);
+
+        // Auto-translate Elementor templates (headers/footers)
+        add_action('wp_ajax_aitrfoel_auto_translate_templates', [$this, 'handle_auto_translate_templates']);
     }
 
     /**
@@ -2866,6 +2869,124 @@ class AITRFOEL_Ajax_Handler {
                     $translated_count
                 ),
                 'translated' => $translated_count,
+            ]);
+
+        } catch (Exception $e) {
+            $this->handle_error($e);
+        }
+    }
+
+    /**
+     * Auto-translate Elementor templates (headers, footers, sections) for a target language.
+     * Called via AJAX from the Settings page.
+     */
+    public function handle_auto_translate_templates() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+
+            if (!current_user_can('manage_options')) {
+                throw new Exception(__('You do not have permission to perform this action.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            $target_lang = sanitize_text_field($_POST['target_lang'] ?? '');
+            if (empty($target_lang)) {
+                throw new Exception(__('No target language specified.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            if (!post_type_exists('elementor_library')) {
+                throw new Exception(__('Elementor is not active.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            $multilingual = class_exists('AITRFOEL_Multilingual_Manager') ? AITRFOEL_Multilingual_Manager::get_instance() : null;
+            if (!$multilingual || !$multilingual->is_active()) {
+                throw new Exception(__('No multilingual system active.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            // Find all default-language Elementor templates with data
+            $default_lang = $multilingual->get_default_language();
+            $query_args = [
+                'post_type'      => 'elementor_library',
+                'post_status'    => 'publish',
+                'posts_per_page' => -1,
+                'meta_query'     => [
+                    ['key' => '_elementor_data', 'compare' => 'EXISTS'],
+                ],
+            ];
+
+            // Exclude non-default language posts if built-in system
+            if (class_exists('AITRFOEL_Builtin_Integration') && AITRFOEL_Builtin_Integration::is_enabled()) {
+                $builtin = AITRFOEL_Builtin_Integration::get_instance();
+                $non_default = [];
+                foreach ($builtin->get_available_languages() as $l) {
+                    if ($l->code !== $default_lang) {
+                        $non_default[] = $l->code;
+                    }
+                }
+                if (!empty($non_default)) {
+                    $query_args['tax_query'] = [
+                        [
+                            'taxonomy' => 'aitrfoel_language',
+                            'field'    => 'slug',
+                            'terms'    => $non_default,
+                            'operator' => 'NOT IN',
+                        ],
+                    ];
+                }
+            }
+
+            $templates = get_posts($query_args);
+            if (empty($templates)) {
+                wp_send_json_success([
+                    'message'    => __('No Elementor templates found to translate.', 'ai-translator-for-elementor-and-polylang'),
+                    'translated' => 0,
+                    'skipped'    => 0,
+                    'details'    => [],
+                ]);
+                return;
+            }
+
+            $engine = AITRFOEL_Translation_Engine::get_instance();
+            $translated = 0;
+            $skipped = 0;
+            $errors = 0;
+            $details = [];
+
+            foreach ($templates as $template) {
+                $template_type = get_post_meta($template->ID, '_elementor_template_type', true);
+                $label = $template->post_title ?: ($template_type ?: 'Template #' . $template->ID);
+
+                // Skip if already translated for this language
+                $existing = $multilingual->get_post_translations($template->ID);
+                if (isset($existing[$target_lang]) && $existing[$target_lang] != $template->ID) {
+                    $details[] = sprintf(__('⏭ %s — already translated', 'ai-translator-for-elementor-and-polylang'), $label);
+                    $skipped++;
+                    continue;
+                }
+
+                // Translate using the engine
+                $result = $engine->translate_page($template->ID, $target_lang, $default_lang);
+
+                if (is_wp_error($result)) {
+                    $details[] = sprintf(__('✗ %s — %s', 'ai-translator-for-elementor-and-polylang'), $label, $result->get_error_message());
+                    $errors++;
+                } else {
+                    $details[] = sprintf(__('✓ %s → translated', 'ai-translator-for-elementor-and-polylang'), $label);
+                    $translated++;
+                }
+            }
+
+            wp_send_json_success([
+                'message' => sprintf(
+                    __('Elementor templates for %s: %d translated, %d skipped, %d errors.', 'ai-translator-for-elementor-and-polylang'),
+                    strtoupper($target_lang),
+                    $translated,
+                    $skipped,
+                    $errors
+                ),
+                'translated' => $translated,
+                'skipped'    => $skipped,
+                'errors'     => $errors,
+                'details'    => $details,
             ]);
 
         } catch (Exception $e) {
