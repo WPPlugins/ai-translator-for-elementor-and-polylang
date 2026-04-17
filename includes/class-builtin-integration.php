@@ -2402,6 +2402,17 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
                         }
                     }
                 }
+                
+                // Final fallback: direct menu ID map (handles Elementor Nav Menu widgets
+                // and other menus not assigned to any theme location)
+                $menu_id_map = get_option('aitrfoel_menu_id_map', []);
+                if (isset($menu_id_map[$requested_menu_id][$current_lang])) {
+                    $mapped_id = intval($menu_id_map[$requested_menu_id][$current_lang]);
+                    if ($mapped_id > 0) {
+                        $args['menu'] = $mapped_id;
+                        return $args;
+                    }
+                }
             }
         }
         

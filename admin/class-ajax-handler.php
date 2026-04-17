@@ -2463,6 +2463,153 @@ class AITRFOEL_Ajax_Handler {
 
             update_option('aitrfoel_menu_assignments', $assignments);
 
+            // Build a direct menu ID map (source_id → [lang → translated_id])
+            // This is used as a fallback in filter_nav_menu_by_language() for menus
+            // not assigned to theme locations (e.g. Elementor Nav Menu widgets).
+            $menu_id_map = get_option('aitrfoel_menu_id_map', []);
+
+            // Record location-based menus in the ID map
+            foreach ($assignments as $loc_slug => $lang_map) {
+                $source_id = isset($nav_menu_locations[$loc_slug]) ? (int) $nav_menu_locations[$loc_slug] : 0;
+                if ($source_id > 0 && isset($lang_map[$target_lang])) {
+                    if (!isset($menu_id_map[$source_id])) {
+                        $menu_id_map[$source_id] = [];
+                    }
+                    $menu_id_map[$source_id][$target_lang] = (int) $lang_map[$target_lang];
+                }
+            }
+
+            // Collect IDs of menus that are already translated versions (not sources)
+            $translated_ids = [];
+            foreach ($menu_id_map as $src => $lang_map) {
+                foreach ($lang_map as $l => $tid) {
+                    $translated_ids[] = (int) $tid;
+                }
+            }
+            // Also include location-assigned source IDs that were already processed
+            $processed_source_ids = [];
+            foreach ($nav_menu_locations as $loc => $loc_mid) {
+                if ((int) $loc_mid > 0) {
+                    $processed_source_ids[] = (int) $loc_mid;
+                }
+            }
+
+            // Translate remaining menus not assigned to any theme location
+            $all_menus = wp_get_nav_menus();
+            foreach ($all_menus as $menu_obj) {
+                $src_menu_id = (int) $menu_obj->term_id;
+
+                // Skip if already processed (assigned to a location)
+                if (in_array($src_menu_id, $processed_source_ids, true)) {
+                    continue;
+                }
+                // Skip if this is a translated menu created by us
+                if (in_array($src_menu_id, $translated_ids, true)) {
+                    continue;
+                }
+                // Skip if already has a translation for this language
+                if (isset($menu_id_map[$src_menu_id][$target_lang])) {
+                    $existing_obj = wp_get_nav_menu_object($menu_id_map[$src_menu_id][$target_lang]);
+                    if ($existing_obj) {
+                        $created_menus[] = [
+                            'location' => '(no location)',
+                            'menu_name' => $existing_obj->name,
+                            'skipped' => true,
+                        ];
+                        continue;
+                    }
+                }
+
+                $src_items = wp_get_nav_menu_items($src_menu_id);
+                if (empty($src_items)) {
+                    continue;
+                }
+
+                // Collect labels to translate
+                $labels = [];
+                foreach ($src_items as $item) {
+                    $label = trim($item->title);
+                    if ($label !== '' && !in_array($label, $labels, true)) {
+                        $labels[] = $label;
+                    }
+                }
+
+                // Batch translate
+                $label_translations = [];
+                if (!empty($labels)) {
+                    $result = $api->translate_batch($labels, $target_lang, $source_lang);
+                    if (!is_wp_error($result)) {
+                        $label_translations = $result;
+                    }
+                }
+
+                // Create translated menu clone
+                $new_name = $menu_obj->name . ' ' . $lang_upper;
+                $existing = wp_get_nav_menu_object($new_name);
+                if ($existing) {
+                    $new_mid = $existing->term_id;
+                    $old_items = wp_get_nav_menu_items($new_mid);
+                    if ($old_items) {
+                        foreach ($old_items as $old_item) {
+                            wp_delete_post($old_item->ID, true);
+                        }
+                    }
+                } else {
+                    $new_mid = wp_create_nav_menu($new_name);
+                    if (is_wp_error($new_mid)) {
+                        continue;
+                    }
+                }
+
+                $id_map = [];
+                foreach ($src_items as $item) {
+                    $translated_title = isset($label_translations[$item->title]) ? $label_translations[$item->title] : $item->title;
+                    $object_id = $item->object_id;
+                    $item_url = $item->url;
+                    if (in_array($item->type, ['post_type', 'taxonomy'], true) && $object_id) {
+                        $post_translations = $builtin->get_post_translations($object_id);
+                        if (isset($post_translations[$target_lang])) {
+                            $object_id = $post_translations[$target_lang];
+                            $item_url = '';
+                        }
+                    }
+                    $item_args = [
+                        'menu-item-title'     => $translated_title,
+                        'menu-item-url'       => $item_url,
+                        'menu-item-object'    => $item->object,
+                        'menu-item-object-id' => $object_id,
+                        'menu-item-type'      => $item->type,
+                        'menu-item-status'    => 'publish',
+                        'menu-item-target'    => $item->target,
+                        'menu-item-classes'   => implode(' ', (array) $item->classes),
+                        'menu-item-xfn'       => $item->xfn,
+                        'menu-item-position'  => $item->menu_order,
+                    ];
+                    if ($item->menu_item_parent && isset($id_map[$item->menu_item_parent])) {
+                        $item_args['menu-item-parent-id'] = $id_map[$item->menu_item_parent];
+                    }
+                    $new_item_id = wp_update_nav_menu_item($new_mid, 0, $item_args);
+                    if (!is_wp_error($new_item_id)) {
+                        $id_map[$item->db_id] = $new_item_id;
+                    }
+                }
+
+                // Store in ID map
+                if (!isset($menu_id_map[$src_menu_id])) {
+                    $menu_id_map[$src_menu_id] = [];
+                }
+                $menu_id_map[$src_menu_id][$target_lang] = (int) $new_mid;
+
+                $created_menus[] = [
+                    'location' => '(no location)',
+                    'menu_name' => $new_name,
+                    'items' => count($src_items),
+                    'skipped' => false,
+                ];
+            }
+
+            update_option('aitrfoel_menu_id_map', $menu_id_map);
+
             wp_send_json_success([
                 'message' => sprintf(
                     __('Menus translated and assigned for %s.', 'ai-translator-for-elementor-and-polylang'),

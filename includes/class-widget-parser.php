@@ -707,7 +707,9 @@ class AITRFOEL_Widget_Parser {
     // Protect only a subset of inline tags with structural risk.
     // IMPORTANT: Do NOT placeholderize strong/em/b/i/span so their inner text is visible to the model and can be translated.
     // Links ('a') are already excluded on purpose to preserve anchors.
-    $inline_tags = ['u','small','sup','sub','mark','code','kbd'];
+    // 'br' MUST be included: without it, <br> tags are sent raw to the AI which drops them,
+    // causing "Satisfait ou<br>remboursé" → "Satisfaction orrefund" (no line break, words merged).
+    $inline_tags = ['u','small','sup','sub','mark','code','kbd','br'];
         $map = [];
         $counter = 0;
 
