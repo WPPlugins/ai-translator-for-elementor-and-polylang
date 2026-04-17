@@ -2367,13 +2367,13 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         }
         
         $assignments = get_option('aitrfoel_menu_assignments', []);
-        if (empty($assignments) || !is_array($assignments)) {
-            return $args;
+        if (!is_array($assignments)) {
+            $assignments = [];
         }
         
         // Try by theme location first
         $location = isset($args['theme_location']) ? $args['theme_location'] : '';
-        if (!empty($location) && isset($assignments[$location][$current_lang])) {
+        if (!empty($location) && !empty($assignments) && isset($assignments[$location][$current_lang])) {
             $menu_id = intval($assignments[$location][$current_lang]);
             if ($menu_id > 0) {
                 $args['menu'] = $menu_id;
@@ -2735,29 +2735,70 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             return $data;
         }
 
-        // Check if this template has a translation for the current language
+        // Try loading a fully translated template first
         $translations = $this->get_post_translations($post_id);
-        if (!isset($translations[$current_lang])) {
-            return $data;
+        if (isset($translations[$current_lang])) {
+            $translated_id = (int) $translations[$current_lang];
+            if ($translated_id > 0 && get_post_status($translated_id) === 'publish') {
+                $translated_data_json = get_post_meta($translated_id, '_elementor_data', true);
+                if (!empty($translated_data_json)) {
+                    $translated_data = json_decode($translated_data_json, true);
+                    if (is_array($translated_data) && !empty($translated_data)) {
+                        // Translated template already has correct menu IDs baked in
+                        return $translated_data;
+                    }
+                }
+            }
         }
 
-        $translated_id = (int) $translations[$current_lang];
-        if ($translated_id <= 0 || get_post_status($translated_id) !== 'publish') {
-            return $data;
+        // Fallback: no translated template available — dynamically swap menu IDs
+        // in the original template data so Nav Menu widgets show the correct language menu
+        $menu_id_map = get_option('aitrfoel_menu_id_map', []);
+        $menu_assignments = get_option('aitrfoel_menu_assignments', []);
+
+        // Build a combined source→translated map from both location assignments and direct map
+        $combined_map = is_array($menu_id_map) ? $menu_id_map : [];
+        if (!empty($menu_assignments) && is_array($menu_assignments)) {
+            $nav_locations = get_nav_menu_locations();
+            foreach ($nav_locations as $loc => $loc_menu_id) {
+                $loc_menu_id = (int) $loc_menu_id;
+                if ($loc_menu_id > 0 && isset($menu_assignments[$loc][$current_lang])) {
+                    $combined_map[$loc_menu_id][$current_lang] = (int) $menu_assignments[$loc][$current_lang];
+                }
+            }
         }
 
-        // Load the translated template's Elementor data instead
-        $translated_data_json = get_post_meta($translated_id, '_elementor_data', true);
-        if (empty($translated_data_json)) {
-            return $data;
+        if (!empty($combined_map)) {
+            $this->swap_menu_ids_in_elementor_data_recursive($data, $combined_map, $current_lang);
         }
 
-        $translated_data = json_decode($translated_data_json, true);
-        if (!is_array($translated_data) || empty($translated_data)) {
-            return $data;
-        }
+        return $data;
+    }
 
-        return $translated_data;
+    /**
+     * Recursively swap nav-menu widget menu IDs in Elementor data at runtime.
+     *
+     * @param array  &$data       Elementor elements array (modified in place).
+     * @param array  $menu_id_map Source menu ID => [lang => translated menu ID].
+     * @param string $target_lang Target language code.
+     */
+    private function swap_menu_ids_in_elementor_data_recursive(&$data, $menu_id_map, $target_lang) {
+        foreach ($data as &$element) {
+            if (!is_array($element)) continue;
+
+            $widget_type = isset($element['widgetType']) ? $element['widgetType'] : '';
+            if ($widget_type === 'nav-menu' && isset($element['settings']['menu'])) {
+                $source_menu_id = (int) $element['settings']['menu'];
+                if ($source_menu_id > 0 && isset($menu_id_map[$source_menu_id][$target_lang])) {
+                    $element['settings']['menu'] = (string) $menu_id_map[$source_menu_id][$target_lang];
+                }
+            }
+
+            if (isset($element['elements']) && is_array($element['elements'])) {
+                $this->swap_menu_ids_in_elementor_data_recursive($element['elements'], $menu_id_map, $target_lang);
+            }
+        }
+        unset($element);
     }
 
     /**

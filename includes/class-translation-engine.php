@@ -2805,7 +2805,6 @@ class AITRFOEL_Translation_Engine {
             '_elementor_pro_version',
             '_elementor_page_settings',
             '_elementor_controls_usage',
-            '_elementor_conditions',         // Elementor Pro display conditions (header/footer/section)
         ];
         
         // Copy Astra theme meta fields to preserve page layout settings
