@@ -40,6 +40,20 @@ class AITRFOEL_Multilingual_Manager {
      */
     private function __construct() {
         $this->detect_multilingual_plugin();
+        
+        // AJAX handler for dismissing TranslatePress notice
+        add_action('wp_ajax_aitrfoel_dismiss_translatepress_notice', [$this, 'ajax_dismiss_translatepress_notice']);
+    }
+    
+    /**
+     * AJAX handler to dismiss TranslatePress notice
+     */
+    public function ajax_dismiss_translatepress_notice() {
+        check_ajax_referer('aitrfoel_dismiss_tp');
+        if (current_user_can('manage_options')) {
+            update_option('aitrfoel_translatepress_notice_dismissed', true);
+        }
+        wp_die();
     }
     
     /**
@@ -48,6 +62,12 @@ class AITRFOEL_Multilingual_Manager {
      * Otherwise: Polylang first (backward compatibility), then WPML, then built-in.
      */
     private function detect_multilingual_plugin() {
+        // Check for TranslatePress — not supported due to fundamentally different architecture
+        if ($this->is_translatepress_available()) {
+            AITRFOEL_Logger::log('Multilingual Manager: TranslatePress detected but not supported', 'warning');
+            add_action('admin_notices', [$this, 'admin_notice_translatepress']);
+        }
+
         // If the user explicitly enabled the built-in system, respect that choice
         // even if Polylang or WPML is also installed
         if ($this->is_builtin_available()) {
@@ -114,6 +134,46 @@ class AITRFOEL_Multilingual_Manager {
     }
     
     /**
+     * Check if TranslatePress is installed/active
+     */
+    private function is_translatepress_available() {
+        return class_exists('TRP_Translate_Press') || 
+               defined('TRP_PLUGIN_VERSION') ||
+               function_exists('trp_translate');
+    }
+    
+    /**
+     * Admin notice for TranslatePress detection
+     */
+    public function admin_notice_translatepress() {
+        // Only show on our plugin pages and dashboard
+        $screen = get_current_screen();
+        if (!$screen) return;
+        
+        $our_pages = ['toplevel_page_ai-translator', 'dashboard'];
+        $is_our_page = in_array($screen->id, $our_pages) || strpos($screen->id, 'ai-translator') !== false;
+        if (!$is_our_page) return;
+        
+        // Allow dismissal
+        $dismissed = get_option('aitrfoel_translatepress_notice_dismissed', false);
+        if ($dismissed) return;
+        
+        ?>
+        <div class="notice notice-warning is-dismissible" id="aitrfoel-translatepress-notice">
+            <p><strong><?php esc_html_e('Meep AI Translator — TranslatePress Detected', 'ai-translator-for-elementor-and-polylang'); ?></strong></p>
+            <p><?php esc_html_e('TranslatePress uses a fundamentally different translation approach (single-post with inline replacements) that is not compatible with this plugin. Meep AI Translator works with duplicate-post translation systems.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+            <p><?php _e('<strong>Supported systems:</strong> Polylang, WPML, or our Built-in Language System (recommended — includes menu and widget translation).', 'ai-translator-for-elementor-and-polylang'); ?></p>
+            <p><?php _e('You can enable the <strong>Built-in Language System</strong> in <a href="' . esc_url(admin_url('admin.php?page=ai-translator&tab=settings')) . '">Settings → Language Management</a> to get full translation support including menus and widgets.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+        </div>
+        <script>
+        jQuery(document).on('click', '#aitrfoel-translatepress-notice .notice-dismiss', function() {
+            jQuery.post(ajaxurl, { action: 'aitrfoel_dismiss_translatepress_notice', _wpnonce: '<?php echo wp_create_nonce('aitrfoel_dismiss_tp'); ?>' });
+        });
+        </script>
+        <?php
+    }
+    
+    /**
      * Get the active multilingual integration
      * 
      * @return AITRFOEL_Multilingual_Interface|null
@@ -177,6 +237,13 @@ class AITRFOEL_Multilingual_Manager {
      */
     public function is_builtin() {
         return $this->detected_plugin === 'builtin';
+    }
+    
+    /**
+     * Check if TranslatePress is detected (unsupported)
+     */
+    public function is_translatepress_detected() {
+        return $this->is_translatepress_available();
     }
     
     /**

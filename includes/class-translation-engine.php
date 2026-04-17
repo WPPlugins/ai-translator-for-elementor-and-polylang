@@ -1990,7 +1990,8 @@ class AITRFOEL_Translation_Engine {
         }
         
         // Handle self-closing tags with translation-resistant markers (inline, no newlines)
-        $text = str_replace(['<br>', '<br/>', '<br />'], "≪BR≫", $text);
+        // Case-insensitive, handles attributes like <br class=""> and variants like <BR/>
+        $text = preg_replace('/<br\s*\/?>/i', '≪BR≫', $text);
         
         // Strip HTML tags but preserve content and placeholders
         $text = wp_strip_all_tags($text);
@@ -2038,6 +2039,8 @@ class AITRFOEL_Translation_Engine {
         // If no HTML in original, strip any HTML the AI added and return
         if ($original_text === wp_strip_all_tags($original_text)) {
             $cleaned = wp_strip_all_tags($translated_text);
+            // Restore BR markers even in "no HTML" path (edge case: original was already cleaned)
+            $cleaned = str_replace('≪BR≫', '<br>', $cleaned);
             if ($cleaned !== $translated_text) {
                 AITRFOEL_Logger::log("No HTML in original, stripping AI-added HTML", 'debug');
             }
@@ -2062,7 +2065,8 @@ class AITRFOEL_Translation_Engine {
         if (!empty($orig_sequence) && $orig_sequence === $tr_sequence) {
             // AI preserved the same block-level HTML structure — use AI's response directly
             AITRFOEL_Logger::log("AI preserved block-level HTML structure, using AI response directly", 'info');
-            return $translated_text;
+            // Still restore BR markers in case they survived in the AI response
+            return str_replace('≪BR≫', '<br>', $translated_text);
         }
         
         // Block structure doesn't match — fall back to stripping and restoring
@@ -2086,9 +2090,13 @@ class AITRFOEL_Translation_Engine {
             // the AI response doesn't contain the placeholder markers
             if ($result === $cleaned_translated) {
                 AITRFOEL_Logger::log("Placeholder restoration had no effect (AI didn't return placeholders), falling back to pattern matching", 'warning');
-                return $this->restore_html_simple_patterns($cleaned_translated, $original_text);
+                $result = $this->restore_html_simple_patterns($cleaned_translated, $original_text);
+                $result = str_replace('≪BR≫', '<br>', $result);
+                return $result;
             }
             
+            // Restore BR markers from placeholder path
+            $result = str_replace('≪BR≫', '<br>', $result);
             return $result;
         } else {
             AITRFOEL_Logger::log("No placeholders found for hash: $original_hash", 'warning');
@@ -2096,7 +2104,11 @@ class AITRFOEL_Translation_Engine {
         
         // Fallback to simple pattern matching for backward compatibility
         AITRFOEL_Logger::log("Using fallback pattern matching", 'debug');
-        return $this->restore_html_simple_patterns($cleaned_translated, $original_text);
+        $result = $this->restore_html_simple_patterns($cleaned_translated, $original_text);
+        
+        // Always restore BR markers regardless of which path was taken
+        $result = str_replace('≪BR≫', '<br>', $result);
+        return $result;
     }
     
     /**
@@ -2151,8 +2163,7 @@ class AITRFOEL_Translation_Engine {
             }
         }
         
-        // Then restore simple BR tags (AFTER placeholder restoration) with new marker format
-        $translated_text = str_replace('≪BR≫', '<br>', $translated_text);
+        // NOTE: BR marker restoration moved to restore_html_formatting() to cover all paths
         
         AITRFOEL_Logger::log("HTML restoration complete", 'debug');
         return $translated_text;
