@@ -1989,8 +1989,8 @@ class AITRFOEL_Translation_Engine {
             AITRFOEL_Logger::log("Pattern $placeholder_prefix found $match_count matches", 'debug');
         }
         
-        // Handle self-closing tags with translation-resistant markers
-        $text = str_replace(['<br>', '<br/>', '<br />'], "\n≪BR≫\n", $text);
+        // Handle self-closing tags with translation-resistant markers (inline, no newlines)
+        $text = str_replace(['<br>', '<br/>', '<br />'], "≪BR≫", $text);
         
         // Strip HTML tags but preserve content and placeholders
         $text = wp_strip_all_tags($text);

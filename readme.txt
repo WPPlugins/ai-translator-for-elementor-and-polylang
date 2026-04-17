@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.19
+Stable tag: 1.4.20
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,10 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.20 =
+* Fixed: BR tags inside Elementor widgets now preserved during translation (e.g. line breaks in headings)
+* Fixed: Freemius API token no longer included in pro build ZIP
+
 = 1.4.19 =
 * Fixed: Admin trash view now shows all languages by default and language filter works correctly in trash
 * Fixed: Post status counts (All/Published/Draft/Trash) now reflect language filter selection

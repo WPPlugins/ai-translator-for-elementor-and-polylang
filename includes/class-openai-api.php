@@ -724,7 +724,7 @@ $source_instructions$lang_instructions$exclusion_instructions$glossary_instructi
 CRITICAL TRANSLATION RULES:
 1. Translate ONLY the meaningful text content - never translate HTML tags, CSS, or code
 2. Preserve ALL HTML formatting exactly: <p>, <br>, <strong>, <em>, <a>, etc.
-3. Keep placeholders unchanged: {name}, %s, %d, {{variable}}, [shortcode], and <ph id=\"n\"/>
+3. Keep placeholders unchanged: {name}, %s, %d, {{variable}}, [shortcode], <ph id=\"n\"/>, and ≪BR≫ (line break marker)
 4. Maintain the same tone: formal business text should stay formal
 5. For proper nouns, brands, and technical terms - use appropriate localization
 6. If source is Cyrillic/Russian, ensure you understand it correctly before translating
@@ -824,7 +824,7 @@ CRITICAL TRANSLATION RULES:
     $system_prompt = "You are a professional website translator. $source_instruction.
 Rules:
 1) Translate each string independently to $target_full.
-2) Preserve placeholders <ph id=\"n\"/> exactly and in order.
+2) Preserve placeholders <ph id=\"n\"/> and ≪BR≫ (line break marker) exactly and in order.
 3) Do NOT introduce or remove HTML tags beyond placeholders.
 4) Numbers, abbreviations, units, and short alphanumeric tokens (e.g. 36K, 500+, 24/7, 100%) must be kept EXACTLY as-is — do NOT add commentary or explanations, just return them unchanged.
 $source_instructions
