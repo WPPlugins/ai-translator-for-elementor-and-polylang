@@ -2893,6 +2893,8 @@ class AITRFOEL_Ajax_Handler {
                 throw new Exception(__('No target language specified.', 'ai-translator-for-elementor-and-polylang'));
             }
 
+            $mode = sanitize_text_field($_POST['mode'] ?? 'active'); // 'active' or 'all'
+
             if (!post_type_exists('elementor_library')) {
                 throw new Exception(__('Elementor is not active.', 'ai-translator-for-elementor-and-polylang'));
             }
@@ -2938,6 +2940,26 @@ class AITRFOEL_Ajax_Handler {
             if (empty($templates)) {
                 wp_send_json_success([
                     'message'    => __('No Elementor templates found to translate.', 'ai-translator-for-elementor-and-polylang'),
+                    'translated' => 0,
+                    'skipped'    => 0,
+                    'details'    => [],
+                ]);
+                return;
+            }
+
+            // Filter to active-only if mode is 'active'
+            if ($mode === 'active') {
+                $templates = array_filter($templates, function($tpl) {
+                    $conditions = get_post_meta($tpl->ID, '_elementor_conditions', true);
+                    $tpl_type = get_post_meta($tpl->ID, '_elementor_template_type', true);
+                    return !empty($conditions) || in_array($tpl_type, ['header', 'footer'], true);
+                });
+                $templates = array_values($templates); // re-index
+            }
+
+            if (empty($templates)) {
+                wp_send_json_success([
+                    'message'    => __('No active Elementor templates found to translate.', 'ai-translator-for-elementor-and-polylang'),
                     'translated' => 0,
                     'skipped'    => 0,
                     'details'    => [],
