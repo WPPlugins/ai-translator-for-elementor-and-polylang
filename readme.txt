@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.26
+Stable tag: 1.4.27
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,12 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.27 =
+* Fixed: Admin bar language switcher flag and text stacking vertically on some themes
+* Added: WooCommerce product fallback � show default language products when no translation exists (configurable)
+* Added: Force re-translate option for Elementor templates to fix incomplete translations
+* Fixed: WooCommerce breadcrumb and page detection on translated pages (shop, cart, checkout, my account)
+
 = 1.4.26 =
 * Improved: Templates section in Settings now splits into Active (headers/footers with display conditions) and Advanced (other templates) for cleaner UX
 * Improved: Template translate buttons now only translate active templates by default, with option to include all

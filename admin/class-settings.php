@@ -145,6 +145,11 @@ class AITRFOEL_Settings {
             'default' => true
         ]);
 
+        register_setting('aitrfoel_settings_group', 'aitrfoel_woo_product_fallback', [
+            'sanitize_callback' => 'boolval',
+            'default' => true
+        ]);
+
         // Taxonomy name translation (built-in language system)
         register_setting('aitrfoel_settings_group', 'aitrfoel_translate_taxonomy_names', [
             'sanitize_callback' => 'boolval',
@@ -1215,10 +1220,14 @@ class AITRFOEL_Settings {
                             </button>
                             <?php endforeach; ?>
                         </div>
-                        <div style="margin-top: 12px;">
+                        <div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
                             <button type="button" class="button button-primary aitrfoel-translate-tpl-all" data-mode="active">
                                 🌍 <?php esc_html_e('Translate All Languages', 'ai-translator-for-elementor-and-polylang'); ?>
                             </button>
+                            <label style="font-size: 12px; color: #646970; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                                <input type="checkbox" id="aitrfoel-tpl-force" value="1" style="margin: 0;">
+                                <?php esc_html_e('Force re-translate (replace existing translations)', 'ai-translator-for-elementor-and-polylang'); ?>
+                            </label>
                         </div>
                         <div class="aitrfoel-tpl-translate-status" style="margin-top: 10px; display: none;">
                             <div style="display: flex; align-items: center; gap: 8px;">
@@ -1489,6 +1498,7 @@ class AITRFOEL_Settings {
                     $woo_attributes = get_option('aitrfoel_woo_translate_attributes', true);
                     $woo_variations = get_option('aitrfoel_woo_translate_variations', true);
                     $woo_gallery_alt = get_option('aitrfoel_woo_translate_gallery_alt', true);
+                    $woo_fallback = get_option('aitrfoel_woo_product_fallback', true);
                     $has_woo = class_exists('WooCommerce');
                     ?>
                     
@@ -1596,6 +1606,22 @@ class AITRFOEL_Settings {
                                 <label for="aitrfoel_woo_translate_gallery_alt"><?php esc_html_e('Translate product image alt text', 'ai-translator-for-elementor-and-polylang'); ?></label>
                                 <p class="description">
                                     <?php esc_html_e('Translates alt text, captions, and descriptions of product images and gallery images for multilingual SEO.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="aitrfoel_woo_product_fallback"><?php esc_html_e('Product Fallback', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                            </th>
+                            <td>
+                                <input type="checkbox" 
+                                       id="aitrfoel_woo_product_fallback" 
+                                       name="aitrfoel_woo_product_fallback" 
+                                       value="1" 
+                                       <?php checked($woo_fallback); ?> />
+                                <label for="aitrfoel_woo_product_fallback"><?php esc_html_e('Show default language products when no translation exists', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                                <p class="description">
+                                    <?php esc_html_e('When browsing the shop in a non-default language, untranslated products will still appear (in the default language) instead of being hidden. Translated products always take priority.', 'ai-translator-for-elementor-and-polylang'); ?>
                                 </p>
                             </td>
                         </tr>
@@ -2080,17 +2106,20 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                     $tplLog.scrollTop($tplLog[0].scrollHeight);
                 }
 
-                function translateTemplatesLang(lang, name, mode) {
+                function translateTemplatesLang(lang, name, mode, force) {
                     return new Promise(function(resolve) {
                         $tplMsg.text('<?php echo esc_js(__('Translating templates for', 'ai-translator-for-elementor-and-polylang')); ?> ' + name + '...');
-                        tplLog('→ <?php echo esc_js(__('Translating templates →', 'ai-translator-for-elementor-and-polylang')); ?> ' + name);
+                        tplLog('→ <?php echo esc_js(__('Translating templates →', 'ai-translator-for-elementor-and-polylang')); ?> ' + name + (force ? ' (<?php echo esc_js(__('force re-translate', 'ai-translator-for-elementor-and-polylang')); ?>)' : ''));
 
-                        $.post(ajaxurl, {
+                        var postData = {
                             action: 'aitrfoel_auto_translate_templates',
                             nonce: '<?php echo wp_create_nonce('aitrfoel_ajax_nonce'); ?>',
                             target_lang: lang,
                             mode: mode || 'active'
-                        }).done(function(r) {
+                        };
+                        if (force) postData.force = 1;
+
+                        $.post(ajaxurl, postData).done(function(r) {
                             if (r.success) {
                                 tplLog('  ' + r.data.message);
                                 if (r.data.details && r.data.details.length) {
@@ -2113,6 +2142,7 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                     if (tplRunning) return;
                     tplRunning = true;
                     tplMode = mode || 'active';
+                    var force = $('#aitrfoel-tpl-force').is(':checked');
                     $tplStatus.show();
                     $tplLog.empty();
                     $('.aitrfoel-translate-tpl-lang, .aitrfoel-translate-tpl-all').prop('disabled', true);
@@ -2120,7 +2150,7 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                     var chain = Promise.resolve();
                     langs.forEach(function(l) {
                         chain = chain.then(function() {
-                            return translateTemplatesLang(l.code, l.name, tplMode);
+                            return translateTemplatesLang(l.code, l.name, tplMode, force);
                         });
                     });
 

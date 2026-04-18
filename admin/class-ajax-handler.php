@@ -2894,6 +2894,7 @@ class AITRFOEL_Ajax_Handler {
             }
 
             $mode = sanitize_text_field($_POST['mode'] ?? 'active'); // 'active' or 'all'
+            $force = !empty($_POST['force']); // Force re-translate even if translation exists
 
             if (!post_type_exists('elementor_library')) {
                 throw new Exception(__('Elementor is not active.', 'ai-translator-for-elementor-and-polylang'));
@@ -2977,12 +2978,18 @@ class AITRFOEL_Ajax_Handler {
                 $template_type = get_post_meta($template->ID, '_elementor_template_type', true);
                 $label = $template->post_title ?: ($template_type ?: 'Template #' . $template->ID);
 
-                // Skip if already translated for this language
+                // Skip if already translated for this language (unless force re-translate)
                 $existing = $multilingual->get_post_translations($template->ID);
-                if (isset($existing[$target_lang]) && $existing[$target_lang] != $template->ID) {
+                if (!$force && isset($existing[$target_lang]) && $existing[$target_lang] != $template->ID) {
                     $details[] = sprintf(__('⏭ %s — already translated', 'ai-translator-for-elementor-and-polylang'), $label);
                     $skipped++;
                     continue;
+                }
+
+                // If force re-translate and translation exists, delete the old translation first
+                if ($force && isset($existing[$target_lang]) && $existing[$target_lang] != $template->ID) {
+                    wp_delete_post((int) $existing[$target_lang], true);
+                    $details[] = sprintf(__('🔄 %s — re-translating (old translation removed)', 'ai-translator-for-elementor-and-polylang'), $label);
                 }
 
                 // Translate using the engine

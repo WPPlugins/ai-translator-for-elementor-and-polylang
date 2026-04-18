@@ -105,6 +105,14 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             // Filter taxonomy term names to show translated versions
             add_filter('get_term', [$this, 'filter_term_name'], 10, 2);
             add_filter('get_terms', [$this, 'filter_terms_names'], 10, 4);
+            
+            // Filter WooCommerce and WordPress page IDs to translated versions
+            add_filter('pre_option_page_on_front', [$this, 'filter_translated_page_option'], 10, 2);
+            add_filter('pre_option_woocommerce_shop_page_id', [$this, 'filter_translated_page_option'], 10, 2);
+            add_filter('pre_option_woocommerce_cart_page_id', [$this, 'filter_translated_page_option'], 10, 2);
+            add_filter('pre_option_woocommerce_checkout_page_id', [$this, 'filter_translated_page_option'], 10, 2);
+            add_filter('pre_option_woocommerce_myaccount_page_id', [$this, 'filter_translated_page_option'], 10, 2);
+            add_filter('pre_option_woocommerce_terms_page_id', [$this, 'filter_translated_page_option'], 10, 2);
         }
         
         // SEO: hreflang tags
@@ -165,6 +173,8 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         // Admin bar: language switcher in toolbar
         add_action('admin_bar_menu', [$this, 'add_admin_bar_language_switcher'], 100);
+        add_action('admin_head', [$this, 'admin_bar_switcher_css']);
+        add_action('wp_head', [$this, 'admin_bar_switcher_css']);
         
         // Admin: language column in posts list
         if (is_admin()) {
@@ -1246,6 +1256,52 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
     }
     
     /**
+     * Filter WordPress/WooCommerce page ID options to return translated page ID.
+     * Ensures is_front_page(), is_shop(), is_cart(), etc. work correctly
+     * when viewing a translated version of these pages.
+     *
+     * @param mixed  $pre_value Pre-filter value (false = not filtered yet).
+     * @param string $option    Option name.
+     * @return mixed Page ID of translated version, or $pre_value to use default.
+     */
+    public function filter_translated_page_option($pre_value, $option) {
+        if (!$this->is_active()) {
+            return $pre_value;
+        }
+
+        $current_lang = $this->get_current_language();
+        $default_lang = $this->get_default_language();
+
+        if (!$current_lang || $current_lang === $default_lang) {
+            return $pre_value;
+        }
+
+        // Prevent infinite loop: temporarily remove this filter while reading the option
+        static $filtering = [];
+        if (isset($filtering[$option])) {
+            return $pre_value;
+        }
+        $filtering[$option] = true;
+
+        $original_page_id = (int) get_option($option);
+        unset($filtering[$option]);
+
+        if ($original_page_id <= 0) {
+            return $pre_value;
+        }
+
+        $translations = $this->get_post_translations($original_page_id);
+        if (isset($translations[$current_lang])) {
+            $translated_id = (int) $translations[$current_lang];
+            if ($translated_id > 0 && get_post_status($translated_id) === 'publish') {
+                return $translated_id;
+            }
+        }
+
+        return $pre_value;
+    }
+
+    /**
      * Filter home_url to include current language prefix.
      * Ensures logo links, home links etc. point to the correct language.
      *
@@ -1401,19 +1457,82 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         // Filter archives, search, blog index, taxonomy archives
         if ($query->is_archive() || $query->is_home() || $query->is_search() || $query->is_tax()) {
+            $default_lang = $this->get_default_language();
+            $terms = [$current_lang];
+            
+            // WooCommerce product fallback: include default language products
+            // so untranslated products still appear on shop/category pages
+            $is_product_fallback = false;
+            if ($current_lang !== $default_lang && class_exists('WooCommerce') && get_option('aitrfoel_woo_product_fallback', true)) {
+                $queried_post_type = $query->get('post_type');
+                $is_product = ($queried_post_type === 'product')
+                    || (is_array($queried_post_type) && in_array('product', $queried_post_type, true));
+                if ($is_product) {
+                    $terms[] = $default_lang;
+                    $is_product_fallback = true;
+                }
+            }
+            
             $tax_query = $query->get('tax_query') ?: [];
             $tax_query[] = [
                 'taxonomy' => self::TAXONOMY,
                 'field'    => 'slug',
-                'terms'    => $current_lang,
+                'terms'    => $terms,
             ];
             $query->set('tax_query', $tax_query);
+            
+            // Deduplicate: remove default-lang products that have a current-lang translation
+            if ($is_product_fallback) {
+                add_filter('the_posts', [$this, 'deduplicate_fallback_products'], 10, 2);
+            }
         }
         
         // For single posts/pages: if language prefix is in URL but post is in a different language,
         // WordPress will handle the 404 naturally. We just ensure the current language is set.
     }
-    
+
+    /**
+     * Remove default-language products from results when a current-language translation exists.
+     * Runs once as a the_posts filter after WooCommerce product fallback query.
+     *
+     * @param array    $posts Array of WP_Post objects.
+     * @param WP_Query $query The query object.
+     * @return array
+     */
+    public function deduplicate_fallback_products($posts, $query) {
+        remove_filter('the_posts', [$this, 'deduplicate_fallback_products'], 10);
+
+        if (empty($posts)) {
+            return $posts;
+        }
+
+        $current_lang = $this->get_current_language();
+        $default_lang = $this->get_default_language();
+
+        // Collect IDs of default-lang source posts that have a translated version in this result set
+        $translated_source_ids = [];
+        foreach ($posts as $post) {
+            $lang = $this->get_post_language($post->ID);
+            if ($lang === $current_lang) {
+                // This is a translated product — find its source (default lang) post
+                $translations = $this->get_post_translations($post->ID);
+                if (isset($translations[$default_lang])) {
+                    $translated_source_ids[] = (int) $translations[$default_lang];
+                }
+            }
+        }
+
+        // Remove default-lang products whose translation is already in the results
+        if (!empty($translated_source_ids)) {
+            $posts = array_values(array_filter($posts, function($post) use ($translated_source_ids, $default_lang) {
+                $lang = $this->get_post_language($post->ID);
+                return !($lang === $default_lang && in_array((int) $post->ID, $translated_source_ids, true));
+            }));
+        }
+
+        return $posts;
+    }
+
     /**
      * Filter a single term to show its translated name on the frontend.
      * Reads from term meta `_aitrfoel_name_{lang}` set during translation.
@@ -2344,6 +2463,22 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
     // PER-LANGUAGE MENU ASSIGNMENT
     // =========================================================================
     
+    /**
+     * Output CSS for the admin bar language switcher to ensure inline layout.
+     * Some themes override admin bar styles causing flag + text to stack vertically.
+     */
+    public function admin_bar_switcher_css() {
+        if (!is_admin_bar_showing()) {
+            return;
+        }
+        echo '<style id="aitrfoel-admin-bar-lang-css">'
+            . '#wpadminbar .aitrfoel-admin-bar-lang > .ab-item { display: flex !important; align-items: center !important; }'
+            . '#wpadminbar .aitrfoel-admin-bar-lang > .ab-item img { flex-shrink: 0; }'
+            . '#wpadminbar .aitrfoel-admin-bar-lang .ab-submenu .ab-item { display: flex !important; align-items: center !important; }'
+            . '#wpadminbar .aitrfoel-admin-bar-lang .ab-submenu .ab-item img { flex-shrink: 0; }'
+            . '</style>';
+    }
+
     /**
      * Filter wp_nav_menu_args to swap the menu based on current language.
      * Uses option 'aitrfoel_menu_assignments' which stores:
