@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.29
+Stable tag: 1.4.30
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,9 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.30 =
+* Fixed: WordPress.org plugin page missing Description and Changelog (invalid UTF-8 byte in readme.txt)
+
 = 1.4.29 =
 * Fixed: WooCommerce product pages returning 404 when language prefix is enabled (e.g., /fr/product/my-product/)
 * Fixed: Rewrite rule ordering for CPT URLs with language prefix (WooCommerce products, custom post types)
