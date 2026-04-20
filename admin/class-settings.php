@@ -615,6 +615,11 @@ class AITRFOEL_Settings {
                             </td>
                         </tr>
                     </table>
+                    
+                    <!-- Inline Save (after Multilingual Plugin) -->
+                    <div class="aitrfoel-inline-save">
+                        <?php submit_button(__('Save Settings', 'ai-translator-for-elementor-and-polylang'), 'primary', 'submit', false); ?>
+                    </div>
                 </div>
                 
                 <!-- Language Switcher Settings -->

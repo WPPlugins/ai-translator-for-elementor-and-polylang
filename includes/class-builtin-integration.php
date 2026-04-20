@@ -910,7 +910,7 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         // Auto-flush rewrite rules when version changes OR when stored rules
         // are missing our language patterns (can happen after AJAX setup, reinstall, etc.)
-        $rules_version = '1.5.0'; // Bump this when rewrite rules change
+        $rules_version = '1.5.3'; // Bump this when rewrite rules change
         $stored_version = get_option('aitrfoel_rewrite_rules_version', '');
         $needs_flush = ($stored_version !== $rules_version);
         
@@ -933,52 +933,23 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             });
         }
         
-        // Language root: /fr/
-        add_rewrite_rule(
-            '^(' . $lang_pattern . ')/?$',
-            'index.php?lang=$matches[1]',
-            'top'
-        );
+        // === Rewrite rules use 'top' which adds to extra_rules_top array ===
+        // WordPress extra_rules_top uses FIFO: FIRST added = FIRST checked = HIGHEST priority.
+        // So we add from HIGHEST priority to LOWEST priority.
         
-        // Pagination: /fr/page/2/
-        add_rewrite_rule(
-            '^(' . $lang_pattern . ')/page/([0-9]+)/?$',
-            'index.php?lang=$matches[1]&paged=$matches[2]',
-            'top'
-        );
-        
-        // Feed: /fr/feed/
-        add_rewrite_rule(
-            '^(' . $lang_pattern . ')/feed/(feed|rdf|rss|rss2|atom)/?$',
-            'index.php?lang=$matches[1]&feed=$matches[2]',
-            'top'
-        );
-        add_rewrite_rule(
-            '^(' . $lang_pattern . ')/feed/?$',
-            'index.php?lang=$matches[1]&feed=feed',
-            'top'
-        );
-        
-        // Category: /fr/category/slug/
-        add_rewrite_rule(
-            '^(' . $lang_pattern . ')/category/(.+?)/?$',
-            'index.php?lang=$matches[1]&category_name=$matches[2]',
-            'top'
-        );
-        
-        // Tag: /fr/tag/slug/
-        add_rewrite_rule(
-            '^(' . $lang_pattern . ')/tag/(.+?)/?$',
-            'index.php?lang=$matches[1]&tag=$matches[2]',
-            'top'
-        );
-        
-        // Search: /fr/?s=query (handled by query var, no special rewrite needed)
-        
-        // Custom post type rules: archives + single posts
+        // 1. HIGHEST PRIORITY: Custom post type rules (most specific multi-segment patterns)
+        // Must be added FIRST so they're checked before the catch-all page rule.
+        // Fixes 404 for WooCommerce products and other CPTs with language prefix
+        // (e.g., /fr/product/my-product/ or /fr/boutique/produit/my-product/).
         $custom_post_types = get_post_types(['public' => true, '_builtin' => false], 'objects');
         foreach ($custom_post_types as $cpt) {
             $slug = isset($cpt->rewrite['slug']) ? $cpt->rewrite['slug'] : $cpt->name;
+            // WooCommerce sets rewrite slug to '/product' (with leading slash) — strip it
+            $slug = trim($slug, '/');
+            
+            if (empty($slug)) {
+                continue;
+            }
 
             // Single CPT post: /fr/product/my-product/
             add_rewrite_rule(
@@ -987,7 +958,7 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
                 'top'
             );
 
-            // Archive: /fr/product/
+            // Archive: /fr/product/ (or /fr/shop/)
             if ($cpt->has_archive) {
                 $archive_slug = $cpt->has_archive === true ? $slug : $cpt->has_archive;
                 add_rewrite_rule(
@@ -1003,19 +974,60 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             }
         }
         
-        // Catch-all for pages/hierarchical content with language prefix: /fr/parent/child/
-        // Added FIRST so it ends up BELOW the post rule (since 'top' prepends)
+        // 2. Tag: /fr/tag/slug/
         add_rewrite_rule(
-            '^(' . $lang_pattern . ')/(.+?)/?$',
-            'index.php?lang=$matches[1]&pagename=$matches[2]',
+            '^(' . $lang_pattern . ')/tag/(.+?)/?$',
+            'index.php?lang=$matches[1]&tag=$matches[2]',
             'top'
         );
         
-        // Posts with language prefix: /fr/post-slug/ (single-segment slugs)
-        // Added LAST so it ends up ABOVE the page catch-all
+        // 3. Category: /fr/category/slug/
+        add_rewrite_rule(
+            '^(' . $lang_pattern . ')/category/(.+?)/?$',
+            'index.php?lang=$matches[1]&category_name=$matches[2]',
+            'top'
+        );
+        
+        // 4. Feed: /fr/feed/
+        add_rewrite_rule(
+            '^(' . $lang_pattern . ')/feed/(feed|rdf|rss|rss2|atom)/?$',
+            'index.php?lang=$matches[1]&feed=$matches[2]',
+            'top'
+        );
+        add_rewrite_rule(
+            '^(' . $lang_pattern . ')/feed/?$',
+            'index.php?lang=$matches[1]&feed=feed',
+            'top'
+        );
+        
+        // 5. Pagination: /fr/page/2/
+        add_rewrite_rule(
+            '^(' . $lang_pattern . ')/page/([0-9]+)/?$',
+            'index.php?lang=$matches[1]&paged=$matches[2]',
+            'top'
+        );
+        
+        // Search: /fr/?s=query (handled by query var, no special rewrite needed)
+        
+        // 6. Posts with language prefix: /fr/post-slug/ (single-segment slugs)
         add_rewrite_rule(
             '^(' . $lang_pattern . ')/([^/]+)/?$',
             'index.php?lang=$matches[1]&name=$matches[2]',
+            'top'
+        );
+        
+        // 7. Language root: /fr/
+        add_rewrite_rule(
+            '^(' . $lang_pattern . ')/?$',
+            'index.php?lang=$matches[1]',
+            'top'
+        );
+        
+        // 8. LOWEST PRIORITY: Catch-all for pages/hierarchical content: /fr/parent/child/
+        // Must be LAST added so it's checked after all specific patterns above.
+        add_rewrite_rule(
+            '^(' . $lang_pattern . ')/(.+?)/?$',
+            'index.php?lang=$matches[1]&pagename=$matches[2]',
             'top'
         );
     }

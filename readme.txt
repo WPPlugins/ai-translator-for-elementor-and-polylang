@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.28
+Stable tag: 1.4.29
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,11 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.29 =
+* Fixed: WooCommerce product pages returning 404 when language prefix is enabled (e.g., /fr/product/my-product/)
+* Fixed: Rewrite rule ordering for CPT URLs with language prefix (WooCommerce products, custom post types)
+* Added: Save button in Multilingual Plugin settings section
+
 = 1.4.28 =
 * Fixed: Language switcher "Show language names" toggle not working (flags-text style and nav menu ignored settings)
 * Added: Name display format setting for language switcher (native name, English name, code uppercase, code lowercase)
@@ -115,7 +120,7 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 
 = 1.4.27 =
 * Fixed: Admin bar language switcher flag and text stacking vertically on some themes
-* Added: WooCommerce product fallback � show default language products when no translation exists (configurable)
+* Added: WooCommerce product fallback — show default language products when no translation exists (configurable)
 * Added: Force re-translate option for Elementor templates to fix incomplete translations
 * Fixed: WooCommerce breadcrumb and page detection on translated pages (shop, cart, checkout, my account)
 
