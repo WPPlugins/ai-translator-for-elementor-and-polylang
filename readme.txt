@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.27
+Stable tag: 1.4.28
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,15 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.28 =
+* Fixed: Language switcher "Show language names" toggle not working (flags-text style and nav menu ignored settings)
+* Added: Name display format setting for language switcher (native name, English name, code uppercase, code lowercase)
+* Added: Custom language names per language for the switcher
+* Added: Bundled local SVG country flags (86 flags, no external CDN dependency)
+* Improved: Language switcher preview renders actual frontend output
+* Improved: Added 116 missing translation strings across all 9 languages
+* Fixed: Build scripts now correctly exclude development files (meeptech.svg, .pot templates, readme folder)
+
 = 1.4.27 =
 * Fixed: Admin bar language switcher flag and text stacking vertically on some themes
 * Added: WooCommerce product fallback � show default language products when no translation exists (configurable)

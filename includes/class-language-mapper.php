@@ -468,15 +468,22 @@ class AITRFOEL_Language_Mapper {
     }
     
     /**
-     * Get flag image URL from flagcdn.com
+     * Get flag image URL (local bundled SVG, CDN fallback)
      * 
      * @param string $lang_code The language code
-     * @param int $width Flag width in pixels (default: 24)
+     * @param int $width Flag width in pixels (used for fallback CDN sizing)
      * @return string Flag image URL
      */
     public static function get_flag_url($lang_code, $width = 24) {
         $country_code = self::get_country_code($lang_code);
-        // flagcdn.com minimum width is 20 — w16 and below return 404
+        $local_file = 'assets/img/flags/' . $country_code . '.svg';
+        
+        // Use bundled SVG if available
+        if (defined('AITRFOEL_PLUGIN_DIR') && file_exists(AITRFOEL_PLUGIN_DIR . $local_file)) {
+            return AITRFOEL_PLUGIN_URL . $local_file;
+        }
+        
+        // Fallback to CDN for flags not bundled
         $w = max(20, intval($width));
         return 'https://flagcdn.com/w' . $w . '/' . $country_code . '.png';
     }

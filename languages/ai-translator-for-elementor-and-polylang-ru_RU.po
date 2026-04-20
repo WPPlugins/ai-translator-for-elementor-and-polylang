@@ -2328,3 +2328,448 @@ msgstr "Все переводы не удались."
 
 msgid "%d translation(s) completed successfully."
 msgstr "%d перевод(а) успешно завершены."
+
+#: admin/class-settings.php
+msgid "Templates"
+msgstr "Шаблоны"
+
+#: admin/class-settings.php
+msgid "Menus & Widgets"
+msgstr "Меню и Виджеты"
+
+#: admin/class-settings.php
+msgid "📋 Menus & Widgets"
+msgstr "📋 Меню и Виджеты"
+
+#: admin/class-settings.php
+msgid "Assign different navigation menus and control widget visibility per language. Only available when the built-in language system is active."
+msgstr "Назначайте разные навигационные меню и управляйте видимостью виджетов для каждого языка. Доступно только при активной встроенной языковой системе."
+
+#: admin/class-settings.php
+msgid "Enable the built-in language system in the Multilingual section to use per-language menus and widget visibility."
+msgstr "Включите встроенную языковую систему в разделе «Многоязычность», чтобы использовать меню и видимость виджетов для каждого языка."
+
+#: admin/class-settings.php
+msgid "Add at least one additional language in the Multilingual section to configure per-language menus and widgets."
+msgstr "Добавьте хотя бы один дополнительный язык в разделе «Многоязычность», чтобы настроить меню и виджеты для каждого языка."
+
+#: admin/class-settings.php
+msgid "Auto-Translate & Assign"
+msgstr "Автоперевод и назначение"
+
+#: admin/class-settings.php
+msgid "Automatically clone your menus, translate menu item labels and widget content, and assign everything per language. Uses your translation credits."
+msgstr "Автоматически клонируйте меню, переведите подписи пунктов меню и содержимое виджетов, а затем назначьте всё для каждого языка. Использует ваши кредиты на перевод."
+
+#: admin/class-settings.php
+msgid "Translate All Languages"
+msgstr "Перевести на все языки"
+
+#: admin/class-settings.php
+msgid "Advanced: Manual Menu & Widget Assignment"
+msgstr "Дополнительно: Ручное назначение меню и виджетов"
+
+#: admin/class-settings.php
+msgid "Per-Language Menus"
+msgstr "Меню по языкам"
+
+#: admin/class-settings.php
+msgid "The default language uses the menu assigned in Appearance → Menus. Select a different menu for each additional language below."
+msgstr "Язык по умолчанию использует меню, назначенное в Внешний вид → Меню. Выберите другое меню для каждого дополнительного языка ниже."
+
+#: admin/class-settings.php
+msgid "— Same as default —"
+msgstr "— Как по умолчанию —"
+
+#: admin/class-settings.php
+msgid "Widget Language Visibility"
+msgstr "Видимость виджетов по языкам"
+
+#: admin/class-settings.php
+msgid "Control which language(s) each widget is displayed for. Widgets with no language selected will show for all languages. Duplicate your footer/sidebar widgets and assign each copy to a specific language."
+msgstr "Управляйте тем, для какого языка (языков) отображается каждый виджет. Виджеты без выбранного языка будут отображаться для всех языков. Дублируйте виджеты подвала/боковой панели и назначьте каждую копию определённому языку."
+
+#: admin/class-settings.php
+msgid "Widget"
+msgstr "Виджет"
+
+#: admin/class-settings.php
+msgid "Show in Languages"
+msgstr "Показывать на языках"
+
+#: admin/class-settings.php
+msgid "Reset Menus & Widgets Defaults"
+msgstr "Сбросить меню и виджеты по умолчанию"
+
+#: admin/class-settings.php
+msgid "Reset Menus & Widgets settings to defaults"
+msgstr "Сбросить настройки меню и виджетов по умолчанию"
+
+#: admin/class-settings.php
+msgid "🧩 Elementor Templates"
+msgstr "🧩 Шаблоны Elementor"
+
+#: admin/class-settings.php
+msgid "Enable the built-in language system in the Multilingual section to translate Elementor templates."
+msgstr "Включите встроенную языковую систему в разделе «Многоязычность», чтобы переводить шаблоны Elementor."
+
+#: admin/class-settings.php
+msgid "Add at least one additional language in the Multilingual section first."
+msgstr "Сначала добавьте хотя бы один дополнительный язык в разделе «Многоязычность»."
+
+#: admin/class-settings.php
+msgid "No Elementor templates found."
+msgstr "Шаблоны Elementor не найдены."
+
+#: admin/class-settings.php
+msgid "These templates are actively displayed on your site (headers, footers, and page templates with display conditions). Translate them to show the correct content for each language."
+msgstr "Эти шаблоны активно отображаются на вашем сайте (заголовки, подвалы и шаблоны страниц с условиями показа). Переведите их, чтобы показывать правильный контент для каждого языка."
+
+#: admin/class-settings.php
+msgid "Template"
+msgstr "Шаблон"
+
+#: admin/class-settings.php
+msgid "No active templates detected. Your Elementor templates may not have display conditions set. Check the Advanced section below for all templates."
+msgstr "Активные шаблоны не обнаружены. Возможно, у ваших шаблонов Elementor не заданы условия показа. Проверьте раздел «Дополнительно» ниже для всех шаблонов."
+
+#: admin/class-settings.php
+msgid "Translate Active Templates"
+msgstr "Перевести активные шаблоны"
+
+#: admin/class-settings.php
+msgid "Translates your headers, footers, and other active page templates. Already translated templates will be skipped. Uses your translation credits."
+msgstr "Переводит заголовки, подвалы и другие активные шаблоны страниц. Уже переведённые шаблоны будут пропущены. Использует ваши кредиты на перевод."
+
+#: admin/class-settings.php
+msgid "Force re-translate (replace existing translations)"
+msgstr "Принудительно перевести заново (заменить существующие переводы)"
+
+#: admin/class-settings.php
+msgid "These are reusable sections, containers, popups, and loop templates. They are usually embedded inside pages that are already translated, so translating them separately is optional."
+msgstr "Это повторно используемые секции, контейнеры, всплывающие окна и шаблоны циклов. Обычно они встроены в страницы, которые уже переведены, поэтому переводить их отдельно необязательно."
+
+#: admin/class-settings.php
+msgid "Translate All Templates (including advanced)"
+msgstr "Перевести все шаблоны (включая дополнительные)"
+
+#: admin/class-settings.php
+msgid "Header"
+msgstr "Шапка"
+
+#: admin/class-settings.php
+msgid "Footer"
+msgstr "Подвал"
+
+#: admin/class-settings.php
+msgid "Single Page"
+msgstr "Отдельная страница"
+
+#: admin/class-settings.php
+msgid "Blog Post"
+msgstr "Запись блога"
+
+#: admin/class-settings.php
+msgid "Archive"
+msgstr "Архив"
+
+#: admin/class-settings.php
+msgid "Product"
+msgstr "Товар"
+
+#: admin/class-settings.php
+msgid "Shop Page"
+msgstr "Страница магазина"
+
+#: admin/class-settings.php
+msgid "404 Page"
+msgstr "Страница 404"
+
+#: admin/class-settings.php
+msgid "Search Results"
+msgstr "Результаты поиска"
+
+#: admin/class-settings.php
+msgid "Section"
+msgstr "Секция"
+
+#: admin/class-settings.php
+msgid "Popup"
+msgstr "Всплывающее окно"
+
+#: admin/class-settings.php
+msgid "Loop Item"
+msgstr "Элемент цикла"
+
+#: admin/class-settings.php
+msgid "Kit"
+msgstr "Набор"
+
+#: admin/class-settings.php
+msgid "Name format:"
+msgstr "Формат имени:"
+
+#: admin/class-settings.php
+msgid "Native (Français, Deutsch)"
+msgstr "Родной (Français, Deutsch)"
+
+#: admin/class-settings.php
+msgid "English (French, German)"
+msgstr "Английский (French, German)"
+
+#: admin/class-settings.php
+msgid "Code uppercase (FR, DE)"
+msgstr "Код заглавными (FR, DE)"
+
+#: admin/class-settings.php
+msgid "Code lowercase (fr, de)"
+msgstr "Код строчными (fr, de)"
+
+#: admin/class-settings.php
+msgid "Custom names (optional — overrides the format above):"
+msgstr "Пользовательские имена (необязательно — переопределяет формат выше):"
+
+#: admin/class-settings.php
+msgid "Leave empty to use the selected format above."
+msgstr "Оставьте пустым, чтобы использовать выбранный формат выше."
+
+#: admin/class-settings.php
+msgid "This preview shows the exact output that will appear on the frontend. Save settings to update."
+msgstr "Этот предпросмотр показывает точный вывод, который появится на сайте. Сохраните настройки для обновления."
+
+#: admin/class-settings.php
+msgid "Enable Switcher"
+msgstr "Включить переключатель"
+
+#: admin/class-settings.php
+msgid "Output the language switcher on the frontend (shortcode, widget, and nav menu)"
+msgstr "Показывать переключатель языков на сайте (шорткод, виджет и меню навигации)"
+
+#: admin/class-settings.php
+msgid "Default Language URL Prefix"
+msgstr "Префикс URL языка по умолчанию"
+
+#: admin/class-settings.php
+msgid "Translate Category & Tag Names"
+msgstr "Перевести названия рубрик и меток"
+
+#: admin/class-settings.php
+msgid "Product Fallback"
+msgstr "Резервный товар"
+
+#: admin/class-settings.php
+msgid "Show default language products when no translation exists"
+msgstr "Показывать товары на языке по умолчанию, когда перевод отсутствует"
+
+#: admin/class-settings.php
+msgid "Add language prefix to the default language URLs (e.g., /fr/page/ instead of /page/)"
+msgstr "Добавить языковой префикс к URL-адресам языка по умолчанию (напр., /fr/page/ вместо /page/)"
+
+#: admin/class-settings.php
+msgid "When enabled, the default language will also get a URL prefix like other languages. Visitors accessing pages without a prefix will be redirected to the prefixed version. Only works with the built-in language system."
+msgstr "При включении язык по умолчанию также получит префикс URL, как и другие языки. Посетители, переходящие на страницы без префикса, будут перенаправлены на версию с префиксом. Работает только со встроенной языковой системой."
+
+#: admin/class-settings.php
+msgid "Uncheck to completely disable all language switcher output on your site."
+msgstr "Снимите флажок, чтобы полностью отключить вывод переключателя языков на вашем сайте."
+
+#: admin/class-settings.php
+msgid "No languages configured yet."
+msgstr "Языки ещё не настроены."
+
+#: admin/class-settings.php
+msgid "Reset Language Switcher settings to defaults"
+msgstr "Сбросить настройки переключателя языков по умолчанию"
+
+#: admin/class-settings.php
+msgid "Reset Switcher Defaults"
+msgstr "Сбросить настройки переключателя"
+
+#: admin/class-settings.php
+msgid "Reset Cache settings to defaults"
+msgstr "Сбросить настройки кеша по умолчанию"
+
+#: admin/class-settings.php
+msgid "Reset Cache Defaults"
+msgstr "Сбросить настройки кеша"
+
+#: admin/class-settings.php
+msgid "Reset Page Creation settings to defaults"
+msgstr "Сбросить настройки создания страниц по умолчанию"
+
+#: admin/class-settings.php
+msgid "Reset Pages Defaults"
+msgstr "Сбросить настройки страниц"
+
+#: admin/class-settings.php
+msgid "Reset SEO settings to defaults"
+msgstr "Сбросить настройки SEO по умолчанию"
+
+#: admin/class-settings.php
+msgid "Reset SEO Defaults"
+msgstr "Сбросить настройки SEO"
+
+#: admin/class-settings.php
+msgid "Reset WooCommerce settings to defaults"
+msgstr "Сбросить настройки WooCommerce по умолчанию"
+
+#: admin/class-settings.php
+msgid "Reset WooCommerce Defaults"
+msgstr "Сбросить настройки WooCommerce"
+
+#: admin/class-settings.php
+msgid "Reset these settings to their defaults?"
+msgstr "Сбросить эти настройки по умолчанию?"
+
+#: admin/class-settings.php
+msgid "✓ Reset — click Save to apply"
+msgstr "✓ Сброшено — нажмите Сохранить для применения"
+
+#: admin/class-settings.php
+msgid "When browsing the shop in a non-default language, untranslated products will still appear (in the default language) instead of being hidden. Translated products always take priority."
+msgstr "При просмотре магазина на неосновном языке непереведённые товары будут отображаться (на языке по умолчанию) вместо того, чтобы быть скрытыми. Переведённые товары всегда имеют приоритет."
+
+#: admin/class-settings.php
+msgid "Translate taxonomy term names into the target language"
+msgstr "Перевести названия терминов таксономии на целевой язык"
+
+#: admin/class-settings.php
+msgid "When translating posts or products, category and tag names are translated via AI and displayed in the correct language on the frontend. Works with WooCommerce product categories/tags and regular post categories/tags. Requires the built-in language system."
+msgstr "При переводе записей или товаров названия категорий и меток переводятся с помощью ИИ и отображаются на правильном языке на сайте. Работает с категориями/метками товаров WooCommerce и обычными категориями/метками записей. Требуется встроенная языковая система."
+
+#: admin/class-settings.php
+msgid "Translating menus for"
+msgstr "Перевод меню для"
+
+#: admin/class-settings.php
+msgid "Translating menus →"
+msgstr "Перевод меню →"
+
+#: admin/class-settings.php
+msgid "already assigned"
+msgstr "уже назначено"
+
+#: admin/class-settings.php
+msgid "Menus"
+msgstr "Меню"
+
+#: admin/class-settings.php
+msgid "Menu translation request failed"
+msgstr "Ошибка запроса перевода меню"
+
+#: admin/class-settings.php
+msgid "Translating widgets for"
+msgstr "Перевод виджетов для"
+
+#: admin/class-settings.php
+msgid "Translating widgets →"
+msgstr "Перевод виджетов →"
+
+#: admin/class-settings.php
+msgid "Widgets"
+msgstr "Виджеты"
+
+#: admin/class-settings.php
+msgid "Widget translation request failed"
+msgstr "Ошибка запроса перевода виджета"
+
+#: admin/class-settings.php
+msgid "Done! Reload the page to see updated assignments."
+msgstr "Готово! Перезагрузите страницу, чтобы увидеть обновлённые назначения."
+
+#: admin/class-settings.php
+msgid "All translations complete."
+msgstr "Все переводы завершены."
+
+#: admin/class-settings.php
+msgid "This will translate and assign menus + widget content for ALL languages. Uses translation credits. Continue?"
+msgstr "Это переведёт и назначит меню + содержимое виджетов для ВСЕХ языков. Использует кредиты на перевод. Продолжить?"
+
+#: admin/class-settings.php
+msgid "Translating templates for"
+msgstr "Перевод шаблонов для"
+
+#: admin/class-settings.php
+msgid "Translating templates →"
+msgstr "Перевод шаблонов →"
+
+#: admin/class-settings.php
+msgid "force re-translate"
+msgstr "принудительный повторный перевод"
+
+#: admin/class-settings.php
+msgid "Request failed"
+msgstr "Ошибка запроса"
+
+#: admin/class-settings.php
+msgid "Done! Reload to see updated status."
+msgstr "Готово! Перезагрузите, чтобы увидеть обновлённый статус."
+
+#: admin/class-settings.php
+msgid "All template translations complete."
+msgstr "Все переводы шаблонов завершены."
+
+#: admin/class-settings.php
+msgid "all"
+msgstr "все"
+
+#: admin/class-settings.php
+msgid "active"
+msgstr "активные"
+
+#: admin/class-settings.php
+msgid "Elementor templates for"
+msgstr "Шаблоны Elementor для"
+
+#: admin/class-settings.php
+msgid "Uses translation credits."
+msgstr "Использует кредиты на перевод."
+
+#: admin/class-settings.php
+msgid "ALL templates (including advanced)"
+msgstr "ВСЕ шаблоны (включая дополнительные)"
+
+#: admin/class-settings.php
+msgid "active templates"
+msgstr "активные шаблоны"
+
+#: admin/class-settings.php
+msgid "for ALL languages? Uses translation credits."
+msgstr "для ВСЕХ языков? Использует кредиты на перевод."
+
+
+
+
+#: admin/class-settings.php
+msgid "Translate → %s"
+msgstr "Перевести → %s"
+
+
+
+#: admin/class-settings.php
+msgid "Are you sure you want to reset all plugin data? This will:\n\n• Disable the built-in language system\n• Remove all configured languages\n• Reset the onboarding/welcome screen\n• Clear dependency status cache\n\nYour API key, translated pages, and other settings will be preserved.\n\nContinue?"
+msgstr "Вы уверены, что хотите сбросить все данные плагина? Это:\n\n• Отключит встроенную языковую систему\n• Удалит все настроенные языки\n• Сбросит экран приветствия/настройки\n• Очистит кеш статуса зависимостей\n\nВаш API-ключ, переведённые страницы и другие настройки будут сохранены.\n\nПродолжить?"
+
+#: admin/class-settings.php
+msgid "Your current theme has no registered navigation menu locations. Menu assignment per language is not available."
+msgstr "В вашей текущей теме нет зарегистрированных расположений навигационного меню. Назначение меню по языкам недоступно."
+
+#: admin/class-settings.php
+msgid "No menus found. %sCreate menus%s in Appearance → Menus first, then assign them per language here."
+msgstr "Меню не найдены. %sСоздайте меню%s в Внешний вид → Меню сначала, затем назначьте их по языкам здесь."
+
+#: admin/class-settings.php
+msgid "No active widgets found. %sAdd widgets%s to your sidebars first, then configure their language visibility here."
+msgstr "Активные виджеты не найдены. %sДобавьте виджеты%s в боковые панели сначала, затем настройте их видимость по языкам здесь."
+
+#: admin/class-settings.php
+msgid "Advanced: %d other templates (sections, popups, loops...)"
+msgstr "Дополнительно: %d других шаблонов (секции, всплывающие окна, циклы...)"
+
+#: admin/class-settings.php
+msgid "This will translate and assign menus + widget content for"
+msgstr "Это переведёт и назначит меню + содержимое виджетов для"
+
+#: admin/class-settings.php
+msgid "Uses translation credits. Continue?"
+msgstr "Использует кредиты на перевод. Продолжить?"

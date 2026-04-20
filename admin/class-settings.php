@@ -198,6 +198,22 @@ class AITRFOEL_Settings {
             'default' => true
         ]);
         
+        register_setting('aitrfoel_settings_group', 'aitrfoel_switcher_name_display', [
+            'sanitize_callback' => function($value) {
+                $allowed = ['native', 'english', 'code', 'code_lower'];
+                return in_array($value, $allowed, true) ? $value : 'native';
+            },
+            'default' => 'native'
+        ]);
+        
+        register_setting('aitrfoel_settings_group', 'aitrfoel_switcher_custom_names', [
+            'sanitize_callback' => function($value) {
+                if (!is_array($value)) return [];
+                return array_map('sanitize_text_field', $value);
+            },
+            'default' => []
+        ]);
+        
         register_setting('aitrfoel_settings_group', 'aitrfoel_switcher_custom_css', [
             'sanitize_callback' => 'wp_strip_all_tags',
             'default' => ''
@@ -654,6 +670,7 @@ class AITRFOEL_Settings {
                             <td>
                                 <?php $show_flags = get_option('aitrfoel_switcher_show_flags', true); ?>
                                 <?php $show_names = get_option('aitrfoel_switcher_show_names', true); ?>
+                                <?php $name_display = get_option('aitrfoel_switcher_name_display', 'native'); ?>
                                 <label>
                                     <input type="checkbox" name="aitrfoel_switcher_show_flags" value="1" <?php checked($show_flags); ?> />
                                     <?php esc_html_e('Show country flags', 'ai-translator-for-elementor-and-polylang'); ?>
@@ -663,6 +680,38 @@ class AITRFOEL_Settings {
                                     <input type="checkbox" name="aitrfoel_switcher_show_names" value="1" <?php checked($show_names); ?> />
                                     <?php esc_html_e('Show language names', 'ai-translator-for-elementor-and-polylang'); ?>
                                 </label>
+                                
+                                <div id="aitrfoel-name-display-options" style="margin-top: 10px; padding: 10px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; <?php echo !$show_names ? 'display:none;' : ''; ?>">
+                                    <label style="display: block; margin-bottom: 4px; font-weight: 500; font-size: 12px; color: #374151;"><?php esc_html_e('Name format:', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                                    <select name="aitrfoel_switcher_name_display" style="width: max-content; min-width: 200px;">
+                                        <option value="native" <?php selected($name_display, 'native'); ?>><?php esc_html_e('Native (Français, Deutsch)', 'ai-translator-for-elementor-and-polylang'); ?></option>
+                                        <option value="english" <?php selected($name_display, 'english'); ?>><?php esc_html_e('English (French, German)', 'ai-translator-for-elementor-and-polylang'); ?></option>
+                                        <option value="code" <?php selected($name_display, 'code'); ?>><?php esc_html_e('Code uppercase (FR, DE)', 'ai-translator-for-elementor-and-polylang'); ?></option>
+                                        <option value="code_lower" <?php selected($name_display, 'code_lower'); ?>><?php esc_html_e('Code lowercase (fr, de)', 'ai-translator-for-elementor-and-polylang'); ?></option>
+                                    </select>
+                                    
+                                    <?php
+                                    $custom_names = get_option('aitrfoel_switcher_custom_names', []);
+                                    $switcher_languages = [];
+                                    if (class_exists('AITRFOEL_Builtin_Integration') && AITRFOEL_Builtin_Integration::is_enabled()) {
+                                        $bi = AITRFOEL_Builtin_Integration::get_instance();
+                                        $switcher_languages = $bi->get_available_languages();
+                                    }
+                                    if (!empty($switcher_languages)): ?>
+                                    <div style="margin-top: 10px;">
+                                        <label style="display: block; margin-bottom: 4px; font-weight: 500; font-size: 12px; color: #374151;"><?php esc_html_e('Custom names (optional — overrides the format above):', 'ai-translator-for-elementor-and-polylang'); ?></label>
+                                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                            <?php foreach ($switcher_languages as $sl): ?>
+                                            <div style="display: flex; align-items: center; gap: 4px;">
+                                                <?php echo AITRFOEL_Language_Mapper::get_flag_html($sl->code, 16); ?>
+                                                <input type="text" name="aitrfoel_switcher_custom_names[<?php echo esc_attr($sl->code); ?>]" value="<?php echo esc_attr($custom_names[$sl->code] ?? ''); ?>" placeholder="<?php echo esc_attr($sl->native_name ?? $sl->name); ?>" style="width: 100px; font-size: 12px; padding: 2px 6px;">
+                                            </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <p class="description" style="margin-top: 4px; font-size: 11px;"><?php esc_html_e('Leave empty to use the selected format above.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
                             </td>
                         </tr>
                         
@@ -709,37 +758,41 @@ class AITRFOEL_Settings {
                             <td>
                                 <div style="background: #fff; border: 1px solid #dcdcde; border-radius: 4px; padding: 16px;">
                                     <?php
-                                    // Show a live preview of the language switcher
+                                    // Render actual shortcode output so preview matches frontend exactly
                                     if (class_exists('AITRFOEL_Builtin_Integration') && AITRFOEL_Builtin_Integration::is_enabled()) {
                                         $builtin = AITRFOEL_Builtin_Integration::get_instance();
-                                        $switcher_data = $builtin->get_language_switcher_data();
-                                        if (!empty($switcher_data)) {
-                                            echo '<div class="aitrfoel-switcher-preview">';
-                                            foreach ($switcher_data as $lang) {
-                                                $flag = AITRFOEL_Language_Mapper::get_flag_html($lang['code'], 20, 'margin-right: 4px;');
-                                                echo '<span style="display: inline-flex; align-items: center; padding: 4px 8px; margin-right: 6px; border: 1px solid #ddd; border-radius: 4px;">';
-                                                echo $flag . ' <span style="font-size: 13px;">' . esc_html(strtoupper($lang['code'])) . '</span>';
-                                                echo '</span>';
-                                            }
-                                            echo '</div>';
+                                        $preview_html = $builtin->render_language_switcher_shortcode();
+                                        if (!empty($preview_html)) {
+                                            echo $preview_html;
                                         } else {
                                             echo '<p style="color: #666; margin: 0;">' . esc_html__('No languages configured yet. Add languages in the Multilingual Plugin section above.', 'ai-translator-for-elementor-and-polylang') . '</p>';
                                         }
                                     } elseif (function_exists('pll_languages_list')) {
                                         $lang_codes = pll_languages_list(['fields' => 'slug']);
-                                        echo '<div class="aitrfoel-switcher-preview">';
-                                        foreach ($lang_codes as $lc) {
-                                            $flag = AITRFOEL_Language_Mapper::get_flag_html($lc, 20, 'margin-right: 4px;');
-                                            echo '<span style="display: inline-flex; align-items: center; padding: 4px 8px; margin-right: 6px; border: 1px solid #ddd; border-radius: 4px;">';
-                                            echo $flag . ' <span style="font-size: 13px;">' . esc_html(strtoupper($lc)) . '</span>';
-                                            echo '</span>';
+                                        if (!empty($lang_codes)) {
+                                            echo '<div class="aitrfoel-switcher-preview">';
+                                            foreach ($lang_codes as $lc) {
+                                                $flag = $show_flags ? AITRFOEL_Language_Mapper::get_flag_html($lc, 20, 'margin-right: 4px;') : '';
+                                                $pll_name = $show_names ? esc_html(strtoupper($lc)) : '';
+                                                if (!$show_flags && !$show_names) {
+                                                    $pll_name = esc_html(strtoupper($lc));
+                                                }
+                                                echo '<span style="display: inline-flex; align-items: center; padding: 4px 8px; margin-right: 6px; border: 1px solid #ddd; border-radius: 4px;">';
+                                                echo $flag . ($pll_name ? ' <span style="font-size: 13px;">' . $pll_name . '</span>' : '');
+                                                echo '</span>';
+                                            }
+                                            echo '</div>';
+                                        } else {
+                                            echo '<p style="color: #666; margin: 0;">' . esc_html__('No languages configured yet.', 'ai-translator-for-elementor-and-polylang') . '</p>';
                                         }
-                                        echo '</div>';
                                     } else {
                                         echo '<p style="color: #666; margin: 0;">' . esc_html__('No multilingual plugin active. Configure one first.', 'ai-translator-for-elementor-and-polylang') . '</p>';
                                     }
                                     ?>
                                 </div>
+                                <p class="description" style="margin-top: 6px;">
+                                    <?php esc_html_e('This preview shows the exact output that will appear on the frontend. Save settings to update.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
                             </td>
                         </tr>
                         
@@ -1894,6 +1947,7 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                         'aitrfoel_switcher_style': {type: 'select', val: 'flags-text'},
                         'aitrfoel_switcher_show_flags': {type: 'checkbox', val: true},
                         'aitrfoel_switcher_show_names': {type: 'checkbox', val: true},
+                        'aitrfoel_switcher_name_display': {type: 'select', val: 'native'},
                         'aitrfoel_switcher_custom_css': {type: 'textarea', val: ''},
                         'aitrfoel_switcher_hide_untranslated': {type: 'checkbox', val: false},
                         'aitrfoel_nav_menu_switcher': {type: 'checkbox', val: false},
@@ -1973,6 +2027,11 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                 
                 $('#aitrfoel_switcher_style').on('change', updateShortcodePreview);
                 $('input[name="aitrfoel_switcher_show_flags"], input[name="aitrfoel_switcher_show_names"]').on('change', updateShortcodePreview);
+                
+                // Toggle name display options visibility
+                $('input[name="aitrfoel_switcher_show_names"]').on('change', function() {
+                    $('#aitrfoel-name-display-options').toggle($(this).is(':checked'));
+                });
 
                 // --- Auto-Translate Menus & Widgets ---
                 var autoTranslateRunning = false;

@@ -1770,3 +1770,448 @@ msgstr "%d Übersetzung(en) erfolgreich abgeschlossen."
 
 msgid "Private"
 msgstr "Privat"
+
+#: admin/class-settings.php
+msgid "Templates"
+msgstr "Vorlagen"
+
+#: admin/class-settings.php
+msgid "Menus & Widgets"
+msgstr "Menüs & Widgets"
+
+#: admin/class-settings.php
+msgid "📋 Menus & Widgets"
+msgstr "📋 Menüs & Widgets"
+
+#: admin/class-settings.php
+msgid "Assign different navigation menus and control widget visibility per language. Only available when the built-in language system is active."
+msgstr "Weisen Sie verschiedene Navigationsmenüs zu und steuern Sie die Widget-Sichtbarkeit pro Sprache. Nur verfügbar, wenn das integrierte Sprachsystem aktiv ist."
+
+#: admin/class-settings.php
+msgid "Enable the built-in language system in the Multilingual section to use per-language menus and widget visibility."
+msgstr "Aktivieren Sie das integrierte Sprachsystem im Abschnitt Mehrsprachig, um sprachspezifische Menüs und Widget-Sichtbarkeit zu verwenden."
+
+#: admin/class-settings.php
+msgid "Add at least one additional language in the Multilingual section to configure per-language menus and widgets."
+msgstr "Fügen Sie mindestens eine zusätzliche Sprache im Abschnitt Mehrsprachig hinzu, um sprachspezifische Menüs und Widgets zu konfigurieren."
+
+#: admin/class-settings.php
+msgid "Auto-Translate & Assign"
+msgstr "Automatisch übersetzen & zuweisen"
+
+#: admin/class-settings.php
+msgid "Automatically clone your menus, translate menu item labels and widget content, and assign everything per language. Uses your translation credits."
+msgstr "Klonen Sie automatisch Ihre Menüs, übersetzen Sie Menüpunkt-Bezeichnungen und Widget-Inhalte und weisen Sie alles pro Sprache zu. Verwendet Ihre Übersetzungs-Credits."
+
+#: admin/class-settings.php
+msgid "Translate All Languages"
+msgstr "Alle Sprachen übersetzen"
+
+#: admin/class-settings.php
+msgid "Advanced: Manual Menu & Widget Assignment"
+msgstr "Erweitert: Manuelle Menü- & Widget-Zuweisung"
+
+#: admin/class-settings.php
+msgid "Per-Language Menus"
+msgstr "Menüs pro Sprache"
+
+#: admin/class-settings.php
+msgid "The default language uses the menu assigned in Appearance → Menus. Select a different menu for each additional language below."
+msgstr "Die Standardsprache verwendet das unter Design → Menüs zugewiesene Menü. Wählen Sie für jede zusätzliche Sprache unten ein anderes Menü."
+
+#: admin/class-settings.php
+msgid "— Same as default —"
+msgstr "— Gleich wie Standard —"
+
+#: admin/class-settings.php
+msgid "Widget Language Visibility"
+msgstr "Widget-Sichtbarkeit nach Sprache"
+
+#: admin/class-settings.php
+msgid "Control which language(s) each widget is displayed for. Widgets with no language selected will show for all languages. Duplicate your footer/sidebar widgets and assign each copy to a specific language."
+msgstr "Legen Sie fest, für welche Sprache(n) jedes Widget angezeigt wird. Widgets ohne ausgewählte Sprache werden für alle Sprachen angezeigt. Duplizieren Sie Ihre Footer-/Sidebar-Widgets und weisen Sie jede Kopie einer bestimmten Sprache zu."
+
+#: admin/class-settings.php
+msgid "Widget"
+msgstr "Widget"
+
+#: admin/class-settings.php
+msgid "Show in Languages"
+msgstr "Anzeigen in Sprachen"
+
+#: admin/class-settings.php
+msgid "Reset Menus & Widgets Defaults"
+msgstr "Menüs & Widgets auf Standard zurücksetzen"
+
+#: admin/class-settings.php
+msgid "Reset Menus & Widgets settings to defaults"
+msgstr "Menüs & Widgets-Einstellungen auf Standard zurücksetzen"
+
+#: admin/class-settings.php
+msgid "🧩 Elementor Templates"
+msgstr "🧩 Elementor-Vorlagen"
+
+#: admin/class-settings.php
+msgid "Enable the built-in language system in the Multilingual section to translate Elementor templates."
+msgstr "Aktivieren Sie das integrierte Sprachsystem im Abschnitt Mehrsprachig, um Elementor-Vorlagen zu übersetzen."
+
+#: admin/class-settings.php
+msgid "Add at least one additional language in the Multilingual section first."
+msgstr "Fügen Sie zuerst mindestens eine zusätzliche Sprache im Abschnitt Mehrsprachig hinzu."
+
+#: admin/class-settings.php
+msgid "No Elementor templates found."
+msgstr "Keine Elementor-Vorlagen gefunden."
+
+#: admin/class-settings.php
+msgid "These templates are actively displayed on your site (headers, footers, and page templates with display conditions). Translate them to show the correct content for each language."
+msgstr "Diese Vorlagen werden aktiv auf Ihrer Website angezeigt (Kopfzeilen, Fußzeilen und Seitenvorlagen mit Anzeigebedingungen). Übersetzen Sie sie, um den korrekten Inhalt für jede Sprache anzuzeigen."
+
+#: admin/class-settings.php
+msgid "Template"
+msgstr "Vorlage"
+
+#: admin/class-settings.php
+msgid "No active templates detected. Your Elementor templates may not have display conditions set. Check the Advanced section below for all templates."
+msgstr "Keine aktiven Vorlagen erkannt. Ihre Elementor-Vorlagen haben möglicherweise keine Anzeigebedingungen. Überprüfen Sie den erweiterten Abschnitt unten für alle Vorlagen."
+
+#: admin/class-settings.php
+msgid "Translate Active Templates"
+msgstr "Aktive Vorlagen übersetzen"
+
+#: admin/class-settings.php
+msgid "Translates your headers, footers, and other active page templates. Already translated templates will be skipped. Uses your translation credits."
+msgstr "Übersetzt Ihre Kopfzeilen, Fußzeilen und andere aktive Seitenvorlagen. Bereits übersetzte Vorlagen werden übersprungen. Verwendet Ihre Übersetzungs-Credits."
+
+#: admin/class-settings.php
+msgid "Force re-translate (replace existing translations)"
+msgstr "Neu übersetzen erzwingen (vorhandene Übersetzungen ersetzen)"
+
+#: admin/class-settings.php
+msgid "These are reusable sections, containers, popups, and loop templates. They are usually embedded inside pages that are already translated, so translating them separately is optional."
+msgstr "Dies sind wiederverwendbare Abschnitte, Container, Popups und Loop-Vorlagen. Sie sind normalerweise in bereits übersetzten Seiten eingebettet, daher ist eine separate Übersetzung optional."
+
+#: admin/class-settings.php
+msgid "Translate All Templates (including advanced)"
+msgstr "Alle Vorlagen übersetzen (einschließlich erweiterte)"
+
+#: admin/class-settings.php
+msgid "Header"
+msgstr "Kopfzeile"
+
+#: admin/class-settings.php
+msgid "Footer"
+msgstr "Fußzeile"
+
+#: admin/class-settings.php
+msgid "Single Page"
+msgstr "Einzelseite"
+
+#: admin/class-settings.php
+msgid "Blog Post"
+msgstr "Blogbeitrag"
+
+#: admin/class-settings.php
+msgid "Archive"
+msgstr "Archiv"
+
+#: admin/class-settings.php
+msgid "Product"
+msgstr "Produkt"
+
+#: admin/class-settings.php
+msgid "Shop Page"
+msgstr "Shop-Seite"
+
+#: admin/class-settings.php
+msgid "404 Page"
+msgstr "404-Seite"
+
+#: admin/class-settings.php
+msgid "Search Results"
+msgstr "Suchergebnisse"
+
+#: admin/class-settings.php
+msgid "Section"
+msgstr "Abschnitt"
+
+#: admin/class-settings.php
+msgid "Popup"
+msgstr "Popup"
+
+#: admin/class-settings.php
+msgid "Loop Item"
+msgstr "Loop-Element"
+
+#: admin/class-settings.php
+msgid "Kit"
+msgstr "Kit"
+
+#: admin/class-settings.php
+msgid "Name format:"
+msgstr "Namensformat:"
+
+#: admin/class-settings.php
+msgid "Native (Français, Deutsch)"
+msgstr "Nativ (Français, Deutsch)"
+
+#: admin/class-settings.php
+msgid "English (French, German)"
+msgstr "Englisch (French, German)"
+
+#: admin/class-settings.php
+msgid "Code uppercase (FR, DE)"
+msgstr "Code Großbuchstaben (FR, DE)"
+
+#: admin/class-settings.php
+msgid "Code lowercase (fr, de)"
+msgstr "Code Kleinbuchstaben (fr, de)"
+
+#: admin/class-settings.php
+msgid "Custom names (optional — overrides the format above):"
+msgstr "Benutzerdefinierte Namen (optional — überschreibt das obige Format):"
+
+#: admin/class-settings.php
+msgid "Leave empty to use the selected format above."
+msgstr "Leer lassen, um das oben ausgewählte Format zu verwenden."
+
+#: admin/class-settings.php
+msgid "This preview shows the exact output that will appear on the frontend. Save settings to update."
+msgstr "Diese Vorschau zeigt die genaue Ausgabe, die im Frontend erscheint. Speichern Sie die Einstellungen zum Aktualisieren."
+
+#: admin/class-settings.php
+msgid "Enable Switcher"
+msgstr "Switcher aktivieren"
+
+#: admin/class-settings.php
+msgid "Output the language switcher on the frontend (shortcode, widget, and nav menu)"
+msgstr "Sprachumschalter im Frontend ausgeben (Shortcode, Widget und Navigationsmenü)"
+
+#: admin/class-settings.php
+msgid "Default Language URL Prefix"
+msgstr "URL-Präfix für Standardsprache"
+
+#: admin/class-settings.php
+msgid "Translate Category & Tag Names"
+msgstr "Kategorie- & Schlagwortnamen übersetzen"
+
+#: admin/class-settings.php
+msgid "Product Fallback"
+msgstr "Produkt-Fallback"
+
+#: admin/class-settings.php
+msgid "Show default language products when no translation exists"
+msgstr "Produkte der Standardsprache anzeigen, wenn keine Übersetzung existiert"
+
+#: admin/class-settings.php
+msgid "Add language prefix to the default language URLs (e.g., /fr/page/ instead of /page/)"
+msgstr "Sprachpräfix zu den Standard-Sprach-URLs hinzufügen (z. B. /fr/page/ statt /page/)"
+
+#: admin/class-settings.php
+msgid "When enabled, the default language will also get a URL prefix like other languages. Visitors accessing pages without a prefix will be redirected to the prefixed version. Only works with the built-in language system."
+msgstr "Wenn aktiviert, erhält auch die Standardsprache ein URL-Präfix wie andere Sprachen. Besucher, die Seiten ohne Präfix aufrufen, werden zur Version mit Präfix weitergeleitet. Funktioniert nur mit dem integrierten Sprachsystem."
+
+#: admin/class-settings.php
+msgid "Uncheck to completely disable all language switcher output on your site."
+msgstr "Deaktivieren Sie diese Option, um die Sprachumschalter-Ausgabe auf Ihrer Website vollständig zu deaktivieren."
+
+#: admin/class-settings.php
+msgid "No languages configured yet."
+msgstr "Noch keine Sprachen konfiguriert."
+
+#: admin/class-settings.php
+msgid "Reset Language Switcher settings to defaults"
+msgstr "Sprachumschalter-Einstellungen auf Standard zurücksetzen"
+
+#: admin/class-settings.php
+msgid "Reset Switcher Defaults"
+msgstr "Sprachumschalter-Standardwerte zurücksetzen"
+
+#: admin/class-settings.php
+msgid "Reset Cache settings to defaults"
+msgstr "Cache-Einstellungen auf Standard zurücksetzen"
+
+#: admin/class-settings.php
+msgid "Reset Cache Defaults"
+msgstr "Cache-Standardwerte zurücksetzen"
+
+#: admin/class-settings.php
+msgid "Reset Page Creation settings to defaults"
+msgstr "Seitenerstellungs-Einstellungen auf Standard zurücksetzen"
+
+#: admin/class-settings.php
+msgid "Reset Pages Defaults"
+msgstr "Seiten-Standardwerte zurücksetzen"
+
+#: admin/class-settings.php
+msgid "Reset SEO settings to defaults"
+msgstr "SEO-Einstellungen auf Standard zurücksetzen"
+
+#: admin/class-settings.php
+msgid "Reset SEO Defaults"
+msgstr "SEO-Standardwerte zurücksetzen"
+
+#: admin/class-settings.php
+msgid "Reset WooCommerce settings to defaults"
+msgstr "WooCommerce-Einstellungen auf Standard zurücksetzen"
+
+#: admin/class-settings.php
+msgid "Reset WooCommerce Defaults"
+msgstr "WooCommerce-Standardwerte zurücksetzen"
+
+#: admin/class-settings.php
+msgid "Reset these settings to their defaults?"
+msgstr "Diese Einstellungen auf Standard zurücksetzen?"
+
+#: admin/class-settings.php
+msgid "✓ Reset — click Save to apply"
+msgstr "✓ Zurückgesetzt — klicken Sie auf Speichern zum Übernehmen"
+
+#: admin/class-settings.php
+msgid "When browsing the shop in a non-default language, untranslated products will still appear (in the default language) instead of being hidden. Translated products always take priority."
+msgstr "Beim Durchsuchen des Shops in einer Nicht-Standard-Sprache werden unübersetzte Produkte weiterhin (in der Standardsprache) angezeigt, anstatt ausgeblendet zu werden. Übersetzte Produkte haben immer Vorrang."
+
+#: admin/class-settings.php
+msgid "Translate taxonomy term names into the target language"
+msgstr "Taxonomie-Begriffsnamen in die Zielsprache übersetzen"
+
+#: admin/class-settings.php
+msgid "When translating posts or products, category and tag names are translated via AI and displayed in the correct language on the frontend. Works with WooCommerce product categories/tags and regular post categories/tags. Requires the built-in language system."
+msgstr "Beim Übersetzen von Beiträgen oder Produkten werden Kategorie- und Schlagwortnamen per KI übersetzt und im Frontend in der richtigen Sprache angezeigt. Funktioniert mit WooCommerce-Produktkategorien/-tags und regulären Beitragskategorien/-tags. Erfordert das integrierte Sprachsystem."
+
+#: admin/class-settings.php
+msgid "Translating menus for"
+msgstr "Menüs werden übersetzt für"
+
+#: admin/class-settings.php
+msgid "Translating menus →"
+msgstr "Menüs werden übersetzt →"
+
+#: admin/class-settings.php
+msgid "already assigned"
+msgstr "bereits zugewiesen"
+
+#: admin/class-settings.php
+msgid "Menus"
+msgstr "Menüs"
+
+#: admin/class-settings.php
+msgid "Menu translation request failed"
+msgstr "Menü-Übersetzungsanfrage fehlgeschlagen"
+
+#: admin/class-settings.php
+msgid "Translating widgets for"
+msgstr "Widgets werden übersetzt für"
+
+#: admin/class-settings.php
+msgid "Translating widgets →"
+msgstr "Widgets werden übersetzt →"
+
+#: admin/class-settings.php
+msgid "Widgets"
+msgstr "Widgets"
+
+#: admin/class-settings.php
+msgid "Widget translation request failed"
+msgstr "Widget-Übersetzungsanfrage fehlgeschlagen"
+
+#: admin/class-settings.php
+msgid "Done! Reload the page to see updated assignments."
+msgstr "Fertig! Laden Sie die Seite neu, um die aktualisierten Zuweisungen zu sehen."
+
+#: admin/class-settings.php
+msgid "All translations complete."
+msgstr "Alle Übersetzungen abgeschlossen."
+
+#: admin/class-settings.php
+msgid "This will translate and assign menus + widget content for ALL languages. Uses translation credits. Continue?"
+msgstr "Dies wird Menüs und Widget-Inhalte für ALLE Sprachen übersetzen und zuweisen. Verwendet Übersetzungs-Credits. Fortfahren?"
+
+#: admin/class-settings.php
+msgid "Translating templates for"
+msgstr "Vorlagen werden übersetzt für"
+
+#: admin/class-settings.php
+msgid "Translating templates →"
+msgstr "Vorlagen werden übersetzt →"
+
+#: admin/class-settings.php
+msgid "force re-translate"
+msgstr "Neu übersetzen erzwingen"
+
+#: admin/class-settings.php
+msgid "Request failed"
+msgstr "Anfrage fehlgeschlagen"
+
+#: admin/class-settings.php
+msgid "Done! Reload to see updated status."
+msgstr "Fertig! Laden Sie neu, um den aktualisierten Status zu sehen."
+
+#: admin/class-settings.php
+msgid "All template translations complete."
+msgstr "Alle Vorlagenübersetzungen abgeschlossen."
+
+#: admin/class-settings.php
+msgid "all"
+msgstr "alle"
+
+#: admin/class-settings.php
+msgid "active"
+msgstr "aktive"
+
+#: admin/class-settings.php
+msgid "Elementor templates for"
+msgstr "Elementor-Vorlagen für"
+
+#: admin/class-settings.php
+msgid "Uses translation credits."
+msgstr "Verwendet Übersetzungs-Credits."
+
+#: admin/class-settings.php
+msgid "ALL templates (including advanced)"
+msgstr "ALLE Vorlagen (einschließlich erweiterte)"
+
+#: admin/class-settings.php
+msgid "active templates"
+msgstr "aktive Vorlagen"
+
+#: admin/class-settings.php
+msgid "for ALL languages? Uses translation credits."
+msgstr "für ALLE Sprachen? Verwendet Übersetzungs-Credits."
+
+
+
+
+#: admin/class-settings.php
+msgid "Translate → %s"
+msgstr "Übersetzen → %s"
+
+
+
+#: admin/class-settings.php
+msgid "Are you sure you want to reset all plugin data? This will:\n\n• Disable the built-in language system\n• Remove all configured languages\n• Reset the onboarding/welcome screen\n• Clear dependency status cache\n\nYour API key, translated pages, and other settings will be preserved.\n\nContinue?"
+msgstr "Sind Sie sicher, dass Sie alle Plugin-Daten zurücksetzen möchten? Dies wird:\n\n• Das integrierte Sprachsystem deaktivieren\n• Alle konfigurierten Sprachen entfernen\n• Den Onboarding-/Willkommensbildschirm zurücksetzen\n• Den Abhängigkeitsstatus-Cache leeren\n\nIhr API-Schlüssel, übersetzte Seiten und andere Einstellungen bleiben erhalten.\n\nFortfahren?"
+
+#: admin/class-settings.php
+msgid "Your current theme has no registered navigation menu locations. Menu assignment per language is not available."
+msgstr "Ihr aktuelles Theme hat keine registrierten Navigationsmenü-Positionen. Die Menüzuweisung pro Sprache ist nicht verfügbar."
+
+#: admin/class-settings.php
+msgid "No menus found. %sCreate menus%s in Appearance → Menus first, then assign them per language here."
+msgstr "Keine Menüs gefunden. %sMenüs erstellen%s unter Design → Menüs, dann hier pro Sprache zuweisen."
+
+#: admin/class-settings.php
+msgid "No active widgets found. %sAdd widgets%s to your sidebars first, then configure their language visibility here."
+msgstr "Keine aktiven Widgets gefunden. %sWidgets hinzufügen%s zu Ihren Seitenleisten zuerst, dann hier die Sprachsichtbarkeit konfigurieren."
+
+#: admin/class-settings.php
+msgid "Advanced: %d other templates (sections, popups, loops...)"
+msgstr "Erweitert: %d weitere Vorlagen (Abschnitte, Popups, Loops...)"
+
+#: admin/class-settings.php
+msgid "This will translate and assign menus + widget content for"
+msgstr "Dies wird Menüs und Widget-Inhalte übersetzen und zuweisen für"
+
+#: admin/class-settings.php
+msgid "Uses translation credits. Continue?"
+msgstr "Verwendet Übersetzungs-Credits. Fortfahren?"

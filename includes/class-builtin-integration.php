@@ -2040,18 +2040,25 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             return $items;
         }
         
+        $show_flags = get_option('aitrfoel_switcher_show_flags', true);
+        $show_names = get_option('aitrfoel_switcher_show_names', true);
+        
         foreach ($switcher_data as $lang) {
             $class = 'menu-item menu-item-language';
             if ($lang['is_current']) {
                 $class .= ' current-language';
             }
-            $flag_html = AITRFOEL_Language_Mapper::get_flag_html($lang['code'], 16, 'margin-right: 4px;');
+            $flag_html = $show_flags ? AITRFOEL_Language_Mapper::get_flag_html($lang['code'], 16, 'margin-right: 4px;') : '';
+            $name_html = $show_names ? esc_html($this->get_language_display_name($lang)) : '';
+            if (!$show_flags && !$show_names) {
+                $name_html = esc_html(strtoupper($lang['code']));
+            }
             $items .= sprintf(
                 '<li class="%s"><a href="%s">%s%s</a></li>',
                 esc_attr($class),
                 esc_url($lang['url']),
                 $flag_html,
-                esc_html(strtoupper($lang['code']))
+                $name_html
             );
         }
         
@@ -2106,6 +2113,44 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
     }
     
     /**
+     * Get the display name for a language based on settings
+     * 
+     * @param array $lang Language data with code, name, native_name keys
+     * @return string The formatted display name
+     */
+    private function get_language_display_name($lang) {
+        return self::resolve_language_display_name($lang);
+    }
+    
+    /**
+     * Static version for use in settings preview
+     * 
+     * @param array $lang Language data with code, name, native_name keys
+     * @return string The formatted display name
+     */
+    public static function resolve_language_display_name($lang) {
+        // Check custom names first
+        $custom_names = get_option('aitrfoel_switcher_custom_names', []);
+        if (!empty($custom_names[$lang['code']])) {
+            return $custom_names[$lang['code']];
+        }
+        
+        $format = get_option('aitrfoel_switcher_name_display', 'native');
+        
+        switch ($format) {
+            case 'english':
+                return $lang['name'] ?? strtoupper($lang['code']);
+            case 'code':
+                return strtoupper($lang['code']);
+            case 'code_lower':
+                return strtolower($lang['code']);
+            case 'native':
+            default:
+                return $lang['native_name'] ?? $lang['name'] ?? strtoupper($lang['code']);
+        }
+    }
+    
+    /**
      * Render language switcher via shortcode
      * 
      * @param array $atts Shortcode attributes
@@ -2140,7 +2185,10 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             foreach ($switcher_data as $lang) {
                 $active_class = $lang['is_current'] ? ' active' : '';
                 $flag_html = $show_flags ? AITRFOEL_Language_Mapper::get_flag_html($lang['code'], 20, 'margin-right: 6px;') : '';
-                $name_html = $show_names ? esc_html($lang['native_name'] ?? $lang['name']) : esc_html(strtoupper($lang['code']));
+                $name_html = $show_names ? esc_html($this->get_language_display_name($lang)) : '';
+                if (!$show_flags && !$show_names) {
+                    $name_html = esc_html(strtoupper($lang['code']));
+                }
                 printf(
                     '<li class="aitrfoel-switcher-item%s"><a href="%s">%s%s</a></li>',
                     esc_attr($active_class),
@@ -2168,14 +2216,18 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             echo '<div class="aitrfoel-language-switcher aitrfoel-switcher-flags-text">';
             foreach ($switcher_data as $lang) {
                 $active_class = $lang['is_current'] ? ' active' : '';
-                $flag_html = AITRFOEL_Language_Mapper::get_flag_html($lang['code'], 20, 'margin-right: 4px;');
+                $flag_html = $show_flags ? AITRFOEL_Language_Mapper::get_flag_html($lang['code'], 20, 'margin-right: 4px;') : '';
+                $name_html = $show_names ? esc_html($this->get_language_display_name($lang)) : '';
+                if (!$show_flags && !$show_names) {
+                    $name_html = esc_html(strtoupper($lang['code']));
+                }
                 printf(
-                    '<a href="%s" class="aitrfoel-flag-text-link%s" title="%s">%s<span>%s</span></a>',
+                    '<a href="%s" class="aitrfoel-flag-text-link%s" title="%s">%s%s</a>',
                     esc_url($lang['url']),
                     esc_attr($active_class),
                     esc_attr($lang['name']),
                     $flag_html,
-                    esc_html(strtoupper($lang['code']))
+                    $name_html ? '<span>' . $name_html . '</span>' : ''
                 );
             }
             echo '</div>';
@@ -2188,7 +2240,10 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             if (!$current_lang) $current_lang = $switcher_data[0];
             
             $current_flag = $show_flags ? AITRFOEL_Language_Mapper::get_flag_html($current_lang['code'], 20, 'margin-right: 6px;') : '';
-            $current_label = $show_names ? esc_html($current_lang['native_name'] ?? $current_lang['name']) : esc_html(strtoupper($current_lang['code']));
+            $current_label = $show_names ? esc_html($this->get_language_display_name($current_lang)) : '';
+            if (!$show_flags && !$show_names) {
+                $current_label = esc_html(strtoupper($current_lang['code']));
+            }
             
             echo '<div class="aitrfoel-language-switcher aitrfoel-switcher-dropdown-wrapper">';
             echo '<button type="button" class="aitrfoel-dropdown-trigger" aria-expanded="false" aria-haspopup="listbox">';
@@ -2199,7 +2254,10 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             foreach ($switcher_data as $lang) {
                 $active_class = $lang['is_current'] ? ' active' : '';
                 $flag_html = $show_flags ? AITRFOEL_Language_Mapper::get_flag_html($lang['code'], 20, 'margin-right: 6px;') : '';
-                $label = $show_names ? esc_html($lang['native_name'] ?? $lang['name']) : esc_html(strtoupper($lang['code']));
+                $label = $show_names ? esc_html($this->get_language_display_name($lang)) : '';
+                if (!$show_flags && !$show_names) {
+                    $label = esc_html(strtoupper($lang['code']));
+                }
                 printf(
                     '<li role="option" class="aitrfoel-dropdown-item%s"><a href="%s">%s%s</a></li>',
                     esc_attr($active_class),
