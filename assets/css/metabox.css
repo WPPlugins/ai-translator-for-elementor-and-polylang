@@ -1,132 +1,76 @@
 /**
  * AI Translator – Translation Metabox Styles
- * Modernized with Meep Design System tokens
+ * Widget in the post/page edit screen sidebar
  */
 
 /* Wrapper */
 .aitrfoel-mb-wrapper {
     font-size: 13px;
     line-height: 1.5;
-    color: #1e293b;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
 }
 
-/* Header Card */
-.aitrfoel-mb-header-card {
+/* Labels */
+.aitrfoel-mb-label {
+    display: block;
+    font-weight: 600;
+    color: #1d2327;
+    margin-bottom: 4px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* Current language */
+.aitrfoel-mb-current-lang {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 8px 12px;
-    margin-bottom: 12px;
+    gap: 6px;
+    margin-bottom: 8px;
 }
 
-.aitrfoel-mb-meta-item {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+.aitrfoel-mb-current-lang strong {
+    font-size: 14px;
 }
 
-.aitrfoel-mb-meta-label {
+/* Badges */
+.aitrfoel-mb-badge {
+    display: inline-block;
     font-size: 10px;
-    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #64748b;
+    letter-spacing: 0.3px;
 }
 
-.aitrfoel-mb-lang-pill-wrap {
+.aitrfoel-mb-badge-source {
+    background: #e7f5e8;
+    color: #00a32a;
+}
+
+.aitrfoel-mb-badge-translation {
+    background: #f0f6fc;
+    color: #2271b1;
+}
+
+/* Content type */
+.aitrfoel-mb-content-type {
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
     gap: 6px;
 }
 
-.aitrfoel-mb-lang-code {
-    font-weight: 700;
-    font-size: 13px;
-    color: #0f172a;
-}
-
-/* Badges */
-.aitrfoel-mb-badge {
-    display: inline-flex;
-    align-items: center;
-    font-size: 10px;
-    padding: 1px 6px;
-    border-radius: 4px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.aitrfoel-mb-badge-source {
-    background: #dcfce7;
-    color: #15803d;
-}
-
-.aitrfoel-mb-badge-translation {
-    background: #eff6ff;
-    color: #1d4ed8;
-}
-
 .aitrfoel-mb-type-badge {
-    display: inline-flex;
-    align-items: center;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 2px 7px;
-    border-radius: 4px;
-    background: #f1f5f9;
-    color: #475569;
+    font-size: 12px;
+    color: #50575e;
 }
 
-.aitrfoel-mb-type-badge.aitrfoel-mb-type-gutenberg {
-    background: #e0e7ff;
-    color: #4338ca;
-}
-
-.aitrfoel-mb-type-badge.aitrfoel-mb-type-elementor {
-    background: #fce7f3;
-    color: #be185d;
-}
-
-/* Section Divider */
+/* Divider */
 .aitrfoel-mb-divider {
     border: none;
-    border-top: 1px solid #e2e8f0;
-    margin: 12px 0;
-}
-
-/* Section Header */
-.aitrfoel-mb-section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 6px;
-}
-
-.aitrfoel-mb-label {
-    display: block;
-    font-weight: 700;
-    color: #334155;
-    margin-bottom: 6px;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.aitrfoel-mb-toggle-all {
-    font-size: 11px !important;
-    color: #1447e6 !important;
-    text-decoration: none !important;
-    cursor: pointer;
-}
-
-.aitrfoel-mb-toggle-all:hover {
-    text-decoration: underline !important;
+    border-top: 1px solid #e0e0e0;
+    margin: 10px 0;
 }
 
 /* Translation list */
@@ -139,9 +83,10 @@
 .aitrfoel-mb-lang-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 0;
-    border-bottom: 1px solid #f1f5f9;
+    gap: 6px;
+    padding: 5px 0;
+    border-bottom: 1px solid #f0f0f0;
+    flex-wrap: wrap;
 }
 
 .aitrfoel-mb-lang-item:last-child {
@@ -149,169 +94,138 @@
 }
 
 .aitrfoel-mb-lang-flag {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 26px;
-    height: 18px;
-    font-size: 10px;
+    display: inline-block;
+    min-width: 24px;
+    text-align: center;
+    font-size: 11px;
     font-weight: 700;
     color: #fff;
-    background: #1447e6;
-    padding: 0 4px;
-    border-radius: 4px;
-    letter-spacing: 0.04em;
+    background: #2271b1;
+    padding: 1px 4px;
+    border-radius: 3px;
+    line-height: 1.4;
 }
 
 .aitrfoel-mb-lang-item.no-translation .aitrfoel-mb-lang-flag {
-    background: #94a3b8;
+    background: #b0b0b0;
 }
 
 .aitrfoel-mb-lang-name {
     flex: 1;
-    font-size: 12.5px;
-    font-weight: 500;
-    color: #0f172a;
+    font-size: 12px;
+    color: #1d2327;
     min-width: 60px;
 }
 
 /* Status badges */
 .aitrfoel-mb-status {
-    font-size: 10.5px;
-    font-weight: 600;
-    padding: 2px 7px;
-    border-radius: 4px;
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 3px;
     white-space: nowrap;
 }
 
 .aitrfoel-mb-status-publish {
-    background: #dcfce7;
-    color: #15803d;
+    background: #e7f5e8;
+    color: #00a32a;
 }
 
 .aitrfoel-mb-status-draft {
-    background: #fef3c7;
-    color: #b45309;
+    background: #fff8e5;
+    color: #996800;
 }
 
 .aitrfoel-mb-status-pending {
-    background: #fee2e2;
-    color: #b91c1c;
+    background: #fef0f0;
+    color: #a00;
 }
 
 .aitrfoel-mb-status-private {
-    background: #f1f5f9;
-    color: #475569;
+    background: #f0f0f0;
+    color: #50575e;
 }
 
 .aitrfoel-mb-status-missing {
-    background: #f8fafc;
-    color: #94a3b8;
-    border: 1px dashed #cbd5e1;
-    font-style: normal;
+    background: #f0f0f0;
+    color: #999;
+    font-style: italic;
 }
 
 /* Action links */
 .aitrfoel-mb-actions {
     display: flex;
-    align-items: center;
-    gap: 4px;
+    gap: 2px;
 }
 
 .aitrfoel-mb-actions a {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    border-radius: 4px;
-    color: #64748b;
-    border: 1px solid #e2e8f0;
-    background: #fff;
+    color: #2271b1;
     text-decoration: none;
-    transition: all .15s ease;
 }
 
 .aitrfoel-mb-actions a:hover {
-    color: #1447e6;
-    border-color: #1447e6;
-    background: #eff6ff;
+    color: #135e96;
 }
 
 .aitrfoel-mb-actions .dashicons {
-    font-size: 14px;
-    width: 14px;
-    height: 14px;
-    line-height: 14px;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
 }
 
-/* Checkboxes Area */
+/* Translate section */
+.aitrfoel-mb-translate-section {
+    margin-bottom: 8px;
+}
+
+/* Checkboxes */
 .aitrfoel-mb-lang-checkboxes {
-    max-height: 200px;
+    max-height: 180px;
     overflow-y: auto;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
     padding: 4px;
-    margin: 6px 0 10px;
+    margin: 6px 0;
     background: #fff;
 }
 
 .aitrfoel-mb-lang-checkbox {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 8px;
+    gap: 4px;
+    padding: 3px 4px;
     cursor: pointer;
-    border-radius: 4px;
+    border-radius: 3px;
     font-size: 12px;
-    transition: background-color .15s ease;
+    transition: background-color .15s;
 }
 
 .aitrfoel-mb-lang-checkbox:hover {
-    background: #f8fafc;
+    background: #f0f6fc;
 }
 
 .aitrfoel-mb-lang-checkbox input[type="checkbox"] {
     margin: 0;
-    border-radius: 3px;
 }
 
-.aitrfoel-mb-checkbox-flag {
-    font-size: 9.5px;
-    font-weight: 700;
-    color: #475569;
-    background: #e2e8f0;
-    padding: 1px 4px;
-    border-radius: 3px;
+.aitrfoel-mb-lang-checkbox.already-translated {
+    color: #787c82;
 }
 
-.aitrfoel-mb-checkbox-name {
-    flex: 1;
-    font-weight: 500;
-    color: #1e293b;
-}
-
-.aitrfoel-mb-missing-pill {
-    font-size: 9.5px;
-    font-weight: 700;
-    color: #16a34a;
-    background: #dcfce7;
-    padding: 1px 5px;
-    border-radius: 3px;
-    text-transform: uppercase;
-}
-
-.aitrfoel-mb-retranslate-hint {
-    font-size: 10px;
-    font-weight: 600;
-    color: #d97706;
-    background: #fef3c7;
-    padding: 1px 5px;
-    border-radius: 3px;
+.aitrfoel-mb-lang-checkbox.already-translated span:first-of-type {
+    text-decoration: line-through;
+    text-decoration-color: #ccc;
 }
 
 .aitrfoel-mb-lang-checkbox.retranslate-selected {
-    background: #fffbeb;
+    background: #fff8e5;
+}
+
+.aitrfoel-mb-retranslate-hint {
+    font-size: 14px;
+    color: #dba617;
+    cursor: help;
+    margin-left: auto;
 }
 
 /* Translate actions */
@@ -319,47 +233,11 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    margin: 10px 0 6px;
+    margin: 8px 0;
 }
 
 .aitrfoel-mb-translate-btn {
     flex: 1;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 6px !important;
-    height: 34px !important;
-    font-size: 12.5px !important;
-    font-weight: 600 !important;
-    background: #1447e6 !important;
-    border-color: #1447e6 !important;
-    border-radius: 6px !important;
-    color: #fff !important;
-    box-shadow: 0 1px 3px rgba(20, 71, 230, 0.25) !important;
-    transition: all .15s ease !important;
-}
-
-.aitrfoel-mb-translate-btn:hover {
-    background: #0d38c2 !important;
-    border-color: #0d38c2 !important;
-    box-shadow: 0 2px 6px rgba(20, 71, 230, 0.35) !important;
-}
-
-.aitrfoel-mb-translate-btn:disabled {
-    background: #94a3b8 !important;
-    border-color: #94a3b8 !important;
-    cursor: not-allowed !important;
-    box-shadow: none !important;
-}
-
-.aitrfoel-mb-btn-spinner {
-    animation: aitrfoel-spin 0.8s linear infinite;
-    flex-shrink: 0;
-}
-
-@keyframes aitrfoel-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
 }
 
 .aitrfoel-mb-translate-actions .spinner {
@@ -369,12 +247,12 @@
 
 /* Progress bar */
 .aitrfoel-mb-progress {
-    margin: 10px 0;
+    margin: 8px 0;
 }
 
 .aitrfoel-mb-progress-bar {
     height: 6px;
-    background: #e2e8f0;
+    background: #e0e0e0;
     border-radius: 3px;
     overflow: hidden;
     margin-bottom: 4px;
@@ -382,177 +260,108 @@
 
 .aitrfoel-mb-progress-fill {
     height: 100%;
-    background: #1447e6;
+    background: #2271b1;
     border-radius: 3px;
     width: 0;
     transition: width 0.4s ease;
 }
 
-.aitrfoel-mb-progress-fill.is-pulsing {
-    background: linear-gradient(90deg, #1447e6 0%, #3b82f6 50%, #1447e6 100%);
-    background-size: 200% 100%;
-    animation: aitrfoel-pulse-gradient 1.5s ease-in-out infinite;
-}
-
-@keyframes aitrfoel-pulse-gradient {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
-
 .aitrfoel-mb-progress-text {
-    font-size: 11.5px;
-    font-weight: 500;
-    color: #475569;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    font-size: 11px;
+    color: #50575e;
 }
 
-.aitrfoel-mb-progress-dot {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #1447e6;
-    animation: aitrfoel-dot-pulse 1s ease-in-out infinite alternate;
-}
-
-@keyframes aitrfoel-dot-pulse {
-    from { opacity: 0.3; transform: scale(0.8); }
-    to { opacity: 1; transform: scale(1.2); }
-}
-
-/* Message / Notice boxes */
+/* Message */
 .aitrfoel-mb-message {
-    padding: 10px 12px;
-    border-radius: 6px;
+    padding: 8px 10px;
+    border-radius: 4px;
     font-size: 12px;
     line-height: 1.5;
-    margin: 10px 0;
+    margin: 8px 0;
 }
 
 .aitrfoel-mb-message.success {
-    background: #ecfdf5;
-    border: 1px solid #a7f3d0;
-    color: #065f46;
+    background: #e7f5e8;
+    border-left: 3px solid #00a32a;
+    color: #1d2327;
 }
 
 .aitrfoel-mb-message.error {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #991b1b;
+    background: #fef0f0;
+    border-left: 3px solid #d63638;
+    color: #1d2327;
 }
 
 .aitrfoel-mb-message.info {
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    color: #1e40af;
+    background: #f0f6fc;
+    border-left: 3px solid #2271b1;
+    color: #1d2327;
 }
 
 /* Results list inside message */
 .aitrfoel-mb-results {
     list-style: none;
-    margin: 8px 0 0;
+    margin: 6px 0 0;
     padding: 0;
 }
 
 .aitrfoel-mb-results li {
-    padding: 4px 0;
+    padding: 3px 0;
     display: flex;
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.aitrfoel-mb-results li:first-child {
-    border-top: none;
 }
 
 .aitrfoel-mb-results a {
     font-size: 11px;
-    font-weight: 500;
 }
 
 /* Errors inside message */
 .aitrfoel-mb-errors {
-    margin-top: 8px;
+    margin-top: 6px;
     padding-top: 6px;
-    border-top: 1px solid rgba(153, 27, 27, 0.15);
+    border-top: 1px solid #e0e0e0;
 }
 
-.aitrfoel-mb-errors ul,
-.aitrfoel-mb-error-list {
+.aitrfoel-mb-errors ul {
     list-style: none;
     margin: 4px 0 0;
     padding: 0;
 }
 
-.aitrfoel-mb-errors li,
-.aitrfoel-mb-error-list li {
-    padding: 3px 0;
-    color: #991b1b;
-    font-size: 11.5px;
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-}
-
-/* Upgrade nudge */
-.aitrfoel-mb-nudge {
-    margin-top: 8px;
-    padding: 6px 8px;
-    background: #fffbeb;
-    border: 1px solid #fde68a;
-    border-radius: 4px;
+.aitrfoel-mb-errors li {
+    padding: 2px 0;
+    color: #a00;
     font-size: 11px;
-    color: #92400e;
-}
-
-.aitrfoel-mb-nudge a {
-    color: #b45309;
-    font-weight: 600;
-    text-decoration: underline;
-}
-
-/* Source Hint */
-.aitrfoel-mb-source-hint {
-    padding: 10px 12px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    font-size: 12px;
 }
 
 /* Footer link */
 .aitrfoel-mb-footer {
-    margin-top: 12px;
-    padding-top: 10px;
-    border-top: 1px solid #e2e8f0;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #e0e0e0;
     text-align: center;
 }
 
 .aitrfoel-mb-footer a {
-    color: #1447e6;
+    color: #2271b1;
     text-decoration: none;
     font-size: 12px;
-    font-weight: 600;
 }
 
 .aitrfoel-mb-footer a:hover {
+    color: #135e96;
     text-decoration: underline;
 }
 
 /* Notice */
 .aitrfoel-mb-notice {
-    color: #64748b;
-    font-size: 12.5px;
+    color: #50575e;
+    font-style: italic;
     margin: 0;
-    padding: 6px 0;
 }
 
 .aitrfoel-mb-notice a {
-    color: #1447e6;
-    font-weight: 600;
-    text-decoration: none;
+    color: #2271b1;
 }

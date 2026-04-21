@@ -10,19 +10,6 @@ class AITRFOEL_OpenAI_API {
     private static $instance = null;
     private $api_key;
     private $model;
-
-    /** Time budget forwarded from the translation engine for large-text chunking. */
-    private static $budget_start   = 0.0;
-    private static $budget_seconds = PHP_INT_MAX;
-
-    /**
-     * Called by the translation engine before the batch loop so that
-     * translate_large_text() can honour the same time budget.
-     */
-    public static function set_time_budget(float $start, int $seconds): void {
-        self::$budget_start   = $start;
-        self::$budget_seconds = $seconds;
-    }
     private $max_retries = 3;
     private $retry_delay = 500; // milliseconds - reduced from 1000ms for better performance
     private $usage_session = [
@@ -36,29 +23,13 @@ class AITRFOEL_OpenAI_API {
     const MEEPTECH_TRANSLATE_ENDPOINT = 'https://meeptech.com/api/eat/translate';
     
     /**
-     * Get dynamic MeepTech translate endpoint (supports AITRFOEL_API_BASE_URL constant and filters)
-     *
-     * @param string $subpath Optional subpath (e.g. 'batch', 'async/submit')
-     * @return string
-     */
-    public static function get_translate_endpoint($subpath = '') {
-        $base = defined('AITRFOEL_API_BASE_URL') ? AITRFOEL_API_BASE_URL : 'https://meeptech.com/api/eat';
-        $base = apply_filters('aitrfoel_api_base_url', $base);
-        $endpoint = rtrim($base, '/') . '/translate';
-        if (!empty($subpath)) {
-            $endpoint .= '/' . ltrim($subpath, '/');
-        }
-        return $endpoint;
-    }
-
-    /**
      * Available OpenAI models
      */
     const MODELS = [
-        'gpt-4o' => 'OpenAI ChatGPT (Latest model, best quality)',
-        'gpt-4o-mini' => 'OpenAI ChatGPT Fast (High speed, cost-effective)',
-        'gpt-4-turbo' => 'OpenAI ChatGPT Pro (High quality)',
-        'gpt-3.5-turbo' => 'OpenAI ChatGPT Standard (Economical)'
+        'gpt-4o' => 'GPT-4o (Best quality, fastest)',
+        'gpt-4o-mini' => 'GPT-4o Mini (Fast, cost-effective)',
+        'gpt-4-turbo' => 'GPT-4 Turbo (High quality)',
+        'gpt-3.5-turbo' => 'GPT-3.5 Turbo (Fast, economical)'
     ];
 
     public static function get_instance() {
@@ -191,334 +162,13 @@ class AITRFOEL_OpenAI_API {
     }
 
     /**
-     * Character length above which a single string is split into chunks before
-     * being sent to the API.  Keeping chunks ≤ 5 000 chars (~1 000 words) stays
-     * well within the 60 s per-request timeout even for slow API responses.
-     */
-    const LARGE_TEXT_THRESHOLD = 5000;
-
-    /**
-     * Translate single text.
-     * Strings longer than LARGE_TEXT_THRESHOLD are automatically split into
-     * paragraph-level chunks, translated individually and reassembled so that
-     * no single API call ever times out on giant legal / long-form content.
+     * Translate single text
      */
     public function translate_text($text, $target_lang, $source_lang = 'auto') {
-        if (empty(trim((string) $text))) {
-            return $text;
-        }
-
-        // Check Translation Memory (TM) first
-        $tm = class_exists('AITRFOEL_Translation_Memory') ? AITRFOEL_Translation_Memory::get_instance() : null;
-        if ($tm && $tm->is_enabled()) {
-            $cached = $tm->lookup_single($text, $target_lang, $source_lang);
-            if ($cached !== null) {
-                return $cached;
-            }
-        }
-
-        $map = [];
-        $protected_text = $this->protect_excluded_words($text, $map);
-
-        if (strlen($protected_text) > self::LARGE_TEXT_THRESHOLD) {
-            $translated = $this->translate_large_text($protected_text, $target_lang, $source_lang);
-        } else {
-            // Always use MeepTech server
-            $translated = $this->translate_via_meeptech($protected_text, $target_lang, $source_lang);
-        }
-
-        if (is_wp_error($translated)) {
-            return $translated;
-        }
-
-        $final = $this->restore_excluded_words($translated, $map);
-
-        // Store into Translation Memory for future instant reuse
-        if ($tm && !is_wp_error($final)) {
-            $tm->save_single($text, $final, $target_lang, $source_lang);
-        }
-
-        return $final;
+        // Always use MeepTech server
+        return $this->translate_via_meeptech($text, $target_lang, $source_lang);
     }
-
-    /**
-     * Translate a string that is too long for a single API call.
-     * Splits the content at HTML block-level tag boundaries, groups split
-     * segments into chunks ≤ LARGE_TEXT_THRESHOLD chars, translates each
-     * chunk and concatenates the results.
-     */
-    /**
-     * Split a (placeholder-prepared) HTML string into chunks no larger than $max
-     * characters, breaking only at block-level closing tags so each chunk remains a
-     * set of complete elements. Mirrors the chunking inside translate_large_text()
-     * so the async submit path produces identical chunks. Returns [] for empty
-     * input, or a single-element array when no block tags are present.
-     *
-     * @param string $text
-     * @param int    $max
-     * @return string[]
-     */
-    public static function split_html_into_chunks($text, $max = self::LARGE_TEXT_THRESHOLD) {
-        if (!is_string($text) || trim($text) === '') {
-            return [];
-        }
-        $sentinel   = "\x00SPLIT\x00";
-        $split_tags = 'p|h[1-6]|li|ul|ol|blockquote|table|thead|tbody|tfoot|tr|td|th|div|section|article|header|footer|figure|figcaption';
-        $chunked    = preg_replace('/<\/(' . $split_tags . ')>/iS', '</$1>' . $sentinel, $text);
-        $segments   = array_values(array_filter(
-            explode($sentinel, $chunked),
-            static fn($s) => trim($s) !== ''
-        ));
-        if (count($segments) <= 1) {
-            return [$text];
-        }
-        $chunks  = [];
-        $current = '';
-        foreach ($segments as $segment) {
-            if ($current !== '' && strlen($current) + strlen($segment) > $max) {
-                $chunks[] = $current;
-                $current  = $segment;
-            } else {
-                $current .= $segment;
-            }
-        }
-        if ($current !== '') {
-            $chunks[] = $current;
-        }
-        return $chunks;
-    }
-
-    private function translate_large_text($text, $target_lang, $source_lang = 'auto') {
-        $max = self::LARGE_TEXT_THRESHOLD;
-
-        // Insert a unique sentinel after every closing block-level tag so we
-        // can explode cleanly while keeping each segment a complete element.
-        $sentinel = "\x00SPLIT\x00";
-        $split_tags = 'p|h[1-6]|li|ul|ol|blockquote|table|thead|tbody|tfoot|tr|td|th|div|section|article|header|footer|figure|figcaption';
-        $chunked = preg_replace(
-            '/<\/(' . $split_tags . ')>/iS',
-            '</$1>' . $sentinel,
-            $text
-        );
-
-        $segments = array_values(array_filter(
-            explode($sentinel, $chunked),
-            static fn($s) => trim($s) !== ''
-        ));
-
-        // If no block tags found, fall back to sentence-level splitting.
-        if (count($segments) <= 1) {
-            return $this->translate_large_text_plain($text, $target_lang, $source_lang, $max);
-        }
-
-        // Group segments into chunks that fit within $max chars.
-        // If a single segment already exceeds $max (one very long <p>),
-        // treat it as its own chunk — it is still far smaller than the
-        // original 53 k+ string so the API will usually cope.
-        $chunks = [];
-        $current = '';
-        foreach ($segments as $segment) {
-            if ($current !== '' && strlen($current) + strlen($segment) > $max) {
-                $chunks[] = $current;
-                $current  = $segment;
-            } else {
-                $current .= $segment;
-            }
-        }
-        if ($current !== '') {
-            $chunks[] = $current;
-        }
-
-        $total_chunks   = count($chunks);
-        $cache_key_base = 'aitrfoel_chunk_' . md5($text . $target_lang);
-
-        AITRFOEL_Logger::log(
-            sprintf('Large string (%d chars) split into %d chunks for translation', strlen($text), $total_chunks),
-            'info'
-        );
-
-        // Translate chunks and reassemble.
-        // Each completed chunk is stored in a short-lived transient so that a
-        // timed-out request can be retried without re-doing already-done work.
-        // Uncached chunks are sent to the server in PARALLEL (one /translate
-        // request per chunk, fired concurrently) instead of one-at-a-time — this
-        // is what collapses ~N×20s of sequential calls into ~one chunk's time.
-        $translated_chunks    = []; // index => translated text (reassembled by ksort below)
-        $chunk_timed_out      = false;
-        $chunk_word_limit_hit = false;
-
-        // Pass 1: load any chunks already completed in a previous (timed-out) pass.
-        $to_translate = []; // index => chunk text (the uncached ones)
-        foreach ($chunks as $i => $chunk) {
-            $cached = get_transient($cache_key_base . '_' . $i);
-            if ($cached !== false) {
-                $translated_chunks[$i] = $cached;
-                AITRFOEL_Logger::log(sprintf('Chunk %d/%d loaded from transient cache', $i + 1, $total_chunks), 'debug');
-            } else {
-                $to_translate[$i] = $chunk;
-            }
-        }
-
-        // Pass 2: fire all uncached chunks in parallel (unless the time budget is nearly spent).
-        if (!empty($to_translate)) {
-            if (self::$budget_start > 0.0 && self::$budget_seconds < PHP_INT_MAX &&
-                (microtime(true) - self::$budget_start) >= (self::$budget_seconds - 30)) {
-                AITRFOEL_Logger::log(
-                    sprintf('[TIMING] Time budget nearly exhausted — deferring %d/%d remaining chunks to retry pass.', count($to_translate), $total_chunks),
-                    'warning'
-                );
-                $chunk_timed_out = true;
-            } else {
-                $results = $this->translate_chunks_parallel($to_translate, $target_lang, $source_lang);
-
-                foreach ($to_translate as $i => $chunk) {
-                    $result = isset($results[$i]) ? $results[$i] : new WP_Error('missing_chunk', 'No result returned for chunk');
-
-                    if (is_wp_error($result)) {
-                        $err_msg = $result->get_error_message();
-                        AITRFOEL_Logger::log(
-                            sprintf('Large text chunk %d/%d failed: %s — keeping original', $i + 1, $total_chunks, $err_msg),
-                            'error'
-                        );
-                        // Word-limit errors affect every remaining chunk — abort now so the
-                        // transient cache preserves already-translated chunks for the retry.
-                        if ($result->get_error_code() === 'word_limit_exceeded' ||
-                            stripos($err_msg, 'word limit') !== false || stripos($err_msg, 'limit exceeded') !== false) {
-                            AITRFOEL_Logger::log(
-                                sprintf('[WORD LIMIT] Aborting large-text chunking due to word limit. Retry will resume from cached chunks.'),
-                                'warning'
-                            );
-                            $chunk_word_limit_hit = true;
-                            break;
-                        }
-                        $translated_chunks[$i] = $chunk; // keep original on hard failure
-                    } else {
-                        set_transient($cache_key_base . '_' . $i, $result, HOUR_IN_SECONDS);
-                        $translated_chunks[$i] = $result;
-                    }
-                }
-            }
-        }
-
-        // Reassemble in original chunk order (parallel results may arrive keyed out of order).
-        ksort($translated_chunks);
-
-        if ($chunk_word_limit_hit) {
-            // The completed-chunk transients ensure a retry only calls the API
-            // for the remaining chunks, not the entire string again.
-            return new WP_Error('word_limit_exceeded', 'Word limit reached mid-chunk; will resume on retry.');
-        }
-
-        if ($chunk_timed_out) {
-            // Signal the engine to save a partial page and retry.
-            // The completed-chunk transients ensure the retry only calls the API
-            // for the remaining chunks, not the entire string again.
-            return new WP_Error('chunk_timeout', 'Large text chunking timed out; will resume on retry.');
-        }
-
-        // All chunks done — clean up transients.
-        for ($i = 0; $i < $total_chunks; $i++) {
-            delete_transient($cache_key_base . '_' . $i);
-        }
-
-        return implode('', $translated_chunks);
-    }
-
-    /**
-     * Sentence-level chunking fallback for plain text with no HTML block tags.
-     */
-    private function translate_large_text_plain($text, $target_lang, $source_lang, $max) {
-        // Split on sentence-ending punctuation followed by whitespace.
-        $sentences = preg_split('/(?<=[.!?…])\s+/u', $text, -1, PREG_SPLIT_NO_EMPTY);
-
-        $chunks  = [];
-        $current = '';
-        foreach ($sentences as $sentence) {
-            $glue = $current !== '' ? ' ' : '';
-            if ($current !== '' && strlen($current) + strlen($glue) + strlen($sentence) > $max) {
-                $chunks[] = $current;
-                $current  = $sentence;
-            } else {
-                $current .= $glue . $sentence;
-            }
-        }
-        if ($current !== '') {
-            $chunks[] = $current;
-        }
-
-        if (empty($chunks)) {
-            // Absolute last resort: hard-split at byte boundaries.
-            $chunks = str_split($text, $max);
-        }
-
-        $total_chunks   = count($chunks);
-        $cache_key_base = 'aitrfoel_chunk_' . md5($text . $target_lang);
-
-        AITRFOEL_Logger::log(
-            sprintf('Large plain text (%d chars) split into %d sentence chunks for translation', strlen($text), $total_chunks),
-            'info'
-        );
-
-        $translated_chunks = [];
-        $chunk_timed_out      = false;
-        $chunk_word_limit_hit = false;
-
-        foreach ($chunks as $i => $chunk) {
-            $tkey   = $cache_key_base . '_' . $i;
-            $cached = get_transient($tkey);
-            if ($cached !== false) {
-                $translated_chunks[] = $cached;
-                AITRFOEL_Logger::log(sprintf('Plain chunk %d/%d loaded from transient cache', $i + 1, $total_chunks), 'debug');
-                continue;
-            }
-
-            if (self::$budget_start > 0.0 && self::$budget_seconds < PHP_INT_MAX &&
-                (microtime(true) - self::$budget_start) >= (self::$budget_seconds - 30)) {
-                AITRFOEL_Logger::log(
-                    sprintf('[TIMING] Time budget nearly exhausted — stopping plain-text chunking after %d/%d chunks. Remaining chunks will be retried.', $i, $total_chunks),
-                    'warning'
-                );
-                $chunk_timed_out = true;
-                break;
-            }
-
-            $result = $this->translate_via_meeptech($chunk, $target_lang, $source_lang);
-            if (is_wp_error($result)) {
-                $err_msg = $result->get_error_message();
-                AITRFOEL_Logger::log(
-                    sprintf('Large plain text chunk %d/%d failed: %s — keeping original', $i + 1, $total_chunks, $err_msg),
-                    'error'
-                );
-                if (stripos($err_msg, 'word limit') !== false || stripos($err_msg, 'limit exceeded') !== false) {
-                    AITRFOEL_Logger::log(
-                        sprintf('[WORD LIMIT] Aborting plain-text chunking after %d/%d chunks due to word limit. Retry will resume from this chunk.', $i, $total_chunks),
-                        'warning'
-                    );
-                    $chunk_word_limit_hit = true;
-                    break;
-                }
-                $translated_chunks[] = $chunk;
-            } else {
-                set_transient($tkey, $result, HOUR_IN_SECONDS);
-                $translated_chunks[] = $result;
-            }
-        }
-
-        if ($chunk_word_limit_hit) {
-            return new WP_Error('word_limit_exceeded', 'Word limit reached mid-chunk; will resume on retry.');
-        }
-
-        if ($chunk_timed_out) {
-            return new WP_Error('chunk_timeout', 'Large plain text chunking timed out; will resume on retry.');
-        }
-
-        for ($i = 0; $i < $total_chunks; $i++) {
-            delete_transient($cache_key_base . '_' . $i);
-        }
-
-        return implode(' ', $translated_chunks);
-    }
-
+    
     /**
      * Translate text via MeepTech server proxy
      */
@@ -550,18 +200,6 @@ class AITRFOEL_OpenAI_API {
         } else {
             $lang_instructions = $general_instructions;
         }
-
-        // Append glossary rules
-        $glossary_instructions = $this->get_glossary_instructions($target_lang);
-        if (!empty($glossary_instructions)) {
-            $lang_instructions .= "\n" . $glossary_instructions;
-        }
-
-        // Append Brand Voice & Tone rules (PRO Language Enhancer)
-        $tone_instructions = $this->build_brand_tone_instructions($target_lang);
-        if (!empty($tone_instructions)) {
-            $lang_instructions .= $tone_instructions;
-        }
         
         // Log what we're sending
         if (class_exists('AITRFOEL_Logger')) {
@@ -579,11 +217,7 @@ class AITRFOEL_OpenAI_API {
             'language_instructions' => $lang_instructions, // Special instructions for rare languages
             'site_url' => $site_url,
             'plan' => $plan,
-            'license_key' => $license_key,
-            'engine' => get_option('aitrfoel_ai_engine', 'auto'),
-            'brand_tone_preset' => get_option('aitrfoel_brand_tone_preset', 'corporate'),
-            'brand_tone_custom' => get_option('aitrfoel_brand_tone_custom', ''),
-            'formality_mode'    => get_option('aitrfoel_formality_mode', 'auto'),
+            'license_key' => $license_key
         ];
         
         $args = [
@@ -592,7 +226,7 @@ class AITRFOEL_OpenAI_API {
                 'Content-Type' => 'application/json',
             ],
             'body' => json_encode($body),
-            'timeout' => 60,
+            'timeout' => 300,
         ];
         
         $response = wp_remote_post(self::MEEPTECH_TRANSLATE_ENDPOINT, $args);
@@ -626,135 +260,16 @@ class AITRFOEL_OpenAI_API {
         }
         
         $translated = $data['translated_text'];
-
+        
         // Clean up AI artifacts that sometimes appear in translations
         $translated = $this->cleanup_ai_artifacts($translated);
-
+        
         // Post-process: detect chatty AI responses and keep original
         $translated = $this->sanitize_chatty_response($text, $translated);
-
+        
         return $translated;
     }
-
-    /**
-     * Translate an ordered set of large-text chunks in PARALLEL via the MeepTech
-     * /translate endpoint.
-     *
-     * Each chunk is sent exactly as translate_via_meeptech() would send it (one
-     * chunk per request, plain `text` payload) so HTML fidelity is identical —
-     * only the requests are fired concurrently instead of one-at-a-time. This is
-     * the transport that turns ~N×20s of sequential chunk calls into roughly the
-     * time of the single slowest chunk.
-     *
-     * Falls back to sequential translate_via_meeptech() when parallel transport
-     * is unavailable, and retries any individually-failed chunk sequentially.
-     * Word-limit errors are surfaced as a WP_Error('word_limit_exceeded') so the
-     * caller can abort and resume from the transient cache.
-     *
-     * @param array  $chunks      Map of index => chunk text (keys preserved in result)
-     * @param string $target_lang Target language code
-     * @param string $source_lang Source language code or 'auto'
-     * @return array Map of index => translated string | WP_Error (same keys as $chunks)
-     */
-    public function translate_chunks_parallel(array $chunks, $target_lang, $source_lang = 'auto') {
-        if (empty($chunks)) {
-            return [];
-        }
-
-        $requests_class = class_exists('WpOrg\Requests\Requests') ? 'WpOrg\Requests\Requests' : (class_exists('Requests') ? 'Requests' : null);
-
-        // No parallel transport available, or a single chunk — just go sequential.
-        if (!$requests_class || !method_exists($requests_class, 'request_multiple') || count($chunks) < 2) {
-            $out = [];
-            foreach ($chunks as $i => $chunk) {
-                $out[$i] = $this->translate_via_meeptech($chunk, $target_lang, $source_lang);
-            }
-            return $out;
-        }
-
-        static $license_info_cache = null;
-        if ($license_info_cache === null) {
-            $license_info_cache = AITRFOEL_License_Manager::get_instance()->get_license_status();
-        }
-
-        $source_language = ($source_lang === 'auto') ? 'auto' : AITRFOEL_Language_Mapper::get_language_name($source_lang);
-        $target_language = AITRFOEL_Language_Mapper::get_language_name($target_lang);
-        $lang_instructions = AITRFOEL_Language_Mapper::get_language_specific_instructions($target_lang);
-        $general_instructions = "CRITICAL: If a string is already in the target language or contains only numbers/symbols/short codes (e.g. 36K, 500+, 24/7, 100%), return it EXACTLY as-is. NEVER add explanations, commentary, or notes. Output ONLY the translated text.";
-        $lang_instructions = !empty($lang_instructions) ? $general_instructions . "\n" . $lang_instructions : $general_instructions;
-
-        $url     = self::MEEPTECH_TRANSLATE_ENDPOINT;
-        $headers = ['Content-Type' => 'application/json'];
-
-        $requests = [];
-        $sources  = []; // index => normalized source text, for sanitize + sequential retry
-        foreach ($chunks as $i => $chunk) {
-            $text = $chunk;
-            if (class_exists('Normalizer') && is_string($text)) {
-                $text = Normalizer::normalize($text, Normalizer::FORM_C);
-            }
-            $sources[$i] = $text;
-            $body = [
-                'text'                  => $text,
-                'source_language'       => $source_language,
-                'target_language'       => $target_language,
-                'target_lang_code'      => $target_lang,
-                'language_instructions' => $lang_instructions,
-                'site_url'              => home_url(),
-                'plan'                  => $license_info_cache['plan'],
-                'license_key'           => $license_info_cache['license_key'],
-            ];
-            $requests[$i] = [
-                'url'     => $url,
-                'headers' => $headers,
-                'data'    => json_encode($body),
-                'type'    => 'POST',
-                'options' => ['timeout' => 90],
-            ];
-        }
-
-        AITRFOEL_Logger::log(
-            sprintf('Sending %d large-text chunks in PARALLEL to MeepTech (%s → %s)', count($requests), $source_language, $target_language),
-            'info'
-        );
-
-        $responses = $requests_class::request_multiple($requests, []);
-
-        $out = [];
-        foreach ($requests as $i => $_unused) {
-            $response = isset($responses[$i]) ? $responses[$i] : null;
-
-            // Transport-level failure → retry this one chunk sequentially.
-            if ($response instanceof \Exception || $response === null) {
-                $msg = $response instanceof \Exception ? $response->getMessage() : 'No response';
-                AITRFOEL_Logger::log(sprintf('Parallel chunk %d failed: %s — retrying sequentially', $i, $msg), 'warning');
-                $out[$i] = $this->translate_via_meeptech($sources[$i], $target_lang, $source_lang);
-                continue;
-            }
-
-            $status = isset($response->status_code) ? $response->status_code : 0;
-            $data   = json_decode(isset($response->body) ? $response->body : '', true);
-
-            if ($status !== 200 || !isset($data['success']) || !$data['success'] || !isset($data['translated_text'])) {
-                $error_message = isset($data['error']) ? $data['error'] : ('Chunk request failed (HTTP ' . $status . ')');
-                // Word-limit errors affect every remaining chunk — surface so the caller aborts and resumes.
-                if (stripos($error_message, 'word limit') !== false || stripos($error_message, 'limit exceeded') !== false) {
-                    $out[$i] = new WP_Error('word_limit_exceeded', $error_message);
-                    continue;
-                }
-                AITRFOEL_Logger::log(sprintf('Parallel chunk %d error (%s): %s — retrying sequentially', $i, $status, $error_message), 'warning');
-                $out[$i] = $this->translate_via_meeptech($sources[$i], $target_lang, $source_lang);
-                continue;
-            }
-
-            $translated = $this->cleanup_ai_artifacts($data['translated_text']);
-            $translated = $this->sanitize_chatty_response($sources[$i], $translated);
-            $out[$i]    = $translated;
-        }
-
-        return $out;
-    }
-
+    
     /**
      * Clean up AI artifacts from translation responses
      * Removes instruction text, wrapper tags, etc.
@@ -786,107 +301,13 @@ class AITRFOEL_OpenAI_API {
         
         return trim($text);
     }
-
+    
     /**
      * Translate multiple texts in batch
      */
-     public function translate_batch($texts, $target_lang, $source_lang = 'auto') {
-         if (empty($texts)) {
-             return [];
-         }
-
-         // Ensure texts is a sequential 0-indexed array
-         $texts = array_values($texts);
-
-         // Check Translation Memory (TM) first to save word quota and accelerate translation
-         $tm = class_exists('AITRFOEL_Translation_Memory') ? AITRFOEL_Translation_Memory::get_instance() : null;
-         $tm_hits = [];
-         $untranslated_texts = [];
-
-         if ($tm && $tm->is_enabled()) {
-             $tm_lookup = $tm->lookup_batch($texts, $target_lang, $source_lang);
-             $tm_hits = $tm_lookup['hits'] ?? [];
-             $untranslated_texts = $tm_lookup['misses'] ?? [];
-         } else {
-             $untranslated_texts = $texts;
-         }
-
-         // If ALL strings were already resolved from Translation Memory, return immediately!
-         if (empty($untranslated_texts)) {
-             $results = [];
-             foreach ($texts as $key => $orig_text) {
-                 $results[$orig_text] = $tm_hits[$key] ?? $orig_text;
-             }
-             return $results;
-         }
-
-         $untranslated_keys = array_keys($untranslated_texts);
-         $untranslated_values = array_values($untranslated_texts);
-
-         $protected_texts = [];
-         $maps = [];
-         foreach ($untranslated_values as $seq_idx => $text) {
-             $orig_key = $untranslated_keys[$seq_idx];
-             $map = [];
-             $protected_texts[$seq_idx] = $this->protect_excluded_words($text, $map);
-             $maps[$seq_idx] = [
-                 'orig_key' => $orig_key,
-                 'map'      => $map,
-             ];
-         }
-
-         // Always use MeepTech server for untranslated batch items (sequential 0-indexed array)
-         $translated_batch = $this->translate_batch_via_meeptech(array_values($protected_texts), $target_lang, $source_lang);
-
-         if (is_wp_error($translated_batch)) {
-             return $translated_batch;
-         }
-
-         $results = [];
-         $tm_to_save = [];
-
-         // Map each original string back from either TM or API
-         foreach ($texts as $key => $orig_text) {
-             // 1) Resolved from Translation Memory
-             if (isset($tm_hits[$key])) {
-                 $results[$orig_text] = $tm_hits[$key];
-                 continue;
-             }
-
-             // 2) Freshly translated via API
-             $found_seq_idx = array_search($key, $untranslated_keys, true);
-             if ($found_seq_idx !== false && isset($protected_texts[$found_seq_idx])) {
-                 $prot = $protected_texts[$found_seq_idx];
-                 if (isset($translated_batch[$prot])) {
-                     $translated = $translated_batch[$prot];
-                     if (is_wp_error($translated)) {
-                         $results[$orig_text] = $translated;
-                     } else {
-                         $final_trans = $this->restore_excluded_words($translated, $maps[$found_seq_idx]['map'] ?? []);
-                         $results[$orig_text] = $final_trans;
-                         $tm_to_save[] = [
-                             'source'     => $orig_text,
-                             'translated' => $final_trans,
-                         ];
-                     }
-                 }
-             }
-         }
-
-         // Store new translations into Translation Memory for future instant reuse
-        if ($tm && !empty($tm_to_save)) {
-            $valid_tm = [];
-            foreach ($tm_to_save as $item) {
-                if ($item['source'] !== $item['translated'] || !preg_match('/[\p{L}]/u', $item['source'])) {
-                    $valid_tm[] = $item;
-                }
-            }
-            if (!empty($valid_tm)) {
-                $tm->save_batch($valid_tm, $target_lang, $source_lang);
-            }
-        }
-
-        return $results;
+    public function translate_batch($texts, $target_lang, $source_lang = 'auto') {
+        // Always use MeepTech server for batch translation
+        return $this->translate_batch_via_meeptech($texts, $target_lang, $source_lang);
     }
 
     /**
@@ -932,25 +353,12 @@ class AITRFOEL_OpenAI_API {
         $general_instructions = "CRITICAL: If a string is already in the target language or contains only numbers/symbols/short codes (e.g. 36K, 500+, 24/7, 100%, ★, →), return it EXACTLY as-is. NEVER add explanations, commentary, or notes. Your output for each string must be ONLY the translated text (or the original if no translation is needed). Never say 'this text does not need translation' or similar.";
         $lang_instructions = !empty($lang_instructions) ? $general_instructions . "\n" . $lang_instructions : $general_instructions;
 
-        // Append glossary rules
-        $glossary_instructions = $this->get_glossary_instructions($target_lang);
-        if (!empty($glossary_instructions)) {
-            $lang_instructions .= "\n" . $glossary_instructions;
-        }
-
-        // Append Brand Voice & Tone rules (PRO Language Enhancer)
-        $tone_instructions = $this->build_brand_tone_instructions($target_lang);
-        if (!empty($tone_instructions)) {
-            $lang_instructions .= $tone_instructions;
-        }
-
         $url = self::MEEPTECH_TRANSLATE_ENDPOINT . '/batch';
         $headers = ['Content-Type' => 'application/json'];
 
         // Build parallel request definitions
         $requests = [];
         $batch_texts = []; // Keep reference to original texts per batch index
-        $batch_maps = [];
         foreach ($batches as $idx => $texts) {
             // Normalize NFC
             if (class_exists('Normalizer')) {
@@ -962,18 +370,8 @@ class AITRFOEL_OpenAI_API {
             }
             $batch_texts[$idx] = $texts;
 
-            // Protect excluded words
-            $protected_texts = [];
-            $maps = [];
-            foreach ($texts as $i => $t) {
-                $map = [];
-                $protected_texts[$i] = $this->protect_excluded_words($t, $map);
-                $maps[$i] = $map;
-            }
-            $batch_maps[$idx] = $maps;
-
             $body = [
-                'texts' => $protected_texts,
+                'texts' => $texts,
                 'source_language' => $source_language,
                 'target_language' => $target_language,
                 'target_lang_code' => $target_lang,
@@ -981,10 +379,6 @@ class AITRFOEL_OpenAI_API {
                 'site_url' => home_url(),
                 'plan' => $license_info_cache['plan'],
                 'license_key' => $license_info_cache['license_key'],
-                'engine' => get_option('aitrfoel_ai_engine', 'auto'),
-                'brand_tone_preset' => get_option('aitrfoel_brand_tone_preset', 'corporate'),
-                'brand_tone_custom' => get_option('aitrfoel_brand_tone_custom', ''),
-                'formality_mode'    => get_option('aitrfoel_formality_mode', 'auto'),
             ];
 
             $requests[$idx] = [
@@ -992,7 +386,7 @@ class AITRFOEL_OpenAI_API {
                 'headers' => $headers,
                 'data' => json_encode($body),
                 'type' => 'POST',
-                'options' => ['timeout' => 60],
+                'options' => ['timeout' => 300],
             ];
         }
 
@@ -1056,150 +450,12 @@ class AITRFOEL_OpenAI_API {
             // Map back to original => translated
             foreach ($texts as $index => $original_text) {
                 if (isset($translated_texts[$index])) {
-                    $restored = $this->restore_excluded_words($translated_texts[$index], $batch_maps[$idx][$index] ?? []);
-                    $combined[$original_text] = $this->sanitize_chatty_response($original_text, $restored);
+                    $combined[$original_text] = $this->sanitize_chatty_response($original_text, $translated_texts[$index]);
                 }
             }
         }
 
         return $combined;
-    }
-
-    /**
-     * Submit a batch translation as an async job on the proxy server.
-     * Returns the proxy job ID string immediately (< 1 second), or WP_Error.
-     *
-     * @param array  $texts       Indexed array of plain-text strings to translate
-     * @param string $target_lang Target language code
-     * @param string $source_lang Source language code or 'auto'
-     * @return string|WP_Error Proxy job ID string, or WP_Error on failure
-     */
-    public function submit_batch_async($texts, $target_lang, $source_lang = 'auto') {
-        if (empty($texts)) {
-            return new WP_Error('empty_texts', 'No texts to submit for translation.');
-        }
-
-        static $lic_cache = null;
-        if ($lic_cache === null) {
-            $lic_cache = AITRFOEL_License_Manager::get_instance()->get_license_status();
-        }
-
-        $source_language = ($source_lang === 'auto') ? 'auto' : AITRFOEL_Language_Mapper::get_language_name($source_lang);
-        $target_language = AITRFOEL_Language_Mapper::get_language_name($target_lang);
-        $instructions    = AITRFOEL_Language_Mapper::get_language_specific_instructions($target_lang);
-        $general         = "CRITICAL: If a string is already in the target language or contains only numbers/symbols/short codes (e.g. 36K, 500+, 24/7, 100%, ★, →), return it EXACTLY as-is. NEVER add explanations. Output ONLY the translated text.";
-        $instructions    = !empty($instructions) ? $general . "\n" . $instructions : $general;
-
-        // Append glossary rules
-        $glossary_instructions = $this->get_glossary_instructions($target_lang);
-        if (!empty($glossary_instructions)) {
-            $instructions .= "\n" . $glossary_instructions;
-        }
-
-        // Append Brand Voice & Tone rules (PRO Language Enhancer)
-        $tone_instructions = $this->build_brand_tone_instructions($target_lang);
-        if (!empty($tone_instructions)) {
-            $instructions .= $tone_instructions;
-        }
-
-        $protected_texts = [];
-        $maps = [];
-        $index = 0;
-        foreach ($texts as $key => $text) {
-            $map = [];
-            $protected_texts[$index] = $this->protect_excluded_words($text, $map);
-            $maps[$index] = $map;
-            $index++;
-        }
-
-        $response = wp_remote_post(self::MEEPTECH_TRANSLATE_ENDPOINT . '/async/submit', [
-            'method'  => 'POST',
-            'headers' => ['Content-Type' => 'application/json'],
-            'body'    => wp_json_encode([
-                'texts'                 => $protected_texts,
-                'source_language'       => $source_language,
-                'target_language'       => $target_language,
-                'target_lang_code'      => $target_lang,
-                'language_instructions' => $instructions,
-                'site_url'              => home_url(),
-                'plan'                  => $lic_cache['plan'],
-                'license_key'           => $lic_cache['license_key'],
-                'engine'                => get_option('aitrfoel_ai_engine', 'auto'),
-                'brand_tone_preset'     => get_option('aitrfoel_brand_tone_preset', 'corporate'),
-                'brand_tone_custom'     => get_option('aitrfoel_brand_tone_custom', ''),
-                'formality_mode'        => get_option('aitrfoel_formality_mode', 'auto'),
-            ]),
-            'timeout' => 15, // submit only queues the job — should respond in < 5s
-        ]);
-
-        if (is_wp_error($response)) {
-            AITRFOEL_Logger::log('Async submit error: ' . $response->get_error_message(), 'error');
-            return $response;
-        }
-
-        $code = wp_remote_retrieve_response_code($response);
-        $data = json_decode(wp_remote_retrieve_body($response), true);
-
-        if ($code !== 200 || empty($data['job_id'])) {
-            $msg = $data['error'] ?? 'Async submit failed (HTTP ' . $code . ')';
-            AITRFOEL_Logger::log('Async submit failed: ' . $msg, 'error');
-            return new WP_Error('async_submit_failed', $msg);
-        }
-
-        AITRFOEL_Logger::log('Async job submitted: ' . $data['job_id'] . ' (' . count($texts) . ' strings, ' . $source_language . ' → ' . $target_language . ')', 'info');
-        set_transient('aitrfoel_async_maps_' . $data['job_id'], $maps, HOUR_IN_SECONDS);
-        return $data['job_id'];
-    }
-
-    /**
-     * Check status of an async translation job.
-     *
-     * @param string $job_id Proxy job ID returned by submit_batch_async()
-     * @return array|WP_Error Array {status: 'pending'|'processing'|'done'|'error', translations?: string[], error?: string}
-     */
-    public function get_async_job_status($job_id) {
-        static $lic_cache = null;
-        if ($lic_cache === null) {
-            $lic_cache = AITRFOEL_License_Manager::get_instance()->get_license_status();
-        }
-
-        $response = wp_remote_post(self::MEEPTECH_TRANSLATE_ENDPOINT . '/async/status', [
-            'method'  => 'POST',
-            'headers' => ['Content-Type' => 'application/json'],
-            'body'    => wp_json_encode([
-                'job_id'      => $job_id,
-                'license_key' => $lic_cache['license_key'],
-                'site_url'    => home_url(),
-            ]),
-            'timeout' => 10,
-        ]);
-
-        if (is_wp_error($response)) {
-            AITRFOEL_Logger::log('Async status error: ' . $response->get_error_message(), 'error');
-            return $response;
-        }
-
-        $code = wp_remote_retrieve_response_code($response);
-        $data = json_decode(wp_remote_retrieve_body($response), true);
-
-        if ($code !== 200 || !isset($data['status'])) {
-            $msg = $data['error'] ?? 'Status check failed (HTTP ' . $code . ')';
-            return new WP_Error('async_status_failed', $msg);
-        }
-
-        if ($data['status'] === 'completed' && isset($data['translations'])) {
-            $maps = get_transient('aitrfoel_async_maps_' . $job_id);
-            if (!empty($maps)) {
-                foreach ($data['translations'] as $key => $translated) {
-                    if (is_string($translated)) {
-                        $data['translations'][$key] = $this->restore_excluded_words($translated, $maps[$key] ?? []);
-                    }
-                }
-                delete_transient('aitrfoel_async_maps_' . $job_id);
-            }
-        }
-
-        return $data; // {status, translations?, error?}
     }
 
     /**
@@ -1244,18 +500,6 @@ class AITRFOEL_OpenAI_API {
         } else {
             $lang_instructions = $general_instructions;
         }
-
-        // Append glossary rules
-        $glossary_instructions = $this->get_glossary_instructions($target_lang);
-        if (!empty($glossary_instructions)) {
-            $lang_instructions .= "\n" . $glossary_instructions;
-        }
-
-        // Append Brand Voice & Tone rules (PRO Language Enhancer)
-        $tone_instructions = $this->build_brand_tone_instructions($target_lang);
-        if (!empty($tone_instructions)) {
-            $lang_instructions .= $tone_instructions;
-        }
         
         // Send batch request to MeepTech
         $body = [
@@ -1266,11 +510,7 @@ class AITRFOEL_OpenAI_API {
             'language_instructions' => $lang_instructions, // Special instructions for rare languages
             'site_url' => $site_url,
             'plan' => $plan,
-            'license_key' => $license_key,
-            'engine' => get_option('aitrfoel_ai_engine', 'auto'),
-            'brand_tone_preset' => get_option('aitrfoel_brand_tone_preset', 'corporate'),
-            'brand_tone_custom' => get_option('aitrfoel_brand_tone_custom', ''),
-            'formality_mode'    => get_option('aitrfoel_formality_mode', 'auto'),
+            'license_key' => $license_key
         ];
         
         AITRFOEL_Logger::log('Sending batch to MeepTech server - ' . count($texts) . ' texts, ' . $source_language . ' → ' . $target_language . (!empty($lang_instructions) ? ' (with special instructions)' : ''), 'debug');
@@ -1279,7 +519,7 @@ class AITRFOEL_OpenAI_API {
             'method' => 'POST',
             'headers' => ['Content-Type' => 'application/json'],
             'body' => json_encode($body),
-            'timeout' => 60,
+            'timeout' => 300,
         ];
         
         $response = wp_remote_post(self::MEEPTECH_TRANSLATE_ENDPOINT . '/batch', $args);
@@ -1381,7 +621,7 @@ class AITRFOEL_OpenAI_API {
      * @param string $translated Translated text from AI
      * @return string Clean translation or original if chatty detected
      */
-    public function sanitize_chatty_response($original, $translated) {
+    private function sanitize_chatty_response($original, $translated) {
         if (empty($original) || empty($translated)) {
             return $translated;
         }
@@ -1476,17 +716,16 @@ class AITRFOEL_OpenAI_API {
         // Get exclusion settings
         $exclusion_instructions = $this->build_exclusion_instructions();
         $glossary_instructions = $this->build_glossary_instructions($target_lang);
-        $tone_instructions = $this->build_brand_tone_instructions($target_lang);
         
     $system_prompt = "You are a professional website translator. $source_instruction.
 
-$source_instructions$lang_instructions$exclusion_instructions$glossary_instructions$tone_instructions
+$source_instructions$lang_instructions$exclusion_instructions$glossary_instructions
 
 CRITICAL TRANSLATION RULES:
 1. Translate ONLY the meaningful text content - never translate HTML tags, CSS, or code
 2. Preserve ALL HTML formatting exactly: <p>, <br>, <strong>, <em>, <a>, etc.
 3. Keep placeholders unchanged: {name}, %s, %d, {{variable}}, [shortcode], <ph id=\"n\"/>, and ≪BR≫ (line break marker)
-4. Maintain the specified brand voice and tone consistently throughout
+4. Maintain the same tone: formal business text should stay formal
 5. For proper nouns, brands, and technical terms - use appropriate localization
 6. If source is Cyrillic/Russian, ensure you understand it correctly before translating
 7. Do NOT use code fences, comments, or explanations in the output
@@ -1511,7 +750,7 @@ CRITICAL TRANSLATION RULES:
         }
         
         $exclude_list = implode(', ', $exclude_words);
-        $exclusion_text = "\n\nBRAND PROTECTION — CRITICAL: The following are proprietary BRAND NAMES that must NEVER be translated, modified, or altered in any way: {$exclude_list}. Even if a term looks like a common word or phrase in the source language (for example 'LaVie', 'LaRoche', 'LeChat'), it is a brand name and must be output verbatim and unchanged. This rule overrides all other translation rules.";
+        $exclusion_text = "\n\nEXCLUSION RULES: Do NOT translate these specific words/terms: {$exclude_list}. Keep them exactly as they appear in the original text, maintaining their original language and capitalization.";
         
         return $exclusion_text;
     }
@@ -1519,7 +758,7 @@ CRITICAL TRANSLATION RULES:
     /**
      * Build glossary instructions from settings
      */
-    public function build_glossary_instructions($target_lang) {
+    private function build_glossary_instructions($target_lang) {
         $raw = get_option('aitrfoel_glossary_terms', '');
         if (empty(trim($raw))) {
             return '';
@@ -1553,48 +792,6 @@ CRITICAL TRANSLATION RULES:
 
         return "\n\nGLOSSARY (use these translations consistently when translating to $target_full):\n" . implode("\n", $entries);
     }
-
-    /**
-     * Build brand voice, tone and formality instructions from settings (PRO Language Enhancer)
-     */
-    public function build_brand_tone_instructions($target_lang = '') {
-        $preset = get_option('aitrfoel_brand_tone_preset', 'corporate');
-        $custom_rules = trim((string) get_option('aitrfoel_brand_tone_custom', ''));
-        $formality_mode = get_option('aitrfoel_formality_mode', 'auto');
-
-        $tone_prompts = [
-            'hospitality' => "BRAND VOICE & TONE (Warm & Welcoming): Adapt the translation to sound hospitable, warm, inviting, friendly, and emotionally engaging. Ideal for travel, hotels, hospitality, wellness, and culinary experiences. Maintain natural conversational elegance.",
-            'corporate'   => "BRAND VOICE & TONE (Professional & Corporate): Maintain a polished, authoritative, clear, and professional business tone. Use precise industry terminology and formal style suited for B2B, SaaS, legal, and financial communication.",
-            'sales'       => "BRAND VOICE & TONE (Persuasive & Sales-Driven): Adopt a compelling, benefit-driven, and high-energy marketing tone. Emphasize value, dynamic calls-to-action, and customer benefits while sounding natural and authentic.",
-            'casual'      => "BRAND VOICE & TONE (Casual & Modern): Write in an approachable, conversational, relatable, and contemporary voice. Avoid overly stiff, archaic, or bureaucratic phrasing.",
-            'custom'      => "BRAND VOICE & TONE (Custom Brand Persona): Follow the custom brand guidelines and persona instructions strictly.",
-        ];
-
-        $instructions = [];
-
-        // 1. Preset Tone instruction
-        if (!empty($tone_prompts[$preset])) {
-            $instructions[] = $tone_prompts[$preset];
-        }
-
-        // 2. Formality Mode instruction (for languages with distinct formal/informal modes)
-        if ($formality_mode === 'formal') {
-            $instructions[] = "FORMALITY REQUIREMENT: Always use FORMAL grammatical address and polite honorifics (e.g. German 'Sie/Ihnen', French 'vous/votre', Spanish 'usted/su', Italian 'Lei/Suo', Portuguese 'você/o senhor', Russian 'Вы/Ваш', Polish 'Pan/Pani').";
-        } elseif ($formality_mode === 'informal') {
-            $instructions[] = "FORMALITY REQUIREMENT: Use FRIENDLY / INFORMAL grammatical address (e.g. German 'du/dein', French 'tu/ton', Spanish 'tú/tu', Italian 'tu/tuo', Portuguese 'tu', Russian 'ты/твой').";
-        }
-
-        // 3. Custom brand rules / persona instructions
-        if (!empty($custom_rules)) {
-            $instructions[] = "CUSTOM BRAND GUIDELINES & PERSONA RULES:\n" . $custom_rules;
-        }
-
-        if (empty($instructions)) {
-            return '';
-        }
-
-        return "\n\n" . implode("\n\n", $instructions);
-    }
     
     /**
      * Build batch translation prompt
@@ -1623,7 +820,6 @@ CRITICAL TRANSLATION RULES:
         
         $exclusion_instructions = $this->build_exclusion_instructions();
         $glossary_instructions = $this->build_glossary_instructions($target_lang);
-        $tone_instructions = $this->build_brand_tone_instructions($target_lang);
 
     $system_prompt = "You are a professional website translator. $source_instruction.
 Rules:
@@ -1635,7 +831,6 @@ $source_instructions
 $lang_instructions
 $exclusion_instructions
 $glossary_instructions
-$tone_instructions
 Return ONLY valid JSON (no code fences, no comments), exactly: {\"t\":[\"...\", ... ]}";
 
         $user_prompt = json_encode(['src' => array_values($texts)], JSON_UNESCAPED_UNICODE);
@@ -1992,27 +1187,19 @@ Return ONLY valid JSON (no code fences, no comments), exactly: {\"t\":[\"...\", 
      */
     private function fallback_individual_translation($texts, $target_lang, $source_lang) {
         $translations = [];
-        $failed_count = 0;
-        $last_error = '';
         
         foreach ($texts as $text) {
             $translation = $this->translate_text($text, $target_lang, $source_lang);
             
             if (is_wp_error($translation)) {
-                $failed_count++;
-                $last_error = $translation->get_error_message();
-                AITRFOEL_Logger::log('Individual translation failed: ' . $last_error, 'error');
+                $translations[$text] = $text; // Keep original on error
+                AITRFOEL_Logger::log('Individual translation failed: ' . $translation->get_error_message(), 'error');
             } else {
                 $translations[$text] = $translation; // Map original => translated
             }
             
             // PERFORMANCE: Reduced delay from 200ms to 50ms for faster batch processing
             usleep(50000); // 50ms delay
-        }
-        
-        // If ALL translations failed, return the WP_Error rather than pretending success
-        if ($failed_count > 0 && empty($translations)) {
-            return new WP_Error('translation_failed', $last_error ?: __('Individual translation failed.', 'ai-translator-for-elementor-and-polylang'));
         }
         
         return $translations;
@@ -2078,164 +1265,5 @@ Return ONLY valid JSON (no code fences, no comments), exactly: {\"t\":[\"...\", 
         }
         
         return $translated;
-    }
-
-    /**
-     * Protect excluded words using placeholders.
-     */
-    private function protect_excluded_words($text, &$map) {
-        if (!is_string($text) || $text === '') {
-            return $text;
-        }
-        
-        $exclude_words = [];
-        if (class_exists('AITRFOEL_Settings') && method_exists('AITRFOEL_Settings', 'get_exclude_words')) {
-            $exclude_words = AITRFOEL_Settings::get_exclude_words();
-        } else {
-            $settings = get_option('aitrfoel_translation_settings', []);
-            $exclude_words = $settings['exclude_words'] ?? [];
-            $raw_exclude = get_option('aitrfoel_exclude_words', '');
-            if (!empty($raw_exclude)) {
-                $exclude_words = array_unique(array_merge($exclude_words, array_filter(array_map('trim', explode("\n", $raw_exclude)))));
-            }
-        }
-
-        // Also include 'do_not_translate' terms from the glossary table
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'aitrfoel_glossary';
-        if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") === $table_name) {
-            $db_terms = $wpdb->get_col("SELECT source_text FROM $table_name WHERE action = 'do_not_translate'");
-            if (!empty($db_terms)) {
-                $exclude_words = array_unique(array_merge($exclude_words, array_map('trim', $db_terms)));
-            }
-        }
-        
-        if (empty($exclude_words)) {
-            return $text;
-        }
-
-        // Sort by length descending to prevent shorter words inside longer ones from matching first
-        usort($exclude_words, function($a, $b) {
-            return strlen($b) - strlen($a);
-        });
-
-        $index = count($map);
-        foreach ($exclude_words as $word) {
-            if (trim($word) === '') {
-                continue;
-            }
-            
-            // Match case-insensitively with word boundaries.
-            $pattern = '/\b' . preg_quote($word, '/') . '\b/iu';
-            
-            // Check if there is a match
-            if (preg_match($pattern, $text)) {
-                $placeholder = "[exclude_{$index}]";
-                $map[$placeholder] = $word;
-                $text = preg_replace($pattern, $placeholder, $text);
-                $index++;
-            }
-        }
-        
-        return $text;
-    }
-
-    /**
-     * Restore protected excluded words from placeholders.
-     */
-    private function restore_excluded_words($text, $map) {
-        if (!is_string($text) || empty($map)) {
-            return $text;
-        }
-        
-        foreach ($map as $placeholder => $word) {
-            $text = str_ireplace($placeholder, $word, $text);
-        }
-        
-        return $text;
-    }
-
-    /**
-     * Get glossary and brand exclusion instructions for a given target language
-     */
-    private function get_glossary_instructions($target_lang) {
-        global $wpdb;
-        $do_not_translate = [];
-        $replace = [];
-        
-        // 1. Query database glossary table if it exists
-        $table_name = $wpdb->prefix . 'aitrfoel_glossary';
-        if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") === $table_name) {
-            $rules = $wpdb->get_results($wpdb->prepare(
-                "SELECT source_text, target_text, action FROM $table_name WHERE lang_code = %s OR lang_code = 'all' OR lang_code = '' ORDER BY id ASC",
-                $target_lang
-            ), ARRAY_A);
-            
-            if (!empty($rules)) {
-                foreach ($rules as $rule) {
-                    $source = trim($rule['source_text']);
-                    if (empty($source)) continue;
-                    if ($rule['action'] === 'do_not_translate') {
-                        $do_not_translate[] = '"' . $source . '"';
-                    } else {
-                        $target = trim($rule['target_text']);
-                        if (!empty($target)) {
-                            $replace[] = 'Translate "' . $source . '" as "' . $target . '"';
-                        }
-                    }
-                }
-            }
-        }
-        
-        // 2. Parse glossary textarea terms
-        $raw_glossary = get_option('aitrfoel_glossary_terms', '');
-        if (!empty(trim($raw_glossary))) {
-            $lines = array_filter(array_map('trim', explode("\n", $raw_glossary)));
-            foreach ($lines as $line) {
-                if (strpos($line, '=') === false) continue;
-                list($term, $translations) = array_map('trim', explode('=', $line, 2));
-                if (empty($term) || empty($translations)) continue;
-                
-                if (preg_match('/([^,]+)\s*\(' . preg_quote($target_lang, '/') . '\)/i', $translations, $m)) {
-                    $replace[] = 'Translate "' . $term . '" as "' . trim($m[1]) . '"';
-                } else {
-                    $replace[] = 'Translate "' . $term . '" as "' . $translations . '"';
-                }
-            }
-        }
-        
-        // 3. Excluded Words & Brand Protection rules
-        $exclude_words = [];
-        if (class_exists('AITRFOEL_Settings') && method_exists('AITRFOEL_Settings', 'get_exclude_words')) {
-            $exclude_words = AITRFOEL_Settings::get_exclude_words();
-        } else {
-            $raw_exclude = get_option('aitrfoel_exclude_words', '');
-            if (!empty($raw_exclude)) {
-                $exclude_words = array_filter(array_map('trim', explode("\n", $raw_exclude)));
-            }
-        }
-        
-        if (!empty($exclude_words)) {
-            foreach ($exclude_words as $ew) {
-                $ew = trim($ew);
-                if (!empty($ew) && !in_array('"' . $ew . '"', $do_not_translate, true)) {
-                    $do_not_translate[] = '"' . $ew . '"';
-                }
-            }
-        }
-        
-        if (empty($do_not_translate) && empty($replace)) {
-            return '';
-        }
-        
-        $instructions = [];
-        if (!empty($do_not_translate)) {
-            $instructions[] = 'CRITICAL BRAND & GLOSSARY RULE: Do NOT translate the following phrases, brand names, or terms. Keep them EXACTLY verbatim as in the source: ' . implode(', ', array_unique($do_not_translate)) . '.';
-        }
-        if (!empty($replace)) {
-            $instructions[] = 'GLOSSARY TRANSLATION RULES: ' . implode('. ', array_unique($replace)) . '.';
-        }
-        
-        return implode("\n", $instructions);
     }
 }

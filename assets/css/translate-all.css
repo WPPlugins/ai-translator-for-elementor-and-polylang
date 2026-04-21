@@ -131,33 +131,7 @@
 }
 
 .aitrfoel-ta-post-type-icon {
-    width: 22px;
-    height: 22px;
-    display: inline-block;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-    flex-shrink: 0;
-}
-
-.aitrfoel-ta-post-type-icon.aitrfoel-ta-post-type-icon-page {
-    background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"%3E%3Cpath d="M3 11L12 4L21 11" stroke="%23354758" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/%3E%3Cpath d="M5 10.5V20H19V10.5" stroke="%23354758" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/%3E%3Cpath d="M10 20V14H14V20" stroke="%23354758" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/%3E%3C/svg%3E');
-}
-
-.aitrfoel-ta-post-type-icon.aitrfoel-ta-post-type-icon-post {
-    background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"%3E%3Crect x="4" y="4" width="16" height="16" rx="2" stroke="%23354758" stroke-width="2"/%3E%3Cpath d="M8 9H16" stroke="%23354758" stroke-width="2" stroke-linecap="round"/%3E%3Cpath d="M8 13H16" stroke="%23354758" stroke-width="2" stroke-linecap="round"/%3E%3Cpath d="M8 17H13" stroke="%23354758" stroke-width="2" stroke-linecap="round"/%3E%3C/svg%3E');
-}
-
-.aitrfoel-ta-post-type-icon.aitrfoel-ta-post-type-icon-product {
-    background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"%3E%3Cpath d="M6 7H19L17.8 14H9.3L8.5 9.6H5.5" stroke="%23354758" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/%3E%3Ccircle cx="10" cy="18" r="1.5" fill="%23354758"/%3E%3Ccircle cx="16" cy="18" r="1.5" fill="%23354758"/%3E%3C/svg%3E');
-}
-
-.aitrfoel-ta-post-type-icon.aitrfoel-ta-post-type-icon-template {
-    background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"%3E%3Crect x="4" y="4" width="16" height="16" rx="2" stroke="%23354758" stroke-width="2"/%3E%3Cpath d="M9 8V16" stroke="%23354758" stroke-width="2" stroke-linecap="round"/%3E%3Cpath d="M14 8V16" stroke="%23354758" stroke-width="2" stroke-linecap="round"/%3E%3C/svg%3E');
-}
-
-.aitrfoel-ta-post-type-icon.aitrfoel-ta-post-type-icon-custom {
-    background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"%3E%3Crect x="4" y="4" width="16" height="16" rx="2" stroke="%23354758" stroke-width="2"/%3E%3Cpath d="M8 9.5H16" stroke="%23354758" stroke-width="2" stroke-linecap="round"/%3E%3Cpath d="M8 14.5H13" stroke="%23354758" stroke-width="2" stroke-linecap="round"/%3E%3C/svg%3E');
+    font-size: 24px;
 }
 
 .aitrfoel-ta-post-type-name {
@@ -224,7 +198,7 @@
 }
 
 /* Language badge in detail table */
-.aitrfoel-lang-flag {
+.eat-lang-flag {
     display: inline-block;
     padding: 2px 7px;
     border-radius: 4px;
@@ -235,10 +209,9 @@
     line-height: 1.4;
 }
 
-.aitrfoel-lang-flag.aitrfoel-lang-exists {
-    background: #dcfce7;
-    color: #166534;
-    border: 1px solid #bbf7d0;
+.eat-lang-flag.eat-lang-exists {
+    background: #2271b1;
+    color: #fff;
 }
 
 /* ── Scan Results Table ────────────────────────────────── */
@@ -302,197 +275,54 @@
 /* ── Action Cards ──────────────────────────────────────── */
 .aitrfoel-ta-actions {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
-    margin-top: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 12px;
 }
 
 .aitrfoel-ta-action-card {
-    padding: 24px 22px;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    background: #ffffff;
+    padding: 20px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    background: #fff;
     text-align: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .aitrfoel-ta-action-card:hover {
-    border-color: #cbd5e1;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
+    border-color: #2271b1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .aitrfoel-ta-action-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 56px;
-    height: 56px;
-    margin: 0 auto 16px;
-    border-radius: 14px;
-    background: #f1f5f9;
-    color: #0f172a;
-}
-
-.aitrfoel-ta-action-icon svg {
-    display: block;
-    width: 28px;
-    height: 28px;
-}
-
-#ta-action-now {
-    background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
-    border-color: #bbf7d0;
-}
-
-#ta-action-now .aitrfoel-ta-action-icon {
-    background: #dcfce7;
-    color: #15803d;
-}
-
-#ta-action-now #ta-start-now-btn {
-    background: #16a34a !important;
-    border-color: #15803d !important;
-    color: #ffffff !important;
-    box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25) !important;
-}
-
-#ta-action-now #ta-start-now-btn:hover,
-#ta-action-now #ta-start-now-btn:focus,
-#ta-action-now #ta-start-now-btn:active {
-    background: #15803d !important;
-    border-color: #166534 !important;
-    color: #ffffff !important;
-}
-
-#ta-action-schedule {
-    background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
-    border-color: #bfdbfe;
-}
-
-#ta-action-schedule .aitrfoel-ta-action-icon {
-    background: #dbeafe;
-    color: #1d4ed8;
-}
-
-#ta-action-schedule #ta-start-scheduled-btn {
-    background: #2563eb !important;
-    border-color: #1d4ed8 !important;
-    color: #ffffff !important;
-    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25) !important;
-}
-
-#ta-action-schedule #ta-start-scheduled-btn:hover,
-#ta-action-schedule #ta-start-scheduled-btn:focus,
-#ta-action-schedule #ta-start-scheduled-btn:active {
-    background: #1d4ed8 !important;
-    border-color: #1e40af !important;
-    color: #ffffff !important;
-}
-
-#ta-action-upgrade {
-    background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
-    border-color: #fde68a;
-    position: relative;
-}
-
-#ta-action-upgrade .aitrfoel-ta-action-icon {
-    background: #fef3c7;
-    color: #d97706;
-}
-
-#ta-action-upgrade #ta-upgrade-btn {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
-    border: 1px solid #d97706 !important;
-    color: #ffffff !important;
-    box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25) !important;
-    text-decoration: none !important;
-}
-
-#ta-action-upgrade #ta-upgrade-btn:hover,
-#ta-action-upgrade #ta-upgrade-btn:focus,
-#ta-action-upgrade #ta-upgrade-btn:active {
-    background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
-    border-color: #b45309 !important;
-    color: #ffffff !important;
-    text-decoration: none !important;
-}
-
-.aitrfoel-ta-action-card .button-large {
-    width: 100% !important;
-    padding: 10px 18px !important;
-    height: auto !important;
-    border-radius: 8px !important;
-    font-size: 14px !important;
-    font-weight: 600 !important;
-    color: #ffffff !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 6px !important;
-}
-
-.aitrfoel-ta-action-card .button-large:hover,
-.aitrfoel-ta-action-card .button-large:focus {
-    color: #ffffff !important;
-}
-
-.aitrfoel-ta-action-card .button-large .aitrfoel-ta-btn-icon {
-    stroke: #ffffff !important;
-    color: #ffffff !important;
-    fill: none !important;
-}
-
-.aitrfoel-ta-heading-icon {
-    display: inline-block;
-    vertical-align: middle;
-    margin-right: 6px;
-    margin-top: -3px;
-    color: #1447e6;
-}
-
-.aitrfoel-ta-btn-icon {
-    display: inline-block;
-    vertical-align: middle;
-    width: 16px;
-    height: 16px;
-    margin-right: 4px;
+    font-size: 36px;
+    margin-bottom: 8px;
+    padding: 8px 0;
+    line-height: 1;
 }
 
 .aitrfoel-ta-action-card h4 {
     margin: 0 0 8px 0;
-    font-size: 17px;
-    font-weight: 700;
-    color: #0f172a;
+    font-size: 16px;
 }
 
 .aitrfoel-ta-action-card p {
-    font-size: 13.5px;
-    color: #475569;
-    line-height: 1.5;
+    font-size: 13px;
+    color: #555;
     margin-bottom: 16px;
 }
 
 .aitrfoel-ta-schedule-info {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    padding: 12px 14px;
-    border-radius: 8px;
-    font-size: 12.5px;
-    color: #334155;
+    background: #f0f6fc;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
     margin-bottom: 16px;
     text-align: left;
-    line-height: 1.5;
 }
 
 .aitrfoel-ta-schedule-info strong {
     display: block;
     margin-bottom: 4px;
-    color: #0f172a;
 }
 
 /* ── Progress ──────────────────────────────────────────── */
@@ -582,41 +412,6 @@
     color: #a00;
 }
 
-#ta-pause-btn,
-#ta-resume-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-weight: 600;
-    padding: 2px 14px;
-    border-radius: 6px;
-    transition: all 0.15s ease;
-}
-
-#ta-pause-btn {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-    color: #334155;
-}
-
-#ta-pause-btn:hover {
-    background: #e2e8f0;
-    border-color: #94a3b8;
-    color: #0f172a;
-}
-
-#ta-resume-btn {
-    background: #0284c7;
-    border-color: #0284c7;
-    color: #ffffff;
-}
-
-#ta-resume-btn:hover {
-    background: #0369a1;
-    border-color: #0369a1;
-    color: #ffffff;
-}
-
 /* Stopped / Paused progress bar states */
 .aitrfoel-ta-progress-fill.stopped {
     background: linear-gradient(90deg, #dba617, #e8a000);
@@ -664,162 +459,107 @@
         flex-direction: column;
     }
 
-    .aitrfoel-ta-post-type-card,
-    .aitrfoel-ta-lang-card {
-        width: 100%;
-    }
-
     .aitrfoel-ta-post-type-inner,
     .aitrfoel-ta-lang-inner {
-        min-width: 0;
-        width: 100%;
-        box-sizing: border-box;
+        min-width: auto;
     }
 }
 
 /* ── Summary Count Colors ──────────────────────────────── */
 .aitrfoel-ta-count-done {
-    color: #15803d;
+    color: #00a32a;
     font-weight: 600;
-}
-
-.aitrfoel-ta-type-pill {
-    display: inline-block;
-    padding: 3px 9px;
-    background: #f1f5f9;
-    color: #334155;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    font-size: 11.5px;
-    font-weight: 600;
-    white-space: nowrap;
 }
 
 .aitrfoel-ta-count-pending {
-    color: #b45309;
+    color: #dba617;
     font-weight: 600;
 }
 
 /* ── Per-Page Detail Section ───────────────────────────── */
 .aitrfoel-ta-posts-detail {
     margin-top: 24px;
-    padding-top: 20px;
-    border-top: 1px solid #e2e8f0;
+    padding-top: 16px;
+    border-top: 1px solid #ddd;
 }
 
 .aitrfoel-ta-posts-detail h4 {
-    margin: 0 0 14px 0;
-    font-size: 16px;
-    font-weight: 700;
-    color: #0f172a;
+    margin: 0 0 12px 0;
+    font-size: 15px;
 }
 
 .aitrfoel-ta-detail-filters {
     display: flex;
     gap: 8px;
-    margin-bottom: 14px;
-    align-items: center;
-    flex-wrap: wrap;
+    margin-bottom: 12px;
 }
 
 .ta-detail-filter {
     padding: 6px 14px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #ddd;
     border-radius: 20px;
-    background: #ffffff;
+    background: #fff;
     cursor: pointer;
-    font-size: 12.5px;
-    font-weight: 500;
-    color: #475569;
+    font-size: 13px;
     transition: all 0.15s;
 }
 
 .ta-detail-filter:hover {
-    border-color: #1447e6;
-    color: #1447e6;
-    background: #f8fafc;
+    border-color: #2271b1;
+    color: #2271b1;
 }
 
 .ta-detail-filter.active {
-    background: #1447e6;
-    color: #ffffff;
-    border-color: #1447e6;
-    font-weight: 600;
+    background: #2271b1;
+    color: #fff;
+    border-color: #2271b1;
 }
 
 .aitrfoel-ta-detail-table {
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    overflow: hidden;
+    border-collapse: collapse;
 }
 
 .aitrfoel-ta-detail-table th {
     font-weight: 600;
-    background: #f8fafc;
-    color: #334155;
-    padding: 10px 14px;
+    background: #f6f7f7;
+    padding: 8px 12px;
     text-align: left;
-    font-size: 12.5px;
-    border-bottom: 1px solid #e2e8f0;
+    font-size: 13px;
+    border-bottom: 2px solid #ddd;
 }
 
 .aitrfoel-ta-detail-table td {
-    padding: 10px 14px;
-    border-bottom: 1px solid #f1f5f9;
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
     font-size: 13px;
-    color: #1e293b;
     vertical-align: middle;
 }
 
-.aitrfoel-ta-detail-table tr:last-child td {
-    border-bottom: none;
-}
-
 .aitrfoel-ta-detail-table tr:hover td {
-    background: #f8fafc;
+    background: #f9f9f9;
 }
 
 .aitrfoel-ta-detail-table a {
     text-decoration: none;
-    color: #1447e6;
-    font-weight: 500;
+    color: #2271b1;
 }
 
 .aitrfoel-ta-detail-table a:hover {
-    color: #1e40af;
+    color: #135e96;
     text-decoration: underline;
 }
 
 /* ── Editor Badges ─────────────────────────────────────── */
 .aitrfoel-ta-badge {
     display: inline-block;
-    padding: 3px 9px;
-    border-radius: 9999px;
-    font-size: 11.5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 11px;
     font-weight: 600;
-    line-height: 1.3;
+    letter-spacing: 0.3px;
     white-space: nowrap;
-}
-
-.aitrfoel-ta-badge-elementor {
-    background: #ffe4e6 !important;
-    color: #e11d48 !important;
-    border: 1px solid #fecdd3 !important;
-}
-
-.aitrfoel-ta-badge-gutenberg {
-    background: #e0f2fe !important;
-    color: #0369a1 !important;
-    border: 1px solid #bae6fd !important;
-}
-
-.aitrfoel-ta-badge-classic {
-    background: #f1f5f9 !important;
-    color: #475569 !important;
-    border: 1px solid #e2e8f0 !important;
 }
 
 /* ── Language Tags ─────────────────────────────────────── */
@@ -832,47 +572,37 @@
 
 .aitrfoel-ta-lang-tag {
     display: inline-block;
-    padding: 2px 7px;
-    border-radius: 4px;
+    padding: 1px 6px;
+    border-radius: 3px;
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .aitrfoel-ta-lang-tag.done {
-    background: #dcfce7;
-    color: #15803d;
-    border: 1px solid #86efac;
+    background: #e6f7e6;
+    color: #00a32a;
+    border: 1px solid #b8e6b8;
 }
 
 .aitrfoel-ta-lang-tag.missing {
-    background: #fee2e2;
-    color: #b91c1c;
-    border: 1px solid #fca5a5;
+    background: #fff0e0;
+    color: #b26200;
+    border: 1px solid #f0d4a8;
 }
 
 /* ── Status Labels ─────────────────────────────────────── */
 .aitrfoel-ta-status-done {
-    display: inline-block;
-    padding: 3px 9px;
-    background: #dcfce7;
-    color: #15803d;
-    border: 1px solid #bbf7d0;
-    border-radius: 6px;
-    font-size: 11.5px;
     font-weight: 600;
+    color: #00a32a;
+    font-size: 13px;
 }
 
 .aitrfoel-ta-status-pending {
-    display: inline-block;
-    padding: 3px 9px;
-    background: #fef3c7;
-    color: #b45309;
-    border: 1px solid #fde68a;
-    border-radius: 6px;
-    font-size: 11.5px;
     font-weight: 600;
+    color: #dba617;
+    font-size: 13px;
 }
 
 /* ── View Link Arrow ───────────────────────────────────── */

@@ -139,18 +139,8 @@ class AITRFOEL_Classic_Parser {
                 $chunks[] = $trailing;
             }
         } else {
-            // No block elements found — split by double newlines (\n\n) if present, else treat entire content as one chunk
-            $paragraphs = preg_split('/(\r\n\r\n|\n\n)/u', $html);
-            if (count($paragraphs) > 1) {
-                foreach ($paragraphs as $para) {
-                    $para = trim($para);
-                    if (!empty($para) && $this->has_translatable_text($para)) {
-                        $chunks[] = $para;
-                    }
-                }
-            } else {
-                $chunks[] = trim($html);
-            }
+            // No block elements found — treat entire content as one chunk
+            $chunks[] = trim($html);
         }
         
         return $chunks;

@@ -45,7 +45,7 @@
 }
 
 /* ── Plugin Header — Modern Gradient ─────────────────────────── */
-.aitrfoel-plugin-header {
+.eat-plugin-header {
     background: linear-gradient(135deg, var(--mt-gray-50) 0%, #fff 50%, var(--mt-blue-50) 100%) !important;
     border-bottom: 1px solid var(--mt-gray-200) !important;
     box-shadow: var(--mt-shadow-sm) !important;
@@ -53,24 +53,24 @@
     transition: var(--mt-transition);
 }
 
-.aitrfoel-plugin-title {
+.eat-plugin-title {
     font-size: 15px !important;
     font-weight: 600 !important;
     color: var(--mt-gray-800) !important;
     letter-spacing: -0.01em !important;
 }
 
-.aitrfoel-current-page {
+.eat-current-page {
     color: var(--mt-blue) !important;
     font-weight: 600 !important;
 }
 
-.aitrfoel-breadcrumb-separator {
+.eat-breadcrumb-separator {
     color: var(--mt-gray-400) !important;
 }
 
 /* ── Cards — Soft & Elevated ─────────────────────────────────── */
-.aitrfoel-card,
+.eat-card,
 .aitrfoel-settings-section {
     background: #fff !important;
     border: 1px solid var(--mt-gray-200) !important;
@@ -82,7 +82,7 @@
     animation: mtFadeIn 0.4s ease-out;
 }
 
-.aitrfoel-card:hover,
+.eat-card:hover,
 .aitrfoel-settings-section:hover {
     box-shadow: var(--mt-shadow-md) !important;
     border-color: var(--mt-gray-300) !important;
@@ -99,7 +99,7 @@
 }
 
 /* ── Compact Stats Bar ───────────────────────────────────────── */
-.aitrfoel-compact-stats-bar {
+.eat-compact-stats-bar {
     background: linear-gradient(135deg, #fff 0%, var(--mt-blue-50) 100%) !important;
     border-bottom: 1px solid var(--mt-gray-200) !important;
     box-shadow: var(--mt-shadow) !important;
@@ -107,7 +107,7 @@
     transition: var(--mt-transition);
 }
 
-.aitrfoel-compact-stat {
+.eat-compact-stat {
     background: rgba(255, 255, 255, 0.8) !important;
     backdrop-filter: blur(8px);
     border: 1px solid var(--mt-gray-200) !important;
@@ -116,13 +116,13 @@
     transition: var(--mt-transition);
 }
 
-.aitrfoel-compact-stat:hover {
+.eat-compact-stat:hover {
     transform: translateY(-1px);
     box-shadow: var(--mt-shadow-md);
     border-color: var(--mt-blue) !important;
 }
 
-.aitrfoel-compact-label {
+.eat-compact-label {
     color: var(--mt-gray-500) !important;
     font-size: 11px !important;
     text-transform: uppercase !important;
@@ -130,25 +130,25 @@
     font-weight: 600 !important;
 }
 
-.aitrfoel-compact-value {
+.eat-compact-value {
     color: var(--mt-gray-900) !important;
     font-weight: 700 !important;
 }
 
 /* Words Left — Modern gradient */
-.aitrfoel-words-left-stat {
+.eat-words-left-stat {
     background: linear-gradient(135deg, var(--mt-green) 0%, #16a34a 100%) !important;
     border-radius: 10px !important;
     transition: var(--mt-transition);
 }
 
-.aitrfoel-words-left-stat:hover {
+.eat-words-left-stat:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
 }
 
 /* ── Buttons — Modern Style ──────────────────────────────────── */
-.aitrfoel-compact-buy-btn {
+.eat-compact-buy-btn {
     background: linear-gradient(135deg, var(--mt-blue) 0%, var(--mt-blue-dark) 100%) !important;
     color: white !important;
     border: none !important;
@@ -160,14 +160,14 @@
     box-shadow: 0 2px 4px rgba(20, 71, 230, 0.2);
 }
 
-.aitrfoel-compact-buy-btn:hover {
+.eat-compact-buy-btn:hover {
     background: linear-gradient(135deg, var(--mt-blue-light) 0%, var(--mt-blue) 100%) !important;
     color: white !important;
     transform: translateY(-1px) !important;
     box-shadow: 0 4px 12px rgba(20, 71, 230, 0.3) !important;
 }
 
-.aitrfoel-compact-addon-badge {
+.eat-compact-addon-badge {
     display: inline-block !important;
     background: linear-gradient(135deg, #e8f5e9, #c8e6c9) !important;
     color: #2e7d32 !important;
@@ -214,7 +214,7 @@
 }
 
 /* ── Stat Cards ──────────────────────────────────────────────── */
-.aitrfoel-stat-card {
+.eat-stat-card {
     border-radius: var(--mt-radius) !important;
     border: 1px solid var(--mt-gray-200) !important;
     box-shadow: var(--mt-shadow) !important;
@@ -222,31 +222,31 @@
     background: #fff !important;
 }
 
-.aitrfoel-stat-card:hover {
+.eat-stat-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--mt-shadow-lg) !important;
     border-color: var(--mt-blue) !important;
 }
 
-.aitrfoel-stat-number {
+.eat-stat-number {
     color: var(--mt-blue) !important;
     font-weight: 800 !important;
 }
 
-.aitrfoel-stat-label {
+.eat-stat-label {
     color: var(--mt-gray-500) !important;
     font-weight: 600 !important;
     letter-spacing: 0.05em !important;
 }
 
 /* ── Progress Bars — Smooth Gradient ─────────────────────────── */
-.aitrfoel-progress-bar {
+.eat-progress-bar {
     background: var(--mt-gray-100) !important;
     border-radius: 12px !important;
     overflow: hidden !important;
 }
 
-.aitrfoel-progress-fill {
+.eat-progress-fill {
     background: linear-gradient(90deg, var(--mt-blue) 0%, var(--mt-blue-light) 50%, var(--mt-green) 100%) !important;
     border-radius: 12px !important;
     transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -254,7 +254,7 @@
     overflow: hidden;
 }
 
-.aitrfoel-progress-fill::after {
+.eat-progress-fill::after {
     content: '';
     position: absolute;
     top: 0;
@@ -266,20 +266,20 @@
 }
 
 /* ── Usage Bar ───────────────────────────────────────────────── */
-.aitrfoel-usage-bar {
+.eat-usage-bar {
     border-radius: 6px !important;
     background: var(--mt-gray-100) !important;
     height: 10px !important;
 }
 
-.aitrfoel-usage-progress {
+.eat-usage-progress {
     border-radius: 6px !important;
     background: linear-gradient(90deg, var(--mt-green) 0%, var(--mt-amber) 60%, var(--mt-red) 100%) !important;
     transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 /* ── Plan Badge ──────────────────────────────────────────────── */
-.aitrfoel-plan-name {
+.eat-plan-name {
     background: linear-gradient(135deg, var(--mt-blue) 0%, var(--mt-blue-dark) 100%) !important;
     border-radius: 6px !important;
     padding: 4px 12px !important;
@@ -322,8 +322,8 @@
 }
 
 /* ── Bulk Translation Bar ────────────────────────────────────── */
-#aitrfoel-translate-all-site,
-#aitrfoel-bulk-settings {
+#eat-translate-all-site,
+#eat-bulk-settings {
     border: 1.5px dashed var(--mt-blue) !important;
     color: var(--mt-blue) !important;
     background: var(--mt-blue-50) !important;
@@ -340,8 +340,8 @@
     gap: 0 !important;
 }
 
-#aitrfoel-translate-all-site .aitrfoel-btn-sub,
-#aitrfoel-bulk-settings .aitrfoel-btn-sub {
+#eat-translate-all-site .eat-btn-sub,
+#eat-bulk-settings .eat-btn-sub {
     font-size: 9px;
     opacity: 0.6;
     font-weight: 400;
@@ -349,7 +349,7 @@
     text-transform: uppercase;
 }
 
-#aitrfoel-translate-all-site:hover {
+#eat-translate-all-site:hover {
     background: var(--mt-blue) !important;
     color: #fff !important;
     border-style: solid !important;
@@ -358,8 +358,8 @@
 }
 
 /* ── Bulk Action Buttons — Icon Centering ──────────────────── */
-.aitrfoel-bulk-actions .button,
-.aitrfoel-bulk-actions .button-primary {
+.eat-bulk-actions .button,
+.eat-bulk-actions .button-primary {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -367,7 +367,7 @@
     vertical-align: middle !important;
 }
 
-.aitrfoel-bulk-translation-bar {
+.eat-bulk-translation-bar {
     background: rgba(255, 255, 255, 0.95) !important;
     backdrop-filter: blur(16px) !important;
     -webkit-backdrop-filter: blur(16px) !important;
@@ -377,74 +377,74 @@
     transition: var(--mt-transition);
 }
 
-.aitrfoel-bulk-translation-bar.is-sticky {
+.eat-bulk-translation-bar.is-sticky {
     box-shadow: var(--mt-shadow-lg) !important;
     border-color: var(--mt-blue) !important;
     border-left: 4px solid var(--mt-blue) !important;
 }
 
-.aitrfoel-bulk-translation-bar.is-sticky::before {
+.eat-bulk-translation-bar.is-sticky::before {
     background: linear-gradient(90deg, var(--mt-blue), var(--mt-blue-light)) !important;
 }
 
 /* ── Status Messages ─────────────────────────────────────────── */
-#aitrfoel-status.success {
+#eat-status.success {
     border-radius: var(--mt-radius) !important;
 }
 
-#aitrfoel-status.error {
+#eat-status.error {
     border-radius: var(--mt-radius) !important;
 }
 
-#aitrfoel-status.info {
+#eat-status.info {
     border-radius: var(--mt-radius) !important;
 }
 
-.aitrfoel-status-green {
+.eat-status-green {
     border-radius: 10px !important;
     border-left: 4px solid var(--mt-green) !important;
 }
 
-.aitrfoel-status-yellow {
+.eat-status-yellow {
     border-radius: 10px !important;
 }
 
-.aitrfoel-status-red {
+.eat-status-red {
     border-radius: 10px !important;
 }
 
 /* ── String Selection Area ───────────────────────────────────── */
-#aitrfoel-string-selection-area {
+#eat-string-selection-area {
     background: var(--mt-gray-50) !important;
     border: 1px solid var(--mt-gray-200) !important;
     border-radius: var(--mt-radius) !important;
 }
 
-#aitrfoel-string-list {
+#eat-string-list {
     border-radius: 10px !important;
     border: 1px solid var(--mt-gray-200) !important;
 }
 
-#aitrfoel-string-list label:hover {
+#eat-string-list label:hover {
     background: var(--mt-blue-50) !important;
     border-radius: 8px !important;
 }
 
 /* ── Model Selector Cards ────────────────────────────────────── */
-.aitrfoel-model-option {
+.eat-model-option {
     border-radius: var(--mt-radius) !important;
     border: 2px solid var(--mt-gray-200) !important;
     transition: var(--mt-transition);
 }
 
-.aitrfoel-model-option:hover {
+.eat-model-option:hover {
     border-color: var(--mt-blue) !important;
     background: var(--mt-blue-50) !important;
     transform: translateY(-2px);
     box-shadow: var(--mt-shadow-md);
 }
 
-.aitrfoel-model-option.selected {
+.eat-model-option.selected {
     border-color: var(--mt-blue) !important;
     background: var(--mt-blue-50) !important;
     box-shadow: 0 0 0 3px rgba(20, 71, 230, 0.1) !important;
@@ -471,14 +471,14 @@
 }
 
 /* ── Translation Success ─────────────────────────────────────── */
-.aitrfoel-translation-success {
+.eat-translation-success {
     border-radius: var(--mt-radius) !important;
     background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
     border-left: 4px solid var(--mt-green) !important;
 }
 
 /* ── Preview & Publish Buttons ───────────────────────────────── */
-.aitrfoel-preview-btn {
+.eat-preview-btn {
     background: linear-gradient(135deg, var(--mt-blue) 0%, var(--mt-blue-dark) 100%) !important;
     border: none !important;
     border-radius: 8px !important;
@@ -486,12 +486,12 @@
     transition: var(--mt-transition);
 }
 
-.aitrfoel-preview-btn:hover {
+.eat-preview-btn:hover {
     transform: translateY(-1px) !important;
     box-shadow: 0 4px 16px rgba(20, 71, 230, 0.35) !important;
 }
 
-.aitrfoel-publish-btn {
+.eat-publish-btn {
     background: linear-gradient(135deg, var(--mt-green) 0%, #16a34a 100%) !important;
     border: none !important;
     border-radius: 8px !important;
@@ -499,7 +499,7 @@
     transition: var(--mt-transition);
 }
 
-.aitrfoel-publish-btn:hover {
+.eat-publish-btn:hover {
     transform: translateY(-1px) !important;
     box-shadow: 0 4px 16px rgba(34, 197, 94, 0.35) !important;
 }
@@ -582,18 +582,23 @@
     color: var(--mt-blue);
 }
 
-/* ── Tooltip Override — Native browser tooltips ──────────────── */
+/* ── Tooltip Override ────────────────────────────────────────── */
+.eat-tooltip:hover::after {
+    border-radius: 10px !important;
+    background: var(--mt-gray-900) !important;
+    box-shadow: var(--mt-shadow-lg) !important;
+}
 
 /* ── Dropdown Button Arrow ────────────────────────────────────── */
-#aitrfoel-select-source-language,
-#aitrfoel-select-languages {
+#eat-select-source-language,
+#eat-select-languages {
     position: relative;
     padding-right: 24px !important;
     text-align: left;
 }
 
 /* ── Dropdown Override ───────────────────────────────────────── */
-.aitrfoel-dropdown-content {
+.eat-dropdown-content {
     border-radius: 10px !important;
     box-shadow: var(--mt-shadow-lg) !important;
     border: 1px solid var(--mt-gray-200) !important;
@@ -602,17 +607,17 @@
     max-height: 400px !important;
 }
 
-#aitrfoel-source-dropdown,
-#aitrfoel-languages-dropdown {
+#eat-source-dropdown,
+#eat-languages-dropdown {
     max-height: 50vh !important;
     overflow-y: auto !important;
 }
 
-.aitrfoel-dropdown-item {
+.eat-dropdown-item {
     transition: var(--mt-transition);
 }
 
-.aitrfoel-dropdown-item:hover {
+.eat-dropdown-item:hover {
     background: var(--mt-blue-50) !important;
 }
 
@@ -794,37 +799,37 @@
 /* Medium screens: 1180px breakpoint */
 @media (max-width: 1180px) {
     /* Stats bar: regular stats in row, license on second row right */
-    .aitrfoel-compact-stats-bar {
+    .eat-compact-stats-bar {
         flex-wrap: wrap !important;
         gap: 8px !important;
     }
 
-    .aitrfoel-compact-stat:not(.aitrfoel-compact-license) {
+    .eat-compact-stat:not(.eat-compact-license) {
         flex: 1 1 auto !important;
     }
 
-    .aitrfoel-compact-stat.aitrfoel-compact-license {
+    .eat-compact-stat.eat-compact-license {
         flex: 1 1 100% !important;
         margin-left: 0 !important;
     }
 
     /* Bulk bar: languages first row, buttons second row right */
-    .aitrfoel-bulk-content {
+    .eat-bulk-content {
         flex-wrap: wrap !important;
     }
 
-    .aitrfoel-bulk-languages {
+    .eat-bulk-languages {
         flex: 1 1 100% !important;
     }
 
-    .aitrfoel-bulk-actions {
+    .eat-bulk-actions {
         margin-left: auto !important;
         flex-wrap: wrap !important;
     }
 }
 
 @media (max-width: 782px) {
-    .aitrfoel-card,
+    .eat-card,
     .aitrfoel-settings-section {
         padding: 16px !important;
         border-radius: 10px !important;
@@ -837,7 +842,7 @@
     }
 
     /* Fix compact stats bar negative margin and overflow */
-    .aitrfoel-compact-stats-bar {
+    .eat-compact-stats-bar {
         margin-left: 0 !important;
         margin-right: 0 !important;
         padding: 12px !important;
@@ -850,7 +855,7 @@
         box-shadow: var(--mt-shadow-sm) !important;
     }
 
-    .aitrfoel-compact-stat {
+    .eat-compact-stat {
         flex: 1 1 calc(50% - 8px) !important;
         min-width: 0 !important;
         padding: 8px 12px !important;
@@ -861,34 +866,34 @@
         font-size: 12px !important;
     }
 
-    .aitrfoel-compact-stat.aitrfoel-compact-license {
+    .eat-compact-stat.eat-compact-license {
         flex: 1 1 100% !important;
         margin-left: 0 !important;
     }
 
     /* Fix bulk translation bar responsive layout */
-    .aitrfoel-bulk-translation-bar {
+    .eat-bulk-translation-bar {
         padding: 14px !important;
         border-radius: 10px !important;
         margin-left: 0 !important;
         margin-right: 0 !important;
     }
 
-    .aitrfoel-bulk-content {
+    .eat-bulk-content {
         flex-direction: column !important;
         gap: 12px !important;
         align-items: stretch !important;
     }
 
-    .aitrfoel-bulk-actions {
+    .eat-bulk-actions {
         margin-left: 0 !important;
         flex-wrap: wrap !important;
         gap: 8px !important;
         justify-content: stretch !important;
     }
 
-    .aitrfoel-bulk-actions .button,
-    .aitrfoel-bulk-actions .button-primary {
+    .eat-bulk-actions .button,
+    .eat-bulk-actions .button-primary {
         flex: 1 1 auto !important;
         min-width: 0 !important;
         text-align: center !important;
@@ -897,34 +902,34 @@
         padding: 8px 12px !important;
     }
 
-    #aitrfoel-translate-all-site {
+    #eat-translate-all-site {
         order: 3 !important;
         flex: 1 1 100% !important;
     }
 }
 
 @media (max-width: 480px) {
-    .aitrfoel-compact-stat {
+    .eat-compact-stat {
         flex: 1 1 100% !important;
     }
 
-    .aitrfoel-bulk-actions {
+    .eat-bulk-actions {
         flex-direction: column !important;
     }
 
-    .aitrfoel-bulk-actions .button,
-    .aitrfoel-bulk-actions .button-primary {
+    .eat-bulk-actions .button,
+    .eat-bulk-actions .button-primary {
         width: 100% !important;
         flex: none !important;
     }
 
-    #aitrfoel-translate-all-site {
+    #eat-translate-all-site {
         order: unset !important;
     }
 }
 
 /* ── Toast Notifications ─────────────────────────────────────── */
-#aitrfoel-toast-container {
+#eat-toast-container {
     position: fixed;
     top: 40px;
     right: 20px;
@@ -935,7 +940,7 @@
     pointer-events: none;
 }
 
-.aitrfoel-toast {
+.eat-toast {
     pointer-events: auto;
     display: flex;
     align-items: center;
@@ -955,21 +960,21 @@
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-.aitrfoel-toast.aitrfoel-toast-show {
+.eat-toast.eat-toast-show {
     opacity: 1;
     transform: translateX(0);
 }
 
-.aitrfoel-toast-icon {
+.eat-toast-icon {
     flex-shrink: 0;
     font-size: 18px;
 }
 
-.aitrfoel-toast-msg {
+.eat-toast-msg {
     flex: 1;
 }
 
-.aitrfoel-toast-close {
+.eat-toast-close {
     flex-shrink: 0;
     background: none;
     border: none;
@@ -981,14 +986,14 @@
     transition: color 0.2s;
 }
 
-.aitrfoel-toast-close:hover {
+.eat-toast-close:hover {
     color: var(--mt-gray-700);
 }
 
-.aitrfoel-toast-success { border-left-color: #22c55e; }
-.aitrfoel-toast-error   { border-left-color: #ef4444; }
-.aitrfoel-toast-warning { border-left-color: #f59e0b; }
-.aitrfoel-toast-info    { border-left-color: var(--mt-blue); }
+.eat-toast-success { border-left-color: #22c55e; }
+.eat-toast-error   { border-left-color: #ef4444; }
+.eat-toast-warning { border-left-color: #f59e0b; }
+.eat-toast-info    { border-left-color: var(--mt-blue); }
 
 /* ── Settings Section Navigation ─────────────────────────────── */
 .aitrfoel-settings-nav {

@@ -53,37 +53,15 @@ class AITRFOEL_Widget_Parser {
             // Text widget fields
             'editor', 'text', 'title', 'title_text', 'description_text', 'inner_text', 'text_field',
             'heading', 'subtitle', 'prefix', 'suffix', 'highlighted_text',
-            // Premium Addons / Essential Addons repeater + text fields (use "txt" not "text")
-            'item_txt', 'item_text', 'premium_text', 'pa_text', 'before_text', 'after_text', 'rotating_text',
             'button', 'button_text', 'link_text', 'read_more_text',
             'field_label', 'placeholder', 'field_html', 'acceptance_text', 'success_message', 'error_message',
             'caption', 'alt', 'image_caption', 'lightbox_description',
-            // Testimonial & Toggle / Accordion / Tabs widget fields
             'testimonial_content', 'testimonial_name', 'testimonial_job',
-            'tab_title', 'tab_content', 'tab_label', 'tab_body', 'tab_text', 'tab_desc', 'tab_sub_title',
-            'toggle_title', 'toggle_content', 'toggle_text', 'toggle_description', 'toggle_sub_title', 'toggle_tab_title', 'toggle_body',
-            'accordion_title', 'accordion_content', 'accordion_text', 'accordion_description', 'accordion_item_title', 'accordion_item_content', 'accordion_body',
-            'item_title', 'item_content', 'item_description', 'item_subtitle', 'item_desc', 'item_heading',
-            'faq_question', 'faq_answer', 'question', 'answer',
-            // Third-party addons (Essential Addons, Premium Addons, Ultimate Addons, etc.)
-            'eael_adv_accordion_tab_title', 'eael_adv_accordion_tab_content', 'eael_toggle_title', 'eael_toggle_content',
-            'premium_accordion_title', 'premium_accordion_content', 'uael_accordion_title', 'uael_accordion_content',
-            'list_title', 'list_content', 'list_text', 'list_description',
-            'card_title', 'card_content', 'card_description', 'card_text',
-            'feature_title', 'feature_text', 'feature_description',
-            'step_title', 'step_text', 'step_description', 'step_content',
-            'timeline_title', 'timeline_text', 'timeline_content',
-            'info_box_title', 'info_box_description', 'info_box_content',
-            'flipbox_title_front', 'flipbox_title_back', 'flipbox_content_front', 'flipbox_content_back',
+            'tab_title', 'tab_content', 'accordion_item_title', 'accordion_item_content',
             'alert_title', 'alert_description', 'cta_title', 'cta_description', 'cta_button',
             'html', 'shortcode', 'excerpt', 'before_text', 'after_text',
             // Add more specific fields
-            'label', 'description', 'content', 'message',
-            // Elementor v4 atomic widget fields
-            'paragraph',
-            // JetSmartFilters translatable widget fields
-            'show_all_filter_label', 'filter_placeholder', 'search_placeholder', 'dropdown_placeholder',
-            'filter_label', 'apply_button_text', 'remove_filters_button_text', 'search_placeholder_text',
+            'label', 'description', 'content', 'message'
         ];
         
         // Protected fields that should NEVER be translated
@@ -91,9 +69,6 @@ class AITRFOEL_Widget_Parser {
             // Core Elementor structure
             '_id', 'id', 'custom_id', 'css_id', 'css_classes', '_css_classes',
             'widgetType', 'elType', 'isInner', 'elements', 'settings',
-            // Global colour/typography references ("globals/colors?id=...") and
-            // dynamic tag shortcodes ("[elementor-tag ...]"): never user text.
-            '__globals__', '__dynamic__',
             
             // Links and media
             'url', 'link', 'video_link', 'custom_url', 'website_link', 'external_link',
@@ -292,7 +267,7 @@ class AITRFOEL_Widget_Parser {
             if ($key === 'form_fields' && is_array($value)) {
                 foreach ($value as $idx => $ff) {
                     if (!is_array($ff)) continue;
-                    foreach (['placeholder', 'field_label', 'title', 'field_options', 'field_html', 'acceptance_text', 'field_value', 'step_next_label', 'step_previous_label', 'help_text', 'description'] as $k) {
+                    foreach (['placeholder','field_label','title'] as $k) {
                         if (!empty($ff[$k]) && is_string($ff[$k]) && $this->is_translatable_content($ff[$k])) {
                             $p = array_merge($path, ['form_fields', $idx, $k]);
                             $ps = implode('.', $p);
@@ -317,39 +292,7 @@ class AITRFOEL_Widget_Parser {
             }
             
             $current_path = array_merge($path, [$key]);
-
-            // ── Elementor v4 atomic typed-prop ──────────────────────────────
-            // Atomic widgets (e-heading, e-paragraph, etc.) store text in a
-            // typed-prop object: { "$$type": "html-v3", "value": [...] }
-            // The value array is either:
-            //   - Delta format: [{"insert":"text …"}, {"insert":"\n"}, …]
-            //   - Tree format:  [{"type":"text","text":"…"}, …]
-            // We only process text-bearing $$types; layout/style types are skipped.
-            if (is_array($value)
-                && isset($value['$$type'])
-                && in_array($value['$$type'], ['html-v3', 'html', 'rich-text'], true)
-                && isset($value['value'])
-                && is_array($value['value'])
-                && $this->is_translatable_field($key)
-            ) {
-                $text = $this->extract_atomic_text($value['value']);
-                if ($text !== '' && $this->is_translatable_content($text)) {
-                    $path_string = implode('.', $current_path);
-                    AITRFOEL_Logger::log("Found atomic field '$key' ({$value['$$type']}) at path: $path_string", 'debug');
-                    $translation_map[$path_string] = [
-                        'original'     => $text,
-                        'display_text' => $this->clean_html_for_display($text),
-                        'type'         => 'atomic',
-                        'field_name'   => $key,
-                        'path'         => $path_string,
-                        'path_array'   => $current_path,
-                        'atomic_type'  => $value['$$type'],
-                        'atomic_value' => $value['value'],
-                    ];
-                }
-                continue; // Do not recurse further into this typed prop.
-            }
-
+            
             if (is_string($value) && $this->is_translatable_field($key) && $this->is_translatable_content($value)) {
                 // Found translatable content
                 $path_string = implode('.', $current_path);
@@ -374,132 +317,6 @@ class AITRFOEL_Widget_Parser {
     /**
      * Parse nested structures like repeaters, tabs, accordions
      */
-    /**
-     * Extract plain text from an Elementor v4 html-v3 value array.
-     *
-     * Supports two known formats:
-     *   - Delta:  [ {"insert":"text"}, {"insert":"\n"}, … ]
-     *   - Tree:   [ {"type":"text","text":"…"}, {"type":"br"}, … ]
-     *
-     * Returns the concatenated text with newlines collapsed.
-     */
-    private function extract_atomic_text(array $nodes): string {
-        $parts = [];
-        foreach ($nodes as $node) {
-            if (!is_array($node)) {
-                continue;
-            }
-            // Delta format
-            if (array_key_exists('insert', $node) && is_string($node['insert'])) {
-                $t = $node['insert'];
-                if ($t !== "\n" && trim($t) !== '') {
-                    $parts[] = $t;
-                }
-                continue;
-            }
-            // Tree format — leaf text node
-            if (isset($node['type']) && $node['type'] === 'text' && isset($node['text']) && is_string($node['text'])) {
-                if (trim($node['text']) !== '') {
-                    $parts[] = $node['text'];
-                }
-                continue;
-            }
-            // Tree format — recurse into children
-            if (!empty($node['children']) && is_array($node['children'])) {
-                $child_text = $this->extract_atomic_text($node['children']);
-                if ($child_text !== '') {
-                    $parts[] = $child_text;
-                }
-            }
-        }
-        return implode(' ', $parts);
-    }
-
-    /**
-     * Rebuild an Elementor v4 html-v3 value array with translated text.
-     *
-     * Replaces all text-bearing nodes with the translated string (inserted as
-     * a single Delta text-run), preserving non-text nodes (br, newline).
-     * If the original format is unrecognised, returns the original unchanged.
-     */
-    private function apply_atomic_text(array $nodes, string $translated): array {
-        // Detect format from first text-bearing node.
-        $is_delta = false;
-        foreach ($nodes as $node) {
-            if (is_array($node) && array_key_exists('insert', $node)) {
-                $is_delta = true;
-                break;
-            }
-        }
-
-        if ($is_delta) {
-            // Replace all string-insert nodes with translated text; keep structural "\n" nodes.
-            $result = [];
-            $injected = false;
-            foreach ($nodes as $node) {
-                if (!is_array($node)) {
-                    $result[] = $node;
-                    continue;
-                }
-                if (array_key_exists('insert', $node) && is_string($node['insert'])) {
-                    if ($node['insert'] === "\n") {
-                        $result[] = $node; // preserve paragraph-break markers
-                    } elseif (!$injected) {
-                        // Replace the first text run with the translation; drop the rest.
-                        $result[] = array_merge($node, ['insert' => $translated]);
-                        $injected = true;
-                    }
-                    // Subsequent non-newline text runs are dropped (they were part of same string).
-                    continue;
-                }
-                $result[] = $node;
-            }
-            // If we never injected (nothing to replace), prepend a new text run.
-            if (!$injected) {
-                array_unshift($result, ['insert' => $translated]);
-            }
-            return $result;
-        }
-
-        // Tree format: replace text in leaf nodes recursively.
-        $first = true;
-        $replace_tree = function (array &$arr) use (&$replace_tree, $translated, &$first): void {
-            foreach ($arr as &$node) {
-                if (!is_array($node)) {
-                    continue;
-                }
-                if (isset($node['type']) && $node['type'] === 'text' && isset($node['text'])) {
-                    if ($first) {
-                        $node['text'] = $translated;
-                        $first = false;
-                    } else {
-                        $node['text'] = ''; // Blank out subsequent text runs.
-                    }
-                    continue;
-                }
-                if (!empty($node['children']) && is_array($node['children'])) {
-                    $replace_tree($node['children']);
-                }
-            }
-            unset($node);
-        };
-        $result = $nodes;
-        $replace_tree($result);
-        return $result;
-    }
-
-    /**
-     * Return a copy of an Elementor v4 typed prop ({"$$type":…,"value":[…]}) with its
-     * text replaced by $translated. Non-typed-prop input is returned unchanged.
-     * Used by every write-back path so a typed prop is never overwritten by a string.
-     */
-    public function apply_atomic_translation($typed_prop, $translated) {
-        if (!is_array($typed_prop) || !isset($typed_prop['$$type']) || !isset($typed_prop['value']) || !is_array($typed_prop['value'])) {
-            return $typed_prop;
-        }
-        return array_merge($typed_prop, ['value' => $this->apply_atomic_text($typed_prop['value'], (string) $translated)]);
-    }
-
     private function parse_nested_structure($array, &$translation_map, $path = []) {
         foreach ($array as $key => $value) {
             // Skip if key is protected
@@ -565,29 +382,6 @@ class AITRFOEL_Widget_Parser {
                 } else {
                     $fail_count++;
                     AITRFOEL_Logger::log("Failed to update custom attribute '$attr_name' at: $container_path", 'warning');
-                }
-                continue;
-            }
-
-            // Handle Elementor v4 atomic typed-prop (html-v3 etc.).
-            // The typed-prop sits at $path in the data as {"$$type":…,"value":[…]}.
-            // We rebuild the value array with the translated text and write it back.
-            $current_at_path = $this->get_value_by_path($translated_data, $path);
-            if (is_array($current_at_path)
-                && isset($current_at_path['$$type'])
-                && isset($current_at_path['value'])
-                && is_array($current_at_path['value'])
-            ) {
-                $new_value_nodes = $this->apply_atomic_text($current_at_path['value'], $translated_text);
-                $new_typed_prop  = array_merge($current_at_path, ['value' => $new_value_nodes]);
-                $result = $this->set_value_by_path_fixed($translated_data, $path, $new_typed_prop);
-                if ($result !== false) {
-                    $translated_data = $result;
-                    $success_count++;
-                    AITRFOEL_Logger::log("Applied atomic translation at: $path", 'debug');
-                } else {
-                    $fail_count++;
-                    AITRFOEL_Logger::log("Failed to apply atomic translation at: $path", 'warning');
                 }
                 continue;
             }
@@ -741,40 +535,26 @@ class AITRFOEL_Widget_Parser {
             return false;
         }
         
-        $result = false;
-
         // Check exact match
         if (in_array($field_name, $this->translatable_fields, true)) {
-            $result = true;
-        } else {
-            // Check patterns for common translatable fields
-            $translatable_patterns = [
-                '/^(title|heading|text|content|description|caption|label|message|subtitle|editor|html|question|answer|body|paragraph)$/i',
-                '/^(button_text|link_text|placeholder|prefix|suffix|read_more_text)$/i',
-                '/_(title|text|content|description|label|message|subtitle|question|answer|caption|heading|body|excerpt|html|editor)$/i',
-                '/^(tab|toggle|accordion|item|faq|step|slide|timeline|feature|card|pricing|list|box|alert|prompt)_/i',
-                '/^field_(label|placeholder|html)$/i'
-            ];
-
-            foreach ($translatable_patterns as $pattern) {
-                if (preg_match($pattern, $field_name)) {
-                    $result = true;
-                    break;
-                }
+            return true;
+        }
+        
+        // Check patterns for common translatable fields
+        $translatable_patterns = [
+            '/^(title|heading|text|content|description|caption|label|message|subtitle|editor|html)$/i',
+            '/^(button_text|link_text|placeholder|prefix|suffix)$/i',
+            '/_(title|text|content|description|label|message)$/i',
+            '/^field_(label|placeholder|html)$/i'
+        ];
+        
+        foreach ($translatable_patterns as $pattern) {
+            if (preg_match($pattern, $field_name)) {
+                return true;
             }
         }
-
-        /**
-         * Filter whether an Elementor widget field name holds translatable text.
-         * Lets third-party / addon widget repeater fields (Premium Addons, Essential
-         * Addons, JetElements, etc.) be translated by whitelisting their field keys,
-         * without modifying core. The layout/protected/underscore blocks above are
-         * intentionally not overridable.
-         *
-         * @param bool   $result
-         * @param string $field_name
-         */
-        return (bool) apply_filters('aitrfoel_is_translatable_elementor_field', $result, $field_name);
+        
+        return false;
     }
     
     /**

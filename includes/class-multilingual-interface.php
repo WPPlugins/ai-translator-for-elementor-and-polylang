@@ -207,46 +207,25 @@ abstract class AITRFOEL_Multilingual_Interface {
      * @return string|null Normalized language code
      */
     protected function normalize_language_code($language) {
-        if (!is_string($language) || trim($language) === '') {
-            return null;
-        }
-
-        $clean = str_replace('_', '-', strtolower(trim($language)));
-
-        // If it's already a configured language in the active integration, return as-is
-        if ($this->language_exists($clean)) {
-            return $clean;
-        }
-
         // If it's already a short code (2-3 chars), return as-is
-        if (strlen($clean) <= 3 && preg_match('/^[a-z]{2,3}$/', $clean)) {
-            return $clean;
+        if (strlen($language) <= 3) {
+            return strtolower($language);
         }
-
-        // If it's a known regional/variant code mapped in Language Mapper (e.g. 'es-mx', 'pt-br')
-        if (class_exists('AITRFOEL_Language_Mapper') && AITRFOEL_Language_Mapper::is_mapped($clean)) {
-            return $clean;
-        }
-
-        // Check local name map first (e.g. 'Spanish' => 'es')
-        $code = $this->get_code_from_name(trim($language));
+        
+        // Try the local name map first
+        $code = $this->get_code_from_name($language);
         if ($code) {
             return $code;
         }
-
-        // Fallback: reverse-lookup via Language Mapper (e.g. 'Spanish (Mexico)' => 'es-mx')
+        
+        // Fallback: reverse-lookup via Language Mapper (has 100+ languages)
         if (class_exists('AITRFOEL_Language_Mapper')) {
-            $code = AITRFOEL_Language_Mapper::get_code_from_language_name(trim($language));
+            $code = AITRFOEL_Language_Mapper::get_code_from_language_name($language);
             if ($code) {
                 return $code;
             }
         }
-
-        // If it matches standard regional language code format (e.g. 'xx-yy' or 'xxx-yyyy')
-        if (preg_match('/^[a-z]{2,3}(-[a-z0-9]{2,4})?$/', $clean)) {
-            return $clean;
-        }
-
+        
         return null;
     }
     
