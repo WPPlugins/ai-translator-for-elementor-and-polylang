@@ -2829,6 +2829,14 @@ class AITRFOEL_Translation_Engine {
                 update_post_meta($new_page_id, $meta_key, $meta_value);
             }
         }
+
+        // Translated templates must NEVER have display conditions — only the original (default-language)
+        // template should have conditions. Elementor Pro may copy conditions automatically via its own
+        // hooks when a new elementor_library post is created, which would make the translation show up
+        // as an independent "show everywhere" template competing with the original.
+        if (get_post_type($original_page_id) === 'elementor_library') {
+            delete_post_meta($new_page_id, '_elementor_conditions');
+        }
         
         // Handle multilingual plugin (Polylang or WPML) via abstraction layer
         $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
