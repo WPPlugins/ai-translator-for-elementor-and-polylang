@@ -2955,6 +2955,19 @@ class AITRFOEL_Ajax_Handler {
             }
 
             $templates = get_posts($query_args);
+
+            // PHP-level guard: tax_query NOT IN only excludes posts that *have* the taxonomy
+            // set to a non-default value. Posts created as translations but whose taxonomy term
+            // was not properly assigned would slip through, causing them to be re-translated and
+            // overwrite the correct default-language translation entry in the group.
+            if (class_exists('AITRFOEL_Builtin_Integration') && AITRFOEL_Builtin_Integration::is_enabled()) {
+                $bl_guard = AITRFOEL_Builtin_Integration::get_instance();
+                $templates = array_filter($templates, function($tpl) use ($bl_guard, $default_lang) {
+                    return $bl_guard->get_post_language($tpl->ID) === $default_lang;
+                });
+                $templates = array_values($templates);
+            }
+
             if (empty($templates)) {
                 wp_send_json_success([
                     'message'    => __('No Elementor templates found to translate.', 'ai-translator-for-elementor-and-polylang'),

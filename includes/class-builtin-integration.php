@@ -2730,29 +2730,55 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             return;
         }
         
-        // Check if the current post is actually in the current language
-        $post_lang = $this->get_post_language($post_id);
+        // Check if the current post is in the current language AND is published.
+        // A draft/pending translation should also redirect to the default language,
+        // otherwise anonymous visitors get a 404 or a caching redirect loop.
+        $post_lang   = $this->get_post_language($post_id);
+        $post_status = get_post_status($post_id);
         
-        if ($post_lang !== $current_lang) {
-            // This post is not translated to the current language
-            // Redirect to the default language version
-            $default_url = get_permalink($post_id);
-            
-            // If permalink filters add the lang prefix, get the raw permalink
-            // by temporarily removing our filter
-            remove_filter('page_link', [$this, 'filter_page_permalink'], 10);
-            remove_filter('post_link', [$this, 'filter_permalink'], 10);
-            remove_filter('post_type_link', [$this, 'filter_permalink'], 10);
-            $default_url = get_permalink($post_id);
-            add_filter('post_link', [$this, 'filter_permalink'], 10, 2);
-            add_filter('page_link', [$this, 'filter_page_permalink'], 10, 2);
-            add_filter('post_type_link', [$this, 'filter_permalink'], 10, 2);
-            
-            if ($default_url) {
-                wp_safe_redirect($default_url, 302);
-                exit;
-            }
+        $needs_redirect = ($post_lang !== $current_lang) ||
+                          ($post_lang === $current_lang && $post_status !== 'publish');
+        
+        if (!$needs_redirect) {
+            return;
         }
+        
+        $default_lang_prefix = get_option('aitrfoel_default_lang_prefix', false);
+        
+        // For the front page: redirect directly to the default language home.
+        // Using get_permalink() for front page returns home_url('/') which then
+        // triggers another hop through maybe_redirect_default_lang_prefix — this
+        // extra hop can interact with Cloudflare / host-level redirects and loop.
+        if (is_front_page()) {
+            $default_url = $default_lang_prefix
+                ? home_url('/' . $default_lang . '/')
+                : home_url('/');
+        } else {
+            // For regular pages/posts, redirect to the default-language version.
+            // Temporarily remove our prefix filters so get_permalink returns the raw URL.
+            remove_filter('page_link',      [$this, 'filter_page_permalink'], 10);
+            remove_filter('post_link',      [$this, 'filter_permalink'],      10);
+            remove_filter('post_type_link', [$this, 'filter_permalink'],      10);
+            
+            // Try to find the actual default-language post for this content.
+            $translations    = $this->get_post_translations($post_id);
+            $default_post_id = isset($translations[$default_lang]) ? (int) $translations[$default_lang] : $post_id;
+            $default_url     = get_permalink($default_post_id) ?: home_url('/');
+            
+            add_filter('post_link',      [$this, 'filter_permalink'],      10, 2);
+            add_filter('page_link',      [$this, 'filter_page_permalink'], 10, 2);
+            add_filter('post_type_link', [$this, 'filter_permalink'],      10, 2);
+        }
+        
+        // Anti-loop guard: don't redirect if the target path equals the current path.
+        $current_path = rtrim(wp_parse_url(home_url(sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'] ?? '/'))), PHP_URL_PATH) ?? '/', '/');
+        $target_path  = rtrim(wp_parse_url($default_url, PHP_URL_PATH) ?? '/', '/');
+        if ($current_path === $target_path) {
+            return;
+        }
+        
+        wp_safe_redirect($default_url, 302);
+        exit;
     }
     
     // =========================================================================
