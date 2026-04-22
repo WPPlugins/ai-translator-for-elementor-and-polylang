@@ -2175,26 +2175,51 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                         $tplMsg.text('<?php echo esc_js(__('Translating templates for', 'ai-translator-for-elementor-and-polylang')); ?> ' + name + '...');
                         tplLog('→ <?php echo esc_js(__('Translating templates →', 'ai-translator-for-elementor-and-polylang')); ?> ' + name + (force ? ' (<?php echo esc_js(__('force re-translate', 'ai-translator-for-elementor-and-polylang')); ?>)' : ''));
 
-                        var postData = {
+                        var baseData = {
                             action: 'aitrfoel_auto_translate_templates',
                             nonce: '<?php echo wp_create_nonce('aitrfoel_ajax_nonce'); ?>',
                             target_lang: lang,
                             mode: mode || 'active'
                         };
-                        if (force) postData.force = 1;
+                        if (force) baseData.force = 1;
 
-                        $.post(ajaxurl, postData).done(function(r) {
-                            if (r.success) {
-                                tplLog('  ' + r.data.message);
-                                if (r.data.details && r.data.details.length) {
-                                    r.data.details.forEach(function(d) {
-                                        tplLog('    ' + d);
-                                    });
-                                }
-                            } else {
+                        // Step 1: fetch the list of templates to translate (no actual translation yet)
+                        $.post(ajaxurl, $.extend({}, baseData, { list_only: 1 })).done(function(r) {
+                            if (!r.success) {
                                 tplLog('  ⚠ ' + (r.data || '<?php echo esc_js(__('Error', 'ai-translator-for-elementor-and-polylang')); ?>'));
+                                return resolve();
                             }
-                            resolve();
+
+                            var queue = r.data.queue || [];
+                            if (!queue.length) {
+                                tplLog('  ' + r.data.message);
+                                return resolve();
+                            }
+
+                            tplLog('  ' + r.data.message);
+
+                            // Step 2: translate one template per request to avoid PHP timeout
+                            var i = 0;
+                            function translateNext() {
+                                if (i >= queue.length) {
+                                    return resolve();
+                                }
+                                var tpl = queue[i++];
+                                $tplMsg.text('<?php echo esc_js(__('Translating', 'ai-translator-for-elementor-and-polylang')); ?> ' + name + ': ' + tpl.label + '...');
+                                $.post(ajaxurl, $.extend({}, baseData, { template_id: tpl.id })).done(function(tr) {
+                                    if (tr.success) {
+                                        tplLog('    ' + tr.data.message);
+                                    } else {
+                                        tplLog('    ⚠ ' + (tr.data || '<?php echo esc_js(__('Error', 'ai-translator-for-elementor-and-polylang')); ?>'));
+                                    }
+                                    translateNext();
+                                }).fail(function() {
+                                    tplLog('    ✗ ' + tpl.label + ' — <?php echo esc_js(__('Request failed', 'ai-translator-for-elementor-and-polylang')); ?>');
+                                    translateNext();
+                                });
+                            }
+                            translateNext();
+
                         }).fail(function() {
                             tplLog('  ✗ <?php echo esc_js(__('Request failed', 'ai-translator-for-elementor-and-polylang')); ?>');
                             resolve();

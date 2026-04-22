@@ -2896,6 +2896,15 @@ class AITRFOEL_Ajax_Handler {
     /**
      * Auto-translate Elementor templates (headers, footers, sections) for a target language.
      * Called via AJAX from the Settings page.
+     *
+     * Supports two modes to avoid PHP max_execution_time timeouts:
+     *
+     * 1. list_only=1  — Returns the list of template IDs/labels that need translating
+     *                   without actually translating anything. The JS uses this to build
+     *                   a queue and then calls the handler once per template.
+     *
+     * 2. template_id=N — Translates exactly one template and returns the result.
+     *                    The JS calls this in a sequential loop, one request per template.
      */
     public function handle_auto_translate_templates() {
         try {
@@ -2910,8 +2919,10 @@ class AITRFOEL_Ajax_Handler {
                 throw new Exception(__('No target language specified.', 'ai-translator-for-elementor-and-polylang'));
             }
 
-            $mode = sanitize_text_field($_POST['mode'] ?? 'active'); // 'active' or 'all'
-            $force = !empty($_POST['force']); // Force re-translate even if translation exists
+            $mode      = sanitize_text_field($_POST['mode'] ?? 'active');
+            $force     = !empty($_POST['force']);
+            $list_only = !empty($_POST['list_only']);
+            $single_id = isset($_POST['template_id']) ? (int) $_POST['template_id'] : 0;
 
             if (!post_type_exists('elementor_library')) {
                 throw new Exception(__('Elementor is not active.', 'ai-translator-for-elementor-and-polylang'));
@@ -2922,8 +2933,65 @@ class AITRFOEL_Ajax_Handler {
                 throw new Exception(__('No multilingual system active.', 'ai-translator-for-elementor-and-polylang'));
             }
 
-            // Find all default-language Elementor templates with data
             $default_lang = $multilingual->get_default_language();
+
+            // ── Single-template mode ────────────────────────────────────────────
+            // JS passes template_id=N to translate exactly one template per request,
+            // avoiding max_execution_time overruns when there are many templates.
+            if ($single_id > 0) {
+                $template = get_post($single_id);
+                if (!$template || $template->post_type !== 'elementor_library') {
+                    throw new Exception("Template #{$single_id} not found.");
+                }
+
+                $template_type = get_post_meta($single_id, '_elementor_template_type', true);
+                $label = $template->post_title ?: ($template_type ?: 'Template #' . $single_id);
+
+                $existing = $multilingual->get_post_translations($single_id);
+
+                // Skip if already translated (unless force)
+                if (!$force && isset($existing[$target_lang]) && $existing[$target_lang] != $single_id) {
+                    wp_send_json_success([
+                        'message'    => sprintf(__('⏭ %s — already translated', 'ai-translator-for-elementor-and-polylang'), $label),
+                        'status'     => 'skipped',
+                        'translated' => 0,
+                        'skipped'    => 1,
+                        'errors'     => 0,
+                    ]);
+                    return;
+                }
+
+                // Delete old translation if force re-translate
+                if ($force && isset($existing[$target_lang]) && $existing[$target_lang] != $single_id) {
+                    wp_delete_post((int) $existing[$target_lang], true);
+                }
+
+                $engine = AITRFOEL_Translation_Engine::get_instance();
+                $result = $engine->translate_page($single_id, $target_lang, $default_lang);
+
+                if (is_wp_error($result)) {
+                    wp_send_json_success([
+                        'message'    => sprintf(__('✗ %s — %s', 'ai-translator-for-elementor-and-polylang'), $label, $result->get_error_message()),
+                        'status'     => 'error',
+                        'translated' => 0,
+                        'skipped'    => 0,
+                        'errors'     => 1,
+                    ]);
+                } else {
+                    wp_send_json_success([
+                        'message'    => sprintf(__('✓ %s → translated', 'ai-translator-for-elementor-and-polylang'), $label),
+                        'status'     => 'ok',
+                        'translated' => 1,
+                        'skipped'    => 0,
+                        'errors'     => 0,
+                    ]);
+                }
+                return;
+            }
+
+            // ── List / batch-queue mode ─────────────────────────────────────────
+            // Build the list of templates that need to be (re)translated.
+
             $query_args = [
                 'post_type'      => 'elementor_library',
                 'post_status'    => 'publish',
@@ -2933,9 +3001,9 @@ class AITRFOEL_Ajax_Handler {
                 ],
             ];
 
-            // Exclude non-default language posts if built-in system
+            // Exclude already-translated (non-default) posts via taxonomy
             if (class_exists('AITRFOEL_Builtin_Integration') && AITRFOEL_Builtin_Integration::is_enabled()) {
-                $builtin = AITRFOEL_Builtin_Integration::get_instance();
+                $builtin     = AITRFOEL_Builtin_Integration::get_instance();
                 $non_default = [];
                 foreach ($builtin->get_available_languages() as $l) {
                     if ($l->code !== $default_lang) {
@@ -2943,72 +3011,89 @@ class AITRFOEL_Ajax_Handler {
                     }
                 }
                 if (!empty($non_default)) {
-                    $query_args['tax_query'] = [
-                        [
-                            'taxonomy' => 'aitrfoel_language',
-                            'field'    => 'slug',
-                            'terms'    => $non_default,
-                            'operator' => 'NOT IN',
-                        ],
-                    ];
+                    $query_args['tax_query'] = [[
+                        'taxonomy' => 'aitrfoel_language',
+                        'field'    => 'slug',
+                        'terms'    => $non_default,
+                        'operator' => 'NOT IN',
+                    ]];
                 }
             }
 
             $templates = get_posts($query_args);
 
-            // PHP-level guard: tax_query NOT IN only excludes posts that *have* the taxonomy
-            // set to a non-default value. Posts created as translations but whose taxonomy term
-            // was not properly assigned would slip through, causing them to be re-translated and
-            // overwrite the correct default-language translation entry in the group.
+            // PHP-level guard: confirm every post is actually the default language
             if (class_exists('AITRFOEL_Builtin_Integration') && AITRFOEL_Builtin_Integration::is_enabled()) {
-                $bl_guard = AITRFOEL_Builtin_Integration::get_instance();
-                $templates = array_filter($templates, function($tpl) use ($bl_guard, $default_lang) {
+                $bl_guard  = AITRFOEL_Builtin_Integration::get_instance();
+                $templates = array_values(array_filter($templates, function($tpl) use ($bl_guard, $default_lang) {
                     return $bl_guard->get_post_language($tpl->ID) === $default_lang;
-                });
-                $templates = array_values($templates);
+                }));
             }
 
             if (empty($templates)) {
-                wp_send_json_success([
-                    'message'    => __('No Elementor templates found to translate.', 'ai-translator-for-elementor-and-polylang'),
-                    'translated' => 0,
-                    'skipped'    => 0,
-                    'details'    => [],
-                ]);
+                wp_send_json_success(['message' => __('No Elementor templates found to translate.', 'ai-translator-for-elementor-and-polylang'), 'queue' => []]);
                 return;
             }
 
-            // Filter to active-only if mode is 'active'
+            // Filter to active-only if requested
             if ($mode === 'active') {
-                $templates = array_filter($templates, function($tpl) {
+                $templates = array_values(array_filter($templates, function($tpl) {
                     $conditions = get_post_meta($tpl->ID, '_elementor_conditions', true);
-                    $tpl_type = get_post_meta($tpl->ID, '_elementor_template_type', true);
+                    $tpl_type   = get_post_meta($tpl->ID, '_elementor_template_type', true);
                     return !empty($conditions) || in_array($tpl_type, ['header', 'footer'], true);
-                });
-                $templates = array_values($templates); // re-index
+                }));
             }
 
             if (empty($templates)) {
+                wp_send_json_success(['message' => __('No active Elementor templates found to translate.', 'ai-translator-for-elementor-and-polylang'), 'queue' => []]);
+                return;
+            }
+
+            // Build queue: skip already-translated unless force
+            $queue = [];
+            foreach ($templates as $tpl) {
+                $existing = $multilingual->get_post_translations($tpl->ID);
+                $already  = isset($existing[$target_lang]) && $existing[$target_lang] != $tpl->ID;
+
+                if (!$force && $already) {
+                    continue; // will be skipped — don't add to queue
+                }
+
+                $tpl_type = get_post_meta($tpl->ID, '_elementor_template_type', true);
+                $queue[] = [
+                    'id'    => $tpl->ID,
+                    'label' => $tpl->post_title ?: ($tpl_type ?: 'Template #' . $tpl->ID),
+                    'type'  => $tpl_type,
+                ];
+            }
+
+            // list_only=1: just return the queue, don't translate anything
+            if ($list_only) {
+                $skipped_count = count($templates) - count($queue);
                 wp_send_json_success([
-                    'message'    => __('No active Elementor templates found to translate.', 'ai-translator-for-elementor-and-polylang'),
-                    'translated' => 0,
-                    'skipped'    => 0,
-                    'details'    => [],
+                    'message' => sprintf(
+                        __('%d template(s) to translate, %d already done.', 'ai-translator-for-elementor-and-polylang'),
+                        count($queue),
+                        $skipped_count
+                    ),
+                    'queue'   => $queue,
+                    'skipped' => $skipped_count,
                 ]);
                 return;
             }
 
-            $engine = AITRFOEL_Translation_Engine::get_instance();
+            // Legacy fallback: no template_id and no list_only — translate all in one go
+            // (kept for backward-compat but the JS now uses the chunked path above)
+            $engine     = AITRFOEL_Translation_Engine::get_instance();
             $translated = 0;
-            $skipped = 0;
-            $errors = 0;
-            $details = [];
+            $skipped    = 0;
+            $errors     = 0;
+            $details    = [];
 
             foreach ($templates as $template) {
                 $template_type = get_post_meta($template->ID, '_elementor_template_type', true);
-                $label = $template->post_title ?: ($template_type ?: 'Template #' . $template->ID);
+                $label         = $template->post_title ?: ($template_type ?: 'Template #' . $template->ID);
 
-                // Skip if already translated for this language (unless force re-translate)
                 $existing = $multilingual->get_post_translations($template->ID);
                 if (!$force && isset($existing[$target_lang]) && $existing[$target_lang] != $template->ID) {
                     $details[] = sprintf(__('⏭ %s — already translated', 'ai-translator-for-elementor-and-polylang'), $label);
@@ -3016,13 +3101,11 @@ class AITRFOEL_Ajax_Handler {
                     continue;
                 }
 
-                // If force re-translate and translation exists, delete the old translation first
                 if ($force && isset($existing[$target_lang]) && $existing[$target_lang] != $template->ID) {
                     wp_delete_post((int) $existing[$target_lang], true);
                     $details[] = sprintf(__('🔄 %s — re-translating (old translation removed)', 'ai-translator-for-elementor-and-polylang'), $label);
                 }
 
-                // Translate using the engine
                 $result = $engine->translate_page($template->ID, $target_lang, $default_lang);
 
                 if (is_wp_error($result)) {
