@@ -2587,9 +2587,41 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
         $default_lang = $builtin->get_default_language();
         $all_mappings = AITRFOEL_Language_Mapper::get_all_mappings();
         $nonce = wp_create_nonce('aitrfoel_ajax_nonce');
+        
+        // Get raw stored data for debugging language code corruption
+        $raw_stored = get_option('aitrfoel_builtin_languages', []);
+        $stored_codes = array_column($raw_stored, 'code');
+        $lang_keys = array_keys($languages);
+        
+        // Check for corruption: codes not matching
+        $code_mismatch = array_diff($stored_codes, $lang_keys);
+        $show_debug = !empty($code_mismatch) || (count($stored_codes) > 0 && count($lang_keys) > 0 && array_values($stored_codes) !== array_values($lang_keys));
+        
         ?>
         <div id="aitrfoel-builtin-lang-management" style="margin-top: 15px; padding: 15px; background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 6px;">
             <h4 style="margin-top: 0;"><?php esc_html_e('Manage Languages', 'ai-translator-for-elementor-and-polylang'); ?></h4>
+
+            <!-- Debug Panel: Show Stored Language Codes -->
+            <?php if ($show_debug || current_user_can('manage_options')): ?>
+            <div style="margin-bottom: 15px; padding: 12px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; font-size: 12px; font-family: monospace;">
+                <strong style="color: #856404;">🔍 Debug: Stored Language Codes</strong>
+                <div style="margin-top: 8px; color: #666;">
+                    <div><strong>Stored in Database:</strong> <?php echo count($raw_stored) > 0 ? esc_html(json_encode($stored_codes)) : '(empty)'; ?></div>
+                    <div><strong>Loaded into UI:</strong> <?php echo count($lang_keys) > 0 ? esc_html(json_encode($lang_keys)) : '(empty)'; ?></div>
+                    <?php if (!empty($code_mismatch)): ?>
+                        <div style="margin-top: 8px; color: #d32f2f;"><strong>⚠️ MISMATCH DETECTED:</strong> <?php echo esc_html(json_encode($code_mismatch)); ?> - These codes in database don't match UI!</div>
+                    <?php endif; ?>
+                    <?php if (!empty($raw_stored)): ?>
+                        <div style="margin-top: 8px; background: #fff; padding: 8px; border-radius: 3px; border: 1px solid #ddd;">
+                            <strong>Raw Data:</strong><br>
+                            <?php foreach ($raw_stored as $idx => $lang): ?>
+                                <div>[$<?php echo $idx; ?>] code=<code><?php echo esc_html($lang['code'] ?? 'N/A'); ?></code>, name=<code><?php echo esc_html($lang['name'] ?? 'N/A'); ?></code>, is_default=<?php echo isset($lang['is_default']) ? ($lang['is_default'] ? 'true' : 'false') : 'N/A'; ?></div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endif; ?>
 
             <!-- Current Languages Table -->
             <style>
