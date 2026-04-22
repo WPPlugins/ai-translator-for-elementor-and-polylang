@@ -910,7 +910,7 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         // Auto-flush rewrite rules when version changes OR when stored rules
         // are missing our language patterns (can happen after AJAX setup, reinstall, etc.)
-        $rules_version = '1.5.3'; // Bump this when rewrite rules change
+        $rules_version = '1.5.4'; // Bump this when rewrite rules change
         $stored_version = get_option('aitrfoel_rewrite_rules_version', '');
         $needs_flush = ($stored_version !== $rules_version);
         
@@ -1009,21 +1009,39 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         // Search: /fr/?s=query (handled by query var, no special rewrite needed)
         
-        // 6. Posts with language prefix: /fr/post-slug/ (single-segment slugs)
+        // 6. Posts with permalink front base: /fr/blog/post-slug/
+        // Mirrors common permalink structures like /blog/%postname%/ so prefixed
+        // default-language post URLs resolve instead of falling through to pages.
+        global $wp_rewrite;
+        if (isset($wp_rewrite) && !empty($wp_rewrite->permalink_structure)) {
+            $permalink_structure = trim($wp_rewrite->permalink_structure, '/');
+            if (strpos($permalink_structure, '%postname%') !== false) {
+                $front_base = trim(str_replace('%postname%', '', $permalink_structure), '/');
+                if ($front_base !== '' && strpos($front_base, '%') === false) {
+                    add_rewrite_rule(
+                        '^(' . $lang_pattern . ')/' . preg_quote($front_base, '/') . '/([^/]+)/?$',
+                        'index.php?lang=$matches[1]&name=$matches[2]',
+                        'top'
+                    );
+                }
+            }
+        }
+
+        // 7. Posts with language prefix: /fr/post-slug/ (single-segment slugs)
         add_rewrite_rule(
             '^(' . $lang_pattern . ')/([^/]+)/?$',
             'index.php?lang=$matches[1]&name=$matches[2]',
             'top'
         );
         
-        // 7. Language root: /fr/
+        // 8. Language root: /fr/
         add_rewrite_rule(
             '^(' . $lang_pattern . ')/?$',
             'index.php?lang=$matches[1]',
             'top'
         );
         
-        // 8. LOWEST PRIORITY: Catch-all for pages/hierarchical content: /fr/parent/child/
+        // 9. LOWEST PRIORITY: Catch-all for pages/hierarchical content: /fr/parent/child/
         // Must be LAST added so it's checked after all specific patterns above.
         add_rewrite_rule(
             '^(' . $lang_pattern . ')/(.+?)/?$',

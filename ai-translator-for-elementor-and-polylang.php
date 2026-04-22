@@ -3,7 +3,7 @@
  * Plugin Name: Meep AI Translator
  * Plugin URI: https://meeptech.com/products/ai-translator-for-elementor-polylang
  * Description: AI-powered translation for Elementor, Gutenberg, Classic & WooCommerce. Preserves your design perfectly. Built-in languages or Polylang/WPML.
- * Version: 1.4.31
+ * Version: 1.4.32
  * Author: Meep Tech
  * Author URI: https://meeptech.com
  * License: GPL v2 or later
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('AITRFOEL_VERSION', '1.4.31');
+define('AITRFOEL_VERSION', '1.4.32');
 define('AITRFOEL_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AITRFOEL_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AITRFOEL_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -95,6 +95,9 @@ class AITRFOEL_Main {
         
         // Enqueue scripts
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_scripts']);
+
+        // Plugin list row actions
+        add_filter('plugin_action_links_' . AITRFOEL_PLUGIN_BASENAME, [$this, 'add_plugin_action_links']);
         
         // Hide Elementor admin elements on our plugin pages
         add_action('admin_init', [$this, 'disable_elementor_admin_ui']);
@@ -124,6 +127,20 @@ class AITRFOEL_Main {
                 });
             }
         }
+    }
+
+    /**
+     * Add plugin row action links on the Plugins screen.
+     *
+     * @param array $links Existing action links.
+     * @return array
+     */
+    public function add_plugin_action_links($links) {
+        $settings_link = '<a href="' . esc_url(admin_url('admin.php?page=ai-translator-for-elementor-and-polylang')) . '">' . esc_html__('Settings', 'ai-translator-for-elementor-and-polylang') . '</a>';
+
+        array_unshift($links, $settings_link);
+
+        return $links;
     }
     
     /**

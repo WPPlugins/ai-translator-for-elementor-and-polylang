@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.31
+Stable tag: 1.4.32
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,10 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.32 =
+* Fixed: Single posts no longer return 404 when default language URL prefix is enabled and the site uses a post base like /blog/%postname%/
+* Added: Settings link in the WordPress Plugins page row actions
+
 = 1.4.31 =
 * Fixed: 500 error during bulk translation on sites with built-in language system and default language prefix
 
