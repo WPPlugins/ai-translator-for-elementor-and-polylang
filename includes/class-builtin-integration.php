@@ -1124,31 +1124,38 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         // Language-root URL (e.g. /en/) with a static front page configured:
         // WordPress doesn't know to show the front page because the rewrite rule
         // only sets lang=. Manually point to the static front page (or its translation).
+        // IMPORTANT: only apply when the ONLY query var set is 'lang' — if any
+        // other content var is set (product_cat, post_type, name, etc.) it means
+        // the URL matched a content rule, not the language-root rule, and we must
+        // not override it with the front page.
         if (isset($wp->query_vars['lang'])
-            && !isset($wp->query_vars['name'])
-            && !isset($wp->query_vars['pagename'])
-            && !isset($wp->query_vars['page_id'])
-            && !isset($wp->query_vars['p'])
-            && !isset($wp->query_vars['post_type'])
-            && !isset($wp->query_vars['category_name'])
-            && !isset($wp->query_vars['tag'])
-            && !isset($wp->query_vars['s'])
             && get_option('show_on_front') === 'page'
         ) {
-            $front_page_id = (int) get_option('page_on_front');
-            if ($front_page_id) {
-                $request_lang = sanitize_text_field($wp->query_vars['lang']);
-                $default_lang = $this->get_default_language();
-                
-                // If visiting a non-default language root, find the translated front page
-                if ($request_lang && $request_lang !== $default_lang) {
-                    $translations = $this->get_post_translations($front_page_id);
-                    if (isset($translations[$request_lang])) {
-                        $front_page_id = $translations[$request_lang];
+            // Build the set of non-trivial query vars (exclude lang itself and
+            // WordPress internal vars that are always present or not content).
+            $ignore_vars = ['lang' => 1, 'error' => 1, 'preview' => 1, 'robots' => 1,
+                            'favicon' => 1, 'sitemap' => 1, 'sitemap-stylesheet' => 1];
+            $content_vars = array_filter(
+                array_diff_key($wp->query_vars, $ignore_vars),
+                function($v) { return $v !== '' && $v !== false && $v !== null && $v !== 0; }
+            );
+
+            if (empty($content_vars)) {
+                $front_page_id = (int) get_option('page_on_front');
+                if ($front_page_id) {
+                    $request_lang = sanitize_text_field($wp->query_vars['lang']);
+                    $default_lang = $this->get_default_language();
+
+                    // If visiting a non-default language root, find the translated front page
+                    if ($request_lang && $request_lang !== $default_lang) {
+                        $translations = $this->get_post_translations($front_page_id);
+                        if (isset($translations[$request_lang])) {
+                            $front_page_id = $translations[$request_lang];
+                        }
                     }
+
+                    $wp->query_vars['page_id'] = $front_page_id;
                 }
-                
-                $wp->query_vars['page_id'] = $front_page_id;
             }
         }
 
