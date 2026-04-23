@@ -1239,14 +1239,33 @@ class AITRFOEL_Settings {
                                 <td style="padding: 8px;">
                                     <?php foreach ($et_secondary as $lang):
                                         $has = isset($tpl_translations[$lang->code]) && $tpl_translations[$lang->code] != $tpl->ID;
+                                        $tpl_label = esc_attr($tpl->post_title ?: 'Template #' . $tpl->ID);
                                     ?>
-                                        <span style="display: inline-flex; align-items: center; gap: 3px; margin-right: 8px; font-size: 12px;">
+                                        <span style="display: inline-flex; align-items: center; gap: 3px; margin-right: 10px; font-size: 12px; white-space: nowrap;">
                                             <?php echo AITRFOEL_Language_Mapper::get_flag_html($lang->code, 14); ?>
-                                            <?php echo esc_html(strtoupper($lang->code)); ?>
+                                            <span style="font-weight:500;"><?php echo esc_html(strtoupper($lang->code)); ?></span>
                                             <?php if ($has): ?>
                                                 <span style="color: #16a34a;">✓</span>
+                                                <button type="button"
+                                                    class="button button-small aitrfoel-tpl-translate-single"
+                                                    style="font-size:10px;padding:0 5px;min-height:20px;line-height:1.5;color:#646970;border-color:#c3c4c7;"
+                                                    data-tpl-id="<?php echo esc_attr($tpl->ID); ?>"
+                                                    data-tpl-label="<?php echo $tpl_label; ?>"
+                                                    data-lang="<?php echo esc_attr($lang->code); ?>"
+                                                    data-lang-name="<?php echo esc_attr($lang->name); ?>"
+                                                    data-force="1"
+                                                    title="<?php esc_attr_e('Force re-translate this template', 'ai-translator-for-elementor-and-polylang'); ?>">↺</button>
                                             <?php else: ?>
                                                 <span style="color: #dc2626;">✗</span>
+                                                <button type="button"
+                                                    class="button button-small aitrfoel-tpl-translate-single"
+                                                    style="font-size:10px;padding:0 5px;min-height:20px;line-height:1.5;"
+                                                    data-tpl-id="<?php echo esc_attr($tpl->ID); ?>"
+                                                    data-tpl-label="<?php echo $tpl_label; ?>"
+                                                    data-lang="<?php echo esc_attr($lang->code); ?>"
+                                                    data-lang-name="<?php echo esc_attr($lang->name); ?>"
+                                                    data-force="0"
+                                                    title="<?php esc_attr_e('Translate this template', 'ai-translator-for-elementor-and-polylang'); ?>">+</button>
                                             <?php endif; ?>
                                         </span>
                                     <?php endforeach; ?>
@@ -1337,14 +1356,33 @@ class AITRFOEL_Settings {
                                     <td style="padding: 8px;">
                                         <?php foreach ($et_secondary as $lang):
                                             $has = isset($tpl_translations[$lang->code]) && $tpl_translations[$lang->code] != $tpl->ID;
+                                            $tpl_label = esc_attr($tpl->post_title ?: 'Template #' . $tpl->ID);
                                         ?>
-                                            <span style="display: inline-flex; align-items: center; gap: 3px; margin-right: 8px; font-size: 12px;">
+                                            <span style="display: inline-flex; align-items: center; gap: 3px; margin-right: 10px; font-size: 12px; white-space: nowrap;">
                                                 <?php echo AITRFOEL_Language_Mapper::get_flag_html($lang->code, 14); ?>
-                                                <?php echo esc_html(strtoupper($lang->code)); ?>
+                                                <span style="font-weight:500;"><?php echo esc_html(strtoupper($lang->code)); ?></span>
                                                 <?php if ($has): ?>
                                                     <span style="color: #16a34a;">✓</span>
+                                                    <button type="button"
+                                                        class="button button-small aitrfoel-tpl-translate-single"
+                                                        style="font-size:10px;padding:0 5px;min-height:20px;line-height:1.5;color:#646970;border-color:#c3c4c7;"
+                                                        data-tpl-id="<?php echo esc_attr($tpl->ID); ?>"
+                                                        data-tpl-label="<?php echo $tpl_label; ?>"
+                                                        data-lang="<?php echo esc_attr($lang->code); ?>"
+                                                        data-lang-name="<?php echo esc_attr($lang->name); ?>"
+                                                        data-force="1"
+                                                        title="<?php esc_attr_e('Force re-translate this template', 'ai-translator-for-elementor-and-polylang'); ?>">↺</button>
                                                 <?php else: ?>
                                                     <span style="color: #dc2626;">✗</span>
+                                                    <button type="button"
+                                                        class="button button-small aitrfoel-tpl-translate-single"
+                                                        style="font-size:10px;padding:0 5px;min-height:20px;line-height:1.5;"
+                                                        data-tpl-id="<?php echo esc_attr($tpl->ID); ?>"
+                                                        data-tpl-label="<?php echo $tpl_label; ?>"
+                                                        data-lang="<?php echo esc_attr($lang->code); ?>"
+                                                        data-lang-name="<?php echo esc_attr($lang->name); ?>"
+                                                        data-force="0"
+                                                        title="<?php esc_attr_e('Translate this template', 'ai-translator-for-elementor-and-polylang'); ?>">+</button>
                                                 <?php endif; ?>
                                             </span>
                                         <?php endforeach; ?>
@@ -2262,6 +2300,55 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                     startTemplateTranslate([{code: lang, name: name}], mode);
                 });
 
+                // Single-template translate (per-row + / ↺ buttons)
+                $(document).on('click', '.aitrfoel-tpl-translate-single', function(e) {
+                    e.stopPropagation();
+                    var $btn     = $(this);
+                    var tplId    = $btn.data('tpl-id');
+                    var tplLabel = $btn.data('tpl-label');
+                    var lang     = $btn.data('lang');
+                    var langName = $btn.data('lang-name');
+                    var force    = parseInt($btn.data('force')) === 1;
+                    var msg      = force
+                        ? '<?php echo esc_js(__('Re-translate', 'ai-translator-for-elementor-and-polylang')); ?> "' + tplLabel + '" \u2192 ' + langName + '?\n<?php echo esc_js(__('The existing translation will be replaced. Uses translation credits.', 'ai-translator-for-elementor-and-polylang')); ?>'
+                        : '<?php echo esc_js(__('Translate', 'ai-translator-for-elementor-and-polylang')); ?> "' + tplLabel + '" \u2192 ' + langName + '?\n<?php echo esc_js(__('Uses translation credits.', 'ai-translator-for-elementor-and-polylang')); ?>';
+                    if (!confirm(msg)) return;
+                    if (tplRunning) {
+                        alert('<?php echo esc_js(__('A translation is already in progress. Please wait.', 'ai-translator-for-elementor-and-polylang')); ?>');
+                        return;
+                    }
+                    tplRunning = true;
+                    $tplStatus.show();
+                    $tplLog.empty();
+                    $tplStatus.find('.spinner').css('visibility', 'visible');
+                    $tplMsg.text('<?php echo esc_js(__('Translating', 'ai-translator-for-elementor-and-polylang')); ?> ' + tplLabel + ' \u2192 ' + langName + '...');
+                    tplLog('\u2192 ' + tplLabel + ' \u2192 ' + langName + (force ? ' (<?php echo esc_js(__('force re-translate', 'ai-translator-for-elementor-and-polylang')); ?>)' : ''));
+                    $btn.prop('disabled', true);
+                    $.post(ajaxurl, {
+                        action:      'aitrfoel_auto_translate_templates',
+                        nonce:       '<?php echo wp_create_nonce('aitrfoel_ajax_nonce'); ?>',
+                        target_lang: lang,
+                        template_id: tplId,
+                        force:       force ? 1 : 0
+                    }).done(function(r) {
+                        if (r.success) {
+                            tplLog('  ' + r.data.message);
+                        } else {
+                            tplLog('  \u26a0 ' + (r.data || '<?php echo esc_js(__('Error', 'ai-translator-for-elementor-and-polylang')); ?>'));
+                        }
+                        $tplMsg.text('<?php echo esc_js(__('Done! Reload to see updated status.', 'ai-translator-for-elementor-and-polylang')); ?>');
+                        $tplStatus.find('.spinner').css('visibility', 'hidden');
+                        tplRunning = false;
+                        setTimeout(function() { location.reload(); }, 2000);
+                    }).fail(function() {
+                        tplLog('  \u2717 <?php echo esc_js(__('Request failed', 'ai-translator-for-elementor-and-polylang')); ?>');
+                        $tplMsg.text('<?php echo esc_js(__('Request failed.', 'ai-translator-for-elementor-and-polylang')); ?>');
+                        $tplStatus.find('.spinner').css('visibility', 'hidden');
+                        tplRunning = false;
+                        $btn.prop('disabled', false);
+                    });
+                });
+
                 $(document).on('click', '.aitrfoel-translate-tpl-all', function() {
                     var mode = $(this).data('mode') || 'active';
                     var langs = [];
@@ -2626,8 +2713,8 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
         <div id="aitrfoel-builtin-lang-management" style="margin-top: 15px; padding: 15px; background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 6px;">
             <h4 style="margin-top: 0;"><?php esc_html_e('Manage Languages', 'ai-translator-for-elementor-and-polylang'); ?></h4>
 
-            <!-- Debug Panel: Show Stored Language Codes -->
-            <?php if ($show_debug || current_user_can('manage_options')): ?>
+            <!-- Debug Panel: Show Stored Language Codes (only on mismatch or WP_DEBUG) -->
+            <?php if ($show_debug || (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options'))): ?>
             <div style="margin-bottom: 15px; padding: 12px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; font-size: 12px; font-family: monospace;">
                 <strong style="color: #856404;">🔍 Debug: Stored Language Codes</strong>
                 <div style="margin-top: 8px; color: #666;">
