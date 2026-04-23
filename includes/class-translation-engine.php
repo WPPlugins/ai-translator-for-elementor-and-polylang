@@ -2823,9 +2823,17 @@ class AITRFOEL_Translation_Engine {
         // Combine all meta keys to copy
         $all_meta_keys = array_merge($elementor_meta_keys, $astra_meta_keys);
         
+        $is_elementor_template = get_post_type($original_page_id) === 'elementor_library';
+
         foreach ($all_meta_keys as $meta_key) {
             $meta_value = get_post_meta($original_page_id, $meta_key, true);
             if ($meta_value !== '') { // Copy even if false/0, but not if completely empty
+                // Strip display conditions from _elementor_page_settings for translated templates.
+                // Elementor Pro reads the 'conditions' key inside this meta and re-writes
+                // _elementor_conditions via an updated_post_meta hook, undoing our delete below.
+                if ($is_elementor_template && $meta_key === '_elementor_page_settings' && is_array($meta_value)) {
+                    unset($meta_value['conditions']);
+                }
                 update_post_meta($new_page_id, $meta_key, $meta_value);
             }
         }
@@ -2834,7 +2842,7 @@ class AITRFOEL_Translation_Engine {
         // template should have conditions. Elementor Pro may copy conditions automatically via its own
         // hooks when a new elementor_library post is created, which would make the translation show up
         // as an independent "show everywhere" template competing with the original.
-        if (get_post_type($original_page_id) === 'elementor_library') {
+        if ($is_elementor_template) {
             delete_post_meta($new_page_id, '_elementor_conditions');
         }
         
