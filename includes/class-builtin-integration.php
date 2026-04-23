@@ -3029,6 +3029,8 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             $this->swap_menu_ids_in_elementor_data_recursive($data, $combined_map, $current_lang);
         }
 
+        $this->swap_nested_elementor_template_refs_recursive($data, $current_lang);
+
         return $data;
     }
 
@@ -3056,6 +3058,67 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             }
         }
         unset($element);
+    }
+
+    /**
+     * Recursively swap nested Elementor reusable template references.
+     *
+     * Covers common reusable-element patterns such as the Template widget
+     * (`settings.template_id`) and Global Widget references (`templateID`).
+     *
+     * @param array  &$data       Elementor elements array (modified in place).
+     * @param string $target_lang Target language code.
+     */
+    private function swap_nested_elementor_template_refs_recursive(&$data, $target_lang) {
+        foreach ($data as &$element) {
+            if (!is_array($element)) continue;
+
+            $widget_type = isset($element['widgetType']) ? $element['widgetType'] : '';
+
+            if ($widget_type === 'template' && isset($element['settings']['template_id'])) {
+                $translated_id = $this->get_translated_runtime_elementor_template_id((int) $element['settings']['template_id'], $target_lang);
+                if ($translated_id > 0) {
+                    $element['settings']['template_id'] = (string) $translated_id;
+                }
+            }
+
+            if (isset($element['templateID'])) {
+                $translated_id = $this->get_translated_runtime_elementor_template_id((int) $element['templateID'], $target_lang);
+                if ($translated_id > 0) {
+                    $element['templateID'] = $translated_id;
+                }
+            }
+
+            if (isset($element['elements']) && is_array($element['elements'])) {
+                $this->swap_nested_elementor_template_refs_recursive($element['elements'], $target_lang);
+            }
+        }
+        unset($element);
+    }
+
+    /**
+     * Resolve a translated reusable Elementor template for runtime rendering.
+     *
+     * @param int    $template_id Source template ID.
+     * @param string $target_lang Target language code.
+     * @return int
+     */
+    private function get_translated_runtime_elementor_template_id($template_id, $target_lang) {
+        if ($template_id <= 0 || get_post_type($template_id) !== 'elementor_library') {
+            return 0;
+        }
+
+        $translations = $this->get_post_translations($template_id);
+        if (!isset($translations[$target_lang])) {
+            return 0;
+        }
+
+        $translated_id = (int) $translations[$target_lang];
+        if ($translated_id <= 0 || get_post_status($translated_id) !== 'publish') {
+            return 0;
+        }
+
+        return $translated_id;
     }
 
     /**

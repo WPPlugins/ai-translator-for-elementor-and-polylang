@@ -889,6 +889,13 @@ class AITRFOEL_Translation_Engine {
             }
         }
 
+        // Swap nested Elementor template references so translated headers/footers do not
+        // keep pointing at source-language reusable templates/sections.
+        $template_refs_swapped = $this->swap_elementor_template_refs_in_data($translated_data, $target_lang);
+        if ($template_refs_swapped > 0) {
+            AITRFOEL_Logger::log("Swapped $template_refs_swapped nested Elementor template references for $target_lang", 'info', $page_id);
+        }
+
         // Create new page with translations
         $new_page_id = $this->create_translated_page($page_id, $translated_data, $target_lang, $detected_lang, $pre_translated_title);
         
@@ -2532,6 +2539,81 @@ class AITRFOEL_Translation_Engine {
         }
         unset($element);
         return $swapped;
+    }
+
+    /**
+     * Swap nested Elementor template references to translated template IDs.
+     *
+     * Covers common reusable-element patterns such as the Elementor Template widget
+     * (`settings.template_id`) and Global Widget references (`templateID`).
+     *
+     * @param array  &$data       Elementor data array (modified in place).
+     * @param string $target_lang Target language code.
+     * @return int Number of template references swapped.
+     */
+    private function swap_elementor_template_refs_in_data(&$data, $target_lang) {
+        $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
+        if (!$multilingual->is_active()) {
+            return 0;
+        }
+
+        $swapped = 0;
+        foreach ($data as &$element) {
+            if (!is_array($element)) continue;
+
+            $widget_type = isset($element['widgetType']) ? $element['widgetType'] : '';
+
+            if ($widget_type === 'template' && isset($element['settings']['template_id'])) {
+                $source_template_id = (int) $element['settings']['template_id'];
+                $translated_template_id = $this->get_translated_elementor_template_id($source_template_id, $target_lang, $multilingual);
+                if ($translated_template_id > 0) {
+                    $element['settings']['template_id'] = (string) $translated_template_id;
+                    $swapped++;
+                }
+            }
+
+            if (isset($element['templateID'])) {
+                $source_template_id = (int) $element['templateID'];
+                $translated_template_id = $this->get_translated_elementor_template_id($source_template_id, $target_lang, $multilingual);
+                if ($translated_template_id > 0) {
+                    $element['templateID'] = $translated_template_id;
+                    $swapped++;
+                }
+            }
+
+            if (isset($element['elements']) && is_array($element['elements'])) {
+                $swapped += $this->swap_elementor_template_refs_in_data($element['elements'], $target_lang);
+            }
+        }
+        unset($element);
+
+        return $swapped;
+    }
+
+    /**
+     * Resolve the translated Elementor template ID for a target language.
+     *
+     * @param int                           $template_id  Source template ID.
+     * @param string                        $target_lang  Target language code.
+     * @param AITRFOEL_Multilingual_Manager $multilingual Multilingual manager instance.
+     * @return int
+     */
+    private function get_translated_elementor_template_id($template_id, $target_lang, $multilingual) {
+        if ($template_id <= 0 || get_post_type($template_id) !== 'elementor_library') {
+            return 0;
+        }
+
+        $translations = $multilingual->get_post_translations($template_id);
+        if (!isset($translations[$target_lang])) {
+            return 0;
+        }
+
+        $translated_template_id = (int) $translations[$target_lang];
+        if ($translated_template_id <= 0 || get_post_status($translated_template_id) !== 'publish') {
+            return 0;
+        }
+
+        return $translated_template_id;
     }
 
     /**
