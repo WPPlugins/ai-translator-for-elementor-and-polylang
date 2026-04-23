@@ -2935,9 +2935,11 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         $swapped = [];
         foreach ($templates as $template) {
             $template_id = 0;
+            $is_document_object = false;
             if (is_array($template) && isset($template['id'])) {
                 $template_id = (int) $template['id'];
             } elseif (is_object($template) && method_exists($template, 'get_post')) {
+                $is_document_object = true;
                 $post = $template->get_post();
                 $template_id = $post ? (int) $post->ID : 0;
             }
@@ -2950,8 +2952,12 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
                         // Swap the template to the translated version
                         if (is_array($template)) {
                             $template['id'] = $translated_id;
+                        } elseif ($is_document_object && class_exists('\\Elementor\\Plugin')) {
+                            $translated_document = \Elementor\Plugin::instance()->documents->get($translated_id);
+                            if ($translated_document) {
+                                $template = $translated_document;
+                            }
                         }
-                        // For document objects, we can't easily swap — fallback handled below
                     }
                 }
             }
