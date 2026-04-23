@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.38
+Stable tag: 1.4.39
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,9 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.39 =
+* Fixed: Elementor template preview/editor no longer swaps the original template to a translated language when opening header/footer templates
+
 = 1.4.38 =
 * Fixed: Translated Elementor templates no longer inherit display conditions � conditions were being re-applied by Elementor after reading _elementor_page_settings; now stripped at copy time
 

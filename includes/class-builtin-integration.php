@@ -2921,6 +2921,10 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             return $templates;
         }
 
+        if ($this->should_skip_elementor_template_swap()) {
+            return $templates;
+        }
+
         $current_lang = $this->get_current_language();
         $default_lang = $this->get_default_language();
 
@@ -2968,6 +2972,10 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
      */
     public function filter_elementor_template_data($data, $post_id) {
         if (!$this->is_active() || empty($data)) {
+            return $data;
+        }
+
+        if ($this->should_skip_elementor_template_swap()) {
             return $data;
         }
 
@@ -3048,6 +3056,27 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             }
         }
         unset($element);
+    }
+
+    /**
+     * Do not swap template content when previewing or editing the template itself.
+     *
+     * Frontend language swapping should only happen when a template is rendered as part
+     * of a page request, not when Elementor is opening the original template document.
+     *
+     * @return bool
+     */
+    private function should_skip_elementor_template_swap() {
+        if (is_singular('elementor_library')) {
+            return true;
+        }
+
+        $preview_id = isset($_GET['elementor-preview']) ? (int) $_GET['elementor-preview'] : 0;
+        if ($preview_id > 0 && get_post_type($preview_id) === 'elementor_library') {
+            return true;
+        }
+
+        return false;
     }
 
     /**
