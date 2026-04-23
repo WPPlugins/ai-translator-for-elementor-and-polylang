@@ -2759,14 +2759,16 @@ class AITRFOEL_Translation_Engine {
             // Update existing translated page's Elementor data
             update_post_meta($existing_page_id, '_elementor_data', wp_slash(json_encode($translated_data)));
 
-            // Sync Elementor display conditions from the original so the translated template
-            // appears in Elementor's location resolver. Our runtime filter handles language exclusion.
+            // Translated templates must NEVER have display conditions — ensure they are removed
+            // even if a previous plugin version accidentally copied them.
             if (get_post_type($original_page_id) === 'elementor_library') {
-                $original_conditions = get_post_meta($original_page_id, '_elementor_conditions', true);
-                if (is_array($original_conditions) && !empty($original_conditions)) {
-                    update_post_meta($existing_page_id, '_elementor_conditions', $original_conditions);
-                } else {
-                    delete_post_meta($existing_page_id, '_elementor_conditions');
+                delete_post_meta($existing_page_id, '_elementor_conditions');
+                // Also strip conditions from _elementor_page_settings to prevent Elementor Pro
+                // re-adding _elementor_conditions via its updated_post_meta hook.
+                $page_settings = get_post_meta($existing_page_id, '_elementor_page_settings', true);
+                if (is_array($page_settings) && isset($page_settings['conditions'])) {
+                    unset($page_settings['conditions']);
+                    update_post_meta($existing_page_id, '_elementor_page_settings', $page_settings);
                 }
             }
             
@@ -2921,21 +2923,23 @@ class AITRFOEL_Translation_Engine {
         foreach ($all_meta_keys as $meta_key) {
             $meta_value = get_post_meta($original_page_id, $meta_key, true);
             if ($meta_value !== '') { // Copy even if false/0, but not if completely empty
+                // Strip display conditions from _elementor_page_settings for translated templates.
+                // Elementor Pro reads the 'conditions' key inside this meta and re-writes
+                // _elementor_conditions via an updated_post_meta hook, undoing our delete below.
+                if ($is_elementor_template && $meta_key === '_elementor_page_settings' && is_array($meta_value)) {
+                    unset($meta_value['conditions']);
+                }
                 update_post_meta($new_page_id, $meta_key, $meta_value);
             }
         }
 
-        // Translated templates must have the SAME display conditions as the original so that
-        // Elementor's location resolver includes them in its candidates list. Our runtime
-        // filter_elementor_location_templates() then removes templates whose language does not
-        // match the current page language, ensuring only one template is shown per location.
+        // Translated templates must NEVER have display conditions. Elementor's location resolver
+        // uses conditions to build its candidates list — if translated templates have conditions
+        // they compete with the original and cause wrong-language templates to appear.
+        // Our filter_elementor_location_templates() injects translated templates into the
+        // candidate list at runtime by swapping originals, so conditions are not needed.
         if ($is_elementor_template) {
-            $original_conditions = get_post_meta($original_page_id, '_elementor_conditions', true);
-            if (is_array($original_conditions) && !empty($original_conditions)) {
-                update_post_meta($new_page_id, '_elementor_conditions', $original_conditions);
-            } else {
-                delete_post_meta($new_page_id, '_elementor_conditions');
-            }
+            delete_post_meta($new_page_id, '_elementor_conditions');
         }
         
         // Handle multilingual plugin (Polylang or WPML) via abstraction layer

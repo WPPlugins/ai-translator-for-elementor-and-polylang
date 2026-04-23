@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.42
+Stable tag: 1.4.43
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,9 @@ Go to AI Translator â†’ Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings â€” configure product translation options.
 
 == Changelog ==
+= 1.4.43 =
+* Fixed: Elementor Pro header/footer templates now reliably show the correct language on translated pages; reworked internal template resolution so translated templates never compete with the original via display conditions
+
 = 1.4.42 =
 * Fixed: Elementor editor no longer swaps original templates to translated versions when editing
 * Fixed: Translated Elementor templates now inherit same display conditions as original; language filter prevents them showing on wrong-language pages
@@ -119,17 +122,17 @@ Go to AI Translator â†’ Dashboard to see your current usage, words remaining, an
 * Fixed: Elementor template preview/editor no longer swaps the original template to a translated language when opening header/footer templates
 
 = 1.4.38 =
-* Fixed: Translated Elementor templates no longer inherit display conditions — conditions were being re-applied by Elementor after reading _elementor_page_settings; now stripped at copy time
+* Fixed: Translated Elementor templates no longer inherit display conditions ï¿½ conditions were being re-applied by Elementor after reading _elementor_page_settings; now stripped at copy time
 
 = 1.4.37 =
-* Added: Per-template translate button in Elementor Templates table — translate or re-translate a single template per language without reprocessing all templates at once
+* Added: Per-template translate button in Elementor Templates table ï¿½ translate or re-translate a single template per language without reprocessing all templates at once
 * Improved: Language code debug panel now only shown on code mismatch or when WP_DEBUG is active, not always
 
 = 1.4.36 =
-* Fixed: Translated Elementor templates no longer inherit display conditions from the original — prevents translated footer/header from showing on all languages
+* Fixed: Translated Elementor templates no longer inherit display conditions from the original ï¿½ prevents translated footer/header from showing on all languages
 
 = 1.4.35 =
-* Fixed: Template translation no longer times out on servers with short PHP max_execution_time — each template is now translated in its own AJAX request instead of all at once
+* Fixed: Template translation no longer times out on servers with short PHP max_execution_time ï¿½ each template is now translated in its own AJAX request instead of all at once
 
 = 1.4.34 =
 * Fixed: Elementor template translation now only processes default-language templates, preventing translated copies (e.g. German) from being re-translated and overwriting the correct Spanish/Italian group entries

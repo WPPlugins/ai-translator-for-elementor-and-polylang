@@ -153,17 +153,21 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         add_filter('widget_update_callback', [$this, 'widget_language_save'], 10, 4);
         
         // Elementor Pro: swap header/footer/section templates to translated versions
+        // Strategy (mirrors "Connect Polylang for Elementor" plugin):
+        //   1. Translated templates have NO _elementor_conditions in DB.
+        //   2. Elementor resolves candidates using only the original (default-lang) template's conditions.
+        //   3. Once Elementor has picked the original template ID, we swap it to the translation via
+        //      the elementor/theme/get_location_templates/template_id filter.
+        //   4. The get_post_metadata filter ensures translated templates always return empty conditions
+        //      even if conditions were accidentally written to DB (belt-and-suspenders).
         if (!is_admin()) {
-            add_action('elementor/theme/before_do_header', [$this, 'swap_elementor_template_location'], 10);
-            add_action('elementor/theme/before_do_footer', [$this, 'swap_elementor_template_location'], 10);
-            // Generic filter for all Elementor Pro template locations
-            add_filter('elementor/theme/get_location_templates/header', [$this, 'filter_elementor_location_templates'], 10, 1);
-            add_filter('elementor/theme/get_location_templates/footer', [$this, 'filter_elementor_location_templates'], 10, 1);
-            add_filter('elementor/theme/get_location_templates/single', [$this, 'filter_elementor_location_templates'], 10, 1);
-            add_filter('elementor/theme/get_location_templates/archive', [$this, 'filter_elementor_location_templates'], 10, 1);
+            add_filter('elementor/theme/get_location_templates/template_id', [$this, 'swap_elementor_template_id_to_translation'], 10, 1);
             // Fallback: intercept Elementor data loading for any template
             add_filter('elementor/frontend/builder_content_data', [$this, 'filter_elementor_template_data'], 10, 2);
         }
+        // Always (admin + frontend): make translated templates appear to have no conditions,
+        // so they never compete with the original in Elementor's conditions resolver.
+        add_filter('get_post_metadata', [$this, 'elementor_conditions_empty_on_translations'], 10, 3);
         
         // REST API language fields
         add_action('rest_api_init', [$this, 'register_rest_fields']);
@@ -2910,146 +2914,89 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
     }
 
     /**
-     * Filter Elementor Pro location templates to serve the correct language version.
+     * Swap the Elementor template ID to its translation for the current language.
      *
-     * Strategy: Elementor Pro indexes the templates array by post_id (the key). We must
-     * preserve that relationship. For each entry:
-     *   - Template in the correct language → keep as-is.
-     *   - Default-language template that has a translation → replace key+value with the
-     *     translated document (so Elementor renders the correct post).
-     *   - Default-language template with no translation → keep as fallback.
-     *   - Template from any other secondary language → exclude.
+     * This is the primary hook for Elementor Pro Theme Builder template swapping.
+     * It mirrors the approach used by "Connect Polylang for Elementor":
      *
-     * Called via elementor/theme/get_location_templates/{location} filter.
+     *   1. Translated templates have NO _elementor_conditions (enforced by
+     *      elementor_conditions_empty_on_translations() below).
+     *   2. Elementor resolves its candidates using only the default-language template's
+     *      conditions — translated templates are invisible to the resolver.
+     *   3. Once Elementor has selected the default-language template ID, this filter
+     *      swaps it to the translated version for the current language.
      *
-     * @param array $templates Array of template documents for this location.
-     * @return array
+     * Called via elementor/theme/get_location_templates/template_id filter.
+     *
+     * @param int $post_id The template post ID Elementor selected via conditions.
+     * @return int The translated template post ID, or the original if no translation exists.
      */
-    public function filter_elementor_location_templates($templates) {
-        if (!$this->is_active() || empty($templates)) {
-            return $templates;
-        }
-
-        if ($this->should_skip_elementor_template_swap()) {
-            return $templates;
+    public function swap_elementor_template_id_to_translation($post_id) {
+        if (!$this->is_active() || $this->should_skip_elementor_template_swap()) {
+            return $post_id;
         }
 
         $current_lang = $this->get_current_language();
         $default_lang = $this->get_default_language();
 
         if ($current_lang === $default_lang) {
-            // On the default language: remove any translated-language templates that may
-            // have appeared due to copied conditions.
-            $result = [];
-            foreach ($templates as $key => $template) {
-                $template_id = $this->extract_elementor_template_id($template, $key);
-                $template_lang = $template_id > 0 ? $this->get_post_language($template_id) : null;
-                if (!$template_lang || $template_lang === $default_lang) {
-                    $result[$key] = $template;
-                }
-            }
-            return $result;
+            return $post_id;
         }
 
-        // Secondary-language page: keep current-lang templates, swap default-lang ones,
-        // drop any other secondary-language templates.
-        $result = [];
-        foreach ($templates as $key => $template) {
-            $template_id = $this->extract_elementor_template_id($template, $key);
-
-            if ($template_id <= 0) {
-                $result[$key] = $template;
-                continue;
-            }
-
-            $template_lang = $this->get_post_language($template_id);
-
-            if ($template_lang === $current_lang) {
-                // Already the correct language — include as-is.
-                $result[$key] = $template;
-                continue;
-            }
-
-            if (!$template_lang || $template_lang === $default_lang) {
-                // Default-language (or unassigned) template — swap to translation if one exists.
-                $translations = $this->get_post_translations($template_id);
-                if (isset($translations[$current_lang])) {
-                    $translated_id = (int) $translations[$current_lang];
-                    if ($translated_id > 0 && get_post_status($translated_id) === 'publish') {
-                        // Use the translated_id as the array key so Elementor renders the right post.
-                        $result[$translated_id] = $this->make_swapped_elementor_template($template, $translated_id);
-                        continue;
-                    }
-                }
-                // No translation available — keep original as language fallback.
-                $result[$key] = $template;
-                continue;
-            }
-
-            // Template belongs to a different secondary language — exclude it.
+        $translations = $this->get_post_translations((int) $post_id);
+        if (!isset($translations[$current_lang])) {
+            return $post_id; // No translation — fall back to original.
         }
 
-        return $result;
+        $translated_id = (int) $translations[$current_lang];
+        if ($translated_id > 0 && get_post_status($translated_id) === 'publish') {
+            return $translated_id;
+        }
+
+        return $post_id;
     }
 
     /**
-     * Extract the post ID from an Elementor template array entry or document object.
+     * Return empty conditions for translated Elementor templates.
      *
-     * Elementor Pro >= 3.x indexes the templates array by post_id; the integer key
-     * is the most reliable source.
+     * Hooked to get_post_metadata (always, admin + frontend).
      *
-     * @param mixed      $template Template entry (array or document object).
-     * @param int|string $key      Array key (may be the post ID in newer Elementor Pro).
-     * @return int Post ID, or 0 if unknown.
+     * Elementor Pro queries _elementor_conditions when building its candidates list.
+     * If a translated template has conditions it competes with the original, causing
+     * the wrong-language template to appear. By returning an empty array here,
+     * translated templates are invisible to the conditions resolver.
+     * The actual swap happens via swap_elementor_template_id_to_translation().
+     *
+     * This mirrors elementor_conditions_empty_on_translations() in Connect Polylang for Elementor.
+     *
+     * @param mixed  $null     null (pass-through) or override value.
+     * @param int    $post_id  Post being queried.
+     * @param string $meta_key Meta key being read.
+     * @return mixed null (pass-through) or empty array.
      */
-    private function extract_elementor_template_id($template, $key = null) {
-        if (is_int($key) && $key > 0) {
-            return $key;
+    public function elementor_conditions_empty_on_translations($null, $post_id, $meta_key) {
+        if ('_elementor_conditions' !== $meta_key) {
+            return $null;
         }
-        if (is_array($template) && isset($template['id'])) {
-            return (int) $template['id'];
+        if (!$this->is_active()) {
+            return $null;
         }
-        if (is_object($template) && method_exists($template, 'get_post')) {
-            $post = $template->get_post();
-            return $post ? (int) $post->ID : 0;
+        // Only intercept elementor_library posts.
+        if (get_post_type($post_id) !== 'elementor_library') {
+            return $null;
         }
-        if (is_object($template) && isset($template->ID)) {
-            return (int) $template->ID;
+        $default_lang = $this->get_default_language();
+        $post_lang = $this->get_post_language($post_id);
+        // If this is a translated (non-default) template, return empty conditions.
+        if ($post_lang && $post_lang !== $default_lang) {
+            return [[]]; // Polylang convention: array containing one empty array.
         }
-        return 0;
-    }
-
-    /**
-     * Build a swapped Elementor template entry pointing to the translated post.
-     *
-     * Tries to return a proper Elementor Document object. Falls back to mutating
-     * the array 'id' key when Elementor is unavailable.
-     *
-     * @param mixed $template     Original template entry (array or document object).
-     * @param int   $translated_id Post ID of the translated template.
-     * @return mixed Swapped template entry.
-     */
-    private function make_swapped_elementor_template($template, $translated_id) {
-        if (class_exists('\\Elementor\\Plugin')) {
-            try {
-                $translated_doc = \Elementor\Plugin::instance()->documents->get($translated_id);
-                if ($translated_doc) {
-                    return $translated_doc;
-                }
-            } catch (\Exception $e) {
-                // Fall through to array fallback.
-            }
-        }
-        if (is_array($template)) {
-            $template['id'] = $translated_id;
-            return $template;
-        }
-        return $template;
+        return $null;
     }
 
     /**
      * Swap Elementor template data when rendering a template in a non-default language.
-     * This is a fallback/complement to filter_elementor_location_templates.
+     * This is a fallback for the builder_content_data path (e.g. Template widget, shortcodes).
      * Called via elementor/frontend/builder_content_data filter.
      *
      * @param array $data    Elementor data array.
@@ -3210,9 +3157,6 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
     /**
      * Do not swap template content when previewing or editing the template itself.
      *
-     * Frontend language swapping should only happen when a template is rendered as part
-     * of a page request, not when Elementor is opening the original template document.
-     *
      * @return bool
      */
     private function should_skip_elementor_template_swap() {
@@ -3242,14 +3186,6 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         }
 
         return false;
-    }
-
-    /**
-     * Placeholder for before_do_header / before_do_footer actions.
-     * Currently a no-op; the actual swap happens via the data filter above.
-     */
-    public function swap_elementor_template_location() {
-        // Reserved for future use if direct template ID injection is needed.
     }
 }
 
