@@ -2910,7 +2910,16 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
     }
 
     /**
-     * Filter Elementor Pro location templates to swap to translated versions.
+     * Filter Elementor Pro location templates to serve the correct language version.
+     *
+     * Strategy: Elementor Pro indexes the templates array by post_id (the key). We must
+     * preserve that relationship. For each entry:
+     *   - Template in the correct language → keep as-is.
+     *   - Default-language template that has a translation → replace key+value with the
+     *     translated document (so Elementor renders the correct post).
+     *   - Default-language template with no translation → keep as fallback.
+     *   - Template from any other secondary language → exclude.
+     *
      * Called via elementor/theme/get_location_templates/{location} filter.
      *
      * @param array $templates Array of template documents for this location.
@@ -2929,42 +2938,113 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         $default_lang = $this->get_default_language();
 
         if ($current_lang === $default_lang) {
-            return $templates;
+            // On the default language: remove any translated-language templates that may
+            // have appeared due to copied conditions.
+            $result = [];
+            foreach ($templates as $key => $template) {
+                $template_id = $this->extract_elementor_template_id($template, $key);
+                $template_lang = $template_id > 0 ? $this->get_post_language($template_id) : null;
+                if (!$template_lang || $template_lang === $default_lang) {
+                    $result[$key] = $template;
+                }
+            }
+            return $result;
         }
 
-        $swapped = [];
-        foreach ($templates as $template) {
-            $template_id = 0;
-            $is_document_object = false;
-            if (is_array($template) && isset($template['id'])) {
-                $template_id = (int) $template['id'];
-            } elseif (is_object($template) && method_exists($template, 'get_post')) {
-                $is_document_object = true;
-                $post = $template->get_post();
-                $template_id = $post ? (int) $post->ID : 0;
+        // Secondary-language page: keep current-lang templates, swap default-lang ones,
+        // drop any other secondary-language templates.
+        $result = [];
+        foreach ($templates as $key => $template) {
+            $template_id = $this->extract_elementor_template_id($template, $key);
+
+            if ($template_id <= 0) {
+                $result[$key] = $template;
+                continue;
             }
 
-            if ($template_id > 0) {
+            $template_lang = $this->get_post_language($template_id);
+
+            if ($template_lang === $current_lang) {
+                // Already the correct language — include as-is.
+                $result[$key] = $template;
+                continue;
+            }
+
+            if (!$template_lang || $template_lang === $default_lang) {
+                // Default-language (or unassigned) template — swap to translation if one exists.
                 $translations = $this->get_post_translations($template_id);
                 if (isset($translations[$current_lang])) {
                     $translated_id = (int) $translations[$current_lang];
                     if ($translated_id > 0 && get_post_status($translated_id) === 'publish') {
-                        // Swap the template to the translated version
-                        if (is_array($template)) {
-                            $template['id'] = $translated_id;
-                        } elseif ($is_document_object && class_exists('\\Elementor\\Plugin')) {
-                            $translated_document = \Elementor\Plugin::instance()->documents->get($translated_id);
-                            if ($translated_document) {
-                                $template = $translated_document;
-                            }
-                        }
+                        // Use the translated_id as the array key so Elementor renders the right post.
+                        $result[$translated_id] = $this->make_swapped_elementor_template($template, $translated_id);
+                        continue;
                     }
                 }
+                // No translation available — keep original as language fallback.
+                $result[$key] = $template;
+                continue;
             }
-            $swapped[] = $template;
+
+            // Template belongs to a different secondary language — exclude it.
         }
 
-        return $swapped;
+        return $result;
+    }
+
+    /**
+     * Extract the post ID from an Elementor template array entry or document object.
+     *
+     * Elementor Pro >= 3.x indexes the templates array by post_id; the integer key
+     * is the most reliable source.
+     *
+     * @param mixed      $template Template entry (array or document object).
+     * @param int|string $key      Array key (may be the post ID in newer Elementor Pro).
+     * @return int Post ID, or 0 if unknown.
+     */
+    private function extract_elementor_template_id($template, $key = null) {
+        if (is_int($key) && $key > 0) {
+            return $key;
+        }
+        if (is_array($template) && isset($template['id'])) {
+            return (int) $template['id'];
+        }
+        if (is_object($template) && method_exists($template, 'get_post')) {
+            $post = $template->get_post();
+            return $post ? (int) $post->ID : 0;
+        }
+        if (is_object($template) && isset($template->ID)) {
+            return (int) $template->ID;
+        }
+        return 0;
+    }
+
+    /**
+     * Build a swapped Elementor template entry pointing to the translated post.
+     *
+     * Tries to return a proper Elementor Document object. Falls back to mutating
+     * the array 'id' key when Elementor is unavailable.
+     *
+     * @param mixed $template     Original template entry (array or document object).
+     * @param int   $translated_id Post ID of the translated template.
+     * @return mixed Swapped template entry.
+     */
+    private function make_swapped_elementor_template($template, $translated_id) {
+        if (class_exists('\\Elementor\\Plugin')) {
+            try {
+                $translated_doc = \Elementor\Plugin::instance()->documents->get($translated_id);
+                if ($translated_doc) {
+                    return $translated_doc;
+                }
+            } catch (\Exception $e) {
+                // Fall through to array fallback.
+            }
+        }
+        if (is_array($template)) {
+            $template['id'] = $translated_id;
+            return $template;
+        }
+        return $template;
     }
 
     /**
@@ -3140,9 +3220,25 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             return true;
         }
 
+        // Elementor editor loads as a non-admin frontend iframe with ?elementor in the URL.
+        if (isset($_GET['elementor'])) {
+            return true;
+        }
+
         $preview_id = isset($_GET['elementor-preview']) ? (int) $_GET['elementor-preview'] : 0;
         if ($preview_id > 0 && get_post_type($preview_id) === 'elementor_library') {
             return true;
+        }
+
+        // Use Elementor's own API to detect editor / preview mode when available.
+        if (class_exists('\\Elementor\\Plugin')) {
+            $elementor = \Elementor\Plugin::instance();
+            if (isset($elementor->editor) && method_exists($elementor->editor, 'is_edit_mode') && $elementor->editor->is_edit_mode()) {
+                return true;
+            }
+            if (isset($elementor->preview) && method_exists($elementor->preview, 'is_preview_mode') && $elementor->preview->is_preview_mode()) {
+                return true;
+            }
         }
 
         return false;
