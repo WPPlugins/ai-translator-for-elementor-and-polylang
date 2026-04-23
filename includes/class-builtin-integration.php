@@ -914,7 +914,7 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         // Auto-flush rewrite rules when version changes OR when stored rules
         // are missing our language patterns (can happen after AJAX setup, reinstall, etc.)
-        $rules_version = '1.5.4'; // Bump this when rewrite rules change
+        $rules_version = '1.5.5'; // Bump this when rewrite rules change
         $stored_version = get_option('aitrfoel_rewrite_rules_version', '');
         $needs_flush = ($stored_version !== $rules_version);
         
@@ -991,7 +991,33 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             'index.php?lang=$matches[1]&category_name=$matches[2]',
             'top'
         );
-        
+
+        // 3b. Custom taxonomy terms — WooCommerce product categories, product tags, etc.
+        // Handles: /fr/product-category/slug/ and hierarchical /fr/product-category/parent/child/
+        // Must be added before the catch-all page rule but after specific CPT rules.
+        $public_taxonomies = get_taxonomies(['public' => true, '_builtin' => false], 'objects');
+        foreach ($public_taxonomies as $taxonomy) {
+            if (empty($taxonomy->rewrite) || empty($taxonomy->rewrite['slug']) || empty($taxonomy->query_var)) {
+                continue;
+            }
+            $tax_slug = trim($taxonomy->rewrite['slug'], '/');
+            if (empty($tax_slug)) {
+                continue;
+            }
+            // Pagination first (higher priority): /fr/product-category/slug/page/2/
+            add_rewrite_rule(
+                '^(' . $lang_pattern . ')/' . preg_quote($tax_slug, '/') . '/(.+?)/page/([0-9]+)/?$',
+                'index.php?lang=$matches[1]&' . $taxonomy->query_var . '=$matches[2]&paged=$matches[3]',
+                'top'
+            );
+            // Term archive: /fr/product-category/slug/ (supports parent/child hierarchy via .+?)
+            add_rewrite_rule(
+                '^(' . $lang_pattern . ')/' . preg_quote($tax_slug, '/') . '/(.+?)/?$',
+                'index.php?lang=$matches[1]&' . $taxonomy->query_var . '=$matches[2]',
+                'top'
+            );
+        }
+
         // 4. Feed: /fr/feed/
         add_rewrite_rule(
             '^(' . $lang_pattern . ')/feed/(feed|rdf|rss|rss2|atom)/?$',

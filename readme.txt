@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.44
+Stable tag: 1.4.45
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,9 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.45 =
+* Fixed: WooCommerce product category and custom taxonomy URLs with language prefix (e.g. /fr/product-category/slug/) now resolve correctly instead of returning 404
+
 = 1.4.44 =
 * Fixed: Elementor Pro header/footer templates now reliably show the correct language on translated pages
 
