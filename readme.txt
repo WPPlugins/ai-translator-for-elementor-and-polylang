@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.46
+Stable tag: 1.4.47
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,9 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.47 =
+* Fixed: Post category and tag archive pages now resolve correctly with language prefix when using a custom category/tag base in Settings > Permalinks; also fixed pagination on category and tag archives with language prefix
+
 = 1.4.46 =
 * Fixed: WooCommerce product category and custom taxonomy archive pages no longer redirect to home when accessed via language-prefixed URL
 

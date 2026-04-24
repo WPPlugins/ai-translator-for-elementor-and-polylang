@@ -914,7 +914,7 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         // Auto-flush rewrite rules when version changes OR when stored rules
         // are missing our language patterns (can happen after AJAX setup, reinstall, etc.)
-        $rules_version = '1.5.5'; // Bump this when rewrite rules change
+        $rules_version = '1.5.6'; // Bump this when rewrite rules change
         $stored_version = get_option('aitrfoel_rewrite_rules_version', '');
         $needs_flush = ($stored_version !== $rules_version);
         
@@ -978,16 +978,31 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             }
         }
         
-        // 2. Tag: /fr/tag/slug/
+        // 2. Tag: /fr/tag/slug/ (use dynamic base — respects custom tag base in Settings > Permalinks)
+        global $wp_rewrite;
+        $tag_base = !empty($wp_rewrite->tag_base) ? trim($wp_rewrite->tag_base, '/') : 'tag';
+        // Pagination first: /fr/tag/slug/page/2/
         add_rewrite_rule(
-            '^(' . $lang_pattern . ')/tag/(.+?)/?$',
+            '^(' . $lang_pattern . ')/' . preg_quote($tag_base, '/') . '/(.+?)/page/([0-9]+)/?$',
+            'index.php?lang=$matches[1]&tag=$matches[2]&paged=$matches[3]',
+            'top'
+        );
+        add_rewrite_rule(
+            '^(' . $lang_pattern . ')/' . preg_quote($tag_base, '/') . '/(.+?)/?$',
             'index.php?lang=$matches[1]&tag=$matches[2]',
             'top'
         );
-        
-        // 3. Category: /fr/category/slug/
+
+        // 3. Category: /fr/category/slug/ (use dynamic base — respects custom category base in Settings > Permalinks)
+        $cat_base = !empty($wp_rewrite->category_base) ? trim($wp_rewrite->category_base, '/') : 'category';
+        // Pagination first: /fr/categorie/slug/page/2/
         add_rewrite_rule(
-            '^(' . $lang_pattern . ')/category/(.+?)/?$',
+            '^(' . $lang_pattern . ')/' . preg_quote($cat_base, '/') . '/(.+?)/page/([0-9]+)/?$',
+            'index.php?lang=$matches[1]&category_name=$matches[2]&paged=$matches[3]',
+            'top'
+        );
+        add_rewrite_rule(
+            '^(' . $lang_pattern . ')/' . preg_quote($cat_base, '/') . '/(.+?)/?$',
             'index.php?lang=$matches[1]&category_name=$matches[2]',
             'top'
         );
