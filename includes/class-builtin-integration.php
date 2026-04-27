@@ -914,7 +914,7 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         // Auto-flush rewrite rules when version changes OR when stored rules
         // are missing our language patterns (can happen after AJAX setup, reinstall, etc.)
-        $rules_version = '1.5.7'; // Bump this when rewrite rules change
+        $rules_version = '1.5.8'; // Bump this when rewrite rules change
         $stored_version = get_option('aitrfoel_rewrite_rules_version', '');
         $needs_flush = ($stored_version !== $rules_version);
         
@@ -1068,11 +1068,34 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         );
         
         // Search: /fr/?s=query (handled by query var, no special rewrite needed)
-        
+
+        // 5b. Paginated pages with /page/ base: /fr/blog/page/2/
+        // Standard WordPress pagination for the posts page and static pages.
+        // e.g. /fr/blog/page/2/ → lang=fr, pagename=blog, paged=2
+        // Also handles translated pagination bases (e.g. 'pagina' in some locales).
+        global $wp_rewrite;
+        $pagination_base = (isset($wp_rewrite) && !empty($wp_rewrite->pagination_base))
+            ? trim($wp_rewrite->pagination_base, '/')
+            : 'page';
+        add_rewrite_rule(
+            '^(' . $lang_pattern . ')/([^/]+)/' . preg_quote($pagination_base, '/') . '/([0-9]+)/?$',
+            'index.php?lang=$matches[1]&pagename=$matches[2]&paged=$matches[3]',
+            'top'
+        );
+
+        // 5c. Paginated pages WITHOUT /page/ base: /fr/blog/2/
+        // Some themes generate blog pagination as /{posts-page-slug}/{num}/ without
+        // a 'page' segment in between. The second segment is purely numeric to avoid
+        // conflicting with CPT/taxonomy slugs (which are handled earlier with higher priority).
+        add_rewrite_rule(
+            '^(' . $lang_pattern . ')/([^/]+)/([0-9]+)/?$',
+            'index.php?lang=$matches[1]&pagename=$matches[2]&paged=$matches[3]',
+            'top'
+        );
+
         // 6. Posts with permalink front base: /fr/blog/post-slug/
         // Mirrors common permalink structures like /blog/%postname%/ so prefixed
         // default-language post URLs resolve instead of falling through to pages.
-        global $wp_rewrite;
         if (isset($wp_rewrite) && !empty($wp_rewrite->permalink_structure)) {
             $permalink_structure = trim($wp_rewrite->permalink_structure, '/');
             if (strpos($permalink_structure, '%postname%') !== false) {
