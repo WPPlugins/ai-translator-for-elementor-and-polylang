@@ -914,7 +914,7 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         // Auto-flush rewrite rules when version changes OR when stored rules
         // are missing our language patterns (can happen after AJAX setup, reinstall, etc.)
-        $rules_version = '1.5.6'; // Bump this when rewrite rules change
+        $rules_version = '1.5.7'; // Bump this when rewrite rules change
         $stored_version = get_option('aitrfoel_rewrite_rules_version', '');
         $needs_flush = ($stored_version !== $rules_version);
         
@@ -978,9 +978,17 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             }
         }
         
-        // 2. Tag: /fr/tag/slug/ (use dynamic base — respects custom tag base in Settings > Permalinks)
-        global $wp_rewrite;
-        $tag_base = !empty($wp_rewrite->tag_base) ? trim($wp_rewrite->tag_base, '/') : 'tag';
+        // 2. Tag: /fr/tag/slug/
+        // Use get_taxonomy() to get the actual rewrite slug — this correctly handles:
+        //   a) Custom tag base set in Settings > Permalinks ($wp_rewrite->tag_base)
+        //   b) WordPress core translation of 'tag' base (e.g. $wp_rewrite->tag_base is
+        //      empty but _x('tag','tag base') returns a localized slug). When category_base
+        //      option is not set, WP uses _x() translation for the base, which $wp_rewrite
+        //      does NOT expose — only the taxonomy rewrite['slug'] has the correct value.
+        $tag_tax = get_taxonomy('post_tag');
+        $tag_base = ($tag_tax && !empty($tag_tax->rewrite['slug']))
+            ? trim($tag_tax->rewrite['slug'], '/')
+            : 'tag';
         // Pagination first: /fr/tag/slug/page/2/
         add_rewrite_rule(
             '^(' . $lang_pattern . ')/' . preg_quote($tag_base, '/') . '/(.+?)/page/([0-9]+)/?$',
@@ -993,8 +1001,15 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             'top'
         );
 
-        // 3. Category: /fr/category/slug/ (use dynamic base — respects custom category base in Settings > Permalinks)
-        $cat_base = !empty($wp_rewrite->category_base) ? trim($wp_rewrite->category_base, '/') : 'category';
+        // 3. Category: /fr/category/slug/ (or /fr/categorie/slug/ on French sites, etc.)
+        // Same reasoning: read from get_taxonomy('category')->rewrite['slug'] not $wp_rewrite->category_base,
+        // because when category_base option is empty, WP uses _x('category','category base') as the
+        // slug — e.g. French core translates it to 'categorie'. $wp_rewrite->category_base stays ''
+        // so reading it would fall back to the English 'category' and generate wrong rules.
+        $cat_tax = get_taxonomy('category');
+        $cat_base = ($cat_tax && !empty($cat_tax->rewrite['slug']))
+            ? trim($cat_tax->rewrite['slug'], '/')
+            : 'category';
         // Pagination first: /fr/categorie/slug/page/2/
         add_rewrite_rule(
             '^(' . $lang_pattern . ')/' . preg_quote($cat_base, '/') . '/(.+?)/page/([0-9]+)/?$',
