@@ -1212,6 +1212,96 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             }
         }
 
+        // Handle sub-path URLs caught by the catch-all pagename rule that are actually
+        // WooCommerce endpoint URLs (or other plugin endpoint URLs registered via
+        // add_rewrite_endpoint). The catch-all maps /fr/mon-compte/commandes/ to
+        // pagename=mon-compte/commandes. No child page exists so WP 404s.
+        // We detect: base segment = real page, remaining segment = registered endpoint slug,
+        // then set page_id + endpoint query var so WooCommerce (and other plugins) resolve.
+        if (isset($wp->query_vars['lang']) && isset($wp->query_vars['pagename'])) {
+            $pagename = $wp->query_vars['pagename'];
+
+            if (strpos($pagename, '/') !== false) {
+                // Only act if no real hierarchical page exists at the full path
+                if (!get_page_by_path($pagename)) {
+                    // Split into base page slug + the rest (endpoint path)
+                    $slash_pos      = strpos($pagename, '/');
+                    $base_slug      = substr($pagename, 0, $slash_pos);
+                    $endpoint_path  = substr($pagename, $slash_pos + 1);
+                    $base_page      = get_page_by_path($base_slug);
+
+                    if ($base_page) {
+                        $matched_qv    = null;
+                        $matched_value = '';
+
+                        // 1. Check WooCommerce endpoint slugs (handles translated slugs too)
+                        if (function_exists('WC') && WC()->query) {
+                            foreach (WC()->query->get_query_vars() as $query_var => $slug) {
+                                if (!is_string($slug) || $slug === '') {
+                                    continue;
+                                }
+                                if ($endpoint_path === $slug) {
+                                    $matched_qv    = $query_var;
+                                    $matched_value = '';
+                                    break;
+                                }
+                                // Endpoint with sub-value: editer-adresse/facturation
+                                if (strpos($endpoint_path, $slug . '/') === 0) {
+                                    $matched_qv    = $query_var;
+                                    $matched_value = substr($endpoint_path, strlen($slug) + 1);
+                                    break;
+                                }
+                            }
+                        }
+
+                        // 2. Fallback: check any endpoint registered via add_rewrite_endpoint()
+                        //    (WooCommerce, WP core, other plugins). Stored in $wp_rewrite->endpoints
+                        //    as [bitmask, slug, query_var].
+                        if ($matched_qv === null) {
+                            global $wp_rewrite;
+                            if (!empty($wp_rewrite->endpoints) && is_array($wp_rewrite->endpoints)) {
+                                foreach ($wp_rewrite->endpoints as $ep) {
+                                    $slug = isset($ep[1]) ? (string) $ep[1] : '';
+                                    $qvar = isset($ep[2]) ? (string) $ep[2] : $slug;
+                                    if ($slug === '') {
+                                        continue;
+                                    }
+                                    if ($endpoint_path === $slug) {
+                                        $matched_qv    = $qvar;
+                                        $matched_value = '';
+                                        break;
+                                    }
+                                    if (strpos($endpoint_path, $slug . '/') === 0) {
+                                        $matched_qv    = $qvar;
+                                        $matched_value = substr($endpoint_path, strlen($slug) + 1);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if ($matched_qv !== null) {
+                            $page_id = (int) $base_page->ID;
+
+                            // Translate page to current language if not default
+                            $request_lang = sanitize_text_field($wp->query_vars['lang']);
+                            $default_lang  = $this->get_default_language();
+                            if ($request_lang && $request_lang !== $default_lang) {
+                                $translations = $this->get_post_translations($page_id);
+                                if (isset($translations[$request_lang])) {
+                                    $page_id = (int) $translations[$request_lang];
+                                }
+                            }
+
+                            $wp->query_vars['page_id']   = $page_id;
+                            $wp->query_vars[$matched_qv] = $matched_value;
+                            unset($wp->query_vars['pagename']);
+                        }
+                    }
+                }
+            }
+        }
+
         if (!$this->current_language) {
             $this->current_language = $this->get_default_language();
         }

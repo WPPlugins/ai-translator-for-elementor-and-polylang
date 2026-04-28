@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.49
+Stable tag: 1.4.50
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,9 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.50 =
+* Fixed: WooCommerce My Account endpoint pages (orders, downloads, edit address, edit account, logout, etc.) no longer return 404 when the default language prefix is enabled; the fix is generic and covers any plugin that registers URL endpoints via the WordPress endpoint API
+
 = 1.4.49 =
 * Fixed: Paginated blog and static page archives (e.g. /fr/blog/2/ or /fr/blog/page/2/) no longer return 404 when the default language prefix is enabled
 
