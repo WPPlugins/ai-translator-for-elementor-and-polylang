@@ -499,6 +499,10 @@ jQuery(document).ready(function($) {
             // Checkbox selection events
             $(document).on('change', '.eat-page-checkbox', this.handlePageSelection);
             $(document).on('change', '#cb-select-all, #cb-select-all-posts', this.handleSelectAll);
+
+            // Translation checkbox selection events
+            $(document).on('change', '.eat-translation-checkbox', this.handleTranslationCheckboxChange);
+            $(document).on('click', '#eat-delete-translations-btn', this.handleBulkDeleteTranslations);
             
             // Language selection events
             $(document).on('click', '#eat-select-languages', this.toggleLanguageDropdown);
@@ -1927,6 +1931,67 @@ jQuery(document).ready(function($) {
             if (window.eatSettingsModal) {
                 window.eatSettingsModal.openModal();
             }
+        },
+
+        handleTranslationCheckboxChange: function() {
+            const count = $('.eat-translation-checkbox:checked').length;
+            const $bar = $('#eat-translation-bulk-bar');
+            if (count > 0) {
+                const label = count === 1
+                    ? '1 translation selected'
+                    : count + ' translations selected';
+                $('#eat-translation-selected-count').text(label);
+                $bar.slideDown(150);
+            } else {
+                $bar.slideUp(150);
+            }
+        },
+
+        handleBulkDeleteTranslations: function() {
+            const $checked = $('.eat-translation-checkbox:checked');
+            const count = $checked.length;
+            if (count === 0) return;
+
+            const titles = $checked.map(function() {
+                return '  • ' + ($(this).data('title') || '#' + $(this).val());
+            }).get().join('\n');
+
+            const confirmMessage = 'Permanently delete ' + count + ' translation(s)?\n\n' + titles + '\n\n⚠️ This action CANNOT be undone.';
+            if (!confirm(confirmMessage)) return;
+
+            const postIds = $checked.map(function() { return $(this).val(); }).get();
+            const $btn = $('#eat-delete-translations-btn');
+            $btn.prop('disabled', true).text('Deleting...');
+
+            $.ajax({
+                url: aitrfoelDashboard.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'aitrfoel_bulk_delete_translations',
+                    nonce: aitrfoelDashboard.nonce,
+                    post_ids: postIds
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const deleted = response.data.deleted || [];
+                        deleted.forEach(function(id) {
+                            $('tr.eat-translation-page[data-page-id="' + id + '"]').fadeOut(300, function() {
+                                $(this).remove();
+                            });
+                        });
+                        $('#eat-translation-bulk-bar').slideUp(150);
+                        Dashboard.showNotice('🗑️ ' + response.data.message, 'success');
+                        setTimeout(function() { window.location.reload(true); }, 1500);
+                    } else {
+                        Dashboard.showNotice('❌ ' + (response.data.message || 'Delete failed.'), 'error');
+                        $btn.prop('disabled', false).html('🗑️ Delete selected translations');
+                    }
+                },
+                error: function() {
+                    Dashboard.showNotice('❌ Network error. Please try again.', 'error');
+                    $btn.prop('disabled', false).html('🗑️ Delete selected translations');
+                }
+            });
         },
 
         handleDeletePage: function() {

@@ -1778,6 +1778,14 @@ class AITRFOEL_Admin_Menu {
                 </div>
             </div>
             
+            <!-- Translation Bulk Action Bar (shown when translation checkboxes are selected) -->
+            <div id="eat-translation-bulk-bar" style="display:none;">
+                <span id="eat-translation-selected-count"></span>
+                <button type="button" id="eat-delete-translations-btn" class="button">
+                    🗑️ <?php esc_html_e( 'Delete selected translations', 'ai-translator-for-elementor-and-polylang' ); ?>
+                </button>
+            </div>
+
             <?php
             // Separate pages_data into pages, posts, and products
             $pages_only = [];
@@ -2369,7 +2377,11 @@ class AITRFOEL_Admin_Menu {
                     data-language="<?php echo esc_attr($lang_code); ?>"
                     style="display: none;">
                     <th scope="row" class="check-column">
-                        <!-- No checkbox for translations -->
+                        <input type="checkbox"
+                               class="eat-translation-checkbox"
+                               value="<?php echo absint($translation->ID); ?>"
+                               data-parent-id="<?php echo absint($source->ID); ?>"
+                               data-title="<?php echo esc_attr($translation->post_title); ?>">
                     </th>
                     <td class="column-title">
                         <strong class="eat-translation-indent">

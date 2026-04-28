@@ -37,6 +37,7 @@ class AITRFOEL_Ajax_Handler {
         
         // Page management actions
         add_action('wp_ajax_aitrfoel_delete_page', [$this, 'handle_delete_page']);
+        add_action('wp_ajax_aitrfoel_bulk_delete_translations', [$this, 'handle_bulk_delete_translations']);
         
         // Settings actions
         add_action('wp_ajax_aitrfoel_get_translation_settings', [$this, 'handle_get_translation_settings']);
@@ -2050,6 +2051,73 @@ class AITRFOEL_Ajax_Handler {
             wp_send_json_error([
                 'message' => $e->getMessage()
             ]);
+        }
+    }
+
+    /**
+     * Bulk-delete multiple translated posts permanently.
+     * Only posts that are confirmed translations (not originals) are deleted.
+     */
+    public function handle_bulk_delete_translations() {
+        try {
+            if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'aitrfoel_ajax_nonce')) {
+                throw new Exception('Security check failed');
+            }
+
+            if (!current_user_can('delete_pages') && !current_user_can('delete_posts')) {
+                throw new Exception('Insufficient permissions to delete content');
+            }
+
+            $raw_ids = isset($_POST['post_ids']) ? (array) $_POST['post_ids'] : [];
+            $post_ids = array_map('absint', $raw_ids);
+            $post_ids = array_filter($post_ids);
+
+            if (empty($post_ids)) {
+                throw new Exception('No post IDs provided');
+            }
+
+            $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
+            $deleted  = [];
+            $skipped  = [];
+            $failed   = [];
+
+            foreach ($post_ids as $post_id) {
+                $post = get_post($post_id);
+                if (!$post || !in_array($post->post_type, ['page', 'post', 'product'], true)) {
+                    $skipped[] = $post_id;
+                    continue;
+                }
+
+                // Only permanently delete confirmed translations
+                $is_translation = false;
+                if ($multilingual && method_exists($multilingual, 'get_original_post_id')) {
+                    $original_id = $multilingual->get_original_post_id($post_id);
+                    $is_translation = ($original_id && $original_id !== $post_id);
+                }
+
+                if (!$is_translation) {
+                    $skipped[] = $post_id;
+                    continue;
+                }
+
+                $result = wp_delete_post($post_id, true);
+                if ($result) {
+                    $deleted[] = $post_id;
+                    AITRFOEL_Logger::log("Translation '{$post->post_title}' permanently deleted (bulk) by user " . get_current_user_id(), 'info', $post_id);
+                } else {
+                    $failed[] = $post_id;
+                }
+            }
+
+            wp_send_json_success([
+                'deleted' => $deleted,
+                'skipped' => $skipped,
+                'failed'  => $failed,
+                'message' => sprintf('%d translation(s) deleted.', count($deleted)),
+            ]);
+
+        } catch (Exception $e) {
+            wp_send_json_error(['message' => $e->getMessage()]);
         }
     }
 

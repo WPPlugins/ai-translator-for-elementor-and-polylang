@@ -1209,6 +1209,45 @@ tr.eat-translation-page.eat-translation-expanded {
     bottom: calc(50% - 1px);
 }
 
+/* Translation bulk action bar */
+#eat-translation-bulk-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+    margin: 0 0 8px;
+    background: #fff8e1;
+    border: 1px solid #f0c040;
+    border-radius: 4px;
+    font-size: 13px;
+}
+#eat-translation-selected-count {
+    font-weight: 600;
+    color: #5a3e00;
+}
+#eat-delete-translations-btn {
+    background: #d63638;
+    border-color: #b22223;
+    color: #fff;
+    font-weight: 600;
+}
+#eat-delete-translations-btn:hover:not(:disabled) {
+    background: #b22223;
+    border-color: #8b1a1a;
+    color: #fff;
+}
+#eat-delete-translations-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Checkbox in translation rows */
+.eat-translation-page .check-column input[type="checkbox"] {
+    margin: 0 auto;
+    display: block;
+    cursor: pointer;
+}
+
 
 
 

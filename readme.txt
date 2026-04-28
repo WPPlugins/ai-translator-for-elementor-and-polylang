@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.51
+Stable tag: 1.4.52
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,9 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.52 =
+* Added: Bulk delete for translations � checkboxes now appear on translated items in the dashboard; selecting one or more shows a "Delete selected translations" bar for permanent deletion in one click
+
 = 1.4.51 =
 * Fixed: WooCommerce My Account endpoint pages now work with the default language prefix by adding explicit rewrite rules for all registered WP/WooCommerce endpoints (orders, downloads, edit address, etc.), which is more reliable than the runtime parse_request fix shipped in v1.4.50
 
