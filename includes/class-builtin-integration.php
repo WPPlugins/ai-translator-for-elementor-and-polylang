@@ -914,7 +914,7 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         // Auto-flush rewrite rules when version changes OR when stored rules
         // are missing our language patterns (can happen after AJAX setup, reinstall, etc.)
-        $rules_version = '1.5.8'; // Bump this when rewrite rules change
+        $rules_version = '1.5.9'; // Bump this when rewrite rules change
         $stored_version = get_option('aitrfoel_rewrite_rules_version', '');
         $needs_flush = ($stored_version !== $rules_version);
         
@@ -1092,6 +1092,45 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             'index.php?lang=$matches[1]&pagename=$matches[2]&paged=$matches[3]',
             'top'
         );
+
+        // 5d. WooCommerce / plugin endpoint URLs: /fr/page-slug/endpoint/ (and /value/)
+        // e.g. /fr/mon-espace-lavie/commandes/, /fr/mon-espace-lavie/editer-adresse/facturation/
+        // WooCommerce registers endpoints via add_rewrite_endpoint() at init:20, so
+        // $wp_rewrite->endpoints is fully populated by the time we reach init:25 here.
+        // Adding explicit rules per endpoint is more reliable than parse_request fixups because
+        // WordPress resolves pagename + endpoint query var in one step, matching how it handles
+        // these URLs without the lang prefix.
+        if (!empty($wp_rewrite->endpoints) && is_array($wp_rewrite->endpoints)) {
+            foreach ($wp_rewrite->endpoints as $ep) {
+                if (!is_array($ep) || count($ep) < 2) {
+                    continue;
+                }
+                $ep_places = (int) $ep[0];
+                $ep_slug   = (string) $ep[1];
+                // $ep[2] is always a string by the time WP stores it (never boolean true)
+                $ep_qvar   = (isset($ep[2]) && $ep[2] !== '') ? (string) $ep[2] : $ep_slug;
+
+                // Only handle page-based endpoints (EP_PAGES = 4)
+                if (!($ep_places & EP_PAGES) || $ep_slug === '') {
+                    continue;
+                }
+
+                $ep_slug_q = preg_quote($ep_slug, '/');
+
+                // /fr/page-slug/endpoint/value/ — endpoint with an optional value
+                add_rewrite_rule(
+                    '^(' . $lang_pattern . ')/([^/]+)/' . $ep_slug_q . '/([^/]*)/?$',
+                    'index.php?lang=$matches[1]&pagename=$matches[2]&' . $ep_qvar . '=$matches[3]',
+                    'top'
+                );
+                // /fr/page-slug/endpoint/ — endpoint without a value
+                add_rewrite_rule(
+                    '^(' . $lang_pattern . ')/([^/]+)/' . $ep_slug_q . '/?$',
+                    'index.php?lang=$matches[1]&pagename=$matches[2]&' . $ep_qvar . '=',
+                    'top'
+                );
+            }
+        }
 
         // 6. Posts with permalink front base: /fr/blog/post-slug/
         // Mirrors common permalink structures like /blog/%postname%/ so prefixed
