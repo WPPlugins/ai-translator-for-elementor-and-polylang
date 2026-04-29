@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.53
+Stable tag: 1.4.54
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,9 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.54 =
+* Fixed: Version bump to ensure WordPress.org readme and changelog are published correctly
+
 = 1.4.53 =
 * Fixed: Bulk translation no longer fails with "Failed to update bulk translation job" on long/complex posts; job updates are now schema-safe and length-safe
 * Fixed: Translated posts/pages now keep the same featured image as the source content
