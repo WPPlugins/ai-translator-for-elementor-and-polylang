@@ -3013,6 +3013,14 @@ class AITRFOEL_Translation_Engine {
      * @param string $source_lang  Source language code
      */
     private function translate_post_meta_fields($original_id, $target_id, $target_lang, $source_lang = 'auto') {
+        // Keep featured image in sync for translated posts/pages/products.
+        $thumbnail_id = get_post_thumbnail_id($original_id);
+        if ($thumbnail_id) {
+            set_post_thumbnail($target_id, (int) $thumbnail_id);
+        } else {
+            delete_post_thumbnail($target_id);
+        }
+
         $seo_translate_keys = [];
 
         $seo_enabled = get_option('aitrfoel_seo_translation_enabled', true);

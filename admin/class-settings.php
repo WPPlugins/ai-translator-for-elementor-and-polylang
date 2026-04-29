@@ -1392,6 +1392,9 @@ class AITRFOEL_Settings {
                             </tbody>
                         </table>
                         <div style="padding: 12px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px;">
+                            <button type="button" class="button aitrfoel-translate-tpl-all" data-mode="advanced" style="margin-right: 8px;">
+                                <?php esc_html_e('Translate Advanced Templates Only', 'ai-translator-for-elementor-and-polylang'); ?>
+                            </button>
                             <button type="button" class="button aitrfoel-translate-tpl-all" data-mode="all">
                                 <?php esc_html_e('Translate All Templates (including advanced)', 'ai-translator-for-elementor-and-polylang'); ?>
                             </button>
@@ -2295,7 +2298,11 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                     var lang = $(this).data('lang');
                     var name = $(this).data('name');
                     var mode = $(this).data('mode') || 'active';
-                    var label = mode === 'all' ? '<?php echo esc_js(__('all', 'ai-translator-for-elementor-and-polylang')); ?>' : '<?php echo esc_js(__('active', 'ai-translator-for-elementor-and-polylang')); ?>';
+                    var label = mode === 'advanced'
+                        ? '<?php echo esc_js(__('advanced', 'ai-translator-for-elementor-and-polylang')); ?>'
+                        : (mode === 'all'
+                            ? '<?php echo esc_js(__('all', 'ai-translator-for-elementor-and-polylang')); ?>'
+                            : '<?php echo esc_js(__('active', 'ai-translator-for-elementor-and-polylang')); ?>');
                     if (!confirm('<?php echo esc_js(__('Translate', 'ai-translator-for-elementor-and-polylang')); ?> ' + label + ' <?php echo esc_js(__('Elementor templates for', 'ai-translator-for-elementor-and-polylang')); ?> ' + name + '? <?php echo esc_js(__('Uses translation credits.', 'ai-translator-for-elementor-and-polylang')); ?>')) return;
                     startTemplateTranslate([{code: lang, name: name}], mode);
                 });
@@ -2352,8 +2359,13 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                 $(document).on('click', '.aitrfoel-translate-tpl-all', function() {
                     var mode = $(this).data('mode') || 'active';
                     var langs = [];
-                    // Gather language buttons from the same mode context
-                    $('.aitrfoel-translate-tpl-lang[data-mode="' + (mode === 'all' ? 'active' : mode) + '"]').each(function() {
+                    // Gather language buttons from the current mode context.
+                    // Advanced/all modes reuse the global language set.
+                    var langSelector = (mode === 'active')
+                        ? '.aitrfoel-translate-tpl-lang[data-mode="active"]'
+                        : '.aitrfoel-translate-tpl-lang';
+
+                    $(langSelector).each(function() {
                         langs.push({code: $(this).data('lang'), name: $(this).data('name')});
                     });
                     if (!langs.length) {
@@ -2366,7 +2378,11 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                         });
                     }
                     if (!langs.length) return;
-                    var label = mode === 'all' ? '<?php echo esc_js(__('ALL templates (including advanced)', 'ai-translator-for-elementor-and-polylang')); ?>' : '<?php echo esc_js(__('active templates', 'ai-translator-for-elementor-and-polylang')); ?>';
+                    var label = mode === 'advanced'
+                        ? '<?php echo esc_js(__('advanced templates only', 'ai-translator-for-elementor-and-polylang')); ?>'
+                        : (mode === 'all'
+                            ? '<?php echo esc_js(__('ALL templates (including advanced)', 'ai-translator-for-elementor-and-polylang')); ?>'
+                            : '<?php echo esc_js(__('active templates', 'ai-translator-for-elementor-and-polylang')); ?>');
                     if (!confirm('<?php echo esc_js(__('Translate', 'ai-translator-for-elementor-and-polylang')); ?> ' + label + ' <?php echo esc_js(__('for ALL languages? Uses translation credits.', 'ai-translator-for-elementor-and-polylang')); ?>')) return;
                     startTemplateTranslate(langs, mode);
                 });

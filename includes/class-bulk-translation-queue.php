@@ -290,6 +290,10 @@ class AITRFOEL_Bulk_Translation_Queue {
     public function update_job($job_id, $updates) {
         global $wpdb;
 
+        if (empty($job_id) || !is_array($updates) || empty($updates)) {
+            return 0;
+        }
+
         // Prepare data with timestamps
         if (isset($updates['status'])) {
             if ($updates['status'] === 'processing' && !isset($updates['started_at'])) {
@@ -314,6 +318,33 @@ class AITRFOEL_Bulk_Translation_Queue {
             }
         }
 
+        // Keep high-churn fields within DB column limits to avoid SQL failures.
+        if (isset($updates['status'])) {
+            $updates['status'] = sanitize_text_field($updates['status']);
+        }
+        if (isset($updates['current_step'])) {
+            $updates['current_step'] = mb_substr(sanitize_text_field((string) $updates['current_step']), 0, 250);
+        }
+        if (isset($updates['current_language'])) {
+            $updates['current_language'] = mb_substr(sanitize_text_field((string) $updates['current_language']), 0, 10);
+        }
+        if (isset($updates['completed_language'])) {
+            $updates['completed_language'] = mb_substr(sanitize_text_field((string) $updates['completed_language']), 0, 10);
+        }
+        if (isset($updates['error_type'])) {
+            $updates['error_type'] = mb_substr(sanitize_text_field((string) $updates['error_type']), 0, 50);
+        }
+
+        // Filter out unknown columns for older tables that may miss newer schema fields.
+        $columns = $wpdb->get_col("SHOW COLUMNS FROM {$this->table_name}", 0);
+        if (is_array($columns) && !empty($columns)) {
+            $updates = array_intersect_key($updates, array_flip($columns));
+        }
+
+        if (empty($updates)) {
+            return 0;
+        }
+
         $result = $wpdb->update(
             $this->table_name,
             $updates,
@@ -323,6 +354,11 @@ class AITRFOEL_Bulk_Translation_Queue {
         );
 
         if ($result === false) {
+            AITRFOEL_Logger::log(
+                'Bulk job update failed: ' . $wpdb->last_error,
+                'error',
+                ['job_id' => $job_id, 'updates' => array_keys($updates)]
+            );
             throw new Exception(esc_html__('Failed to update bulk translation job.', 'ai-translator-for-elementor-and-polylang'));
         }
 
