@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.54
+Stable tag: 1.4.55
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,11 +18,11 @@ Most translation plugins treat your site as plain text. Meep AI reads Elementor'
 
 **Why Meep AI Translator?**
 
-* ✅ Elementor layout preserved — pixel-perfect after every translation
-* ✅ Built-in language system — no Polylang or WPML required
-* ✅ WooCommerce support — products, variations, attributes, gallery SEO
-* ✅ No API key needed — zero setup friction
-* ✅ 1,800 words per week free — resets automatically
+* Elementor layout preserved — pixel-perfect after every translation
+* Built-in language system — no Polylang or WPML required
+* WooCommerce support — products, variations, attributes, gallery SEO
+* No API key needed — zero setup friction
+* 1,800 words per week free — resets automatically
 
 **Features:**
 
@@ -51,7 +51,7 @@ Most translation plugins treat your site as plain text. Meep AI reads Elementor'
 * **Agency Lifetime – $299 one-time** – 50 sites, unlimited words. Pay once, use forever.
 * **Enterprise – $53.99/month** – Up to 50 sites, dedicated account manager.
 
-👉 [View plans and upgrade](https://meeptech.com/products/ai-translator-for-elementor-polylang#pricing)
+[View plans and upgrade](https://meeptech.com/products/ai-translator-for-elementor-polylang#pricing)
 
 == Installation ==
 1. Upload the plugin folder to `/wp-content/plugins/` or install via the WordPress Plugins screen.
@@ -104,6 +104,9 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.4.55 =
+* Fixed: WordPress.org plugin description now displays correctly - removed emoji characters from readme, fixed text encoding issue that caused the description to appear blank
+
 = 1.4.54 =
 * Fixed: Version bump to ensure WordPress.org readme and changelog are published correctly
 
@@ -113,7 +116,7 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 * Added: Elementor Templates settings now includes "Translate Advanced Templates Only" in the Advanced section (separate from "Translate All Templates")
 
 = 1.4.52 =
-* Added: Bulk delete for translations � checkboxes now appear on translated items in the dashboard; selecting one or more shows a "Delete selected translations" bar for permanent deletion in one click
+* Added: Bulk delete for translations — checkboxes now appear on translated items in the dashboard; selecting one or more shows a "Delete selected translations" bar for permanent deletion in one click
 
 = 1.4.51 =
 * Fixed: WooCommerce My Account endpoint pages now work with the default language prefix by adding explicit rewrite rules for all registered WP/WooCommerce endpoints (orders, downloads, edit address, etc.), which is more reliable than the runtime parse_request fix shipped in v1.4.50
@@ -157,17 +160,17 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 * Fixed: Elementor template preview/editor no longer swaps the original template to a translated language when opening header/footer templates
 
 = 1.4.38 =
-* Fixed: Translated Elementor templates no longer inherit display conditions � conditions were being re-applied by Elementor after reading _elementor_page_settings; now stripped at copy time
+* Fixed: Translated Elementor templates no longer inherit display conditions — conditions were being re-applied by Elementor after reading _elementor_page_settings; now stripped at copy time
 
 = 1.4.37 =
-* Added: Per-template translate button in Elementor Templates table � translate or re-translate a single template per language without reprocessing all templates at once
+* Added: Per-template translate button in Elementor Templates table — translate or re-translate a single template per language without reprocessing all templates at once
 * Improved: Language code debug panel now only shown on code mismatch or when WP_DEBUG is active, not always
 
 = 1.4.36 =
-* Fixed: Translated Elementor templates no longer inherit display conditions from the original � prevents translated footer/header from showing on all languages
+* Fixed: Translated Elementor templates no longer inherit display conditions from the original — prevents translated footer/header from showing on all languages
 
 = 1.4.35 =
-* Fixed: Template translation no longer times out on servers with short PHP max_execution_time � each template is now translated in its own AJAX request instead of all at once
+* Fixed: Template translation no longer times out on servers with short PHP max_execution_time — each template is now translated in its own AJAX request instead of all at once
 
 = 1.4.34 =
 * Fixed: Elementor template translation now only processes default-language templates, preventing translated copies (e.g. German) from being re-translated and overwriting the correct Spanish/Italian group entries
@@ -533,14 +536,14 @@ This plugin connects to external services to provide AI-powered translations.
 
 = What We Collect =
 
-✅ Website URL (for authentication)
-✅ Word counts and language pairs (for plan limits)
+* Website URL (for authentication)
+* Word counts and language pairs (for plan limits)
 
 = What We Do NOT Collect =
 
-❌ Your translated content is not stored
-❌ Personal information or email addresses
-❌ User or visitor data
+* Your translated content is not stored
+* Personal information or email addresses
+* User or visitor data
 
 = Privacy & Security =
 
