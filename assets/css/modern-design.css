@@ -1,4 +1,4 @@
-/**
+﻿/**
  * AI Translator — Modern Design Overrides
  * Inspired by meeptech.com design language
  * Soft gradients, smooth animations, rounded corners, MeepTech branding
@@ -582,7 +582,12 @@
     color: var(--mt-blue);
 }
 
-/* ── Tooltip Override — Native browser tooltips ──────────────── */
+/* ── Tooltip Override ────────────────────────────────────────── */
+.aitrfoel-tooltip:hover::after {
+    border-radius: 10px !important;
+    background: var(--mt-gray-900) !important;
+    box-shadow: var(--mt-shadow-lg) !important;
+}
 
 /* ── Dropdown Button Arrow ────────────────────────────────────── */
 #aitrfoel-select-source-language,

@@ -11,21 +11,10 @@ if (!defined('ABSPATH')) {
 class AITRFOEL_License_Manager_Server {
     
     private static $instance = null;
-    private $api_base_url = 'https://api.meeptech.com/api/eat'; // Dedicated High-Speed Translation API
+    private $api_base_url = 'https://meeptech.com/api/eat'; // TypeScript Next.js API
     private $cached_license_key = null; // Cache license key to avoid Freemius calls
     private $cached_license_status = null; // Cache license status per-request to avoid repeat HTTP calls
     
-    /**
-     * Get dynamic API base URL (supports constant override and filters)
-     * @return string
-     */
-    public function get_api_base_url() {
-        if (defined('AITRFOEL_API_BASE_URL')) {
-            return AITRFOEL_API_BASE_URL;
-        }
-        return apply_filters('aitrfoel_api_base_url', $this->api_base_url);
-    }
-
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -43,21 +32,16 @@ class AITRFOEL_License_Manager_Server {
         // Admin notices for license expired
         add_action('admin_notices', [$this, 'show_license_expired_notice']);
         
-        // Word limit usage notices (80% warning + review nudge / 100% blocking warning)
-        add_action('admin_notices', [$this, 'show_word_limit_notices']);
-        
         // AJAX handler for dismissing license expired notice
         add_action('wp_ajax_aitrfoel_dismiss_license_expired', [$this, 'dismiss_license_expired_notice']);
-        
-        // AJAX handlers for dismissing word limit notices
-        add_action('wp_ajax_aitrfoel_dismiss_80_notice', [$this, 'dismiss_80_notice']);
-        add_action('wp_ajax_aitrfoel_dismiss_100_notice', [$this, 'dismiss_100_notice']);
         
         // Freemius activation hooks (initialize user in remote DB)
         add_action('aitrfoel_fs_loaded', [$this, 'init_freemius_hooks']);
 
-        // Auto-register Free/unlicensed site in remote DB (once per month)
-        add_action('admin_init', [$this, 'maybe_auto_register_free_user']);
+        // FREE VERSION: Auto-register on first load
+        if (defined('AITRFOEL_VERSION_TYPE') && AITRFOEL_VERSION_TYPE === 'free') {
+            add_action('admin_init', [$this, 'maybe_auto_register_free_user']);
+        }
         
         // Auto-sync plan on admin pages (checks once per hour)
         add_action('admin_init', [$this, 'maybe_sync_plan']);
@@ -70,7 +54,7 @@ class AITRFOEL_License_Manager_Server {
      * Initialize Freemius hooks after SDK is loaded
      */
     public function init_freemius_hooks() {
-        if (function_exists('eatp_fs') && is_object(eatp_fs()) && method_exists(eatp_fs(), 'add_action')) {
+        if (function_exists('eatp_fs')) {
             // When user opts in (connects Freemius account) - Free plan
             eatp_fs()->add_action('after_account_connection', [$this, 'on_freemius_connected']);
             
@@ -79,56 +63,7 @@ class AITRFOEL_License_Manager_Server {
             
             // When user changes plan (upgrade/downgrade)
             eatp_fs()->add_action('after_plan_change', [$this, 'on_plan_changed'], 10, 2);
-
-            // When license or plan is synced (e.g. "Sync License" button, cron, or account sync)
-            eatp_fs()->add_action('after_account_plan_sync', [$this, 'on_account_plan_synced']);
-            eatp_fs()->add_action('after_license_change', [$this, 'on_license_changed'], 10, 2);
-            eatp_fs()->add_action('after_plans_sync', [$this, 'clear_status_cache']);
         }
-    }
-
-    /**
-     * Get plan name directly from local Freemius SDK if active
-     */
-    public function get_freemius_plan_name() {
-        if (!function_exists('eatp_fs') || !is_object(eatp_fs())) {
-            return null;
-        }
-
-        try {
-            if (method_exists(eatp_fs(), 'is_registered') && eatp_fs()->is_registered()) {
-                // Method 1: Check active license plan_id
-                if (method_exists(eatp_fs(), '_get_license')) {
-                    $license = eatp_fs()->_get_license();
-                    if ($license && !empty($license->plan_id) && method_exists(eatp_fs(), '_get_plan_by_id')) {
-                        $plan = eatp_fs()->_get_plan_by_id($license->plan_id);
-                        if ($plan && !empty($plan->name)) {
-                            return $plan->name;
-                        }
-                    }
-                }
-
-                // Method 2: Check get_plan_name()
-                if (method_exists(eatp_fs(), 'get_plan_name')) {
-                    $plan_name = eatp_fs()->get_plan_name();
-                    if (!empty($plan_name) && strtolower($plan_name) !== 'free' && strtolower($plan_name) !== 'plan_name') {
-                        return $plan_name;
-                    }
-                }
-
-                // Method 3: Check get_plan()
-                if (method_exists(eatp_fs(), 'get_plan')) {
-                    $plan = eatp_fs()->get_plan();
-                    if ($plan && !empty($plan->name)) {
-                        return $plan->name;
-                    }
-                }
-            }
-        } catch (Exception $e) {
-            // Ignore
-        }
-
-        return null;
     }
     
     /**
@@ -140,10 +75,15 @@ class AITRFOEL_License_Manager_Server {
             return $this->cached_license_key;
         }
         
-        // During background translation AJAX, avoid calling Freemius SDK
-        $is_translation_ajax = defined('DOING_AJAX') && DOING_AJAX && 
-                              isset($_POST['action']) && 
-                              in_array($_POST['action'], ['aitrfoel_translate_page', 'aitrfoel_process_bulk_batch']);
+        // PERFORMANCE: During AJAX translation, skip Freemius entirely
+        $is_translation_ajax = defined('DOING_AJAX') && DOING_AJAX && isset($_REQUEST['action']) && 
+            in_array($_REQUEST['action'], [
+                'aitrfoel_translate_page',
+                'aitrfoel_bulk_translate', 
+                'aitrfoel_start_bulk_translation',
+                'aitrfoel_process_background_translation',
+                'aitrfoel_get_bulk_job_status'
+            ]);
         
         if ($is_translation_ajax) {
             // Use cached value from WordPress options (set during admin page load)
@@ -153,7 +93,7 @@ class AITRFOEL_License_Manager_Server {
         }
         
         // Normal flow: Get from Freemius (only in admin context)
-        if (function_exists('eatp_fs') && is_object(eatp_fs()) && method_exists(eatp_fs(), 'is_registered') && eatp_fs()->is_registered()) {
+        if (function_exists('eatp_fs') && eatp_fs()->is_registered()) {
             try {
                 $license = eatp_fs()->_get_license();
                 if ($license && isset($license->secret_key)) {
@@ -178,10 +118,6 @@ class AITRFOEL_License_Manager_Server {
      */
     public function clear_status_cache() {
         $this->cached_license_status = null;
-        $this->cached_license_key = null;
-        delete_transient('aitrfoel_license_status_cache');
-        delete_transient('aitrfoel_last_plan_sync_check');
-        delete_option('aitrfoel_cached_license_key');
     }
     
     /**
@@ -193,25 +129,8 @@ class AITRFOEL_License_Manager_Server {
             return $this->cached_license_status;
         }
         
-        // PERFORMANCE: Check if there is a transient cache
-        $cached = get_transient('aitrfoel_license_status_cache');
-        if ($cached !== false && is_array($cached)) {
-            // Check if Freemius locally upgraded to a paid tier while transient was cached as Free
-            $fs_plan = $this->get_freemius_plan_name();
-            $cached_is_free = empty($cached['plan']) || strtolower($cached['plan']) === 'free';
-            $fs_is_paid = !empty($fs_plan) && strtolower($fs_plan) !== 'free';
-
-            if ($fs_is_paid && $cached_is_free) {
-                // Cache is stale - bust it
-                $this->clear_status_cache();
-            } else {
-                $this->cached_license_status = $cached;
-                return $this->cached_license_status;
-            }
-        }
-        
         $plan_name = 'Free';
-        $word_limit = 7200;
+        $word_limit = 1800;
         
         // Get license key (uses cache during AJAX)
         $license_key = $this->get_license_key();
@@ -223,67 +142,27 @@ class AITRFOEL_License_Manager_Server {
         if (isset($server_usage['plan'])) {
             $plan_name = $server_usage['plan'];
         }
-
-        // AUTHORITY OVERRIDE: If Freemius locally is registered with a verified paid plan,
-        // but the remote server returned 'Free' or empty (e.g. before webhook arrival or delay),
-        // Freemius's verified paid plan takes precedence!
-        $fs_plan = $this->get_freemius_plan_name();
-        if (!empty($fs_plan) && strtolower($fs_plan) !== 'free') {
-            if (empty($plan_name) || strtolower($plan_name) === 'free' || (strtolower($fs_plan) === 'agency lifetime' && strtolower($plan_name) !== 'agency lifetime')) {
-                $plan_name = $fs_plan;
-                // Dispatch update to remote server so DB is synced immediately
-                if (!empty($license_key)) {
-                    $this->update_plan_in_remote_db($plan_name, $license_key);
-                }
-            }
-        }
-
-        if (isset($server_usage['word_limit']) && strtolower($plan_name) === strtolower($server_usage['plan'] ?? '')) {
+        if (isset($server_usage['word_limit'])) {
             $word_limit = $server_usage['word_limit'];
         } else {
-            // Calculate from authoritative plan name
+            // Fallback to calculating from plan name
             $word_limit = $this->get_word_limit_for_plan($plan_name);
         }
         
-        // Add addon words to the effective limit when the 50K addon is active.
-        $addon_words = 0;
-        if (!empty($server_usage['addon_active']) && isset($server_usage['addon_words'])) {
-            $addon_words = intval($server_usage['addon_words']);
-            if ($word_limit !== -1) {
-                $word_limit += $addon_words;
-            }
-        }
-
         $words_used = $server_usage['words_used'];
         $words_left = $word_limit === -1 ? -1 : max(0, $word_limit - $words_used);
         
-        $is_unlimited = ($word_limit === -1 || strtolower($plan_name) === 'agency lifetime');
-        $cooldown_end = (int) get_option('aitrfoel_cooldown_end_date', 0);
-        $cooldown_active = false;
-        if (!$is_unlimited && strtolower($plan_name) === 'free') {
-            $cooldown_active = isset($server_usage['cooldown_active'])
-                ? (bool) $server_usage['cooldown_active']
-                : ($cooldown_end > 0 && $cooldown_end > time() && $words_used >= $word_limit);
-        }
-
         $this->cached_license_status = [
             'plan' => $plan_name,
             'word_limit' => $word_limit,
             'words_used' => $words_used,
             'words_left' => $words_left,
             'license_key' => $license_key,
-            'unlimited' => $is_unlimited,
-            'is_unlimited' => $is_unlimited,
             'freemius_validated' => isset($server_usage['freemius_validated']) ? $server_usage['freemius_validated'] : false,
             'license_expired' => isset($server_usage['license_expired']) ? $server_usage['license_expired'] : false,
             'addon_active' => isset($server_usage['addon_active']) ? (bool) $server_usage['addon_active'] : false,
-            'addon_words' => $addon_words,
-            'cooldown_active' => $cooldown_active,
-            'social_bonus_claimed' => isset($server_usage['social_bonus_claimed']) ? (bool) $server_usage['social_bonus_claimed'] : (bool) get_option('aitrfoel_share_bonus_claimed', false),
+            'addon_words' => isset($server_usage['addon_words']) ? intval($server_usage['addon_words']) : 0,
         ];
-        
-        // Cache for 10 minutes to prevent excessive server requests on general page loads
-        set_transient('aitrfoel_license_status_cache', $this->cached_license_status, 10 * MINUTE_IN_SECONDS);
         
         return $this->cached_license_status;
     }
@@ -394,22 +273,9 @@ class AITRFOEL_License_Manager_Server {
                 if (isset($data['addon_words'])) {
                     $result['addon_words'] = intval($data['addon_words']);
                 }
-
-                // Sync social share bonus status from server (auto-heals any prior failed local locks)
-                if (isset($data['social_bonus_claimed'])) {
-                    $result['social_bonus_claimed'] = (bool) $data['social_bonus_claimed'];
-                    if ($data['social_bonus_claimed'] === true) {
-                        if (!get_option('aitrfoel_share_bonus_claimed', false)) {
-                            update_option('aitrfoel_share_bonus_claimed', time());
-                        }
-                    } elseif ($data['social_bonus_claimed'] === false && get_option('aitrfoel_share_bonus_claimed', false)) {
-                        delete_option('aitrfoel_share_bonus_claimed');
-                    }
-                }
                 
                 // Handle cooldown status from server (syncs when admin resets usage)
                 if (isset($data['cooldown_active'])) {
-                    $result['cooldown_active'] = (bool) $data['cooldown_active'];
                     if ($data['cooldown_active'] === true && isset($data['cooldown_ends_at'])) {
                         // Server says cooldown is active - sync to local
                         $cooldown_end = strtotime($data['cooldown_ends_at']);
@@ -459,7 +325,7 @@ class AITRFOEL_License_Manager_Server {
         if (empty($license_key)) {
             return [
                 'total_words_used' => 0,
-                'word_limit' => 7200,
+                'word_limit' => 1800,
                 'active_sites' => 1,
                 'plan' => 'Free'
             ];
@@ -479,7 +345,7 @@ class AITRFOEL_License_Manager_Server {
                 AITRFOEL_Logger::log('❌ Error getting license usage: ' . $response->get_error_message(), 'error');
                 return [
                     'total_words_used' => 0,
-                    'word_limit' => 7200,
+                    'word_limit' => 1800,
                     'active_sites' => 1,
                     'plan' => 'Free'
                 ];
@@ -491,7 +357,7 @@ class AITRFOEL_License_Manager_Server {
             if (isset($data['success']) && $data['success']) {
                 return [
                     'total_words_used' => $data['total_words_used'] ?? 0,
-                    'word_limit' => $data['word_limit'] ?? 7200,
+                    'word_limit' => $data['word_limit'] ?? 1800,
                     'active_sites' => $data['active_sites'] ?? 1,
                     'plan' => $data['plan'] ?? 'Free'
                 ];
@@ -499,7 +365,7 @@ class AITRFOEL_License_Manager_Server {
             
             return [
                 'total_words_used' => 0,
-                'word_limit' => 7200,
+                'word_limit' => 1800,
                 'active_sites' => 1,
                 'plan' => 'Free'
             ];
@@ -508,7 +374,7 @@ class AITRFOEL_License_Manager_Server {
             AITRFOEL_Logger::log('❌ Exception getting license usage: ' . $e->getMessage(), 'error');
             return [
                 'total_words_used' => 0,
-                'word_limit' => 7200,
+                'word_limit' => 1800,
                 'active_sites' => 1,
                 'plan' => 'Free'
             ];
@@ -615,8 +481,6 @@ class AITRFOEL_License_Manager_Server {
                 AITRFOEL_Logger::log('💾 Updating local cache: total_words_used = ' . $data['total_words_used'], 'info');
             }
             update_option('aitrfoel_words_used_this_month', $data['total_words_used']);
-            // Clear status cache to force fresh data on next read
-            $this->clear_status_cache();
         } else {
             if (class_exists('AITRFOEL_Logger')) {
                 AITRFOEL_Logger::log('⚠️ WARNING: translate response missing "total_words_used" field!', 'warning');
@@ -639,21 +503,19 @@ class AITRFOEL_License_Manager_Server {
      * Get word limit for plan
      */
     private function get_word_limit_for_plan($plan_name) {
-        $normalized = strtolower(trim((string) $plan_name));
         $limits = [
-            'free'            => 7200,               // Free: 7,200 words/month (1 site)
-            'starter'         => 18000,              // Starter: 18,000 words/month (1 site)
-            'professional'    => 60000,              // Professional: 60,000 words/month
-            'agency'          => 89000,              // Agency: 89,000 words/month (up to 10 sites, shared)
-            'agency lifetime' => -1,                 // Agency Lifetime: unlimited words (up to 50 sites)
-            'enterprise'      => 355000,             // Enterprise: 355,000 words/month (up to 50 sites, shared)
+            'Free' => 1800,               // Free: 1,800 words/month (1 site)
+            'Starter' => 18000,           // Starter: 18,000 words/month (1 site)
+            'Agency' => 89000,            // Agency: 89,000 words/month (up to 10 sites, shared)
+            'Agency Lifetime' => -1,      // Agency Lifetime: unlimited words (up to 50 sites)
+            'Enterprise' => 355000        // Enterprise: 355,000 words/month (up to 50 sites, shared)
         ];
         
-        return $limits[$normalized] ?? 7200;
+        return $limits[$plan_name] ?? 1800;
     }
     
     /**
-     * Check if monthly cooldown expired and reset word count for free users
+     * Check if 7-day cooldown expired and reset word count for free users
      * Also clear cooldown for paid plan users (they shouldn't have cooldown)
      */
     public function check_cooldown_expiry() {
@@ -673,8 +535,8 @@ class AITRFOEL_License_Manager_Server {
             
             // For free users, check if cooldown expired
             if ($cooldown_end <= time()) {
-                // Cooldown expired - the server is the source of truth for usage (monthly quota);
-                // local count is only cleared if the server confirms words_used === 0.
+                // Cooldown expired - reset word count to 0
+                update_option('aitrfoel_words_used_this_month', 0);
                 delete_option('aitrfoel_cooldown_end_date');
                 
                 // Notify server about the reset
@@ -684,7 +546,7 @@ class AITRFOEL_License_Manager_Server {
     }
     
     /**
-     * Notify server that monthly cooldown reset occurred
+     * Notify server that 7-day cooldown reset occurred
      */
     private function notify_server_of_cooldown_reset() {
         try {
@@ -744,17 +606,13 @@ class AITRFOEL_License_Manager_Server {
             $cooldown_end = get_option('aitrfoel_cooldown_end_date', 0);
             $days_left = ceil(($cooldown_end - time()) / DAY_IN_SECONDS);
             
-            $upgrade_url = (function_exists('eatp_fs') && is_object(eatp_fs()) && method_exists(eatp_fs(), 'is_registered') && eatp_fs()->is_registered())
-                ? eatp_fs()->get_upgrade_url()
-                : ((defined('AITRFOEL_VERSION_TYPE') && AITRFOEL_VERSION_TYPE === 'pro')
-                    ? 'https://meeptech.com/upgrade?utm_source=wp-plugin&utm_medium=free-plugin&utm_campaign=pro-upgrade'
-                    : aitrfoel_free_upgrade_url('cooldown-notice'));
+            $upgrade_url = admin_url('admin.php?page=ai-translator-for-elementor-and-polylang-pricing');
             
             echo '<div class="notice notice-warning is-dismissible">';
-            echo '<p><strong>' . esc_html__('Meep Translator: Monthly Limit Reached', 'ai-translator-for-elementor-and-polylang') . '</strong></p>';
+            echo '<p><strong>' . esc_html__('AI Translator: Monthly Limit Reached', 'ai-translator-for-elementor-and-polylang') . '</strong></p>';
             echo '<p>' . sprintf(
                 /* translators: %d: Number of days until word count resets */
-                esc_html__('You have used all 7,200 words in your free plan this month. Your word count will reset in %d days, or you can ', 'ai-translator-for-elementor-and-polylang'),
+                esc_html__('You have used all 1,800 words in your free plan this month. Your word count will reset in %d days, or you can ', 'ai-translator-for-elementor-and-polylang'),
                 absint($days_left)
             );
             echo '<a href="' . esc_url($upgrade_url) . '">' . esc_html__('upgrade now', 'ai-translator-for-elementor-and-polylang') . '</a>';
@@ -762,7 +620,38 @@ class AITRFOEL_License_Manager_Server {
             echo '</div>';
         }
         
-        // Note: Persistent cooldown notice has been moved to show_word_limit_notices()
+        // Check if user is currently in cooldown (only on plugin pages to avoid extra API calls)
+        $cooldown_end = get_option('aitrfoel_cooldown_end_date', 0);
+        if ($cooldown_end > time()) {
+            // Only show on plugin pages
+            $screen = get_current_screen();
+            if ($screen && strpos($screen->id, 'ai-translator') !== false) {
+                // Sync with server to check if cooldown was reset by admin
+                // This call will clear local cooldown if server says cooldown_active === false
+                $this->get_license_status();
+                
+                // Re-check after server sync
+                $cooldown_end = get_option('aitrfoel_cooldown_end_date', 0);
+                if ($cooldown_end <= time()) {
+                    // Cooldown was cleared by server sync, don't show notice
+                    return;
+                }
+                
+                $days_left = ceil(($cooldown_end - time()) / DAY_IN_SECONDS);
+                $upgrade_url = 'https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing';
+                
+                echo '<div class="notice notice-info">';
+                echo '<p><strong>' . esc_html__('AI Translator: Cooldown Active', 'ai-translator-for-elementor-and-polylang') . '</strong></p>';
+                echo '<p>' . sprintf(
+                    /* translators: %d: Number of days until word limit resets */
+                    esc_html__('Your free plan word limit will reset in %d days. ', 'ai-translator-for-elementor-and-polylang'),
+                    absint($days_left)
+                );
+                echo '<a href="' . esc_url($upgrade_url) . '">' . esc_html__('Upgrade to a paid plan', 'ai-translator-for-elementor-and-polylang') . '</a>';
+                echo ' ' . esc_html__('to start translating immediately.', 'ai-translator-for-elementor-and-polylang') . '</p>';
+                echo '</div>';
+            }
+        }
     }
     
     /**
@@ -796,21 +685,20 @@ class AITRFOEL_License_Manager_Server {
             return;
         }
         
-        $renew_url = (function_exists('eatp_fs') && is_object(eatp_fs()) && method_exists(eatp_fs(), 'is_registered') && eatp_fs()->is_registered())
+        $renew_url = function_exists('eatp_fs') && eatp_fs()->is_registered() 
             ? eatp_fs()->get_upgrade_url() 
-            : aitrfoel_free_upgrade_url('limit-notice');
+            : 'https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing';
         
         ?>
         <div class="notice notice-warning is-dismissible aitrfoel-license-expired-notice">
             <h3 style="margin: 0.5em 0; color: #856404;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#856404" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                <?php esc_html_e('Meep Translator License Expired', 'ai-translator-for-elementor-and-polylang'); ?>
+                ⚠️ <?php esc_html_e('AI Translator License Expired', 'ai-translator-for-elementor-and-polylang'); ?>
             </h3>
             <p>
                 <?php esc_html_e('Your Meep AI Translator license has expired or been cancelled.', 'ai-translator-for-elementor-and-polylang'); ?>
                 <br>
                 <?php esc_html_e('You have been downgraded to the', 'ai-translator-for-elementor-and-polylang'); ?>
-                <strong><?php esc_html_e('Free plan (7,200 words/month)', 'ai-translator-for-elementor-and-polylang'); ?></strong>.
+                <strong><?php esc_html_e('Free plan (1,800 words/week)', 'ai-translator-for-elementor-and-polylang'); ?></strong>.
             </p>
             <p>
                 <a href="<?php echo esc_url($renew_url); ?>" class="button button-primary">
@@ -827,7 +715,7 @@ class AITRFOEL_License_Manager_Server {
                 e.preventDefault();
                 $.post(ajaxurl, {
                     action: 'aitrfoel_dismiss_license_expired',
-                    nonce: '<?php echo esc_js(wp_create_nonce('aitrfoel_dismiss_license_expired')); ?>'
+                    nonce: '<?php echo wp_create_nonce('aitrfoel_dismiss_license_expired'); ?>'
                 });
                 $(this).closest('.notice').fadeOut();
             });
@@ -836,7 +724,7 @@ class AITRFOEL_License_Manager_Server {
             $(document).on('click', '.aitrfoel-license-expired-notice .notice-dismiss', function() {
                 $.post(ajaxurl, {
                     action: 'aitrfoel_dismiss_license_expired',
-                    nonce: '<?php echo esc_js(wp_create_nonce('aitrfoel_dismiss_license_expired')); ?>'
+                    nonce: '<?php echo wp_create_nonce('aitrfoel_dismiss_license_expired'); ?>'
                 });
             });
         });
@@ -868,420 +756,6 @@ class AITRFOEL_License_Manager_Server {
     }
     
     /**
-     * Show premium word limit usage notices (80% nudge + review request, 100% blocking notice)
-     */
-    public function show_word_limit_notices() {
-        // Only run for users who can manage options
-        if (!current_user_can('manage_options')) {
-            return;
-        }
-
-        $screen = get_current_screen();
-        if (!$screen) {
-            return;
-        }
-
-        // Get license status
-        $status = $this->get_license_status();
-        if (!$status) {
-            return;
-        }
-
-        $plan = isset($status['plan']) ? $status['plan'] : 'Free';
-        $limit = isset($status['word_limit']) ? intval($status['word_limit']) : 0;
-        $used = isset($status['words_used']) ? intval($status['words_used']) : 0;
-
-        // Skip if unlimited plan
-        if ($limit === -1 || $limit <= 0) {
-            return;
-        }
-
-        // Calculate usage percentage
-        // Calculate usage percentage
-        $pct = min(100, round(($used / $limit) * 100));
-
-        // CASE 0: Review Prompt after 3+ translated pages (or 2,500+ words) when not showing usage warnings
-        if ($pct < 80) {
-            $rev_dismissed = (bool) get_option('aitrfoel_review_dismissed', false);
-            $rev_snoozed   = (int) get_option('aitrfoel_review_snoozed_until', 0);
-            $rev_count     = (int) get_option('aitrfoel_successful_translations_count', 0);
-            $rev_activated = strtotime((string) get_option('aitrfoel_license_activated_at', '')) ?: time();
-            if (!$rev_dismissed && time() > $rev_snoozed && ($rev_count >= 3 || $used >= 2500) && (time() - $rev_activated) >= 3 * DAY_IN_SECONDS) {
-                ?>
-                <div class="notice notice-info is-dismissible aitrfoel-review-milestone-notice" id="aitrfoel-review-milestone-notice" style="border-left: 4px solid #f59e0b !important; background: #ffffff !important; border-radius: 10px !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important; padding: 16px 20px !important; margin: 15px 0 !important;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
-                        <div style="display: flex; align-items: flex-start; gap: 14px; flex: 1 1 360px;">
-                            <div style="color: #f59e0b; font-size: 22px; line-height: 1; margin-top: 2px;">★★★★★</div>
-                            <div>
-                                <h4 style="font-size: 15px !important; font-weight: 700 !important; color: #0f172a !important; margin: 0 0 4px 0 !important;">
-                                    <?php
-                                    if ($rev_count >= 3) {
-                                        printf(/* translators: %d: number of pages translated */ esc_html__('Milestone unlocked: %d+ pages translated with Meep AI Translator!', 'ai-translator-for-elementor-and-polylang'), absint($rev_count));
-                                    } else {
-                                        printf(/* translators: %s: number of words translated */ esc_html__('Milestone unlocked: %s+ words translated with Meep AI Translator!', 'ai-translator-for-elementor-and-polylang'), esc_html(number_format_i18n($used)));
-                                    }
-                                    ?>
-                                </h4>
-                                <p style="font-size: 13px !important; color: #475569 !important; margin: 0 !important; line-height: 1.5 !important;">
-                                    <?php esc_html_e('Has Meep saved you time translating your site? A quick review on WordPress.org takes 30 seconds and helps our small team keep building great features!', 'ai-translator-for-elementor-and-polylang'); ?>
-                                </p>
-                            </div>
-                        </div>
-                        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
-                            <a href="https://wordpress.org/support/plugin/ai-translator-for-elementor-and-polylang/reviews/?rate=5#new-post" target="_blank" rel="noopener noreferrer" class="button button-primary aitrfoel-review-action-btn" data-mode="done" style="background: #1447e6 !important; border-color: #1447e6 !important; border-radius: 6px !important; font-weight: 600 !important; padding: 0 14px !important; height: 32px !important; line-height: 30px !important; color: #fff !important;">
-                                ★ <?php esc_html_e('Leave a Review', 'ai-translator-for-elementor-and-polylang'); ?>
-                            </a>
-                            <button type="button" class="button aitrfoel-review-action-btn" data-mode="snooze" style="border-radius: 6px !important; height: 32px !important; line-height: 30px !important;">
-                                <?php esc_html_e('Remind me later', 'ai-translator-for-elementor-and-polylang'); ?>
-                            </button>
-                            <button type="button" class="button-link aitrfoel-review-action-btn" data-mode="dismiss" style="color: #64748b !important; font-size: 12px !important; text-decoration: none !important; margin-left: 4px !important;">
-                                <?php esc_html_e('Already reviewed', 'ai-translator-for-elementor-and-polylang'); ?>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <script>
-                    jQuery(document).ready(function($) {
-                        $('#aitrfoel-review-milestone-notice').on('click', '.aitrfoel-review-action-btn, .notice-dismiss', function(e) {
-                            var mode = $(this).data('mode') || 'dismiss';
-                            $('#aitrfoel-review-milestone-notice').fadeOut(150, function() { $(this).remove(); });
-                            $.post(ajaxurl, {
-                                action: 'aitrfoel_dismiss_review',
-                                nonce: '<?php echo esc_js(wp_create_nonce("aitrfoel_ajax_nonce")); ?>',
-                                mode: mode
-                            });
-                        });
-                    });
-                </script>
-                <?php
-            }
-            return;
-        }
-
-        // Check if in cooldown (only applicable to Free plan)
-        $cooldown_end = get_option('aitrfoel_cooldown_end_date', 0);
-        $is_cooldown = (strtolower($plan) === 'free' && $cooldown_end > time());
-        
-        $upgrade_url = (function_exists('eatp_fs') && is_object(eatp_fs()) && method_exists(eatp_fs(), 'is_registered') && eatp_fs()->is_registered())
-            ? eatp_fs()->get_upgrade_url()
-            : ((defined('AITRFOEL_VERSION_TYPE') && AITRFOEL_VERSION_TYPE === 'pro') ? 'https://meeptech.com/upgrade?utm_source=wp-plugin&utm_medium=free-plugin&utm_campaign=pro-upgrade' : aitrfoel_free_upgrade_url('limit-notice'));
-
-        // Check if we are on a plugin page
-        $is_plugin_page = (strpos($screen->id, 'ai-translator') !== false);
-
-        // CASE 1: 100% Usage or Cooldown Active (Blocking Warning)
-        if ($used >= $limit || $is_cooldown) {
-            // Check if dismissed on general (non-plugin) pages
-            if (!$is_plugin_page && get_transient('aitrfoel_limit_100_dismissed')) {
-                return;
-            }
-
-            // Determine if notice should be dismissible
-            $is_dismissible = !$is_plugin_page;
-            
-            // Calculate days left for cooldown
-            $days_left = 0;
-            if ($is_cooldown) {
-                $days_left = ceil(($cooldown_end - time()) / DAY_IN_SECONDS);
-            }
-
-            $tm_stats = class_exists('AITRFOEL_Translation_Memory') ? AITRFOEL_Translation_Memory::get_instance()->get_stats() : ['total_words_saved' => 0];
-            $words_saved_tm = isset($tm_stats['total_words_saved']) ? intval($tm_stats['total_words_saved']) : 0;
-
-            $inventory = class_exists('AITRFOEL_Settings') ? AITRFOEL_Settings::get_site_content_inventory() : null;
-            $untranslated_words = $inventory && isset($inventory['untranslated_words']) ? intval($inventory['untranslated_words']) : 0;
-            $rec_plan = class_exists('AITRFOEL_Settings') ? AITRFOEL_Settings::get_recommended_plan_for_words($untranslated_words) : null;
-            $rec_plan_name = $rec_plan ? $rec_plan['name'] : 'Starter';
-            $rec_plan_url = $rec_plan && !empty($rec_plan['upgrade_url']) ? $rec_plan['upgrade_url'] : $upgrade_url;
-
-            ?>
-            <div class="notice notice-error aitrfoel-usage-notice-100 <?php echo $is_dismissible ? 'is-dismissible' : ''; ?>" id="aitrfoel-usage-notice-100" style="border-left: 4px solid #1447e6 !important; background: linear-gradient(135deg, #ffffff 75%, #eff6ff 100%) !important; border-radius: 12px !important; border: 1px solid #dbeafe !important; box-shadow: 0 10px 25px -5px rgba(20, 71, 230, 0.08) !important; padding: 22px 26px !important; margin: 15px 0 !important; position: relative;">
-                <div class="aitrfoel-notice-flex-100" style="display: flex; align-items: flex-start; gap: 18px;">
-                    <div class="aitrfoel-notice-icon-100" style="font-size: 0; line-height: 1; margin-top: 2px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1447e6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                    </div>
-                    <div class="aitrfoel-notice-text-wrapper-100" style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-                            <span class="aitrfoel-notice-eyebrow-100" style="font-size: 11px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; color: #1e40af; background: #dbeafe; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.05em; font-weight: 600;">
-                                <?php esc_html_e('Monthly Free Word Cap Reached', 'ai-translator-for-elementor-and-polylang'); ?>
-                            </span>
-                            <?php if ($days_left > 0): ?>
-                                <span style="font-size: 12px; color: #64748b; font-weight: 500; display: inline-flex; align-items: center; gap: 4px;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                                    <?php printf(/* translators: %d: days left */ esc_html__('Resets in %d days', 'ai-translator-for-elementor-and-polylang'), absint($days_left)); ?>
-                                </span>
-                            <?php endif; ?>
-                        </div>
-                        <h4 class="aitrfoel-notice-title-100" style="font-size: 17px !important; font-weight: 700 !important; color: #0e1116 !important; margin: 2px 0 0 0 !important;">
-                            <?php printf(/* translators: %s: number of words translated */ esc_html__("You've translated %s words with Meep AI!", 'ai-translator-for-elementor-and-polylang'), esc_html(number_format_i18n($limit))); ?>
-                        </h4>
-                        
-                        <!-- Value & ROI Breakdown Metrics Grid -->
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 10px 0 12px 0;">
-                            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-                                <div style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600;"><?php esc_html_e('Plan Words Used', 'ai-translator-for-elementor-and-polylang'); ?></div>
-                                <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;"><?php echo esc_html(number_format_i18n($used)); ?> / <?php echo esc_html(number_format_i18n($limit)); ?></div>
-                            </div>
-                            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-                                <div style="font-size: 11px; color: #166534; text-transform: uppercase; font-weight: 600; display: flex; align-items: center; gap: 4px;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                                    <?php esc_html_e('Translation Memory Bonus', 'ai-translator-for-elementor-and-polylang'); ?>
-                                </div>
-                                <div style="font-size: 16px; font-weight: 700; color: #15803d; margin-top: 2px;">
-                                    <?php printf(/* translators: %s: number of words saved */ esc_html__('+%s words saved for FREE', 'ai-translator-for-elementor-and-polylang'), esc_html(number_format_i18n($words_saved_tm))); ?>
-                                </div>
-                            </div>
-                            <?php if ($untranslated_words > 0): ?>
-                            <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 10px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-                                <div style="font-size: 11px; color: #92400e; text-transform: uppercase; font-weight: 600; display: flex; align-items: center; gap: 4px;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-                                    <?php esc_html_e('Remaining Content', 'ai-translator-for-elementor-and-polylang'); ?>
-                                </div>
-                                <div style="font-size: 16px; font-weight: 700; color: #b45309; margin-top: 2px;">
-                                    <?php printf(/* translators: %s: number of words still to translate */ esc_html__('~%s words to translate', 'ai-translator-for-elementor-and-polylang'), esc_html(number_format_i18n($untranslated_words))); ?>
-                                </div>
-                            </div>
-                            <?php endif; ?>
-                        </div>
-
-                        <p class="aitrfoel-notice-desc-100" style="font-size: 13.5px !important; color: #334155 !important; margin: 0 0 14px 0 !important; line-height: 1.5 !important;">
-                            <?php if ($untranslated_words > 0 && $rec_plan): ?>
-                                <?php printf(/* translators: %1$s: plan name, %2$s: plan monthly word limit */ esc_html__('Upgrade to the %1$s plan (%2$s words/mo) to seamlessly finish translating all remaining pages and products across your website without interruption.', 'ai-translator-for-elementor-and-polylang'), '<strong>' . esc_html($rec_plan_name) . '</strong>', esc_html(number_format_i18n($rec_plan['limit']))); ?>
-                            <?php else: ?>
-                                <?php esc_html_e('Upgrade to a premium plan to resume translating immediately and unlock unlimited autonomous auto-sync.', 'ai-translator-for-elementor-and-polylang'); ?>
-                            <?php endif; ?>
-                        </p>
-                        <div class="aitrfoel-notice-actions-100" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                            <a href="<?php echo esc_url($rec_plan_url); ?>" class="button button-primary aitrfoel-btn-upgrade" style="background: #1447e6 !important; border-color: #1447e6 !important; border-radius: 6px !important; padding: 0 18px !important; height: 36px !important; line-height: 34px !important; font-weight: 600 !important; color: #fff !important; box-shadow: 0 4px 10px -1px rgba(20, 71, 230, 0.25) !important; transition: all 0.2s ease !important; text-decoration: none; font-size: 13.5px !important;">
-                                <?php printf(/* translators: %s: plan name */ esc_html__('Upgrade to %s & Resume →', 'ai-translator-for-elementor-and-polylang'), esc_html($rec_plan_name)); ?>
-                            </a>
-                            <a href="<?php echo esc_url($upgrade_url); ?>" class="button button-secondary" style="border-radius: 6px !important; padding: 0 16px !important; height: 36px !important; line-height: 34px !important; font-weight: 500 !important; border-color: #cbd5e1 !important; background: #ffffff !important; color: #1e293b !important; text-decoration: none; font-size: 13px !important;">
-                                <?php esc_html_e('View All Plans', 'ai-translator-for-elementor-and-polylang'); ?>
-                            </a>
-                            <?php if ($is_dismissible): ?>
-                                <button type="button" class="button button-secondary aitrfoel-dismiss-100-btn" style="border-radius: 6px !important; padding: 0 14px !important; height: 36px !important; line-height: 34px !important; font-weight: 500 !important; border-color: transparent !important; background: transparent !important; color: #64748b !important; cursor: pointer;">
-                                    <?php esc_html_e('Dismiss for 24h', 'ai-translator-for-elementor-and-polylang'); ?>
-                                </button>
-                            <?php endif; ?>
-                        </div>
-
-                        <?php if (strtolower($plan) === 'free' && !get_option('aitrfoel_share_bonus_claimed', false)): ?>
-                        <div class="aitrfoel-notice-bonus-strip" style="margin-top: 12px; padding: 10px 14px; background: #f8fafc; border: 1px dashed #93c5fd; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-                            <div style="font-size: 12.5px; color: #1e293b;">
-                                <strong style="color: #0284c7;"><?php esc_html_e('Need a quick top-up? Claim +2,500 Free Bonus Words:', 'ai-translator-for-elementor-and-polylang'); ?></strong>
-                                <span><?php esc_html_e('Share Meep AI Translator on X or LinkedIn to unlock +2,500 words immediately.', 'ai-translator-for-elementor-and-polylang'); ?></span>
-                            </div>
-                            <div class="aitrfoel-share-buttons" style="display: flex; align-items: center; gap: 8px;">
-                                <button type="button" class="aitrfoel-global-share-btn" data-platform="x" style="display: inline-flex; align-items: center; gap: 6px; background: #0f172a; color: #fff; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer;">
-                                    <span>𝕏</span>
-                                    <span><?php esc_html_e('Share on X (+2,500)', 'ai-translator-for-elementor-and-polylang'); ?></span>
-                                </button>
-                                <button type="button" class="aitrfoel-global-share-btn" data-platform="linkedin" style="display: inline-flex; align-items: center; gap: 6px; background: #0a66c2; color: #fff; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer;">
-                                    <span>in</span>
-                                    <span><?php esc_html_e('Share on LinkedIn (+2,500)', 'ai-translator-for-elementor-and-polylang'); ?></span>
-                                </button>
-                            </div>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-            <script>
-                jQuery(document).ready(function($) {
-                    $('#aitrfoel-usage-notice-100').on('click', '.aitrfoel-dismiss-100-btn, .notice-dismiss', function(e) {
-                        e.preventDefault();
-                        $('#aitrfoel-usage-notice-100').fadeTo(100, 0, function() {
-                            $(this).slideUp(100, function() {
-                                $(this).remove();
-                            });
-                        });
-                        $.post(ajaxurl, {
-                            action: 'aitrfoel_dismiss_100_notice',
-                            nonce: '<?php echo esc_js(wp_create_nonce("aitrfoel_dismiss_100_notice")); ?>'
-                        });
-                    });
-                    $('#aitrfoel-usage-notice-100').on('click', '.aitrfoel-global-share-btn', function(e) {
-                        e.preventDefault();
-                        var $btn = $(this);
-                        var platform = $btn.data('platform') || 'x';
-                        var productUrl = 'https://meeptech.com/products/ai-translator-for-elementor-polylang';
-                        var shareText = "I'm using Meep AI Translator for WordPress to effortlessly translate Elementor pages with AI! Check it out:";
-                        if (navigator.clipboard && navigator.clipboard.writeText) {
-                            navigator.clipboard.writeText(shareText + ' ' + productUrl).catch(function(){});
-                        }
-                        var shareUrl = platform === 'linkedin'
-                            ? 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(productUrl)
-                            : 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText) + '&url=' + encodeURIComponent(productUrl) + '&hashtags=WordPress,AI,Elementor,Polylang';
-                        window.open(shareUrl, 'meep_share', 'width=600,height=450,toolbar=0,status=0');
-                        var $container = $btn.closest('.aitrfoel-share-buttons');
-                        $container.html('<span style="color:#0284c7;font-weight:600;font-size:12px;">Claiming +2,500 bonus words...</span>');
-                        $.post(ajaxurl, {
-                            action: 'aitrfoel_claim_share_bonus',
-                            nonce: '<?php echo esc_js(wp_create_nonce("aitrfoel_ajax_nonce")); ?>',
-                            platform: platform
-                        }, function(res) {
-                            if (res && res.success) {
-                                $container.html('<span style="color:#059669;font-weight:700;font-size:12px;">✓ +2,500 Bonus Words Unlocked! Refreshing...</span>');
-                                setTimeout(function() { window.location.reload(); }, 1200);
-                            } else {
-                                $container.html('<span style="color:#dc2626;font-size:12px;">' + (res && res.data && res.data.message ? res.data.message : 'Could not claim bonus words.') + '</span>');
-                            }
-                        });
-                    });
-                });
-            </script>
-            <?php
-            return;
-        }
-
-        // CASE 2: 80% to 99.9% Usage (Gentle Warning Nudge + Viral Bonus on Free). Review invite intentionally kept separate from the bonus offer (WP.org review guidelines).
-        if ($pct >= 80) {
-            // Dismissed per billing month (YYYY-MM) so the warning re-arms on a new month
-            $current_month = gmdate('Y-m');
-            $dismissed = get_user_meta(get_current_user_id(), 'aitrfoel_dismiss_80_nudge', true);
-            if ($dismissed === $current_month) {
-                return;
-            }
-
-            $is_free_plan = (strtolower($plan) === 'free');
-            $show_bonus_strip = ($is_free_plan && !get_option('aitrfoel_share_bonus_claimed', false));
-
-            ?>
-            <div class="notice notice-warning is-dismissible aitrfoel-usage-notice-80" id="aitrfoel-usage-notice-80" style="border-left: 4px solid #f4a622 !important; background: linear-gradient(135deg, #ffffff 70%, #fef3c7 100%) !important; border-radius: 12px !important; border: 1px solid #e6e8ee !important; box-shadow: 0 10px 25px -5px rgba(14, 17, 22, 0.05), 0 8px 10px -6px rgba(14, 17, 22, 0.05) !important; padding: 20px 24px !important; margin: 15px 0 !important; position: relative;">
-                <div class="aitrfoel-notice-flex" style="display: flex; flex-wrap: wrap; align-items: stretch; gap: 24px;">
-                    <div class="aitrfoel-notice-content-left" style="flex: 1 1 450px; display: flex; gap: 16px;">
-                        <div class="aitrfoel-notice-icon" style="align-self: flex-start; margin-top: 4px; color: #1447e6;">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                        </div>
-                        <div class="aitrfoel-notice-text-wrapper" style="display: flex; flex-direction: column; gap: 4px;">
-                            <span class="aitrfoel-notice-eyebrow" style="font-size: 10px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; font-weight: 500;">
-                                <?php esc_html_e('Meep AI Translator', 'ai-translator-for-elementor-and-polylang'); ?>
-                            </span>
-                            <h4 class="aitrfoel-notice-title" style="font-size: 15px !important; font-weight: 700 !important; color: #0e1116 !important; margin: 0 !important;">
-                                <?php esc_html_e("You're getting close to your monthly word limit", 'ai-translator-for-elementor-and-polylang'); ?>
-                            </h4>
-                            <p class="aitrfoel-notice-desc" style="font-size: 13px !important; color: #2a2f3a !important; margin: 4px 0 12px 0 !important; line-height: 1.5 !important;">
-                                <?php
-                                if ($show_bonus_strip) {
-                                    printf(
-                                        /* translators: 1: Percentage of usage, 2: Words used, 3: Word limit */
-                                        esc_html__("You have used %1\$s%% of your monthly translation words (%2\$s / %3\$s words). Upgrade your plan anytime or claim +2,500 free bonus words below.", 'ai-translator-for-elementor-and-polylang'),
-                                        esc_html($pct),
-                                        esc_html(number_format_i18n($used)),
-                                        esc_html(number_format_i18n($limit))
-                                    );
-                                } else {
-                                    printf(
-                                        /* translators: 1: Percentage of usage, 2: Words used, 3: Word limit */
-                                        esc_html__("You have used %1\$s%% of your monthly translation words (%2\$s / %3\$s words). Upgrade your plan anytime to keep translating without interruption.", 'ai-translator-for-elementor-and-polylang'),
-                                        esc_html($pct),
-                                        esc_html(number_format_i18n($used)),
-                                        esc_html(number_format_i18n($limit))
-                                    );
-                                }
-                                ?>
-                            </p>
-                            <div class="aitrfoel-notice-actions" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
-                                <a href="<?php echo esc_url($upgrade_url); ?>" class="button button-primary aitrfoel-btn-upgrade" style="background: #1447e6 !important; border-color: #1447e6 !important; border-radius: 6px !important; padding: 0 16px !important; height: 32px !important; line-height: 30px !important; font-weight: 600 !important; color: #fff !important; box-shadow: 0 4px 6px -1px rgba(20, 71, 230, 0.15) !important; transition: all 0.2s ease !important; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                                    <span><?php esc_html_e('Upgrade Plan', 'ai-translator-for-elementor-and-polylang'); ?></span>
-                                </a>
-                                <?php if ($show_bonus_strip): ?>
-                                <span class="aitrfoel-share-buttons" style="display: inline-flex; align-items: center; gap: 6px;">
-                                    <button type="button" class="aitrfoel-global-share-btn" data-platform="x" style="display: inline-flex; align-items: center; gap: 5px; background: #0f172a; color: #fff; border: none; border-radius: 6px; padding: 0 12px; height: 32px; font-size: 12px; font-weight: 600; cursor: pointer;">
-                                        <span><?php esc_html_e('Share on X (+2,500 Free Words)', 'ai-translator-for-elementor-and-polylang'); ?></span>
-                                    </button>
-                                    <button type="button" class="aitrfoel-global-share-btn" data-platform="linkedin" style="display: inline-flex; align-items: center; gap: 5px; background: #0a66c2; color: #fff; border: none; border-radius: 6px; padding: 0 12px; height: 32px; font-size: 12px; font-weight: 600; cursor: pointer;">
-                                        <span><?php esc_html_e('LinkedIn (+2,500)', 'ai-translator-for-elementor-and-polylang'); ?></span>
-                                    </button>
-                                </span>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                    
-                </div>
-            </div>
-            <style>
-                @media (max-width: 782px) {
-                    .aitrfoel-notice-divider {
-                        display: none !important;
-                    }
-                    .aitrfoel-notice-flex {
-                        flex-direction: column !important;
-                    }
-                }
-            </style>
-            <script>
-                jQuery(document).ready(function($) {
-                    $('#aitrfoel-usage-notice-80').on('click', '.notice-dismiss', function(e) {
-                        e.preventDefault();
-                        $.post(ajaxurl, {
-                            action: 'aitrfoel_dismiss_80_notice',
-                            nonce: '<?php echo esc_js(wp_create_nonce("aitrfoel_dismiss_80_notice")); ?>'
-                        });
-                    });
-                    $('#aitrfoel-usage-notice-80').on('click', '.aitrfoel-global-share-btn', function(e) {
-                        e.preventDefault();
-                        var $btn = $(this);
-                        var platform = $btn.data('platform') || 'x';
-                        var productUrl = 'https://meeptech.com/products/ai-translator-for-elementor-polylang';
-                        var shareText = "I'm using Meep AI Translator for WordPress to effortlessly translate Elementor pages with AI! Check it out:";
-                        if (navigator.clipboard && navigator.clipboard.writeText) {
-                            navigator.clipboard.writeText(shareText + ' ' + productUrl).catch(function(){});
-                        }
-                        var shareUrl = platform === 'linkedin'
-                            ? 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(productUrl)
-                            : 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText) + '&url=' + encodeURIComponent(productUrl) + '&hashtags=WordPress,AI,Elementor,Polylang';
-                        window.open(shareUrl, 'meep_share', 'width=600,height=450,toolbar=0,status=0');
-                        var $container = $btn.closest('.aitrfoel-share-buttons');
-                        $container.html('<span style="color:#0284c7;font-weight:600;font-size:12px;">Claiming +2,500 bonus words...</span>');
-                        $.post(ajaxurl, {
-                            action: 'aitrfoel_claim_share_bonus',
-                            nonce: '<?php echo esc_js(wp_create_nonce("aitrfoel_ajax_nonce")); ?>',
-                            platform: platform
-                        }, function(res) {
-                            if (res && res.success) {
-                                $container.html('<span style="color:#059669;font-weight:700;font-size:12px;">✓ +2,500 Bonus Words Unlocked! Refreshing...</span>');
-                                setTimeout(function() { window.location.reload(); }, 1200);
-                            } else {
-                                $container.html('<span style="color:#dc2626;font-size:12px;">' + (res && res.data && res.data.message ? res.data.message : 'Could not claim bonus words.') + '</span>');
-                            }
-                        });
-                    });
-                });
-            </script>
-            <?php
-        }
-    }
-
-    /**
-     * AJAX handler to dismiss 80% usage notice
-     */
-    public function dismiss_80_notice() {
-        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'aitrfoel_dismiss_80_notice')) {
-            wp_send_json_error('Invalid nonce');
-            return;
-        }
-        
-        update_user_meta(get_current_user_id(), 'aitrfoel_dismiss_80_nudge', gmdate('Y-m'));
-        wp_send_json_success();
-    }
-
-    /**
-     * AJAX handler to dismiss 100% usage notice for 24h
-     */
-    public function dismiss_100_notice() {
-        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'aitrfoel_dismiss_100_notice')) {
-            wp_send_json_error('Invalid nonce');
-            return;
-        }
-        
-        set_transient('aitrfoel_limit_100_dismissed', true, DAY_IN_SECONDS);
-        wp_send_json_success();
-    }
-    
-    /**
      * Handle Freemius account connection (Free opt-in)
      * Called when user opts into Freemius and connects their account
      */
@@ -1289,67 +763,64 @@ class AITRFOEL_License_Manager_Server {
         AITRFOEL_Logger::log('Freemius account connected - initializing free user in remote database', 'info');
         $this->initialize_user_in_remote_db('Free', null);
     }
-
-    /**
-     * Auto-register free user on admin_init (once per calendar month)
-     * Ensures every active Free installation is registered in the remote database
-     */
-    public function maybe_auto_register_free_user() {
-        $current_month = gmdate('Y-m');
-        if (get_option('aitrfoel_remote_user_initialized') && get_option('aitrfoel_remote_user_initialized_month') === $current_month) {
-            return;
-        }
-        $license_key = $this->get_license_key();
-        if (!empty($license_key)) {
-            return;
-        }
-        // Back off after a failed attempt so an unreachable API doesn't block every admin page load (30s timeout).
-        if (get_transient('aitrfoel_auto_register_backoff')) {
-            return;
-        }
-        if (class_exists('AITRFOEL_Logger')) {
-            AITRFOEL_Logger::log('Auto-registering free site in remote database for month ' . $current_month, 'info');
-        }
-        if (!$this->initialize_user_in_remote_db('Free', null)) {
-            set_transient('aitrfoel_auto_register_backoff', 1, HOUR_IN_SECONDS);
-        }
-    }
     
     /**
      * Handle license activation (Paid plan)
      * Called when user activates a paid license key
      */
-    public function on_license_activated($license = null) {
-        $this->clear_status_cache();
-        delete_option('aitrfoel_cooldown_end_date');
-
-        // Resolve license object from Freemius if not passed
-        if ((!$license || !is_object($license)) && function_exists('eatp_fs') && is_object(eatp_fs()) && method_exists(eatp_fs(), '_get_license')) {
-            try {
-                $license = eatp_fs()->_get_license();
-            } catch (Exception $e) {}
-        }
-
-        $license_key = (is_object($license) && !empty($license->secret_key)) ? $license->secret_key : $this->get_license_key();
-        $plan = $this->get_freemius_plan_name() ?: 'Starter';
-
-        if (is_object($license) && !empty($license->plan_id) && function_exists('eatp_fs') && method_exists(eatp_fs(), '_get_plan_by_id')) {
-            try {
-                $plan_obj = eatp_fs()->_get_plan_by_id($license->plan_id);
-                if ($plan_obj && !empty($plan_obj->name)) {
-                    $plan = $plan_obj->name;
-                }
-            } catch (Exception $e) {}
-        }
-
-        AITRFOEL_Logger::log('License activated - initializing paid user in remote DB: ' . $plan, 'info', [
-            'license_key' => $license_key ? substr($license_key, 0, 10) . '...' : 'null',
-            'plan' => $plan,
+    public function on_license_activated($license) {
+        AITRFOEL_Logger::log('License activated - initializing paid user in remote database', 'info', [
+            'license_id' => isset($license->id) ? $license->id : 'unknown',
+            'plan_id' => isset($license->plan_id) ? $license->plan_id : 'unknown',
         ]);
-
+        
+        $plan = 'Starter'; // Default to Starter if can't determine
+        $license_key = isset($license->secret_key) ? $license->secret_key : null;
+        
+        if (function_exists('eatp_fs') && eatp_fs()->is_registered()) {
+            // Method 1: Get plan directly from license's plan_id (most reliable)
+            if (isset($license->plan_id) && !empty($license->plan_id)) {
+                try {
+                    $plan_obj = eatp_fs()->_get_plan_by_id($license->plan_id);
+                    if ($plan_obj && isset($plan_obj->name)) {
+                        $plan = $plan_obj->name;
+                        AITRFOEL_Logger::log('Got plan from license plan_id: ' . $plan, 'info');
+                    }
+                } catch (Exception $e) {
+                    AITRFOEL_Logger::log('Could not get plan by id: ' . $e->getMessage(), 'warning');
+                }
+            }
+            
+            // Method 2: Fallback to get_plan_name() if method 1 failed
+            if ($plan === 'Starter') {
+                try {
+                    $plan_name = eatp_fs()->get_plan_name();
+                    if ($plan_name && $plan_name !== 'PLAN_NAME' && $plan_name !== 'free') {
+                        $plan = $plan_name;
+                        AITRFOEL_Logger::log('Got plan from get_plan_name(): ' . $plan, 'info');
+                    }
+                } catch (Exception $e) {
+                    AITRFOEL_Logger::log('Could not get plan name: ' . $e->getMessage(), 'warning');
+                }
+            }
+            
+            // Method 3: Fallback to get_plan() if method 2 failed
+            if ($plan === 'Starter') {
+                try {
+                    $plan_obj = eatp_fs()->get_plan();
+                    if ($plan_obj && isset($plan_obj->name)) {
+                        $plan = $plan_obj->name;
+                        AITRFOEL_Logger::log('Got plan from get_plan(): ' . $plan, 'info');
+                    }
+                } catch (Exception $e) {
+                    AITRFOEL_Logger::log('Could not get plan: ' . $e->getMessage(), 'warning');
+                }
+            }
+        }
+        
+        AITRFOEL_Logger::log('Final plan determined: ' . $plan . ' for license key: ' . ($license_key ? substr($license_key, 0, 10) . '...' : 'null'), 'info');
+        
         $this->initialize_user_in_remote_db($plan, $license_key);
-        $this->update_plan_in_remote_db($plan, $license_key);
-        $this->clear_status_cache();
     }
     
     /**
@@ -1357,11 +828,8 @@ class AITRFOEL_License_Manager_Server {
      * Called when user upgrades or downgrades their plan
      */
     public function on_plan_changed($old_plan, $new_plan) {
-        $this->clear_status_cache();
-        delete_option('aitrfoel_cooldown_end_date');
-
         $old_plan_name = isset($old_plan->name) ? $old_plan->name : 'Unknown';
-        $new_plan_name = isset($new_plan->name) ? $new_plan->name : ($this->get_freemius_plan_name() ?: 'Unknown');
+        $new_plan_name = isset($new_plan->name) ? $new_plan->name : 'Unknown';
         
         AITRFOEL_Logger::log(sprintf(
             'Plan changed from %s to %s - updating remote database',
@@ -1369,50 +837,44 @@ class AITRFOEL_License_Manager_Server {
             $new_plan_name
         ), 'info');
         
-        $license_key = $this->get_license_key();
+        $license_key = null;
+        if (function_exists('eatp_fs') && eatp_fs()->is_registered()) {
+            try {
+                $license = eatp_fs()->_get_license();
+                if ($license && isset($license->secret_key)) {
+                    $license_key = $license->secret_key;
+                }
+            } catch (Exception $e) {
+                AITRFOEL_Logger::log('Could not get license key: ' . $e->getMessage(), 'warning');
+            }
+        }
+        
         $this->update_plan_in_remote_db($new_plan_name, $license_key);
-        $this->clear_status_cache();
     }
 
     /**
-     * Handle Freemius plan sync (Sync License button or periodic sync)
+     * Auto-register free user (FREE VERSION ONLY)
+     * Called on plugin load to ensure site is registered with remote server
      */
-    public function on_account_plan_synced($plan_name = null) {
-        $this->clear_status_cache();
-        delete_option('aitrfoel_cooldown_end_date');
-
-        $plan = !empty($plan_name) ? $plan_name : $this->get_freemius_plan_name();
-        $license_key = $this->get_license_key();
-
-        if (!empty($plan) && strtolower($plan) !== 'free') {
-            AITRFOEL_Logger::log('Freemius account plan synced: ' . $plan . ' - updating remote DB', 'info');
-            $this->update_plan_in_remote_db($plan, $license_key);
-            $this->clear_status_cache();
+    public function maybe_auto_register_free_user() {
+        // Check if already registered
+        if (get_option('aitrfoel_remote_user_initialized')) {
+            return;
         }
-    }
-
-    /**
-     * Handle Freemius license change
-     */
-    public function on_license_changed($plan_change = null, $plan = null) {
-        $this->clear_status_cache();
-        delete_option('aitrfoel_cooldown_end_date');
-
-        $plan_name = (is_object($plan) && !empty($plan->name)) ? $plan->name : $this->get_freemius_plan_name();
-        $license_key = $this->get_license_key();
-
-        if (!empty($plan_name) && strtolower($plan_name) !== 'free') {
-            AITRFOEL_Logger::log('Freemius license changed to ' . $plan_name . ' - updating remote DB', 'info');
-            $this->update_plan_in_remote_db($plan_name, $license_key);
-            $this->clear_status_cache();
+        
+        // Auto-register free user
+        if (class_exists('AITRFOEL_Logger')) {
+            AITRFOEL_Logger::log('Free version - auto-registering user in remote database', 'info');
         }
+        
+        $this->initialize_user_in_remote_db('Free', null);
     }
     
     /**
      * Initialize user in remote database
      * Creates a new user record with initial word count
      */
-    public function initialize_user_in_remote_db($plan, $license_key) {
+    private function initialize_user_in_remote_db($plan, $license_key) {
         $site_url = home_url();
         
         $body = json_encode([
@@ -1447,12 +909,9 @@ class AITRFOEL_License_Manager_Server {
         if (isset($result['success']) && $result['success']) {
             AITRFOEL_Logger::log('User initialized successfully in remote database', 'success');
             
-            // Cache locally (preserve first activation timestamp across monthly re-initializations)
-            if (!get_option('aitrfoel_license_activated_at')) {
-                update_option('aitrfoel_license_activated_at', current_time('mysql'));
-            }
+            // Cache locally
+            update_option('aitrfoel_license_activated_at', current_time('mysql'));
             update_option('aitrfoel_remote_user_initialized', true);
-            update_option('aitrfoel_remote_user_initialized_month', gmdate('Y-m'));
             update_option('aitrfoel_initial_plan', $plan);
             
             // Update local cache with initial values
@@ -1510,7 +969,6 @@ class AITRFOEL_License_Manager_Server {
             if (isset($result['data'])) {
                 $this->update_local_cache($result['data']);
             }
-            $this->clear_status_cache();
             
             return true;
         } else {
@@ -1533,7 +991,6 @@ class AITRFOEL_License_Manager_Server {
         if (isset($data['plan'])) {
             update_option('aitrfoel_current_plan', sanitize_text_field($data['plan']));
         }
-        $this->clear_status_cache();
     }
     
     /**
@@ -1543,7 +1000,7 @@ class AITRFOEL_License_Manager_Server {
      * @return array Result with success status and message
      */
     public function sync_plan_to_server() {
-        if (!function_exists('eatp_fs') || !is_object(eatp_fs()) || !method_exists(eatp_fs(), 'is_registered') || !eatp_fs()->is_registered()) {
+        if (!function_exists('eatp_fs') || !eatp_fs()->is_registered()) {
             AITRFOEL_Logger::log('Cannot sync plan - Freemius not registered', 'warning');
             return [
                 'success' => false,
@@ -1565,9 +1022,9 @@ class AITRFOEL_License_Manager_Server {
         
         // Method 1: Try to get plan from license's plan_id
         try {
-            $license = method_exists(eatp_fs(), '_get_license') ? eatp_fs()->_get_license() : null;
+            $license = eatp_fs()->_get_license();
             if ($license && isset($license->plan_id) && !empty($license->plan_id)) {
-                $plan_obj = method_exists(eatp_fs(), '_get_plan_by_id') ? eatp_fs()->_get_plan_by_id($license->plan_id) : null;
+                $plan_obj = eatp_fs()->_get_plan_by_id($license->plan_id);
                 if ($plan_obj && isset($plan_obj->name)) {
                     $plan = $plan_obj->name;
                     AITRFOEL_Logger::log('sync_plan_to_server: Got plan from license plan_id: ' . $plan, 'info');
@@ -1580,7 +1037,7 @@ class AITRFOEL_License_Manager_Server {
         // Method 2: Fallback to get_plan_name()
         if ($plan === 'Free') {
             try {
-                $plan_name = method_exists(eatp_fs(), 'get_plan_name') ? eatp_fs()->get_plan_name() : null;
+                $plan_name = eatp_fs()->get_plan_name();
                 if ($plan_name && $plan_name !== 'PLAN_NAME' && $plan_name !== 'free') {
                     $plan = $plan_name;
                     AITRFOEL_Logger::log('sync_plan_to_server: Got plan from get_plan_name(): ' . $plan, 'info');
@@ -1593,8 +1050,8 @@ class AITRFOEL_License_Manager_Server {
         // Method 3: Fallback to get_plan()
         if ($plan === 'Free') {
             try {
-                $plan_obj = method_exists(eatp_fs(), 'get_plan') ? eatp_fs()->get_plan() : null;
-                if ($plan_obj && isset($plan_obj->name)) {
+                $plan_obj = eatp_fs()->get_plan();
+                if ($plan_obj && isset($plan_obj->name) && $plan_obj->name !== 'free') {
                     $plan = $plan_obj->name;
                     AITRFOEL_Logger::log('sync_plan_to_server: Got plan from get_plan(): ' . $plan, 'info');
                 }
@@ -1642,15 +1099,12 @@ class AITRFOEL_License_Manager_Server {
             return;
         }
         
-        // If a sync was explicitly requested in URL (like fs_action=sync_license or activated=true), bypass 1-hour throttle
-        $force_sync = !empty($_GET['activated']) || (!empty($_GET['fs_action']) && strpos((string)$_GET['fs_action'], 'sync') !== false);
-        if (!$force_sync) {
-            $last_sync_check = get_transient('aitrfoel_last_plan_sync_check');
-            if ($last_sync_check) {
-                return;
-            }
-            set_transient('aitrfoel_last_plan_sync_check', time(), HOUR_IN_SECONDS);
+        // Only check once per hour to avoid excessive API calls
+        $last_sync_check = get_transient('aitrfoel_last_plan_sync_check');
+        if ($last_sync_check) {
+            return;
         }
+        set_transient('aitrfoel_last_plan_sync_check', time(), HOUR_IN_SECONDS);
         
         // Get current plan from Freemius
         $freemius_plan = 'Free';
@@ -1686,7 +1140,6 @@ class AITRFOEL_License_Manager_Server {
             ), 'warning');
             
             $this->update_plan_in_remote_db($freemius_plan, $license_key);
-            $this->clear_status_cache();
         }
     }
     

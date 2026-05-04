@@ -18,15 +18,6 @@
     function init() {
         $('#aitrfoel-mb-translate-btn').on('click', startTranslation);
 
-        // Select all / Deselect all toggle
-        $('#aitrfoel-mb-select-all').on('click', function (e) {
-            e.preventDefault();
-            var $checkboxes = $('#aitrfoel-mb-target-langs input[type="checkbox"]');
-            var allChecked = $checkboxes.filter(':checked').length === $checkboxes.length;
-            $checkboxes.prop('checked', !allChecked).trigger('change');
-            $(this).text(allChecked ? 'Select all' : 'Deselect all');
-        });
-
         // Highlight retranslate checkboxes
         $('#aitrfoel-mb-target-langs input[data-has-translation]').on('change', function () {
             if (this.checked) {
@@ -51,23 +42,16 @@
     /**
      * Show / hide the spinner and disable / enable button
      */
-    function setLoading(loading, label) {
+    function setLoading(loading) {
         isTranslating = loading;
         var $btn = $('#aitrfoel-mb-translate-btn');
         var $spinner = $('#aitrfoel-mb-spinner');
 
         if (loading) {
-            var btnText = label || cfg.strings.translating;
-            $btn.prop('disabled', true).html(
-                '<svg class="aitrfoel-mb-btn-spinner" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> ' +
-                '<span>' + btnText + '</span>'
-            );
+            $btn.prop('disabled', true).text(cfg.strings.translating);
             $spinner.addClass('is-active');
         } else {
-            $btn.prop('disabled', false).html(
-                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> ' +
-                '<span>' + cfg.strings.translate + '</span>'
-            );
+            $btn.prop('disabled', false).html('🚀 ' + cfg.strings.translate);
             $spinner.removeClass('is-active');
         }
     }
@@ -89,25 +73,15 @@
     /**
      * Update progress bar
      */
-    function updateProgress(current, total, textLabel) {
+    function updateProgress(current, total, langCode) {
         var $progress = $('#aitrfoel-mb-progress');
         var $fill = $('#aitrfoel-mb-progress-fill');
         var $text = $('#aitrfoel-mb-progress-text');
-
-        if (total === 0) {
-            $progress.hide();
-            return;
-        }
+        var pct = total > 0 ? Math.round((current / total) * 100) : 0;
 
         $progress.show();
-        if (current === 'busy') {
-            $fill.addClass('is-pulsing').css('width', '100%');
-            $text.html('<span class="aitrfoel-mb-progress-dot"></span> ' + (textLabel || 'Processing translation with AI...'));
-        } else {
-            var pct = total > 0 ? Math.max(10, Math.round((current / total) * 100)) : 0;
-            $fill.removeClass('is-pulsing').css('width', pct + '%');
-            $text.text(textLabel || (current + '/' + total + ' completed'));
-        }
+        $fill.css('width', pct + '%');
+        $text.text(current + '/' + total + (langCode ? ' – ' + langCode.toUpperCase() : ''));
     }
 
     /**
@@ -122,7 +96,7 @@
             return;
         }
 
-        // Check if any selected language is a retranslation
+        // Confirm retranslations if applicable
         var hasRetranslate = false;
         targetLangs.forEach(function (lang) {
             if ($('#aitrfoel-mb-target-langs input[value="' + lang + '"][data-has-translation]').length) {
@@ -131,16 +105,13 @@
         });
 
         if (hasRetranslate) {
-            if (!confirm(cfg.strings.confirm_translate + '\n\nExisting translations will be replaced with fresh AI translations.')) {
+            if (!confirm(cfg.strings.confirm_translate + '\n\n⚠️ Some languages already have translations that will be replaced.')) {
                 return;
             }
         }
 
-        var loadingLabel = hasRetranslate && targetLangs.length === 1 ? 'Retranslating...' : cfg.strings.translating;
-        var langListUpper = targetLangs.map(function(l){ return l.toUpperCase(); }).join(', ');
-
-        setLoading(true, loadingLabel);
-        updateProgress('busy', targetLangs.length, 'Translating content into ' + langListUpper + '...');
+        setLoading(true);
+        updateProgress(0, targetLangs.length, '');
 
         // Hide any previous message
         $('#aitrfoel-mb-message').hide();
@@ -163,7 +134,7 @@
                     var completedCount = data.translations ? Object.keys(data.translations).length : 0;
                     var errorCount = data.errors ? Object.keys(data.errors).length : 0;
 
-                    updateProgress(completedCount, targetLangs.length, completedCount + ' of ' + targetLangs.length + ' translation(s) completed.');
+                    updateProgress(completedCount, targetLangs.length, '');
 
                     var html = '<strong>' + data.message + '</strong>';
 
@@ -174,14 +145,14 @@
                             html += '<li>';
                             html += '<span class="aitrfoel-mb-lang-flag">' + lang.toUpperCase() + '</span> ';
                             html += info.title + ' ';
-                            html += '<a href="' + info.edit_url + '" class="button button-small">' + cfg.strings.edit + '</a> ';
-                            html += '<a href="' + info.view_url + '" class="button button-small" target="_blank">' + cfg.strings.view + '</a>';
+                            html += '<a href="' + info.edit_url + '">' + cfg.strings.edit + '</a> ';
+                            html += '<a href="' + info.view_url + '" target="_blank">' + cfg.strings.view + '</a>';
                             html += '</li>';
                         });
                         html += '</ul>';
                     }
 
-                    // Show errors if partial
+                    // Show errors
                     if (errorCount > 0) {
                         html += '<div class="aitrfoel-mb-errors"><strong>Errors:</strong><ul>';
                         $.each(data.errors, function (lang, msg) {
@@ -196,7 +167,7 @@
                     if (data.upgrade_nudge) {
                         var nudge = data.upgrade_nudge;
                         var nudgeHtml = '<div class="aitrfoel-mb-nudge">' +
-                            '<strong>' + nudge.words_left + ' words remaining</strong> — ' +
+                            '<strong>⚡ ' + nudge.words_left + ' words left</strong> — ' +
                             '<a href="' + nudge.upgrade_url + '" target="_blank">Upgrade for more</a>' +
                             '</div>';
                         $('#aitrfoel-mb-message').append(nudgeHtml);
@@ -205,19 +176,10 @@
                     // Refresh translation status list
                     refreshTranslationStatus();
                 } else {
-                    var data = response.data || {};
-                    var errMsg = data.message || cfg.strings.translation_failed;
-                    var html = '<strong>' + errMsg + '</strong>';
-
-                    if (data.errors && Object.keys(data.errors).length > 0) {
-                        html += '<div class="aitrfoel-mb-errors"><ul class="aitrfoel-mb-error-list">';
-                        $.each(data.errors, function (lang, msg) {
-                            html += '<li><span class="aitrfoel-mb-lang-flag">' + lang.toUpperCase() + '</span> ' + msg + '</li>';
-                        });
-                        html += '</ul></div>';
-                    }
-
-                    showMessage(html, 'error');
+                    var errMsg = response.data && response.data.message
+                        ? response.data.message
+                        : cfg.strings.translation_failed;
+                    showMessage(errMsg, 'error');
                     $('#aitrfoel-mb-progress').hide();
                 }
             },

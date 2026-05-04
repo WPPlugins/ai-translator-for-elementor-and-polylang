@@ -31,66 +31,6 @@ class AITRFOEL_Wizard_Controller {
 		add_action( 'wp_ajax_aitrfoel_setup_builtin_languages', [ $this, 'handle_setup_builtin_languages' ] );
 		add_action( 'wp_ajax_aitrfoel_complete_wizard',          [ $this, 'handle_complete_wizard' ] );
 		add_action( 'wp_ajax_aitrfoel_wizard_demo_translate',    [ $this, 'handle_wizard_demo_translate' ] );
-		add_action( 'wp_ajax_aitrfoel_install_language_packs',   [ $this, 'handle_install_language_packs' ] );
-		add_action( 'admin_footer',                              [ $this, 'maybe_trigger_language_pack_install' ] );
-	}
-
-	// -------------------------------------------------------------------------
-	// Background install of WordPress/plugin translation packs for new languages
-	// -------------------------------------------------------------------------
-
-	/**
-	 * On any admin page, if languages were added and their translation packs are still
-	 * pending, fire a non-blocking request that installs them. The admin never waits.
-	 */
-	public function maybe_trigger_language_pack_install() {
-		if ( ! current_user_can( 'manage_options' ) || empty( get_option( 'aitrfoel_pending_language_packs', [] ) ) ) {
-			return;
-		}
-		if ( get_transient( 'aitrfoel_language_packs_running' ) ) {
-			return;
-		}
-		$nonce = wp_create_nonce( 'aitrfoel_install_language_packs' );
-		?>
-		<script>
-		(function () {
-			if (typeof ajaxurl === 'undefined' || !window.fetch) { return; }
-			var fd = new FormData();
-			fd.append('action', 'aitrfoel_install_language_packs');
-			fd.append('nonce', <?php echo wp_json_encode( $nonce ); ?>);
-			fetch(ajaxurl, { method: 'POST', body: fd, credentials: 'same-origin', keepalive: true }).catch(function () {});
-		})();
-		</script>
-		<?php
-	}
-
-	/**
-	 * AJAX: install queued translation packs. Keeps running if the admin navigates away.
-	 */
-	public function handle_install_language_packs() {
-		if ( ! check_ajax_referer( 'aitrfoel_install_language_packs', 'nonce', false ) ) {
-			wp_send_json_error( 'Security check failed.' );
-		}
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( 'Insufficient permissions.' );
-		}
-		if ( get_transient( 'aitrfoel_language_packs_running' ) ) {
-			wp_send_json_success( [ 'status' => 'already_running' ] );
-		}
-		set_transient( 'aitrfoel_language_packs_running', 1, 10 * MINUTE_IN_SECONDS );
-		ignore_user_abort( true );
-		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( 300 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
-		}
-
-		if ( ! class_exists( 'AITRFOEL_Builtin_Integration' ) ) {
-			require_once AITRFOEL_PLUGIN_DIR . 'includes/class-multilingual-interface.php';
-			require_once AITRFOEL_PLUGIN_DIR . 'includes/class-builtin-integration.php';
-		}
-		$processed = AITRFOEL_Builtin_Integration::get_instance()->process_pending_language_packs();
-		delete_transient( 'aitrfoel_language_packs_running' );
-
-		wp_send_json_success( [ 'processed' => $processed ] );
 	}
 
 	// -------------------------------------------------------------------------
@@ -134,7 +74,7 @@ class AITRFOEL_Wizard_Controller {
 		delete_option( 'aitrfoel_rewrite_rules_version' );
 
 		// Add default language
-		$builtin->add_language( $default_lang_code, $default_lang_name, $default_lang_name, true, true );
+		$builtin->add_language( $default_lang_code, $default_lang_name, $default_lang_name, true );
 
 		// Add target languages
 		$added = 0;
@@ -142,27 +82,9 @@ class AITRFOEL_Wizard_Controller {
 			if ( ! empty( $lang['code'] ) && ! empty( $lang['name'] ) ) {
 				$lang_code = sanitize_text_field( $lang['code'] );
 				$lang_name = sanitize_text_field( $lang['name'] );
-				// Defer translation-pack downloads so the wizard responds in seconds.
-				if ( $builtin->add_language( $lang_code, $lang_name, $lang_name, false, true ) ) {
+				if ( $builtin->add_language( $lang_code, $lang_name, $lang_name, false ) ) {
 					$added++;
 				}
-			}
-		}
-
-		// Publishing behaviour chosen in the wizard (default: publish immediately).
-		$publish = sanitize_text_field( wp_unslash( $_POST['publish_translations'] ?? '1' ) ) !== '0';
-		update_option( 'aitrfoel_translated_page_status', $publish ? 'publish' : 'draft' );
-
-		// Visitor-facing language switcher in the main menu (default: on).
-		if ( sanitize_text_field( wp_unslash( $_POST['add_switcher'] ?? '1' ) ) !== '0' ) {
-			$location = $this->detect_main_menu_location();
-			// Only when the theme has a menu in a location; otherwise it would land in every menu
-			// (footer included). Those sites can add the widget or shortcode instead.
-			if ( $location !== '' ) {
-				update_option( 'aitrfoel_switcher_enabled', true );
-				update_option( 'aitrfoel_nav_menu_switcher', true );
-				update_option( 'aitrfoel_nav_menu_location', $location );
-				update_option( 'aitrfoel_nav_menu_style', 'dropdown' );
 			}
 		}
 
@@ -177,63 +99,11 @@ class AITRFOEL_Wizard_Controller {
 
 		wp_send_json_success( [
 			'message'         => sprintf(
-				/* translators: %d: number of languages configured */ __( 'Languages configured! %d languages set up. Redirecting to dashboard...', 'ai-translator-for-elementor-and-polylang' ),
+				__( 'Languages configured! %d languages set up. Redirecting to dashboard...', 'ai-translator-for-elementor-and-polylang' ),
 				$added + 1
 			),
 			'languages_count' => $added + 1,
-		] + $this->get_demo_page_data() );
-	}
-
-	/**
-	 * Pick the theme's main header menu location (one that has a menu assigned).
-	 * Returns '' when nothing suitable is found, which means "all menus".
-	 */
-	private function detect_main_menu_location() {
-		$assigned = array_filter( (array) get_nav_menu_locations() );
-		if ( empty( $assigned ) ) {
-			return '';
-		}
-		foreach ( [ 'primary', 'main', 'main-menu', 'main_menu', 'menu-1', 'header', 'header-menu', 'top' ] as $preferred ) {
-			if ( isset( $assigned[ $preferred ] ) ) {
-				return $preferred;
-			}
-		}
-		$locations = array_keys( $assigned );
-		return (string) reset( $locations );
-	}
-
-	/**
-	 * Front page (or newest page) used for the optional "translate your homepage" demo.
-	 *
-	 * @return array{demo_post_id:int,demo_word_count:int,demo_post_title:string}
-	 */
-	private function get_demo_page_data() {
-		// Resolve front page for the optional demo translation step.
-		$front_page_id = (int) get_option( 'page_on_front' );
-		if ( $front_page_id <= 0 ) {
-			// Fallback: most recently published page
-			$pages         = get_posts( [
-				'post_type'   => 'page',
-				'post_status' => 'publish',
-				'numberposts' => 1,
-				'orderby'     => 'date',
-				'order'       => 'DESC',
-			] );
-			$front_page_id = ! empty( $pages ) ? $pages[0]->ID : 0;
-		}
-
-		// Estimate word count so JS can decide whether to run the demo.
-		$demo_word_count = 0;
-		if ( $front_page_id > 0 && class_exists( 'AITRFOEL_Translation_Engine' ) ) {
-			$content         = get_post_field( 'post_content', $front_page_id );
-			$demo_word_count = AITRFOEL_Translation_Engine::count_words( wp_strip_all_tags( $content ) );
-		}
-
-		return [
-			'demo_post_id'    => $front_page_id,
-			'demo_word_count' => $demo_word_count,
-			'demo_post_title' => $front_page_id > 0 ? get_the_title( $front_page_id ) : '',
-		];
+		] );
 	}
 
 	// -------------------------------------------------------------------------
@@ -256,13 +126,32 @@ class AITRFOEL_Wizard_Controller {
 		// Clear cached dependency status so dashboard reflects current multilingual state.
 		delete_option( 'aitrfoel_dependencies_status' );
 
-		$demo = $this->get_demo_page_data();
+		// Resolve front page for the optional demo translation step.
+		$front_page_id = (int) get_option( 'page_on_front' );
+		if ( $front_page_id <= 0 ) {
+			// Fallback: most recently published page
+			$pages         = get_posts( [
+				'post_type'   => 'page',
+				'post_status' => 'publish',
+				'numberposts' => 1,
+				'orderby'     => 'date',
+				'order'       => 'DESC',
+			] );
+			$front_page_id = ! empty( $pages ) ? $pages[0]->ID : 0;
+		}
+
+		// Estimate word count so JS can decide whether to run the demo.
+		$demo_word_count = 0;
+		if ( $front_page_id > 0 && class_exists( 'AITRFOEL_Translation_Engine' ) ) {
+			$content         = get_post_field( 'post_content', $front_page_id );
+			$demo_word_count = AITRFOEL_Translation_Engine::count_words( wp_strip_all_tags( $content ) );
+		}
 
 		wp_send_json_success( [
 			'message'         => __( 'Setup complete. Ready to translate.', 'ai-translator-for-elementor-and-polylang' ),
-			'demo_post_id'    => $demo['demo_post_id'],
-			'demo_word_count' => $demo['demo_word_count'],
-			'demo_post_title' => $demo['demo_post_title'],
+			'demo_post_id'    => $front_page_id,
+			'demo_word_count' => $demo_word_count,
+			'demo_post_title' => $front_page_id > 0 ? get_the_title( $front_page_id ) : '',
 		] );
 	}
 
@@ -293,21 +182,6 @@ class AITRFOEL_Wizard_Controller {
 
 		if ( ! class_exists( 'AITRFOEL_Translation_Engine' ) ) {
 			wp_send_json_error( __( 'Translation engine not available.', 'ai-translator-for-elementor-and-polylang' ) );
-		}
-
-		// Already translated (e.g. the plugin was reset on a site that kept its translations):
-		// don't spend words translating the homepage again.
-		if ( class_exists( 'AITRFOEL_Builtin_Integration' ) && AITRFOEL_Builtin_Integration::is_enabled() ) {
-			$existing = AITRFOEL_Builtin_Integration::get_instance()->get_post_translations( $post_id );
-			$existing_id = is_array( $existing ) && ! empty( $existing[ $target_lang ] ) ? (int) $existing[ $target_lang ] : 0;
-			if ( $existing_id && $existing_id !== $post_id && get_post_status( $existing_id ) && 'trash' !== get_post_status( $existing_id ) ) {
-				wp_send_json_success( [
-					'skipped'        => true,
-					'translated_id'  => $existing_id,
-					'translated_url' => get_permalink( $existing_id ),
-					'message'        => __( 'Homepage is already translated.', 'ai-translator-for-elementor-and-polylang' ),
-				] );
-			}
 		}
 
 		// Word-count guard: skip silently if page is too large for a quick demo.

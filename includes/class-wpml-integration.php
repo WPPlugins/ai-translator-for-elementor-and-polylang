@@ -543,7 +543,8 @@ class AITRFOEL_WPML_Integration extends AITRFOEL_Multilingual_Interface {
      * @return string|null WPML language code (e.g., 'ru') or null
      */
     public function get_language_code($our_language) {
-        return $this->normalize_language_code($our_language);
+        // Use parent's mapping
+        return $this->get_code_from_name($our_language);
     }
     
     /**
@@ -615,7 +616,7 @@ class AITRFOEL_WPML_Integration extends AITRFOEL_Multilingual_Interface {
             ],
             'orderby' => 'title',
             'order' => 'ASC',
-            'suppress_filters' => true // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.SuppressFilters_suppress_filters -- intentional: Polylang/WPML query filters would hide posts in other languages, which the translator must see (Get posts in all languages)
+            'suppress_filters' => true // Get posts in all languages
         ]);
         
         $pages_status = [];

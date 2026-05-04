@@ -101,6 +101,25 @@ class AITRFOEL_Analytics {
         return $this->send_to_posthog('/capture/', $payload);
     }
     
+    /**
+     * Send test event (for verification)
+     */
+    public function send_test_event() {
+        // Temporarily bypass is_enabled check for testing
+        $payload = [
+            'api_key' => $this->api_key,
+            'event' => 'test_event',
+            'properties' => [
+                'distinct_id' => $this->site_id,
+                '$lib' => 'php',
+                'test' => true,
+                'timestamp_sent' => current_time('mysql'),
+            ],
+            'timestamp' => gmdate('c'),
+        ];
+        
+        return $this->send_to_posthog('/capture/', $payload);
+    }
     
     /**
      * Track LLM/AI generation event (for LLM Analytics)
