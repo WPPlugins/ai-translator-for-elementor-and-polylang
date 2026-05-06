@@ -888,25 +888,25 @@ jQuery(document).ready(function($) {
                 },
                 success: function(response) {
                     if (response.success) {
-                        // Animation already showing - just continue with monitoring
-                        // ????????? ???????? ??????? ? localStorage
-                        Dashboard.saveActiveTranslation(response.data.job_id, 5);
-                        Dashboard.monitorTranslationProgress(response.data.job_id);
+                        const d = response.data;
+                        Dashboard.saveActiveTranslation(d.job_id, 5);
+                        // Process items one-by-one to avoid 504 timeouts
+                        Dashboard.processQueueItems(d.job_id, d.items, 0, 0, 0, d.source_language);
                     } else {
                         // Check if this is a structured error (limit_reached, cooldown, etc.)
                         const errorData = response.data || {};
-                        
+
                         // Handle translation errors with proper modals
                         Dashboard.handleTranslationError(errorData);
-                        
-                        // ? Reset UI on error
+
+                        // Reset UI on error
                         Dashboard.resetTranslationUI();
                     }
                 },
                 error: function() {
                     Dashboard.showError('Network error. Please try again.');
-                    
-                    // ? Reset UI on error
+
+                    // Reset UI on error
                     Dashboard.resetTranslationUI();
                 }
             });
@@ -1160,9 +1160,10 @@ jQuery(document).ready(function($) {
                 },
                 success: function(response) {
                     if (response.success) {
-                        // ????????? ???????? ??????? ? localStorage
-                        Dashboard.saveActiveTranslation(response.data.job_id, 5);
-                        Dashboard.monitorTranslationProgress(response.data.job_id);
+                        const d = response.data;
+                        Dashboard.saveActiveTranslation(d.job_id, 5);
+                        // Process items one-by-one to avoid 504 timeouts
+                        Dashboard.processQueueItems(d.job_id, d.items, 0, 0, 0, d.source_language);
                     } else {
                         // Handle errors with enhanced error modals
                         Dashboard.handleTranslationError(response.data);
@@ -1604,6 +1605,92 @@ jQuery(document).ready(function($) {
                 this.updateStageStatus(1, 'active', Math.min(progress, 80));
                 this.updateStageDescription(1, details || 'Processing translation...');
             }
+        },
+
+        /**
+         * Process bulk translation items one-by-one from JS.
+         * Each call handles exactly one (page_id × language) pair to avoid 504 timeouts.
+         * @param {string} jobId
+         * @param {Array}  items          [{page_id, lang}, ...]
+         * @param {number} index          0-based current index
+         * @param {number} completedCount successfully translated so far
+         * @param {number} errorCount     errors so far
+         * @param {string} sourceLang
+         */
+        processQueueItems: function(jobId, items, index, completedCount, errorCount, sourceLang) {
+            const self = this;
+
+            if (index >= items.length) {
+                // All items processed
+                self.clearActiveTranslation();
+                self.stopAnimatedProgress();
+                self.showTranslationComplete({
+                    status: 'completed',
+                    completed_items: completedCount,
+                    total_items: items.length,
+                });
+                return;
+            }
+
+            const item  = items[index];
+            const total = items.length;
+
+            // Inline progress update
+            self.updateAnimatedProgress('Translating ' + (index + 1) + ' / ' + total);
+            self.saveActiveTranslation(jobId, Math.round((index / total) * 100));
+
+            $.ajax({
+                url:     aitrfoelDashboard.ajax_url,
+                type:    'POST',
+                timeout: 180000, // 3 min hard cap per item (generous for large classic pages)
+                data: {
+                    action:           'aitrfoel_process_bulk_item',
+                    nonce:            aitrfoelDashboard.nonce,
+                    job_id:           jobId,
+                    page_id:          item.page_id,
+                    target_lang:      item.lang,
+                    item_index:       index,
+                    total_items:      total,
+                    completed_so_far: completedCount,
+                    error_count:      errorCount,
+                    source_language:  sourceLang || 'auto',
+                },
+                success: function(response) {
+                    if (!response.success) {
+                        // Fatal per-item error (auth, missing params) — skip and continue
+                        self.processQueueItems(jobId, items, index + 1, completedCount, errorCount + 1, sourceLang);
+                        return;
+                    }
+
+                    const data = response.data;
+
+                    if (data.status === 'limit_reached') {
+                        self.stopAnimatedProgress();
+                        self.clearActiveTranslation();
+                        self.handleTranslationError({
+                            type:       'limit_reached_during_process',
+                            message:    data.message || 'Word limit reached.',
+                            error_info: { completed_jobs: data.completed, total_jobs: total },
+                        });
+                        self.resetTranslationUI();
+                        return;
+                    }
+
+                    const newCompleted = (data.completed !== undefined) ? data.completed : completedCount + (data.status === 'ok' ? 1 : 0);
+                    const newErrors    = (data.error_count !== undefined) ? data.error_count : errorCount + (data.status === 'item_error' ? 1 : 0);
+
+                    if (data.source_page_id && data.target_language) {
+                        self.highlightCompletedTranslation(data.source_page_id, data.target_language);
+                    }
+
+                    self.processQueueItems(jobId, items, index + 1, newCompleted, newErrors, sourceLang);
+                },
+                error: function(xhr) {
+                    // 504 or network error — log, skip item, keep going
+                    console.warn('aitrfoel: item ' + index + ' failed (HTTP ' + xhr.status + '), skipping');
+                    self.processQueueItems(jobId, items, index + 1, completedCount, errorCount + 1, sourceLang);
+                },
+            });
         },
 
         showTranslationComplete: function(status) {

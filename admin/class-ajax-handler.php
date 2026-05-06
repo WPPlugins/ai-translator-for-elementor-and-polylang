@@ -28,6 +28,7 @@ class AITRFOEL_Ajax_Handler {
         // Bulk translation actions
         add_action('wp_ajax_aitrfoel_pre_analyze_bulk', [$this, 'handle_pre_analyze_bulk']); // NEW: Pre-flight analysis
         add_action('wp_ajax_aitrfoel_start_bulk_translation', [$this, 'handle_start_bulk_translation']);
+        add_action('wp_ajax_aitrfoel_process_bulk_item', [$this, 'handle_process_bulk_item']); // Per-item processing (avoids 504)
         add_action('wp_ajax_aitrfoel_get_translation_status', [$this, 'handle_get_translation_status']);
         add_action('wp_ajax_aitrfoel_pause_translation', [$this, 'handle_pause_translation']);
         add_action('wp_ajax_aitrfoel_resume_translation', [$this, 'handle_resume_translation']);
@@ -1104,27 +1105,22 @@ class AITRFOEL_Ajax_Handler {
 
             // Create job in database using bulk translation queue
             $queue = AITRFOEL_Bulk_Translation_Queue::get_instance();
-            
+
+            $total_jobs = count($page_ids) * count($target_langs);
+
             $job_data = [
                 'page_ids' => $page_ids,
                 'target_languages' => $target_langs,
                 'source_language' => $source_language,
                 'user_id' => get_current_user_id(),
-                'total_items' => count($page_ids) * count($target_langs)
+                'total_items' => $total_jobs,
             ];
-            
+
             $db_job_id = $queue->create_job($job_id, $job_data);
-            
+
             if (is_wp_error($db_job_id)) {
                 throw new Exception($db_job_id->get_error_message());
             }
-
-            // Process translations with SMOOTH progress tracking
-            $engine = AITRFOEL_Translation_Engine::get_instance();
-            $total_jobs = count($page_ids) * count($target_langs);
-            $completed_jobs = 0;
-            $results = [];
-            $error_count = 0;
             
             // Update job status to processing
             $queue->update_job($job_id, [
@@ -1134,210 +1130,32 @@ class AITRFOEL_Ajax_Handler {
                 'current_step' => 'Initializing translation process...',
                 'details' => 'Preparing pages for translation'
             ]);
-            
-            // Allow advanced users to adjust PHP limits if needed via filter hook
-            // This provides flexibility without forcing global changes
-            // Example: add_filter('aitrfoel_before_bulk_translation', function() { @set_time_limit(300); });
+
             do_action('aitrfoel_before_bulk_translation', $job_id, $total_jobs);
-            
-            foreach ($page_ids as $page_index => $page_id) {
-                foreach ($target_langs as $lang_index => $target_lang) {
-                    $current_job = ($page_index * count($target_langs)) + $lang_index + 1;
-                    $page_title = get_the_title($page_id);
-                    
-                    try {
-                        // CONTINUOUS LIMIT CHECK: Before each translation
-                        $license_manager = AITRFOEL_License_Manager_Server::get_instance();
-                        $license_status = $license_manager->get_license_status();
-                        $words_left = $license_status['word_limit'] === -1 ? -1 : max(0, $license_status['word_limit'] - $license_status['words_used']);
-                        
-                        if ($license_status['word_limit'] !== -1 && $words_left <= 0) {
-                            AITRFOEL_Logger::log(sprintf(
-                                'Word limit reached during bulk translation at job %d/%d',
-                                $current_job,
-                                $total_jobs
-                            ), 'warning');
-                            
-                            // Pause the job
-                            $queue->update_job($job_id, [
-                                'status' => 'paused',
-                                'completed_items' => $completed_jobs,
-                                'current_step' => '⚠️ Paused: Word limit reached',
-                                'details' => sprintf(
-                                    'Limit reached at job %d/%d. %d jobs completed successfully.',
-                                    $current_job,
-                                    $total_jobs,
-                                    $completed_jobs
-                                ),
-                                'error_type' => 'limit_reached_during_process'
-                            ]);
-                            
-                            // Throw error to stop processing
-                            throw new Exception(json_encode([
-                                'type' => 'limit_reached',
-                                'message' => sprintf(
-                                    /* translators: 1: Number of completed jobs, 2: Total number of jobs */
-                                    __('Word limit reached during translation. Completed %1$d of %2$d jobs. Upgrade your plan to continue.', 'ai-translator-for-elementor-and-polylang'),
-                                    $completed_jobs,
-                                    $total_jobs
-                                ),
-                                'completed' => $completed_jobs,
-                                'total' => $total_jobs,
-                                'remaining' => $total_jobs - $completed_jobs,
-                                'words_used' => $license_status['words_used'],
-                                'word_limit' => $license_status['word_limit'],
-                                'plan' => $license_status['plan'],
-                                'upgrade_url' => (function_exists('eatp_fs') && eatp_fs()->is_registered()) 
-                                    ? eatp_fs()->get_upgrade_url() 
-                                    : 'https://meeptech.com/products/ai-translator-for-elementor-polylang/#pricing'
-                            ]));
-                        }
-                        
-                        // STEP 1: Analyzing page (5% of this job)
-                        $base_progress = (($current_job - 1) / $total_jobs) * 100;
-                        $queue->update_job($job_id, [
-                            'progress' => round($base_progress + (5 / $total_jobs)),
-                            'current_step' => "🔍 Analyzing: {$page_title}",
-                            'details' => "Scanning content structure for {$target_lang}",
-                            'stage' => 1,
-                            'stage_description' => "Analyzing page structure and content",
-                            'current_page_id' => $page_id,
-                            'current_language' => $target_lang
-                        ]);
-                        
-                        // STEP 2: Processing content (15% of this job)
-                        $queue->update_job($job_id, [
-                            'progress' => round($base_progress + (20 / $total_jobs)),
-                            'current_step' => "⚙️ Processing: {$page_title}",
-                            'details' => "Extracting translatable content",
-                            'stage' => 1,
-                            'stage_description' => "Extracting and preparing content for translation",
-                            'current_page_id' => $page_id,
-                            'current_language' => $target_lang
-                        ]);
-                        
-                        // STEP 3: AI Translation (60% of this job)
-                        $queue->update_job($job_id, [
-                            'progress' => round($base_progress + (60 / $total_jobs)),
-                            'current_step' => "🤖 AI Translating: {$page_title}",
-                            'details' => "OpenAI is translating to {$target_lang}",
-                            'stage' => 1,
-                            'stage_description' => 'AI Translation in progress',
-                            'current_page_id' => $page_id,
-                            'current_language' => $target_lang
-                        ]);
-                        
-                        // ACTUAL TRANSLATION
-                        $new_page_id = $engine->translate_page($page_id, $target_lang, $source_language);
-                        
-                        if (is_wp_error($new_page_id)) {
-                            $error_code = $new_page_id->get_error_code();
-                            $results[] = ['error' => $new_page_id->get_error_message()];
-                            $error_count++;
-                            
-                            // If word limit error, stop the entire batch — no point continuing
-                            if (in_array($error_code, ['insufficient_words', 'cooldown_active'], true)) {
-                                $queue->update_job($job_id, [
-                                    'status' => 'paused',
-                                    'completed_items' => $completed_jobs,
-                                    'current_step' => '⚠️ Stopped: Word limit reached',
-                                    'details' => wp_strip_all_tags($new_page_id->get_error_message()),
-                                    'error_type' => $error_code
-                                ]);
-                                break 2; // Exit both foreach loops
-                            }
-                            
-                            // Show error state
-                            $queue->update_job($job_id, [
-                                'progress' => round(($current_job / $total_jobs) * 100),
-                                'current_step' => "❌ Error: {$page_title}",
-                                'details' => "Failed to translate to {$target_lang}",
-                                'errors' => $error_count,
-                                'stage' => -1,
-                                'stage_description' => 'Translation failed'
-                            ]);
-                        } else {
-                            $results[] = [
-                                'success' => $new_page_id,
-                                'source_page_id' => $page_id,
-                                'target_language' => $target_lang,
-                                'page_title' => $page_title
-                            ];
-                            $completed_jobs++;
-                            
-                            // STEP 4: Gap-Filler Refinement (15% of this job)
-                            $queue->update_job($job_id, [
-                                'progress' => round($base_progress + (75 / $total_jobs)),
-                                'current_step' => "🔧 Gap-Filler: {$page_title}",
-                                'details' => "Refining translation quality for {$target_lang}",
-                                'completed_items' => $completed_jobs,
-                                'stage' => 2,
-                                'stage_description' => 'Gap-Filler refinement in progress',
-                                'current_page_id' => $page_id,
-                                'current_language' => $target_lang
-                            ]);
-                            
-                            // STEP 5: Finalizing (5% of this job)
-                            $queue->update_job($job_id, [
-                                'progress' => round(($current_job / $total_jobs) * 100),
-                                'current_step' => "✅ Completed: {$page_title}",
-                                'details' => "Successfully translated to {$target_lang}",
-                                'completed_items' => $completed_jobs,
-                                'stage' => 3,
-                                'stage_description' => 'Translation completed',
-                                'current_page_id' => $page_id,
-                                'current_language' => $target_lang,
-                                'completed_page_id' => $page_id,
-                                'completed_language' => $target_lang
-                            ]);
-                        }
-                        
-                        // Production: Removed artificial delay for optimal performance
-                        
-                    } catch (Throwable $e) {
-                        $results[] = ['error' => $e->getMessage()];
-                        $error_count++;
-                        
-                        // Wrap in try-catch so a DB update failure here doesn't kill the entire batch.
-                        // Also avoid emoji in current_step to prevent utf8 charset failures on older tables.
-                        try {
-                            $queue->update_job($job_id, [
-                                'progress' => round(($current_job / $total_jobs) * 100),
-                                'current_step' => "Error: {$page_title}",
-                                'details' => mb_substr($e->getMessage(), 0, 500),
-                                'errors' => $error_count
-                            ]);
-                        } catch (Throwable $ignored) {
-                            // Swallow — a status-update failure must not abort the remaining items.
-                        }
-                    }
+
+            // Build the flat item queue — JS processes one item per AJAX call to avoid 504 timeouts.
+            $items = [];
+            foreach ($page_ids as $page_id) {
+                foreach ($target_langs as $lang) {
+                    $items[] = ['page_id' => $page_id, 'lang' => $lang];
                 }
             }
-            
-            // Allow advanced users to run cleanup actions after bulk translation
-            do_action('aitrfoel_after_bulk_translation', $job_id, $completed_jobs, $total_jobs);
-
-            // Update job status to completed
-            $queue->update_job($job_id, [
-                'status' => 'completed',
-                'completed_items' => $completed_jobs,
-                'total_items' => $total_jobs,
-                'results' => $results,
-                'completed_at' => current_time('mysql')
-            ]);
 
             wp_send_json_success([
-                'job_id' => $job_id,
-                'status' => 'started',
-                'message' => sprintf(
+                'job_id'          => $job_id,
+                'items'           => $items,
+                'total'           => $total_jobs,
+                'source_language' => $source_language,
+                'status'          => 'ready',
+                'message'         => sprintf(
                     /* translators: 1: Number of pages, 2: Number of target languages */
                     __('Bulk translation started for %1$d pages to %2$d languages.', 'ai-translator-for-elementor-and-polylang'),
                     count($page_ids),
                     count($target_langs)
                 ),
-                'pages_count' => count($page_ids),
+                'pages_count'     => count($page_ids),
                 'languages_count' => count($target_langs),
-                'total_jobs' => count($page_ids) * count($target_langs)
+                'total_jobs'      => $total_jobs,
             ]);
 
         } catch (Throwable $e) {
@@ -1347,6 +1165,185 @@ class AITRFOEL_Ajax_Handler {
                 'line' => $e->getLine(),
             ]);
             $this->handle_error($e);
+        }
+    }
+
+    /**
+     * Process a single bulk translation item (one page × one language).
+     *
+     * The JS side calls this once per item so each PHP request is short-lived,
+     * avoiding 504 Gateway Timeout errors that happen when all items are processed
+     * in one long-running request.
+     */
+    public function handle_process_bulk_item() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+
+            if ( ! current_user_can('edit_pages') ) {
+                throw new Exception(__('You do not have permission to perform this action.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            $job_id           = sanitize_text_field($_POST['job_id']        ?? '');
+            $page_id          = intval(             $_POST['page_id']       ?? 0);
+            $target_lang      = sanitize_text_field($_POST['target_lang']   ?? '');
+            $item_index       = intval(             $_POST['item_index']    ?? 0);  // 0-based
+            $total_items      = max(1, intval(      $_POST['total_items']   ?? 1));
+            $completed_so_far = intval(             $_POST['completed_so_far'] ?? 0);
+            $error_count      = intval(             $_POST['error_count']   ?? 0);
+            $source_lang      = sanitize_text_field($_POST['source_language'] ?? 'auto');
+
+            if (empty($job_id) || empty($page_id) || empty($target_lang)) {
+                throw new Exception(__('Missing required parameters.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            $queue      = AITRFOEL_Bulk_Translation_Queue::get_instance();
+            $engine     = AITRFOEL_Translation_Engine::get_instance();
+            $page_title = get_the_title($page_id);
+            $is_last    = ($item_index + 1 >= $total_items);
+
+            // Per-item word limit check (non-fatal on exception)
+            try {
+                $license_manager = AITRFOEL_License_Manager_Server::get_instance();
+                $license_status  = $license_manager->get_license_status();
+                $words_left      = $license_status['word_limit'] === -1
+                    ? -1
+                    : max(0, $license_status['word_limit'] - $license_status['words_used']);
+
+                if ($license_status['word_limit'] !== -1 && $words_left <= 0) {
+                    $queue->update_job($job_id, [
+                        'status'          => 'paused',
+                        'completed_items' => $completed_so_far,
+                        'current_step'    => 'Paused: Word limit reached',
+                        'error_type'      => 'limit_reached_during_process',
+                    ]);
+                    wp_send_json_success([
+                        'status'    => 'limit_reached',
+                        'completed' => $completed_so_far,
+                        'total'     => $total_items,
+                    ]);
+                    return;
+                }
+            } catch (Throwable $e) {
+                AITRFOEL_Logger::log('Limit check error (non-fatal): ' . $e->getMessage(), 'warning');
+            }
+
+            // Mark this item as in-progress in DB
+            $queue->update_job($job_id, [
+                'progress'         => round(($item_index / $total_items) * 100),
+                'current_step'     => "AI Translating: {$page_title}",
+                'details'          => "Translating to {$target_lang}",
+                'current_page_id'  => $page_id,
+                'current_language' => $target_lang,
+                'completed_items'  => $completed_so_far,
+            ]);
+
+            try {
+                $new_page_id = $engine->translate_page($page_id, $target_lang, $source_lang);
+
+                if (is_wp_error($new_page_id)) {
+                    $error_code = $new_page_id->get_error_code();
+                    $error_count++;
+
+                    // Word-limit class errors: pause and tell JS to stop
+                    if (in_array($error_code, ['insufficient_words', 'cooldown_active'], true)) {
+                        $queue->update_job($job_id, [
+                            'status'          => 'paused',
+                            'completed_items' => $completed_so_far,
+                            'current_step'    => 'Stopped: Word limit reached',
+                            'error_type'      => $error_code,
+                        ]);
+                        wp_send_json_success([
+                            'status'     => 'limit_reached',
+                            'error_code' => $error_code,
+                            'completed'  => $completed_so_far,
+                            'total'      => $total_items,
+                        ]);
+                        return;
+                    }
+
+                    $queue->update_job($job_id, [
+                        'progress'        => round((($item_index + 1) / $total_items) * 100),
+                        'current_step'    => "Error: {$page_title}",
+                        'details'         => wp_strip_all_tags($new_page_id->get_error_message()),
+                        'errors'          => $error_count,
+                        'completed_items' => $completed_so_far,
+                    ]);
+
+                    if ($is_last) {
+                        $queue->update_job($job_id, ['status' => 'completed', 'completed_at' => current_time('mysql')]);
+                        do_action('aitrfoel_after_bulk_translation', $job_id, $completed_so_far, $total_items);
+                    }
+
+                    wp_send_json_success([
+                        'status'      => 'item_error',
+                        'error'       => $new_page_id->get_error_message(),
+                        'completed'   => $completed_so_far,
+                        'error_count' => $error_count,
+                        'item_index'  => $item_index,
+                        'total'       => $total_items,
+                    ]);
+                    return;
+                }
+
+                // Success
+                $completed_so_far++;
+                $queue->update_job($job_id, [
+                    'progress'           => round((($item_index + 1) / $total_items) * 100),
+                    'current_step'       => "Completed: {$page_title}",
+                    'details'            => "Successfully translated to {$target_lang}",
+                    'completed_items'    => $completed_so_far,
+                    'completed_page_id'  => $page_id,
+                    'completed_language' => $target_lang,
+                    'current_language'   => $target_lang,
+                ]);
+
+                if ($is_last) {
+                    $queue->update_job($job_id, ['status' => 'completed', 'completed_at' => current_time('mysql')]);
+                    do_action('aitrfoel_after_bulk_translation', $job_id, $completed_so_far, $total_items);
+                }
+
+                wp_send_json_success([
+                    'status'          => 'ok',
+                    'new_page_id'     => $new_page_id,
+                    'source_page_id'  => $page_id,
+                    'target_language' => $target_lang,
+                    'page_title'      => $page_title,
+                    'completed'       => $completed_so_far,
+                    'error_count'     => $error_count,
+                    'item_index'      => $item_index,
+                    'total'           => $total_items,
+                    'is_last'         => $is_last,
+                ]);
+
+            } catch (Throwable $e) {
+                $error_count++;
+                $queue->update_job($job_id, [
+                    'progress'        => round((($item_index + 1) / $total_items) * 100),
+                    'current_step'    => "Error: {$page_title}",
+                    'details'         => mb_substr($e->getMessage(), 0, 500),
+                    'errors'          => $error_count,
+                    'completed_items' => $completed_so_far,
+                ]);
+
+                if ($is_last) {
+                    $queue->update_job($job_id, ['status' => 'completed', 'completed_at' => current_time('mysql')]);
+                    do_action('aitrfoel_after_bulk_translation', $job_id, $completed_so_far, $total_items);
+                }
+
+                // Return success=true so the JS loop continues to the next item
+                wp_send_json_success([
+                    'status'      => 'item_error',
+                    'error'       => $e->getMessage(),
+                    'completed'   => $completed_so_far,
+                    'error_count' => $error_count,
+                    'item_index'  => $item_index,
+                    'total'       => $total_items,
+                ]);
+            }
+
+        } catch (Throwable $e) {
+            AITRFOEL_Logger::log('process_bulk_item fatal: ' . $e->getMessage(), 'error');
+            wp_send_json_error(['message' => $e->getMessage()]);
         }
     }
 
