@@ -138,6 +138,13 @@ class AITRFOEL_Bulk_Translation_Queue {
         if (empty($column_exists)) {
             $wpdb->query("ALTER TABLE {$this->table_name} ADD COLUMN error_details TEXT DEFAULT NULL AFTER error_type");
         }
+
+        // Ensure the table uses utf8mb4 so 4-byte emoji in current_step etc. don't fail.
+        $table_status = $wpdb->get_row("SELECT `CHARACTER_SET_NAME` FROM `information_schema`.`COLUMNS`
+            WHERE `TABLE_SCHEMA` = DATABASE() AND `TABLE_NAME` = '{$this->table_name}' AND `COLUMN_NAME` = 'current_step' LIMIT 1");
+        if ($table_status && $table_status->CHARACTER_SET_NAME === 'utf8') {
+            $wpdb->query("ALTER TABLE {$this->table_name} CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        }
     }
 
     /**
@@ -333,6 +340,15 @@ class AITRFOEL_Bulk_Translation_Queue {
         }
         if (isset($updates['error_type'])) {
             $updates['error_type'] = mb_substr(sanitize_text_field((string) $updates['error_type']), 0, 50);
+        }
+
+        // Strip 4-byte unicode characters (emoji etc.) from string fields to prevent failures
+        // on databases that use the utf8 charset (max 3 bytes per character) instead of utf8mb4.
+        $string_fields = ['current_step', 'details', 'stage_description', 'current_step', 'error_type', 'error_details'];
+        foreach ($string_fields as $field) {
+            if (isset($updates[$field]) && is_string($updates[$field])) {
+                $updates[$field] = preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $updates[$field]);
+            }
         }
 
         // Filter out unknown columns for older tables that may miss newer schema fields.

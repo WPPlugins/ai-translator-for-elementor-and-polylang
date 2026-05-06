@@ -116,7 +116,7 @@
 }
 
 .aitrfoel-dashboard-wrapper .aitrfoel-compact-stat.aitrfoel-usage-pool-stat {
-    grid-column: span 4;
+    grid-column: span 2;
 }
 
 .aitrfoel-dashboard-wrapper .aitrfoel-compact-stat.aitrfoel-compact-license {
@@ -483,15 +483,17 @@
 }
 
 .aitrfoel-bulk-languages {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: auto 1fr auto 1fr;
+    gap: 10px 16px;
+    align-items: start;
 }
 
 .aitrfoel-bulk-languages label {
     font-weight: 500;
     color: #555;
+    white-space: nowrap;
+    font-size: 14px;
 }
 
 .aitrfoel-bulk-languages select {
@@ -679,7 +681,7 @@
     width: 40px;
     text-align: center;
     vertical-align: middle;
-    padding: 12px 0 12px 8px;
+    padding: 12px 8px;
 }
 
 .aitrfoel-dashboard-table .column-cb input[type="checkbox"],
@@ -1222,8 +1224,8 @@ tr.aitrfoel-translation-page td.column-title .aitrfoel-page-status {
     
     .aitrfoel-bulk-languages {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
+        grid-template-columns: auto 1fr auto 1fr;
+        gap: 8px 16px;
         align-items: start;
     }
     

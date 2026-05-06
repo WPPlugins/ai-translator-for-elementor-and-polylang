@@ -183,6 +183,16 @@
   line-height: 1.55;
 }
 
+/* Hide other plugin notices that appear inside meep-hero */
+.aitrfoel-dashboard-wrapper .meep-hero .notice,
+.aitrfoel-admin-wrapper .meep-hero .notice,
+.aitrfoel-dashboard-wrapper .meep-hero .woo-feed-notice,
+.aitrfoel-admin-wrapper .meep-hero .woo-feed-notice,
+.aitrfoel-dashboard-wrapper .meep-hero > div[class*="notice"],
+.aitrfoel-admin-wrapper .meep-hero > div[class*="notice"] {
+  display: none !important;
+}
+
 /* ---------------------------------------------------------------------------
    5. COMPACT STATS BAR
    --------------------------------------------------------------------------- */
@@ -242,7 +252,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  flex: 1 1 50%;
+  flex: 0 1 auto;
   min-width: 0;
 }
 
@@ -250,10 +260,17 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 8px;
-  flex: 1 1 50%;
+  flex-wrap: nowrap;
+  gap: 6px;
+  flex: 1 1 auto;
   min-width: 0;
+}
+
+.aitrfoel-dashboard-wrapper .aitrfoel-compact-actions .aitrfoel-compact-buy-btn,
+.aitrfoel-dashboard-wrapper .aitrfoel-compact-actions .aitrfoel-compact-upgrade-btn {
+  white-space: nowrap;
+  flex-shrink: 1;
+  min-width: fit-content;
 }
 
 .aitrfoel-dashboard-wrapper .aitrfoel-compact-stats-bar > * {
@@ -717,7 +734,7 @@
   font-family: var(--font-mono) !important;
   font-size: 10.5px !important;
   font-weight: 600 !important;
-  text-transform: lowercase !important;
+  text-transform: capitalize !important;
   letter-spacing: 0.04em !important;
   color: var(--ink) !important;
   background: var(--surface) !important;
@@ -994,10 +1011,14 @@
   box-shadow: 0 3px 14px rgba(14,17,22,0.05) !important;
   padding: 14px 16px !important;
   margin: 18px 0 20px !important;
+  max-width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
 }
 
 .aitrfoel-dashboard-wrapper #aitrfoel-bulk-bar .aitrfoel-bulk-content {
   display: grid !important;
+  grid-column: span 12 !important;
   grid-template-columns: minmax(420px, 1.25fr) minmax(190px, 0.8fr) minmax(310px, auto);
   align-items: center !important;
   gap: 10px 14px !important;
@@ -1632,6 +1653,20 @@
   border-radius: 4px;
   padding: 12px;
   margin-bottom: 10px;
+}
+
+.aitrfoel-admin-wrapper .aitrfoel-css-editor-header,
+.aitrfoel-dashboard-wrapper .aitrfoel-css-editor-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.aitrfoel-admin-wrapper .aitrfoel-css-editor-header .description,
+.aitrfoel-dashboard-wrapper .aitrfoel-css-editor-header .description {
+  font-size: 12px;
+  color: var(--muted, #6B7280);
+  margin: 0;
 }
 
 .aitrfoel-admin-wrapper .aitrfoel-switcher-shortcode,

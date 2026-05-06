@@ -836,6 +836,12 @@ class AITRFOEL_Settings {
                                 <label for="aitrfoel_switcher_custom_css"><?php esc_html_e('Custom CSS', 'ai-translator-for-elementor-and-polylang'); ?></label>
                             </th>
                             <td>
+                                <div class="aitrfoel-css-editor-header">
+                                    <button type="button" id="aitrfoel-generate-sample-css" class="button button-secondary">
+                                        <?php esc_html_e('Generate Sample CSS', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    </button>
+                                    <span class="description"><?php esc_html_e('Generates a starting template based on your current switcher style.', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                                </div>
                                 <textarea name="aitrfoel_switcher_custom_css"
                                           id="aitrfoel_switcher_custom_css"
                                           class="large-text code"
@@ -2100,6 +2106,122 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                 
                 $('#aitrfoel_switcher_style').on('change', updateShortcodePreview);
                 $('input[name="aitrfoel_switcher_show_flags"], input[name="aitrfoel_switcher_show_names"]').on('change', updateShortcodePreview);
+
+                // Generate Sample CSS button
+                $('#aitrfoel-generate-sample-css').on('click', function() {
+                    var style = $('#aitrfoel_switcher_style').val() || 'flags-text';
+                    var $ta = $('#aitrfoel_switcher_custom_css');
+                    var existing = $ta.val().trim();
+                    var css = '';
+
+                    var commonCss = [
+                        '/* ---- Language Switcher: Base ---- */',
+                        '.aitrfoel-language-switcher {',
+                        '    display: inline-flex;',
+                        '    align-items: center;',
+                        '    gap: 4px;',
+                        '}',
+                        ''
+                    ].join('\n');
+
+                    var flagsCss = [
+                        '/* Flag size */',
+                        '.aitrfoel-language-switcher img,',
+                        '.aitrfoel-flag-link img,',
+                        '.aitrfoel-flag-text-link img {',
+                        '    width: 20px;',
+                        '    height: auto;',
+                        '    border-radius: 2px;',
+                        '}',
+                        ''
+                    ].join('\n');
+
+                    var listItemCss = [
+                        '/* List items */',
+                        '.aitrfoel-switcher-list .aitrfoel-switcher-item a,',
+                        '.aitrfoel-switcher-flags .aitrfoel-flag-link,',
+                        '.aitrfoel-switcher-flags-text .aitrfoel-flag-text-link {',
+                        '    display: inline-flex;',
+                        '    align-items: center;',
+                        '    gap: 6px;',
+                        '    padding: 4px 8px;',
+                        '    border-radius: 4px;',
+                        '    text-decoration: none;',
+                        '    color: inherit;',
+                        '    transition: background 0.15s;',
+                        '}',
+                        '.aitrfoel-switcher-list .aitrfoel-switcher-item a:hover,',
+                        '.aitrfoel-switcher-flags .aitrfoel-flag-link:hover,',
+                        '.aitrfoel-switcher-flags-text .aitrfoel-flag-text-link:hover {',
+                        '    background: rgba(0,0,0,0.06);',
+                        '}',
+                        '',
+                        '/* Active language */',
+                        '.aitrfoel-switcher-item.active a {',
+                        '    font-weight: 600;',
+                        '    background: rgba(0,0,0,0.08);',
+                        '}',
+                        ''
+                    ].join('\n');
+
+                    var dropdownCss = [
+                        '/* Dropdown toggle button */',
+                        '.aitrfoel-switcher-dropdown .aitrfoel-dropdown-toggle {',
+                        '    display: inline-flex;',
+                        '    align-items: center;',
+                        '    gap: 6px;',
+                        '    padding: 6px 12px;',
+                        '    border: 1px solid #ddd;',
+                        '    border-radius: 4px;',
+                        '    background: #fff;',
+                        '    cursor: pointer;',
+                        '    font-size: 14px;',
+                        '}',
+                        '/* Dropdown menu panel */',
+                        '.aitrfoel-switcher-dropdown .aitrfoel-dropdown-menu {',
+                        '    border: 1px solid #ddd;',
+                        '    border-radius: 4px;',
+                        '    background: #fff;',
+                        '    box-shadow: 0 4px 12px rgba(0,0,0,0.1);',
+                        '    min-width: 140px;',
+                        '}',
+                        '.aitrfoel-switcher-dropdown .aitrfoel-dropdown-menu a {',
+                        '    display: flex;',
+                        '    align-items: center;',
+                        '    gap: 8px;',
+                        '    padding: 8px 12px;',
+                        '    text-decoration: none;',
+                        '    color: inherit;',
+                        '}',
+                        '.aitrfoel-switcher-dropdown .aitrfoel-dropdown-menu a:hover {',
+                        '    background: #f5f5f5;',
+                        '}',
+                        ''
+                    ].join('\n');
+
+                    if (style === 'dropdown') {
+                        css = commonCss + flagsCss + dropdownCss;
+                    } else if (style === 'flags') {
+                        css = commonCss + flagsCss + listItemCss;
+                    } else {
+                        css = commonCss + flagsCss + listItemCss;
+                    }
+
+                    if (existing) {
+                        if (!confirm('<?php echo esc_js(__('Replace current CSS with the generated sample? Click Cancel to append instead.', 'ai-translator-for-elementor-and-polylang')); ?>')) {
+                            $ta.val(existing + '\n\n' + css.trim());
+                        } else {
+                            $ta.val(css.trim());
+                        }
+                    } else {
+                        $ta.val(css.trim());
+                    }
+
+                    var $btn = $(this);
+                    var orig = $btn.text();
+                    $btn.text('<?php echo esc_js(__('Generated!', 'ai-translator-for-elementor-and-polylang')); ?>');
+                    setTimeout(function() { $btn.text(orig); }, 1800);
+                });
                 
                 // Toggle name display options visibility
                 $('input[name="aitrfoel_switcher_show_names"]').on('change', function() {

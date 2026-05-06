@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.5.0
+Stable tag: 1.5.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,16 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.5.1 =
+* Fixed: Bulk translation no longer fails with "Failed to update bulk translation job" on sites where the queue table uses MySQL utf8 charset — the table is automatically upgraded to utf8mb4, and emoji in step labels are stripped as a fallback
+* Added: "Generate Sample CSS" button in Language Switcher settings — generates a boilerplate CSS template based on the selected switcher style (dropdown or list/flags variants)
+* Fixed: Admin notices from other plugins no longer render inside the dashboard hero block
+* Fixed: Checkbox column in translation list now has consistent left/right padding
+* Fixed: Page type pills (Elementor, Gutenberg, etc.) now display with correct capitalisation
+* Fixed: Bulk translation progress bar now stays within the stats bar width instead of expanding to full page width
+* Fixed: "Unlimited words" usage stat no longer takes up excessive horizontal space
+* Fixed: License action buttons (Buy / Upgrade) now fit on a single line on the dashboard card
+
 = 1.5.0 =
 * Added: Translate URL Slugs setting in Multilingual Plugin section — toggle whether translated posts/pages/products get localized URL slugs (post_name) derived from the translated title, or keep the source-style slug pattern
 * Added: WooCommerce product translation review support — the Review Translation page now shows editable segments for product title, excerpt, and content, with inline save working for all three fields
