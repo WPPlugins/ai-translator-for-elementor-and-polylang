@@ -1755,6 +1755,14 @@
 .aitrfoel-admin-wrapper .aitrfoel-nav-menu-location-select,
 .aitrfoel-dashboard-wrapper .aitrfoel-nav-menu-location-select {
   margin-left: 6px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 34px !important;
+  background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"%3E%3Cpath d="M7 10L12 15L17 10" stroke="%2359657A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/%3E%3C/svg%3E');
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 13px 13px;
 }
 
 /* ---------------------------------------------------------------------------

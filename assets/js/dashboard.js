@@ -1928,7 +1928,9 @@ jQuery(document).ready(function($) {
             this.stopAnimatedProgress();
             
             $('#aitrfoel-bulk-bar').removeClass('processing').addClass(__('status_error', 'Error'));
-            $('.aitrfoel-bulk-content').prepend('<div class="notice notice-error"><p>' + message + '</p></div>');
+            // Remove any previous inline error, then show a compact one (not full-width WP notice)
+            $('.aitrfoel-bulk-error-msg').remove();
+            $('.aitrfoel-bulk-content').prepend('<div class="aitrfoel-bulk-error-msg"><span class="dashicons dashicons-warning"></span> ' + message + '</div>');
             
             // ??????? ?????? ? ???????? ????????? ??? ??????
             $('#aitrfoel-start-translation')

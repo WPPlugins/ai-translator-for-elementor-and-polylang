@@ -361,6 +361,17 @@ class AITRFOEL_Bulk_Translation_Queue {
             return 0;
         }
 
+        // Ensure the DB connection is alive — long-running bulk requests can cause
+        // the MySQL connection to be silently dropped (wait_timeout on hosting).
+        if ( ! $wpdb->check_connection( false ) ) {
+            AITRFOEL_Logger::log(
+                'Bulk job update skipped: DB connection unavailable',
+                'warning',
+                ['job_id' => $job_id]
+            );
+            return false;
+        }
+
         $result = $wpdb->update(
             $this->table_name,
             $updates,
@@ -370,12 +381,15 @@ class AITRFOEL_Bulk_Translation_Queue {
         );
 
         if ($result === false) {
+            // Log the failure but DO NOT throw — a status-update failure must never abort
+            // the bulk translation batch. Individual translations already in progress
+            // should complete regardless of whether we can persist progress to the DB.
             AITRFOEL_Logger::log(
-                'Bulk job update failed: ' . $wpdb->last_error,
-                'error',
+                'Bulk job update failed (non-fatal): ' . $wpdb->last_error,
+                'warning',
                 ['job_id' => $job_id, 'updates' => array_keys($updates)]
             );
-            throw new Exception(esc_html__('Failed to update bulk translation job.', 'ai-translator-for-elementor-and-polylang'));
+            return false;
         }
 
         return $result;

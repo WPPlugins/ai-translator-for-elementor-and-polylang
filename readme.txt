@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.5.1
+Stable tag: 1.5.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,14 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.5.2 =
+* Fixed: Bulk translation jobs no longer abort with "Failed to update bulk translation job" on long-running requests — progress updates are now non-fatal so all languages complete even if the DB connection drops mid-job
+* Fixed: Checkbox column in translation list now has correct left/right padding on both header and body rows
+* Fixed: Nav menu location selector now shows the dropdown chevron arrow
+* Fixed: Bulk bar language selector (De / Vers buttons) now fits on one line for all languages including French
+* Fixed: License card in the stats bar is now right-aligned on desktop
+* Added: Compact inline error message in bulk bar replaces full-width WordPress notice on failure
+
 = 1.5.1 =
 * Fixed: Bulk translation no longer fails with "Failed to update bulk translation job" on sites where the queue table uses MySQL utf8 charset — the table is automatically upgraded to utf8mb4, and emoji in step labels are stripped as a fallback
 * Added: "Generate Sample CSS" button in Language Switcher settings — generates a boilerplate CSS template based on the selected switcher style (dropdown or list/flags variants)

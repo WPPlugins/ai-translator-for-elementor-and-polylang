@@ -1298,12 +1298,18 @@ class AITRFOEL_Ajax_Handler {
                         $results[] = ['error' => $e->getMessage()];
                         $error_count++;
                         
-                        $queue->update_job($job_id, [
-                            'progress' => round(($current_job / $total_jobs) * 100),
-                            'current_step' => "💥 Exception: {$page_title}",
-                            'details' => $e->getMessage(),
-                            'errors' => $error_count
-                        ]);
+                        // Wrap in try-catch so a DB update failure here doesn't kill the entire batch.
+                        // Also avoid emoji in current_step to prevent utf8 charset failures on older tables.
+                        try {
+                            $queue->update_job($job_id, [
+                                'progress' => round(($current_job / $total_jobs) * 100),
+                                'current_step' => "Error: {$page_title}",
+                                'details' => mb_substr($e->getMessage(), 0, 500),
+                                'errors' => $error_count
+                            ]);
+                        } catch (Throwable $ignored) {
+                            // Swallow — a status-update failure must not abort the remaining items.
+                        }
                     }
                 }
             }
