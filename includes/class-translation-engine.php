@@ -108,7 +108,373 @@ class AITRFOEL_Translation_Engine {
                 );
         }
     }
-    
+
+    // =========================================================================
+    // ASYNC TRANSLATION  (submit → poll, no blocking HTTP in the AJAX handler)
+    // =========================================================================
+
+    /**
+     * Async Phase 1: Parse page content, check word limit, submit uncached strings
+     * to the proxy async endpoint.  Returns immediately (< 2 s).
+     *
+     * @param int    $page_id     Original page ID
+     * @param string $target_lang Target language code
+     * @param string $source_lang Source language code or 'auto'
+     * @return string|WP_Error
+     *   proxy_job_id string   — job enqueued on proxy; call poll_page_async() to check
+     *   'sync_required'       — Elementor content; caller must use synchronous path
+     *   'cache_hit:{key}'     — all strings cached; page created; retrieve ID via get_transient($key)
+     *   WP_Error              — on failure
+     */
+    public function submit_page_async($page_id, $target_lang, $source_lang = 'auto') {
+        $content_type = AITRFOEL_Content_Detector::get_instance()->detect($page_id);
+
+        // Elementor has complex inline placeholder handling — keep on sync path
+        if ($content_type === AITRFOEL_Content_Detector::TYPE_ELEMENTOR) {
+            return 'sync_required';
+        }
+
+        $parse = $this->parse_page_content_for_async($page_id, $content_type, $source_lang);
+        if (is_wp_error($parse)) {
+            return $parse;
+        }
+
+        $strings = $parse['strings'];
+        $source  = $parse['detected_lang'];
+        $extra   = $parse['extra'];
+
+        $check = $this->check_word_limit($strings, $page_id);
+        if (is_wp_error($check)) {
+            return $check;
+        }
+
+        // Separate cache hits from strings that must go to the proxy
+        $cache      = AITRFOEL_Cache_Manager::get_instance();
+        $cached_map = [];
+        $to_send    = [];
+        foreach ($strings as $s) {
+            $orig = $s['original'] ?? '';
+            if (empty(trim($orig))) {
+                continue;
+            }
+            $hit = $this->cache_enabled ? $cache->get_from_cache($orig, $target_lang, $source) : null;
+            if ($hit) {
+                $cached_map[$orig] = $hit;
+            } else {
+                $to_send[] = $orig;
+            }
+        }
+
+        $context = [
+            'page_id'      => $page_id,
+            'target_lang'  => $target_lang,
+            'source_lang'  => $source,
+            'content_type' => $content_type,
+            'strings'      => $strings,
+            'extra'        => $extra,
+            'cached_map'   => $cached_map,
+            'to_send'      => $to_send,
+            'start_time'   => microtime(true),
+        ];
+
+        if (empty($to_send)) {
+            // All strings were already cached — apply immediately, no async round-trip needed
+            $new_page_id = $this->apply_async_page($context, []);
+            if (is_wp_error($new_page_id)) {
+                return $new_page_id;
+            }
+            $key = 'aitrfoel_ah_' . $page_id . '_' . md5($target_lang);
+            set_transient($key, $new_page_id, 10 * MINUTE_IN_SECONDS);
+            return 'cache_hit:' . $key;
+        }
+
+        $api          = AITRFOEL_OpenAI_API::get_instance();
+        $proxy_job_id = $api->submit_batch_async($to_send, $target_lang, $source);
+        if (is_wp_error($proxy_job_id)) {
+            return $proxy_job_id;
+        }
+
+        set_transient('aitrfoel_async_' . $proxy_job_id, $context, HOUR_IN_SECONDS);
+        AITRFOEL_Logger::log(
+            sprintf('Async page submit: page=%d lang=%s job=%s uncached=%d cached=%d',
+                $page_id, $target_lang, $proxy_job_id, count($to_send), count($cached_map)),
+            'info', $page_id
+        );
+        return $proxy_job_id;
+    }
+
+    /**
+     * Async Phase 2: Check proxy job status; apply translations and create page when done.
+     *
+     * @param string $proxy_job_id Job ID returned by submit_page_async()
+     * @return string|int|WP_Error
+     *   'pending'  — job still running; call again in a few seconds
+     *   int        — new_page_id on success
+     *   WP_Error   — on failure
+     */
+    public function poll_page_async($proxy_job_id) {
+        $api    = AITRFOEL_OpenAI_API::get_instance();
+        $status = $api->get_async_job_status($proxy_job_id);
+
+        if (is_wp_error($status)) {
+            return $status;
+        }
+
+        if (in_array($status['status'], ['pending', 'processing'], true)) {
+            return 'pending';
+        }
+
+        if ($status['status'] === 'error') {
+            return new WP_Error(
+                'proxy_job_error',
+                $status['error'] ?? __('Translation job failed on server.', 'ai-translator-for-elementor-and-polylang')
+            );
+        }
+
+        // status === 'done'
+        $context = get_transient('aitrfoel_async_' . $proxy_job_id);
+        if (!$context) {
+            return new WP_Error(
+                'context_expired',
+                __('Translation context expired. Please retry the translation.', 'ai-translator-for-elementor-and-polylang')
+            );
+        }
+
+        // Proxy returns translations as an array ordered the same as $context['to_send']
+        $proxy_translations = $status['translations'] ?? [];
+        $full_map           = $context['cached_map'];
+        foreach ($context['to_send'] as $i => $orig) {
+            if (isset($proxy_translations[$i])) {
+                $translated = method_exists($api, 'sanitize_chatty_response')
+                    ? $api->sanitize_chatty_response($orig, $proxy_translations[$i])
+                    : $proxy_translations[$i];
+                $full_map[$orig] = $translated;
+            }
+        }
+
+        $new_page_id = $this->apply_async_page($context, $full_map);
+
+        if (!is_wp_error($new_page_id)) {
+            delete_transient('aitrfoel_async_' . $proxy_job_id);
+            // Cache freshly translated strings for future re-use
+            if ($this->cache_enabled) {
+                $cache = AITRFOEL_Cache_Manager::get_instance();
+                foreach ($context['to_send'] as $i => $orig) {
+                    if (!empty($full_map[$orig])) {
+                        $cache->set_to_cache($orig, $full_map[$orig], $context['target_lang'], $context['source_lang'], 'gpt-4o-mini');
+                    }
+                }
+            }
+        }
+
+        return $new_page_id;
+    }
+
+    /**
+     * Parse a non-Elementor page into a strings array for async submission.
+     * Handles Classic Editor, Gutenberg, and WooCommerce content types.
+     *
+     * @param int    $page_id      Page ID
+     * @param string $content_type One of AITRFOEL_Content_Detector::TYPE_* constants
+     * @param string $source_lang  Source language code or 'auto'
+     * @return array|WP_Error {strings, detected_lang, extra}
+     */
+    private function parse_page_content_for_async($page_id, $content_type, $source_lang) {
+        switch ($content_type) {
+            case AITRFOEL_Content_Detector::TYPE_CLASSIC: {
+                $post = get_post($page_id);
+                if (!$post || empty($post->post_content)) {
+                    return new WP_Error('no_content', __('No content found in this page.', 'ai-translator-for-elementor-and-polylang'));
+                }
+                $parser  = AITRFOEL_Classic_Parser::get_instance();
+                $map     = $parser->parse_for_translation($page_id);
+                if (empty($map)) {
+                    return new WP_Error('no_translatable_content', __('No translatable content found in this page.', 'ai-translator-for-elementor-and-polylang'));
+                }
+                $strings          = array_values($map);
+                $title_in_content = false;
+                foreach ($strings as $s) {
+                    if (trim(wp_strip_all_tags($s['original'] ?? '')) === trim($post->post_title)) {
+                        $title_in_content = true;
+                        break;
+                    }
+                }
+                if (!empty($post->post_title) && !$title_in_content) {
+                    $strings[] = ['original' => $post->post_title, 'path' => '__aitrfoel_post_title__', 'type' => 'title', 'widget_type' => 'classic_editor'];
+                }
+                $detected = $this->detect_source_language_from_content($strings, $source_lang, $page_id);
+                return [
+                    'strings'      => $strings,
+                    'detected_lang'=> $detected,
+                    'extra'        => [
+                        'post_title'       => $post->post_title,
+                        'post_content'     => $post->post_content,
+                        'title_in_content' => $title_in_content,
+                    ],
+                ];
+            }
+
+            case AITRFOEL_Content_Detector::TYPE_GUTENBERG: {
+                $post = get_post($page_id);
+                if (!$post || empty($post->post_content)) {
+                    return new WP_Error('no_content', __('No content found in this page.', 'ai-translator-for-elementor-and-polylang'));
+                }
+                $parser  = AITRFOEL_Gutenberg_Parser::get_instance();
+                $map     = $parser->parse_for_translation($page_id);
+                if (empty($map)) {
+                    return new WP_Error('no_translatable_content', __('No translatable content found in this page.', 'ai-translator-for-elementor-and-polylang'));
+                }
+                $strings          = array_values($map);
+                $title_in_content = false;
+                foreach ($strings as $s) {
+                    if (trim(wp_strip_all_tags($s['original'] ?? '')) === trim($post->post_title)) {
+                        $title_in_content = true;
+                        break;
+                    }
+                }
+                if (!empty($post->post_title) && !$title_in_content) {
+                    $strings[] = ['original' => $post->post_title, 'path' => '__aitrfoel_post_title__', 'type' => 'title', 'widget_type' => 'gutenberg'];
+                }
+                $detected = $this->detect_source_language_from_content($strings, $source_lang, $page_id);
+                return [
+                    'strings'      => $strings,
+                    'detected_lang'=> $detected,
+                    'extra'        => [
+                        'post_title'       => $post->post_title,
+                        'post_content'     => $post->post_content,
+                        'title_in_content' => $title_in_content,
+                    ],
+                ];
+            }
+
+            case AITRFOEL_Content_Detector::TYPE_WOOCOMMERCE: {
+                $post = get_post($page_id);
+                if (!$post) {
+                    return new WP_Error('no_content', __('Product not found.', 'ai-translator-for-elementor-and-polylang'));
+                }
+                $texts     = [];
+                $text_keys = [];
+                if (!empty($post->post_title))         { $texts[] = $post->post_title;   $text_keys[] = 'title'; }
+                if (!empty(trim($post->post_excerpt))) { $texts[] = $post->post_excerpt; $text_keys[] = 'excerpt'; }
+                if (!empty(trim($post->post_content))) { $texts[] = $post->post_content; $text_keys[] = 'content'; }
+                if (empty($texts)) {
+                    return new WP_Error('no_translatable_content', __('This product has no translatable content.', 'ai-translator-for-elementor-and-polylang'));
+                }
+                $strings = [];
+                foreach ($texts as $i => $t) {
+                    $strings[] = ['original' => $t, 'path' => $text_keys[$i], 'type' => 'text', 'widget_type' => 'woocommerce_product'];
+                }
+                $detected = $this->detect_source_language_from_content($strings, $source_lang, $page_id);
+                return [
+                    'strings'      => $strings,
+                    'detected_lang'=> $detected,
+                    'extra'        => ['texts' => $texts, 'text_keys' => $text_keys],
+                ];
+            }
+
+            default:
+                return new WP_Error('unsupported_content', __('Content type does not support async translation.', 'ai-translator-for-elementor-and-polylang'));
+        }
+    }
+
+    /**
+     * Apply a complete original→translated map to a page and create the translated copy.
+     * Called by poll_page_async() once all translations are available (and for the all-cached case).
+     *
+     * @param array $context       Context array stored by submit_page_async()
+     * @param array $translations_map Additional original→translated pairs (from proxy result)
+     * @return int|WP_Error new_page_id or WP_Error
+     */
+    private function apply_async_page($context, $translations_map) {
+        $page_id      = $context['page_id'];
+        $target_lang  = $context['target_lang'];
+        $source_lang  = $context['source_lang'];
+        $content_type = $context['content_type'];
+        $extra        = $context['extra'];
+        $start_time   = $context['start_time'] ?? microtime(true);
+        $strings      = $context['strings'];
+
+        // Merge cached hits + proxy results into one complete map
+        $full_map = array_merge($context['cached_map'] ?? [], $translations_map);
+
+        switch ($content_type) {
+            case AITRFOEL_Content_Detector::TYPE_CLASSIC: {
+                $parser             = AITRFOEL_Classic_Parser::get_instance();
+                $translated_content = $parser->apply_translations($extra['post_content'], $full_map);
+                $translated_title   = null;
+                if (!$extra['title_in_content'] && isset($full_map[$extra['post_title']])) {
+                    $translated_title = $full_map[$extra['post_title']];
+                } elseif ($extra['title_in_content']) {
+                    foreach ($strings as $s) {
+                        if (trim(wp_strip_all_tags($s['original'] ?? '')) === trim($extra['post_title'])
+                            && isset($full_map[$s['original']])) {
+                            $translated_title = wp_strip_all_tags($full_map[$s['original']]);
+                            break;
+                        }
+                    }
+                }
+                $new_page_id = $this->create_translated_page_generic($page_id, $translated_content, $target_lang, $source_lang, 'classic', $translated_title);
+                if (!is_wp_error($new_page_id)) {
+                    $this->track_translation_success($page_id, $new_page_id, $target_lang, $source_lang, $start_time, 'classic');
+                }
+                return $new_page_id;
+            }
+
+            case AITRFOEL_Content_Detector::TYPE_GUTENBERG: {
+                $parser             = AITRFOEL_Gutenberg_Parser::get_instance();
+                $translated_content = $parser->apply_translations($extra['post_content'], $full_map);
+                $translated_title   = null;
+                if (!$extra['title_in_content'] && isset($full_map[$extra['post_title']])) {
+                    $translated_title = $full_map[$extra['post_title']];
+                    unset($full_map[$extra['post_title']]);
+                } elseif ($extra['title_in_content']) {
+                    foreach ($strings as $s) {
+                        if (trim(wp_strip_all_tags($s['original'] ?? '')) === trim($extra['post_title'])
+                            && isset($full_map[$s['original']])) {
+                            $translated_title = wp_strip_all_tags($full_map[$s['original']]);
+                            break;
+                        }
+                    }
+                }
+                $new_page_id = $this->create_translated_page_generic($page_id, $translated_content, $target_lang, $source_lang, 'gutenberg', $translated_title);
+                if (!is_wp_error($new_page_id)) {
+                    $this->track_translation_success($page_id, $new_page_id, $target_lang, $source_lang, $start_time, 'gutenberg');
+                }
+                return $new_page_id;
+            }
+
+            case AITRFOEL_Content_Detector::TYPE_WOOCOMMERCE: {
+                $texts              = $extra['texts'];
+                $text_keys          = $extra['text_keys'];
+                $translated_title   = null;
+                $translated_excerpt = null;
+                $translated_content = null;
+                foreach ($texts as $i => $orig) {
+                    $tr = $full_map[$orig] ?? null;
+                    if (!$tr) continue;
+                    if ($text_keys[$i] === 'title')   { $translated_title   = $tr; }
+                    if ($text_keys[$i] === 'excerpt') { $translated_excerpt = $tr; }
+                    if ($text_keys[$i] === 'content') { $translated_content = $tr; }
+                }
+                if (!$translated_title) {
+                    $post = get_post($page_id);
+                    $translated_title = ($post->post_title ?? '') . ' (' . strtoupper($target_lang) . ')';
+                }
+                $new_page_id = $this->create_translated_page_generic($page_id, $translated_content ?: '', $target_lang, $source_lang, 'woocommerce', $translated_title);
+                if (!is_wp_error($new_page_id)) {
+                    if ($translated_excerpt) {
+                        wp_update_post(['ID' => $new_page_id, 'post_excerpt' => $translated_excerpt]);
+                    }
+                    $this->track_translation_success($page_id, $new_page_id, $target_lang, $source_lang, $start_time, 'woocommerce');
+                }
+                return $new_page_id;
+            }
+
+            default:
+                return new WP_Error('unsupported_content', __('Cannot apply translations: unsupported content type.', 'ai-translator-for-elementor-and-polylang'));
+        }
+    }
+
     /**
      * Translate Elementor page (original functionality preserved)
      * 

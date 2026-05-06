@@ -459,6 +459,104 @@ class AITRFOEL_OpenAI_API {
     }
 
     /**
+     * Submit a batch translation as an async job on the proxy server.
+     * Returns the proxy job ID string immediately (< 1 second), or WP_Error.
+     *
+     * @param array  $texts       Indexed array of plain-text strings to translate
+     * @param string $target_lang Target language code
+     * @param string $source_lang Source language code or 'auto'
+     * @return string|WP_Error Proxy job ID string, or WP_Error on failure
+     */
+    public function submit_batch_async($texts, $target_lang, $source_lang = 'auto') {
+        if (empty($texts)) {
+            return new WP_Error('empty_texts', 'No texts to submit for translation.');
+        }
+
+        static $lic_cache = null;
+        if ($lic_cache === null) {
+            $lic_cache = AITRFOEL_License_Manager::get_instance()->get_license_status();
+        }
+
+        $source_language = ($source_lang === 'auto') ? 'auto' : AITRFOEL_Language_Mapper::get_language_name($source_lang);
+        $target_language = AITRFOEL_Language_Mapper::get_language_name($target_lang);
+        $instructions    = AITRFOEL_Language_Mapper::get_language_specific_instructions($target_lang);
+        $general         = "CRITICAL: If a string is already in the target language or contains only numbers/symbols/short codes (e.g. 36K, 500+, 24/7, 100%, ★, →), return it EXACTLY as-is. NEVER add explanations. Output ONLY the translated text.";
+        $instructions    = !empty($instructions) ? $general . "\n" . $instructions : $general;
+
+        $response = wp_remote_post(self::MEEPTECH_TRANSLATE_ENDPOINT . '/async/submit', [
+            'method'  => 'POST',
+            'headers' => ['Content-Type' => 'application/json'],
+            'body'    => wp_json_encode([
+                'texts'                 => array_values($texts),
+                'source_language'       => $source_language,
+                'target_language'       => $target_language,
+                'target_lang_code'      => $target_lang,
+                'language_instructions' => $instructions,
+                'site_url'              => home_url(),
+                'plan'                  => $lic_cache['plan'],
+                'license_key'           => $lic_cache['license_key'],
+            ]),
+            'timeout' => 15, // submit only queues the job — should respond in < 5s
+        ]);
+
+        if (is_wp_error($response)) {
+            AITRFOEL_Logger::log('Async submit error: ' . $response->get_error_message(), 'error');
+            return $response;
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+
+        if ($code !== 200 || empty($data['job_id'])) {
+            $msg = $data['error'] ?? 'Async submit failed (HTTP ' . $code . ')';
+            AITRFOEL_Logger::log('Async submit failed: ' . $msg, 'error');
+            return new WP_Error('async_submit_failed', $msg);
+        }
+
+        AITRFOEL_Logger::log('Async job submitted: ' . $data['job_id'] . ' (' . count($texts) . ' strings, ' . $source_language . ' → ' . $target_language . ')', 'info');
+        return $data['job_id'];
+    }
+
+    /**
+     * Check status of an async translation job.
+     *
+     * @param string $job_id Proxy job ID returned by submit_batch_async()
+     * @return array|WP_Error Array {status: 'pending'|'processing'|'done'|'error', translations?: string[], error?: string}
+     */
+    public function get_async_job_status($job_id) {
+        static $lic_cache = null;
+        if ($lic_cache === null) {
+            $lic_cache = AITRFOEL_License_Manager::get_instance()->get_license_status();
+        }
+
+        $response = wp_remote_post(self::MEEPTECH_TRANSLATE_ENDPOINT . '/async/status', [
+            'method'  => 'POST',
+            'headers' => ['Content-Type' => 'application/json'],
+            'body'    => wp_json_encode([
+                'job_id'      => $job_id,
+                'license_key' => $lic_cache['license_key'],
+                'site_url'    => home_url(),
+            ]),
+            'timeout' => 10,
+        ]);
+
+        if (is_wp_error($response)) {
+            AITRFOEL_Logger::log('Async status error: ' . $response->get_error_message(), 'error');
+            return $response;
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+
+        if ($code !== 200 || !isset($data['status'])) {
+            $msg = $data['error'] ?? 'Status check failed (HTTP ' . $code . ')';
+            return new WP_Error('async_status_failed', $msg);
+        }
+
+        return $data; // {status, translations?, error?}
+    }
+
+    /**
      * Translate multiple texts via MeepTech server in batch
      */
     private function translate_batch_via_meeptech($texts, $target_lang, $source_lang = 'auto') {
@@ -621,7 +719,7 @@ class AITRFOEL_OpenAI_API {
      * @param string $translated Translated text from AI
      * @return string Clean translation or original if chatty detected
      */
-    private function sanitize_chatty_response($original, $translated) {
+    public function sanitize_chatty_response($original, $translated) {
         if (empty($original) || empty($translated)) {
             return $translated;
         }

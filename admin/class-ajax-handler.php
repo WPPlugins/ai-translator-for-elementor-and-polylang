@@ -29,6 +29,8 @@ class AITRFOEL_Ajax_Handler {
         add_action('wp_ajax_aitrfoel_pre_analyze_bulk', [$this, 'handle_pre_analyze_bulk']); // NEW: Pre-flight analysis
         add_action('wp_ajax_aitrfoel_start_bulk_translation', [$this, 'handle_start_bulk_translation']);
         add_action('wp_ajax_aitrfoel_process_bulk_item', [$this, 'handle_process_bulk_item']); // Per-item processing (avoids 504)
+        add_action('wp_ajax_aitrfoel_submit_bulk_item',   [$this, 'handle_submit_bulk_item']);   // Async Phase 1: parse + enqueue on proxy
+        add_action('wp_ajax_aitrfoel_poll_bulk_item',     [$this, 'handle_poll_bulk_item']);     // Async Phase 2: check proxy + apply
         add_action('wp_ajax_aitrfoel_get_translation_status', [$this, 'handle_get_translation_status']);
         add_action('wp_ajax_aitrfoel_pause_translation', [$this, 'handle_pause_translation']);
         add_action('wp_ajax_aitrfoel_resume_translation', [$this, 'handle_resume_translation']);
@@ -1176,6 +1178,10 @@ class AITRFOEL_Ajax_Handler {
      * in one long-running request.
      */
     public function handle_process_bulk_item() {
+        // Match PHP execution limit to the wp_remote_post OpenAI timeout (300s) so PHP can't die before the HTTP call does.
+        // @ suppresses the warning on hosts where set_time_limit is in disable_functions (same pattern as WP core wp-cron.php).
+        @set_time_limit(300);
+
         try {
             check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
 
@@ -1343,6 +1349,147 @@ class AITRFOEL_Ajax_Handler {
 
         } catch (Throwable $e) {
             AITRFOEL_Logger::log('process_bulk_item fatal: ' . $e->getMessage(), 'error');
+            wp_send_json_error(['message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Async Phase 1: Parse page, check word limit, submit uncached strings to proxy.
+     * Returns a proxy_job_id immediately (< 2 s) so the PHP request never blocks on OpenAI.
+     * Falls back to synchronous translation for Elementor pages or if the proxy async
+     * endpoint is not yet deployed.
+     */
+    public function handle_submit_bulk_item() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+
+            if (!current_user_can('edit_pages')) {
+                throw new Exception(__('You do not have permission to perform this action.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            $page_id     = intval(             $_POST['page_id']        ?? 0);
+            $target_lang = sanitize_text_field($_POST['target_lang']    ?? '');
+            $source_lang = sanitize_text_field($_POST['source_language'] ?? 'auto');
+            $item_index  = intval(             $_POST['item_index']     ?? 0);
+            $total_items = max(1, intval(      $_POST['total_items']    ?? 1));
+
+            if (!$page_id || !$target_lang) {
+                throw new Exception(__('Missing required parameters.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            $engine       = AITRFOEL_Translation_Engine::get_instance();
+            $proxy_job_id = $engine->submit_page_async($page_id, $target_lang, $source_lang);
+
+            // 'sync_required' = Elementor; WP_Error = async endpoint not yet live on proxy
+            // Both cases: fall through to synchronous path
+            if ($proxy_job_id === 'sync_required' || is_wp_error($proxy_job_id)) {
+                if (is_wp_error($proxy_job_id)) {
+                    AITRFOEL_Logger::log('Async submit fell back to sync: ' . $proxy_job_id->get_error_message(), 'info');
+                }
+                @set_time_limit(300);
+                $new_page_id = $engine->translate_page($page_id, $target_lang, $source_lang);
+                if (is_wp_error($new_page_id)) {
+                    $code = $new_page_id->get_error_code();
+                    if (in_array($code, ['insufficient_words', 'cooldown_active'], true)) {
+                        wp_send_json_success(['status' => 'limit_reached', 'message' => $new_page_id->get_error_message(), 'item_index' => $item_index, 'total' => $total_items]);
+                        return;
+                    }
+                    wp_send_json_success(['status' => 'item_error', 'error' => $new_page_id->get_error_message(), 'item_index' => $item_index, 'total' => $total_items]);
+                    return;
+                }
+                wp_send_json_success([
+                    'status'          => 'sync_done',
+                    'new_page_id'     => $new_page_id,
+                    'source_page_id'  => $page_id,
+                    'target_language' => $target_lang,
+                    'item_index'      => $item_index,
+                    'total'           => $total_items,
+                ]);
+                return;
+            }
+
+            // 'cache_hit:{key}' — all strings were cached; page already created synchronously
+            if (strpos($proxy_job_id, 'cache_hit:') === 0) {
+                $transient_key = substr($proxy_job_id, strlen('cache_hit:'));
+                $new_page_id   = get_transient($transient_key);
+                delete_transient($transient_key);
+                wp_send_json_success([
+                    'status'          => 'sync_done',
+                    'new_page_id'     => $new_page_id ?: 0,
+                    'source_page_id'  => $page_id,
+                    'target_language' => $target_lang,
+                    'item_index'      => $item_index,
+                    'total'           => $total_items,
+                ]);
+                return;
+            }
+
+            // Normal async path — job enqueued on proxy
+            wp_send_json_success([
+                'status'       => 'submitted',
+                'proxy_job_id' => $proxy_job_id,
+                'page_id'      => $page_id,
+                'target_lang'  => $target_lang,
+                'item_index'   => $item_index,
+                'total'        => $total_items,
+            ]);
+
+        } catch (Throwable $e) {
+            AITRFOEL_Logger::log('submit_bulk_item error: ' . $e->getMessage(), 'error');
+            wp_send_json_error(['message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Async Phase 2: Check proxy job status; apply translations and create page when done.
+     */
+    public function handle_poll_bulk_item() {
+        try {
+            check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+
+            if (!current_user_can('edit_pages')) {
+                throw new Exception(__('You do not have permission to perform this action.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            $proxy_job_id = sanitize_text_field($_POST['proxy_job_id'] ?? '');
+            $page_id      = intval(             $_POST['page_id']       ?? 0);
+            $target_lang  = sanitize_text_field($_POST['target_lang']   ?? '');
+            $item_index   = intval(             $_POST['item_index']    ?? 0);
+            $total_items  = max(1, intval(      $_POST['total_items']   ?? 1));
+
+            if (!$proxy_job_id) {
+                throw new Exception(__('Missing proxy_job_id.', 'ai-translator-for-elementor-and-polylang'));
+            }
+
+            $engine = AITRFOEL_Translation_Engine::get_instance();
+            $result = $engine->poll_page_async($proxy_job_id);
+
+            if ($result === 'pending') {
+                wp_send_json_success(['status' => 'pending', 'proxy_job_id' => $proxy_job_id]);
+                return;
+            }
+
+            if (is_wp_error($result)) {
+                $code = $result->get_error_code();
+                if (in_array($code, ['insufficient_words', 'cooldown_active'], true)) {
+                    wp_send_json_success(['status' => 'limit_reached', 'error' => $result->get_error_message()]);
+                    return;
+                }
+                wp_send_json_success(['status' => 'item_error', 'error' => $result->get_error_message(), 'item_index' => $item_index, 'total' => $total_items]);
+                return;
+            }
+
+            wp_send_json_success([
+                'status'          => 'done',
+                'new_page_id'     => $result,
+                'source_page_id'  => $page_id,
+                'target_language' => $target_lang,
+                'item_index'      => $item_index,
+                'total'           => $total_items,
+            ]);
+
+        } catch (Throwable $e) {
+            AITRFOEL_Logger::log('poll_bulk_item error: ' . $e->getMessage(), 'error');
             wp_send_json_error(['message' => $e->getMessage()]);
         }
     }

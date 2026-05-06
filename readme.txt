@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.5.3
+Stable tag: 1.5.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,9 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.5.4 =
+* Fixed: Admin users can now preview draft translated pages directly — visiting a draft translation no longer redirects to the source-language published page
+
 = 1.5.3 =
 * Fixed: Bulk translation no longer times out with 504 Gateway Error on classic WordPress pages/posts — each language is now translated in its own short AJAX request instead of one long-running PHP request
 

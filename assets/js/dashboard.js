@@ -1639,58 +1639,161 @@ jQuery(document).ready(function($) {
             self.updateAnimatedProgress('Translating ' + (index + 1) + ' / ' + total);
             self.saveActiveTranslation(jobId, Math.round((index / total) * 100));
 
+            // Phase 1: submit item for async translation (fast, < 5 s)
+            // Falls back to synchronous processing for Elementor pages or
+            // when the proxy async endpoint is not yet deployed.
             $.ajax({
                 url:     aitrfoelDashboard.ajax_url,
                 type:    'POST',
-                timeout: 180000, // 3 min hard cap per item (generous for large classic pages)
+                timeout: 60000, // 60 s — submit is parse + enqueue, should be fast
                 data: {
-                    action:           'aitrfoel_process_bulk_item',
-                    nonce:            aitrfoelDashboard.nonce,
-                    job_id:           jobId,
-                    page_id:          item.page_id,
-                    target_lang:      item.lang,
-                    item_index:       index,
-                    total_items:      total,
-                    completed_so_far: completedCount,
-                    error_count:      errorCount,
-                    source_language:  sourceLang || 'auto',
+                    action:          'aitrfoel_submit_bulk_item',
+                    nonce:           aitrfoelDashboard.nonce,
+                    job_id:          jobId,
+                    page_id:         item.page_id,
+                    target_lang:     item.lang,
+                    item_index:      index,
+                    total_items:     total,
+                    source_language: sourceLang || 'auto',
                 },
                 success: function(response) {
                     if (!response.success) {
-                        // Fatal per-item error (auth, missing params) — skip and continue
+                        console.warn('aitrfoel: submit item ' + index + ' server error, skipping');
                         self.processQueueItems(jobId, items, index + 1, completedCount, errorCount + 1, sourceLang);
                         return;
                     }
 
-                    const data = response.data;
+                    const d = response.data;
 
-                    if (data.status === 'limit_reached') {
+                    if (d.status === 'limit_reached') {
                         self.stopAnimatedProgress();
                         self.clearActiveTranslation();
                         self.handleTranslationError({
                             type:       'limit_reached_during_process',
-                            message:    data.message || 'Word limit reached.',
-                            error_info: { completed_jobs: data.completed, total_jobs: total },
+                            message:    d.message || 'Word limit reached.',
+                            error_info: { completed_jobs: completedCount, total_jobs: total },
                         });
                         self.resetTranslationUI();
                         return;
                     }
 
-                    const newCompleted = (data.completed !== undefined) ? data.completed : completedCount + (data.status === 'ok' ? 1 : 0);
-                    const newErrors    = (data.error_count !== undefined) ? data.error_count : errorCount + (data.status === 'item_error' ? 1 : 0);
-
-                    if (data.source_page_id && data.target_language) {
-                        self.highlightCompletedTranslation(data.source_page_id, data.target_language);
+                    if (d.status === 'item_error') {
+                        console.warn('aitrfoel: submit item ' + index + ' error: ' + d.error);
+                        self.processQueueItems(jobId, items, index + 1, completedCount, errorCount + 1, sourceLang);
+                        return;
                     }
 
-                    self.processQueueItems(jobId, items, index + 1, newCompleted, newErrors, sourceLang);
+                    // 'sync_done' = Elementor (inline placeholder processing) or all-cached
+                    if (d.status === 'sync_done') {
+                        if (d.source_page_id && d.target_language) {
+                            self.highlightCompletedTranslation(d.source_page_id, d.target_language);
+                        }
+                        self.processQueueItems(jobId, items, index + 1, completedCount + 1, errorCount, sourceLang);
+                        return;
+                    }
+
+                    // 'submitted' = job is enqueued on proxy; start polling
+                    if (d.status === 'submitted') {
+                        self.pollBulkItem(jobId, items, index, completedCount, errorCount, sourceLang, d.proxy_job_id, 0, 0);
+                        return;
+                    }
+
+                    // Unknown status — skip
+                    self.processQueueItems(jobId, items, index + 1, completedCount, errorCount + 1, sourceLang);
                 },
                 error: function(xhr) {
-                    // 504 or network error — log, skip item, keep going
-                    console.warn('aitrfoel: item ' + index + ' failed (HTTP ' + xhr.status + '), skipping');
+                    console.warn('aitrfoel: submit item ' + index + ' failed (HTTP ' + xhr.status + '), skipping');
                     self.processQueueItems(jobId, items, index + 1, completedCount, errorCount + 1, sourceLang);
                 },
             });
+        },
+
+        // Poll the proxy for async job completion.
+        // pollCount  = number of polls fired so far (max 72 = 6 min)
+        // httpErrors = consecutive HTTP-level errors (max 3 before skipping)
+        pollBulkItem: function(jobId, items, index, completedCount, errorCount, sourceLang, proxyJobId, pollCount, httpErrors) {
+            const self          = this;
+            const total         = items.length;
+            const MAX_POLLS     = 72;   // 72 × 5 s = 6 min max wait per item
+            const POLL_MS       = 5000;
+            const MAX_HTTP_ERR  = 3;
+
+            if (pollCount >= MAX_POLLS) {
+                console.warn('aitrfoel: item ' + index + ' polling timed out, skipping');
+                self.processQueueItems(jobId, items, index + 1, completedCount, errorCount + 1, sourceLang);
+                return;
+            }
+
+            setTimeout(function() {
+                $.ajax({
+                    url:     aitrfoelDashboard.ajax_url,
+                    type:    'POST',
+                    timeout: 15000,
+                    data: {
+                        action:       'aitrfoel_poll_bulk_item',
+                        nonce:        aitrfoelDashboard.nonce,
+                        proxy_job_id: proxyJobId,
+                        page_id:      items[index].page_id,
+                        target_lang:  items[index].lang,
+                        item_index:   index,
+                        total_items:  total,
+                    },
+                    success: function(response) {
+                        if (!response.success) {
+                            console.warn('aitrfoel: poll item ' + index + ' server error, skipping');
+                            self.processQueueItems(jobId, items, index + 1, completedCount, errorCount + 1, sourceLang);
+                            return;
+                        }
+
+                        const d = response.data;
+
+                        if (d.status === 'pending') {
+                            self.pollBulkItem(jobId, items, index, completedCount, errorCount, sourceLang, proxyJobId, pollCount + 1, 0);
+                            return;
+                        }
+
+                        if (d.status === 'limit_reached') {
+                            self.stopAnimatedProgress();
+                            self.clearActiveTranslation();
+                            self.handleTranslationError({
+                                type:       'limit_reached_during_process',
+                                message:    d.error || 'Word limit reached.',
+                                error_info: { completed_jobs: completedCount, total_jobs: total },
+                            });
+                            self.resetTranslationUI();
+                            return;
+                        }
+
+                        if (d.status === 'item_error') {
+                            console.warn('aitrfoel: poll item ' + index + ' error: ' + d.error);
+                            self.processQueueItems(jobId, items, index + 1, completedCount, errorCount + 1, sourceLang);
+                            return;
+                        }
+
+                        if (d.status === 'done') {
+                            if (d.source_page_id && d.target_language) {
+                                self.highlightCompletedTranslation(d.source_page_id, d.target_language);
+                            }
+                            self.processQueueItems(jobId, items, index + 1, completedCount + 1, errorCount, sourceLang);
+                            return;
+                        }
+
+                        // Unknown — skip
+                        self.processQueueItems(jobId, items, index + 1, completedCount, errorCount + 1, sourceLang);
+                    },
+                    error: function(xhr) {
+                        const newErrors = httpErrors + 1;
+                        if (newErrors < MAX_HTTP_ERR) {
+                            // Transient network error — retry without burning a full pollCount
+                            console.warn('aitrfoel: poll item ' + index + ' HTTP ' + xhr.status + ', retrying (' + newErrors + ')');
+                            self.pollBulkItem(jobId, items, index, completedCount, errorCount, sourceLang, proxyJobId, pollCount + 1, newErrors);
+                        } else {
+                            console.warn('aitrfoel: poll item ' + index + ' exceeded HTTP error limit, skipping');
+                            self.processQueueItems(jobId, items, index + 1, completedCount, errorCount + 1, sourceLang);
+                        }
+                    },
+                });
+            }, POLL_MS);
         },
 
         showTranslationComplete: function(status) {

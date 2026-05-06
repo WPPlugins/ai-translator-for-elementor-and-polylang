@@ -2955,12 +2955,15 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         $post_lang   = $this->get_post_language($post_id);
         $post_status = get_post_status($post_id);
         
-        // Only redirect if the post truly belongs to a different language.
-        // Draft/pending posts accessed by admins via direct page_id should not redirect —
-        // the admin needs to view their newly created draft translation.
-        $is_admin_preview = current_user_can( 'edit_posts' ) && isset( $_GET['page_id'] );
+        // Logged-in editors/admins must never be redirected away from their own draft translations.
+        // They need to be able to preview newly created drafts via ?p=ID, ?page_id=ID, or pretty permalink.
+        if (current_user_can('edit_posts')) {
+            return;
+        }
+        
+        // Only redirect if the post truly belongs to a different language or is not published.
         $needs_redirect = ( $post_lang !== $current_lang ) ||
-                          ( ! $is_admin_preview && $post_lang === $current_lang && $post_status !== 'publish' );
+                          ( $post_lang === $current_lang && $post_status !== 'publish' );
         
         if (!$needs_redirect) {
             return;
