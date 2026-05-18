@@ -1982,32 +1982,57 @@ class AITRFOEL_Admin_Menu {
             }
             
             // Find the source page - proper logic for parent determination
+            // Priority 1: The post that is the TRUE original — i.e. the one that was NOT
+            //   created by our plugin as a translation (has no _aitrfoel_source_page meta
+            //   pointing to a different post). This correctly handles sites where the admin
+            //   creates content in a non-default language (e.g. FR) and then translates to EN:
+            //   the EN translation has _aitrfoel_source_page → FR, so FR is the true source.
+            // Priority 2: Default language version (fallback for Polylang/WPML-managed groups
+            //   where no _aitrfoel_source_page meta is set on any member).
+            // Priority 3: Current page in default language.
+            // Priority 4: Oldest page in the group.
             $source_page = null;
-            
-            // First priority: default language version
-            if (isset($translations[$default_lang])) {
-                $source_page = get_post($translations[$default_lang]);
-            }
-            // Second priority: current page if it's in default language
-            else if ($page_lang === $default_lang) {
-                $source_page = $page;
-            }
-            // Third priority: find the "original" page (usually the first created one)
-            else {
-                // Get the oldest page in the translation group
-                $oldest_page = $page;
-                $oldest_date = $page->post_date;
-                
-                foreach ($translations as $lang_code => $post_id) {
-                    if ($post_id) {
-                        $translation_post = get_post($post_id);
-                        if ($translation_post && $translation_post->post_date < $oldest_date) {
-                            $oldest_page = $translation_post;
-                            $oldest_date = $translation_post->post_date;
-                        }
+
+            // Build candidate list: current page first, then translation members
+            $candidate_ids = array_unique(array_merge(
+                [$page->ID],
+                array_values(array_filter((array) $translations))
+            ));
+
+            foreach ($candidate_ids as $cid) {
+                $cmeta = get_post_meta($cid, '_aitrfoel_source_page', true);
+                // No source meta (or meta points to itself) → this is the true original
+                if (!$cmeta || (int) $cmeta === $cid) {
+                    $cpost = ($cid === $page->ID) ? $page : get_post($cid);
+                    if ($cpost && $cpost->post_status !== 'trash') {
+                        $source_page = $cpost;
+                        break;
                     }
                 }
-                $source_page = $oldest_page;
+            }
+
+            // Fallback: default language version
+            if (!$source_page) {
+                if (isset($translations[$default_lang])) {
+                    $source_page = get_post($translations[$default_lang]);
+                } elseif ($page_lang === $default_lang) {
+                    $source_page = $page;
+                } else {
+                    // Final fallback: oldest page in the translation group
+                    $oldest_page = $page;
+                    $oldest_date = $page->post_date;
+
+                    foreach ($translations as $lang_code => $post_id) {
+                        if ($post_id) {
+                            $translation_post = get_post($post_id);
+                            if ($translation_post && $translation_post->post_date < $oldest_date) {
+                                $oldest_page = $translation_post;
+                                $oldest_date = $translation_post->post_date;
+                            }
+                        }
+                    }
+                    $source_page = $oldest_page;
+                }
             }
 
             if ($source_page) {

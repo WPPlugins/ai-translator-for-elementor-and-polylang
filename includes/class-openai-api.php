@@ -848,7 +848,7 @@ CRITICAL TRANSLATION RULES:
         }
         
         $exclude_list = implode(', ', $exclude_words);
-        $exclusion_text = "\n\nEXCLUSION RULES: Do NOT translate these specific words/terms: {$exclude_list}. Keep them exactly as they appear in the original text, maintaining their original language and capitalization.";
+        $exclusion_text = "\n\nBRAND PROTECTION — CRITICAL: The following are proprietary BRAND NAMES that must NEVER be translated, modified, or altered in any way: {$exclude_list}. Even if a term looks like a common word or phrase in the source language (for example 'LaVie', 'LaRoche', 'LeChat'), it is a brand name and must be output verbatim and unchanged. This rule overrides all other translation rules.";
         
         return $exclusion_text;
     }
