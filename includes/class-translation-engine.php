@@ -10,9 +10,9 @@ class AITRFOEL_Translation_Engine {
     private static $instance = null;
     
     /**
-     * Batch size for API calls — larger batches = fewer round trips = faster
+     * Batch size for API calls — smaller batches = more frequent time-budget checks = reliable partial saves
      */
-    private $batch_size = 100;
+    private $batch_size = 20;
     
     /**
      * Rate limit delay (milliseconds) - only used for fallback individual calls
@@ -42,7 +42,7 @@ class AITRFOEL_Translation_Engine {
     }
 
     private function __construct() {
-        $this->batch_size = get_option('aitrfoel_batch_size', 100);
+        $this->batch_size = get_option('aitrfoel_batch_size', 20);
         $this->cache_enabled = (bool) get_option('aitrfoel_cache_enabled', true);
     }
 
@@ -778,7 +778,7 @@ class AITRFOEL_Translation_Engine {
         // PHP can run for 20+ minutes on a huge page and be killed with nothing saved.
         // We cap each call at 200 s, save whatever was translated, and return 'partial' so
         // the caller retries — the retry is fast because all strings are now in cache.
-        $budget_seconds = (int) apply_filters('aitrfoel_translate_time_budget', 200);
+        $budget_seconds = (int) apply_filters('aitrfoel_translate_time_budget', 120);
         $budget_start   = microtime(true);
         $timed_out      = false;
 

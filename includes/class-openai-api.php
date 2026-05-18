@@ -226,7 +226,7 @@ class AITRFOEL_OpenAI_API {
                 'Content-Type' => 'application/json',
             ],
             'body' => json_encode($body),
-            'timeout' => 300,
+            'timeout' => 60,
         ];
         
         $response = wp_remote_post(self::MEEPTECH_TRANSLATE_ENDPOINT, $args);
@@ -386,7 +386,7 @@ class AITRFOEL_OpenAI_API {
                 'headers' => $headers,
                 'data' => json_encode($body),
                 'type' => 'POST',
-                'options' => ['timeout' => 300],
+                'options' => ['timeout' => 60],
             ];
         }
 
@@ -617,7 +617,7 @@ class AITRFOEL_OpenAI_API {
             'method' => 'POST',
             'headers' => ['Content-Type' => 'application/json'],
             'body' => json_encode($body),
-            'timeout' => 300,
+            'timeout' => 60,
         ];
         
         $response = wp_remote_post(self::MEEPTECH_TRANSLATE_ENDPOINT . '/batch', $args);
