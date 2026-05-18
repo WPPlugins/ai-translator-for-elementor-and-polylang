@@ -4,11 +4,11 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.5.6
+Stable tag: 1.5.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI translation for Elementor & WooCommerce — layout stays pixel-perfect. Built-in multilingual system. No Polylang or WPML needed.
+AI translation for Elementor & WooCommerce — layout stays pixel-perfect. Built-in multilingual system. Polylang or WPML supported.
 
 == Description ==
 
@@ -104,6 +104,11 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.5.7 =
+* Fixed: Very large Elementor pages (e.g. Terms & Conditions with 1000+ strings) now always produce a translated page — a 200-second time budget creates a partial save mid-batch, and automatic retries complete the translation quickly from cache
+* Fixed: Translation history is now recorded immediately after page creation, so it is never lost if post-processing (analytics, usage reporting) fails
+* Improved: Publish pipeline now requires explicit confirmation before each deployment step (WordPress.org SVN and Freemius)
+
 = 1.5.6 =
 * Fixed: Large Elementor pages (e.g. Terms & Conditions) no longer silently fail during bulk translation — the sync fallback now uses a dedicated handler with a 6-minute XHR timeout matching the PHP execution time limit
 * Fixed: Single-page translation handler now keeps working even if the browser disconnects mid-request (PHP ignore_user_abort)

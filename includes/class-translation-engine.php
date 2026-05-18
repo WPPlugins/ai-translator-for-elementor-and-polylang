@@ -773,7 +773,15 @@ class AITRFOEL_Translation_Engine {
                 ];
             }
         }
-        
+
+        // Self-imposed time budget per AJAX call.  If the host has disabled set_time_limit,
+        // PHP can run for 20+ minutes on a huge page and be killed with nothing saved.
+        // We cap each call at 200 s, save whatever was translated, and return 'partial' so
+        // the caller retries — the retry is fast because all strings are now in cache.
+        $budget_seconds = (int) apply_filters('aitrfoel_translate_time_budget', 200);
+        $budget_start   = microtime(true);
+        $timed_out      = false;
+
         // Process uncached strings in batches
         if (!empty($uncached_items)) {
             $cache_elapsed = round((microtime(true) - $batch_start_time) * 1000);
@@ -962,6 +970,19 @@ class AITRFOEL_Translation_Engine {
                     'info',
                     $page_id
                 );
+
+                // Time-budget check: break early so create_translated_page() still runs
+                // and the partial result is saved to the DB before PHP is killed.
+                if ((microtime(true) - $budget_start) >= $budget_seconds) {
+                    $timed_out = true;
+                    AITRFOEL_Logger::log(
+                        sprintf('[TIMING] Time budget of %ds reached after batch %d (%d/%d strings done). Saving partial page.',
+                            $budget_seconds, $batch_index, $processed, $total_strings),
+                        'warning',
+                        $page_id
+                    );
+                    break;
+                }
             }
         }
         
@@ -1155,7 +1176,8 @@ class AITRFOEL_Translation_Engine {
         }));
 
         // Gap-Filler second pass: fix missed/under-translated strings before applying
-        if (class_exists('AITRFOEL_Gap_Filler')) {
+        // Skip on a timed-out pass to preserve the time budget; the retry call will run it.
+        if (class_exists('AITRFOEL_Gap_Filler') && !$timed_out) {
             // Prepare minimal strings format expected by gap-filler
             $strings = $strings_to_translate;
             // Inject group_key heuristically (prefix path up to .settings)
@@ -1273,7 +1295,36 @@ class AITRFOEL_Translation_Engine {
             );
             return $new_page_id;
         }
-        
+
+        // Record history immediately after page creation — before usage/analytics which can fail.
+        // Status is 'partial' when we ran out of time mid-batch; the retry (fast from cache)
+        // will overwrite with 'success'.
+        $translation_duration = microtime(true) - $translation_start_time;
+        if (class_exists('AITRFOEL_Translation_History')) {
+            AITRFOEL_Translation_History::record([
+                'original_post_id'   => $page_id,
+                'translated_post_id' => $new_page_id,
+                'source_lang'        => $detected_lang,
+                'target_lang'        => $target_lang,
+                'content_type'       => 'elementor',
+                'word_count'         => $this->last_translation_stats['word_count'] ?? 0,
+                'status'             => $timed_out ? 'partial' : 'success',
+                'duration'           => round($translation_duration, 2),
+            ]);
+        }
+
+        // Tag partial pages so the AJAX handler can trigger an automatic retry.
+        if ($timed_out) {
+            update_post_meta($new_page_id, '_aitrfoel_partial_translation', 1);
+            AITRFOEL_Logger::log(
+                sprintf('Page %d partially translated — retry will complete it from cache.', $new_page_id),
+                'warning',
+                $page_id
+            );
+        } else {
+            delete_post_meta($new_page_id, '_aitrfoel_partial_translation');
+        }
+
         // Log success
         AITRFOEL_Logger::log(
             sprintf('Successfully translated page %d to %s. New page ID: %d', $page_id, $target_lang, $new_page_id),
@@ -1353,21 +1404,8 @@ class AITRFOEL_Translation_Engine {
             ]);
         }
         
-        // Record in translation history
-        $translation_duration = microtime(true) - $translation_start_time;
-        if (class_exists('AITRFOEL_Translation_History')) {
-            AITRFOEL_Translation_History::record([
-                'original_post_id'   => $page_id,
-                'translated_post_id' => $new_page_id,
-                'source_lang'        => $detected_lang,
-                'target_lang'        => $target_lang,
-                'content_type'       => 'elementor',
-                'word_count'         => $this->last_translation_stats['word_count'] ?? 0,
-                'status'             => 'success',
-                'duration'           => round($translation_duration, 2),
-            ]);
-        }
-        
+        // Record in translation history — already done above, right after page creation.
+
         return $new_page_id;
     }
     

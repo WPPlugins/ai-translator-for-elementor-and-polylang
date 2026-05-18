@@ -1806,7 +1806,9 @@ jQuery(document).ready(function($) {
         // Long-timeout handler for Elementor pages that cannot use the 60 s async-submit path.
         // Calls aitrfoel_process_bulk_item directly with a 360 s XHR timeout to match the
         // PHP set_time_limit(300) already in place on that handler.
-        submitSyncItem: function(jobId, items, index, completedCount, errorCount, sourceLang) {
+        submitSyncItem: function(jobId, items, index, completedCount, errorCount, sourceLang, retryCount) {
+            const MAX_RETRIES = 5;
+            if (retryCount === undefined) { retryCount = 0; }
             const self  = this;
             const item  = items[index];
             const total = items.length;
@@ -1858,6 +1860,16 @@ jQuery(document).ready(function($) {
                     if (d.source_page_id && d.target_language) {
                         self.highlightCompletedTranslation(d.source_page_id, d.target_language);
                     }
+
+                    // If the server hit the time budget, the page was partially translated.
+                    // Retry immediately — subsequent calls are fast because strings are cached.
+                    if (d.partial && retryCount < MAX_RETRIES) {
+                        console.log('aitrfoel: item ' + index + ' partial, retrying (' + (retryCount + 1) + '/' + MAX_RETRIES + ')');
+                        self.updateAnimatedProgress('Completing large page translation (pass ' + (retryCount + 2) + ')...');
+                        self.submitSyncItem(jobId, items, index, completedCount, errorCount, sourceLang, retryCount + 1);
+                        return;
+                    }
+
                     self.processQueueItems(jobId, items, index + 1, completedCount + 1, errorCount, sourceLang);
                 },
                 error: function(xhr) {

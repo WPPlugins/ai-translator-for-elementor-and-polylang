@@ -1302,6 +1302,7 @@ class AITRFOEL_Ajax_Handler {
 
                 // Success
                 $completed_so_far++;
+                $is_partial = (bool) get_post_meta($new_page_id, '_aitrfoel_partial_translation', true);
                 $queue->update_job($job_id, [
                     'progress'           => round((($item_index + 1) / $total_items) * 100),
                     'current_step'       => "Completed: {$page_title}",
@@ -1328,6 +1329,7 @@ class AITRFOEL_Ajax_Handler {
                     'item_index'      => $item_index,
                     'total'           => $total_items,
                     'is_last'         => $is_last,
+                    'partial'         => $is_partial,
                 ]);
 
             } catch (Throwable $e) {
