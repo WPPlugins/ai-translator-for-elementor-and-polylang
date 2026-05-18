@@ -1698,6 +1698,13 @@ jQuery(document).ready(function($) {
                         return;
                     }
 
+                    // 'use_sync_handler' = Elementor page; 60 s submit timeout is too short.
+                    // Delegate to aitrfoel_process_bulk_item which waits up to 360 s.
+                    if (d.status === 'use_sync_handler') {
+                        self.submitSyncItem(jobId, items, index, completedCount, errorCount, sourceLang);
+                        return;
+                    }
+
                     // Unknown status — skip
                     self.processQueueItems(jobId, items, index + 1, completedCount, errorCount + 1, sourceLang);
                 },
@@ -1794,6 +1801,70 @@ jQuery(document).ready(function($) {
                     },
                 });
             }, POLL_MS);
+        },
+
+        // Long-timeout handler for Elementor pages that cannot use the 60 s async-submit path.
+        // Calls aitrfoel_process_bulk_item directly with a 360 s XHR timeout to match the
+        // PHP set_time_limit(300) already in place on that handler.
+        submitSyncItem: function(jobId, items, index, completedCount, errorCount, sourceLang) {
+            const self  = this;
+            const item  = items[index];
+            const total = items.length;
+
+            $.ajax({
+                url:     aitrfoelDashboard.ajax_url,
+                type:    'POST',
+                timeout: 360000, // 6 min — large Elementor pages can take up to 5 min
+                data: {
+                    action:           'aitrfoel_process_bulk_item',
+                    nonce:            aitrfoelDashboard.nonce,
+                    job_id:           jobId,
+                    page_id:          item.page_id,
+                    target_lang:      item.lang,
+                    item_index:       index,
+                    total_items:      total,
+                    completed_so_far: completedCount,
+                    error_count:      errorCount,
+                    source_language:  sourceLang || 'auto',
+                },
+                success: function(response) {
+                    if (!response.success) {
+                        console.warn('aitrfoel: sync item ' + index + ' server error, skipping');
+                        self.processQueueItems(jobId, items, index + 1, completedCount, errorCount + 1, sourceLang);
+                        return;
+                    }
+
+                    const d = response.data;
+
+                    if (d.status === 'limit_reached') {
+                        self.stopAnimatedProgress();
+                        self.clearActiveTranslation();
+                        self.handleTranslationError({
+                            type:       'limit_reached_during_process',
+                            message:    d.message || 'Word limit reached.',
+                            error_info: { completed_jobs: completedCount, total_jobs: total },
+                        });
+                        self.resetTranslationUI();
+                        return;
+                    }
+
+                    if (d.status === 'item_error') {
+                        console.warn('aitrfoel: sync item ' + index + ' error: ' + d.error);
+                        self.processQueueItems(jobId, items, index + 1, completedCount, errorCount + 1, sourceLang);
+                        return;
+                    }
+
+                    // 'ok' = success
+                    if (d.source_page_id && d.target_language) {
+                        self.highlightCompletedTranslation(d.source_page_id, d.target_language);
+                    }
+                    self.processQueueItems(jobId, items, index + 1, completedCount + 1, errorCount, sourceLang);
+                },
+                error: function(xhr) {
+                    console.warn('aitrfoel: sync item ' + index + ' failed (HTTP ' + xhr.status + '), skipping');
+                    self.processQueueItems(jobId, items, index + 1, completedCount, errorCount + 1, sourceLang);
+                },
+            });
         },
 
         showTranslationComplete: function(status) {

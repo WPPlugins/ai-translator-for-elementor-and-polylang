@@ -254,6 +254,13 @@ class AITRFOEL_Ajax_Handler {
      * Translate page with enhanced error handling
      */
     public function translate_page() {
+        // Extend PHP execution limit to match the MeepTech API timeout so large pages
+        // do not get killed by the server's default max_execution_time (commonly 30s).
+        // @ suppresses the warning on hosts where set_time_limit is in disable_functions.
+        @set_time_limit(300);
+        // Ensure PHP finishes writing the translation even if the browser disconnects before the response.
+        ignore_user_abort(true);
+
         try {
             check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
             
@@ -1181,6 +1188,8 @@ class AITRFOEL_Ajax_Handler {
         // Match PHP execution limit to the wp_remote_post OpenAI timeout (300s) so PHP can't die before the HTTP call does.
         // @ suppresses the warning on hosts where set_time_limit is in disable_functions (same pattern as WP core wp-cron.php).
         @set_time_limit(300);
+        // Ensure PHP finishes writing the translation even if the browser disconnects before the response.
+        ignore_user_abort(true);
 
         try {
             check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
@@ -1382,28 +1391,20 @@ class AITRFOEL_Ajax_Handler {
 
             // 'sync_required' = Elementor; WP_Error = async endpoint not yet live on proxy
             // Both cases: fall through to synchronous path
+            // 'sync_required' = Elementor; WP_Error = async proxy endpoint not yet live.
+            // Translating Elementor pages synchronously can take several minutes for large pages.
+            // The submit AJAX call has a 60 s JS-side timeout, which is too short.
+            // Signal the JS to delegate to aitrfoel_process_bulk_item, which uses a 360 s timeout.
             if ($proxy_job_id === 'sync_required' || is_wp_error($proxy_job_id)) {
                 if (is_wp_error($proxy_job_id)) {
                     AITRFOEL_Logger::log('Async submit fell back to sync: ' . $proxy_job_id->get_error_message(), 'info');
                 }
-                @set_time_limit(300);
-                $new_page_id = $engine->translate_page($page_id, $target_lang, $source_lang);
-                if (is_wp_error($new_page_id)) {
-                    $code = $new_page_id->get_error_code();
-                    if (in_array($code, ['insufficient_words', 'cooldown_active'], true)) {
-                        wp_send_json_success(['status' => 'limit_reached', 'message' => $new_page_id->get_error_message(), 'item_index' => $item_index, 'total' => $total_items]);
-                        return;
-                    }
-                    wp_send_json_success(['status' => 'item_error', 'error' => $new_page_id->get_error_message(), 'item_index' => $item_index, 'total' => $total_items]);
-                    return;
-                }
                 wp_send_json_success([
-                    'status'          => 'sync_done',
-                    'new_page_id'     => $new_page_id,
-                    'source_page_id'  => $page_id,
-                    'target_language' => $target_lang,
-                    'item_index'      => $item_index,
-                    'total'           => $total_items,
+                    'status'      => 'use_sync_handler',
+                    'page_id'     => $page_id,
+                    'target_lang' => $target_lang,
+                    'item_index'  => $item_index,
+                    'total'       => $total_items,
                 ]);
                 return;
             }
