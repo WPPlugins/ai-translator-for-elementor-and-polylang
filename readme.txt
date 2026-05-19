@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.5.8
+Stable tag: 1.5.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,10 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.5.9 =
+* Fixed: Very large pages no longer hang for 16+ minutes without saving — added time-budget check inside the per-string fallback loop so a partial save fires even when a batch API call times out and the fallback iterates 20 individual strings (each up to 60 s)
+* Fixed: SEO/meta field translation and title translation are now skipped during partial saves, preventing additional API calls from blocking the response after a time-budget break
+
 = 1.5.8 =
 * Fixed: Very large pages (8000+ words) now reliably create a partial translated page — reduced batch size from 100 to 20 strings and capped the per-batch API timeout at 60 s, so the time-budget partial-save fires well before PHP can be killed by the host
 * Improved: Time budget reduced from 200 s to 120 s, giving more headroom for page creation to complete within the PHP execution limit

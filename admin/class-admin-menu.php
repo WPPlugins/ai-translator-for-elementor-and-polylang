@@ -1687,7 +1687,7 @@ class AITRFOEL_Admin_Menu {
                     
                     <div class="aitrfoel-bulk-stats">
                         <span id="aitrfoel-estimated-words" style="color: #666; font-size: 12px;"><?php esc_html_e('Select pages for translation', 'ai-translator-for-elementor-and-polylang'); ?></span>
-                        <span id="aitrfoel-elapsed-timer" style="color: #666; font-size: 12px; margin-left: 10px; display: none;">⏱️ <span id="aitrfoel-timer-value">0:00</span></span>
+                        <span id="aitrfoel-elapsed-timer" style="color: #666; font-size: 12px; margin-left: 10px; display: none;">⏱️ <span id="aitrfoel-timer-value">0:00</span><span id="aitrfoel-timer-msg" style="margin-left: 6px; font-style: italic;"></span></span>
                     </div>
                     
                     <div class="aitrfoel-bulk-actions">

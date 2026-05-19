@@ -1408,16 +1408,52 @@ jQuery(document).ready(function($) {
          */
         startElapsedTimer: function() {
             this.timerStartTime = Date.now();
+            this.timerMsgLastChanged = 0;
+            this.timerMsgIndex = 0;
             $('#aitrfoel-elapsed-timer').show();
-            
-            // Update timer every second
+            $('#aitrfoel-timer-msg').text('');
+
+            // Messages per phase [threshold_seconds, [options...]]
+            // Honest about the plugin's real behavior: batches → partial save → retries → cache
+            const phases = [
+                [  0, ['Connecting to AI…',         'Starting up…',               'Sending content…']],
+                [ 15, ['Translating strings…',       'Processing content…',        'AI is working…']],
+                [ 45, ['Working through batches…',   'AI is busy…',                'Crunching strings…']],
+                [ 90, ['Saving progress…',           'Creating partial save…',     'Checkpoint in progress…']],
+                [120, ['Pass 2 — using cache…',      'Retrying with cache…',       'Building on saved strings…']],
+                [180, ['Pass 3 — filling gaps…',     'Getting closer…',            'Translating remaining strings…']],
+                [240, ['Pass 4 — almost done…',      'Final strings…',             'Nearly there…']],
+                [300, ['Large page, hang tight…',    'Still translating…',         'Almost finished…']],
+            ];
+
+            const pickMsg = (elapsed) => {
+                let phase = phases[0];
+                for (const p of phases) {
+                    if (elapsed >= p[0]) phase = p;
+                    else break;
+                }
+                const opts = phase[1];
+                // Rotate through options in order (not fully random, but varied)
+                const idx = this.timerMsgIndex % opts.length;
+                return opts[idx];
+            };
+
+            // Update timer every second; rotate message every 8 seconds
             this.timerInterval = setInterval(() => {
                 const elapsed = Math.floor((Date.now() - this.timerStartTime) / 1000);
                 const minutes = Math.floor(elapsed / 60);
                 const seconds = elapsed % 60;
-                const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                $('#aitrfoel-timer-value').text(timeString);
+                $('#aitrfoel-timer-value').text(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+
+                if (elapsed - this.timerMsgLastChanged >= 8) {
+                    this.timerMsgLastChanged = elapsed;
+                    this.timerMsgIndex++;
+                    $('#aitrfoel-timer-msg').text('— ' + pickMsg(elapsed));
+                }
             }, 1000);
+
+            // Show first message immediately
+            $('#aitrfoel-timer-msg').text('— ' + pickMsg(0));
         },
 
         /**
@@ -1430,6 +1466,7 @@ jQuery(document).ready(function($) {
             }
             $('#aitrfoel-elapsed-timer').hide();
             $('#aitrfoel-timer-value').text('0:00');
+            $('#aitrfoel-timer-msg').text('');
         },
 
         updateProgress: function(percentage, statusText, detailsText) {
@@ -1862,11 +1899,28 @@ jQuery(document).ready(function($) {
                     }
 
                     // If the server hit the time budget, the page was partially translated.
-                    // Retry immediately — subsequent calls are fast because strings are cached.
+                    // Retry with a short pause — subsequent passes build on cached strings.
                     if (d.partial && retryCount < MAX_RETRIES) {
+                        // Use the server-resolved language code so the cache key
+                        // (source_hash + target_lang + source_lang) stays identical across passes.
+                        const retrySrcLang = d.detected_lang || sourceLang;
+                        const passNum      = retryCount + 2;
                         console.log('aitrfoel: item ' + index + ' partial, retrying (' + (retryCount + 1) + '/' + MAX_RETRIES + ')');
-                        self.updateAnimatedProgress('Completing large page translation (pass ' + (retryCount + 2) + ')...');
-                        self.submitSyncItem(jobId, items, index, completedCount, errorCount, sourceLang, retryCount + 1);
+
+                        // Progress: label shows position + pass; bar advances fractionally
+                        self.updateAnimatedProgress(
+                            'Page ' + (index + 1) + ' of ' + total +
+                            ' — pass ' + passNum + ' of ' + (MAX_RETRIES + 1) + '\u2026'
+                        );
+                        const partialPct = Math.round(
+                            ((index + (retryCount + 1) / (MAX_RETRIES + 1)) / total) * 100
+                        );
+                        self.saveActiveTranslation(jobId, partialPct);
+
+                        // Brief pause before retry — reduces API hammering
+                        setTimeout(() => {
+                            self.submitSyncItem(jobId, items, index, completedCount, errorCount, retrySrcLang, retryCount + 1);
+                        }, 1500);
                         return;
                     }
 

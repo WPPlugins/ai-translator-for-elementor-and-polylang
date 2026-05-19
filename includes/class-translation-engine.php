@@ -628,7 +628,12 @@ class AITRFOEL_Translation_Engine {
                 AITRFOEL_Logger::log("Language detected: '$detected_lang'", 'info', $page_id);
             }
     }
-        
+
+        // Persist the resolved language code so AJAX retries can send an explicit code
+        // instead of 'auto'. This keeps the cache key (hash + target_lang + source_lang)
+        // identical across all partial-save passes, preventing full retranslation.
+        set_transient('aitrfoel_detected_lang_' . $page_id . '_' . $target_lang, $detected_lang, 15 * MINUTE_IN_SECONDS);
+
         // Enhanced logging for debugging
         AITRFOEL_Logger::log(
             sprintf('Translation summary: Page %d, %s → %s, %d strings to translate', 
@@ -823,6 +828,18 @@ class AITRFOEL_Translation_Engine {
                     // Fallback to individual translation
                     $consecutive_limit_errors = 0;
                     foreach ($batch_items as $item) {
+                        // Budget check inside fallback — each individual call can take up to 60 s;
+                        // without this guard 20 calls × 60 s = 1200 s blocks the time-budget save.
+                        if ((microtime(true) - $budget_start) >= $budget_seconds) {
+                            $timed_out = true;
+                            AITRFOEL_Logger::log(
+                                sprintf('[TIMING] Time budget of %ds reached inside individual fallback (batch %d). Saving partial page.',
+                                    $budget_seconds, $batch_index),
+                                'warning',
+                                $page_id
+                            );
+                            break 2;
+                        }
                         $text = $item['src'];
                         $translated = $api->translate_text($text, $target_lang, $detected_lang);
                         
@@ -1285,7 +1302,7 @@ class AITRFOEL_Translation_Engine {
         }
 
         // Create new page with translations
-        $new_page_id = $this->create_translated_page($page_id, $translated_data, $target_lang, $detected_lang, $pre_translated_title);
+        $new_page_id = $this->create_translated_page($page_id, $translated_data, $target_lang, $detected_lang, $pre_translated_title, $timed_out);
         
         if (is_wp_error($new_page_id)) {
             AITRFOEL_Logger::log(
@@ -3149,7 +3166,7 @@ class AITRFOEL_Translation_Engine {
      * @param string $detected_lang Detected source language
      * @return int|WP_Error New page ID or error
      */
-    private function create_translated_page($original_page_id, $translated_data, $target_lang, $detected_lang = 'en', $pre_translated_title = null) {
+    private function create_translated_page($original_page_id, $translated_data, $target_lang, $detected_lang = 'en', $pre_translated_title = null, $is_partial = false) {
         $original_page = get_post($original_page_id);
         
         if (!$original_page) {
@@ -3195,7 +3212,7 @@ class AITRFOEL_Translation_Engine {
             
             // Use pre-translated title if available (from batch), otherwise translate separately
             $translated_title = $pre_translated_title;
-            if (!$translated_title) {
+            if (!$translated_title && !$is_partial) {
                 $api = AITRFOEL_OpenAI_API::get_instance();
                 $translated_title = $api->translate_title($original_page->post_title, $target_lang, $detected_lang);
                 if (is_wp_error($translated_title)) {
@@ -3244,8 +3261,10 @@ class AITRFOEL_Translation_Engine {
                 }
             }
             
-            // Translate SEO meta, excerpt, and WooCommerce fields
-            $this->translate_post_meta_fields($original_page_id, $existing_page_id, $target_lang, $detected_lang);
+            // Translate SEO meta, excerpt, and WooCommerce fields (skip for partial saves)
+            if (!$is_partial) {
+                $this->translate_post_meta_fields($original_page_id, $existing_page_id, $target_lang, $detected_lang);
+            }
 
             // Assign translated WooCommerce product categories/tags
             $this->translate_product_taxonomies($original_page_id, $existing_page_id, $target_lang);
@@ -3273,7 +3292,7 @@ class AITRFOEL_Translation_Engine {
         
         // Use pre-translated title if available (from batch), otherwise translate separately
         $translated_title = $pre_translated_title;
-        if (!$translated_title) {
+        if (!$translated_title && !$is_partial) {
             $api = AITRFOEL_OpenAI_API::get_instance();
             $translated_title = $api->translate_title($original_page->post_title, $target_lang, $detected_lang);
         }
@@ -3413,8 +3432,10 @@ class AITRFOEL_Translation_Engine {
             AITRFOEL_Logger::log('No multilingual plugin is active, skipping translation relationship setup', 'info', $original_page_id);
         }
         
-        // Translate SEO meta, excerpt, and WooCommerce fields
-        $this->translate_post_meta_fields($original_page_id, $new_page_id, $target_lang, $detected_lang);
+        // Translate SEO meta, excerpt, and WooCommerce fields (skip for partial saves)
+        if (!$is_partial) {
+            $this->translate_post_meta_fields($original_page_id, $new_page_id, $target_lang, $detected_lang);
+        }
 
         // Assign translated WooCommerce product categories/tags
         $this->translate_product_taxonomies($original_page_id, $new_page_id, $target_lang);

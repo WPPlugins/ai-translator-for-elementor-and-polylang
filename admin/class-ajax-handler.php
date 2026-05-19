@@ -1255,6 +1255,11 @@ class AITRFOEL_Ajax_Handler {
             try {
                 $new_page_id = $engine->translate_page($page_id, $target_lang, $source_lang);
 
+                // Retrieve the language code that was actually used during translation.
+                // If auto-detection ran, this will be the resolved code (e.g. 'fr') not 'auto'.
+                // Sending it back lets JS pass it on retries so cache keys stay consistent.
+                $resolved_lang = get_transient('aitrfoel_detected_lang_' . $page_id . '_' . $target_lang) ?: $source_lang;
+
                 if (is_wp_error($new_page_id)) {
                     $error_code = $new_page_id->get_error_code();
                     $error_count++;
@@ -1330,6 +1335,7 @@ class AITRFOEL_Ajax_Handler {
                     'total'           => $total_items,
                     'is_last'         => $is_last,
                     'partial'         => $is_partial,
+                    'detected_lang'   => $resolved_lang,
                 ]);
 
             } catch (Throwable $e) {

@@ -1046,13 +1046,15 @@
 
 .aitrfoel-dashboard-wrapper #aitrfoel-bulk-bar .aitrfoel-source-languages .button,
 .aitrfoel-dashboard-wrapper #aitrfoel-bulk-bar .aitrfoel-target-languages .button {
-  min-width: 180px;
+  min-width: 140px; /* reduced from 180 — buttons still expand to content width */
+  width: 100%;       /* fill the flex container */
   justify-content: center;
 }
 
 .aitrfoel-dashboard-wrapper #aitrfoel-bulk-bar .aitrfoel-source-languages,
 .aitrfoel-dashboard-wrapper #aitrfoel-bulk-bar .aitrfoel-target-languages {
   min-width: 0;
+  flex: 1 1 auto; /* share available row space equally; prevents wrapping on translated UIs */
 }
 
 .aitrfoel-dashboard-wrapper #aitrfoel-bulk-bar .aitrfoel-bulk-stats {
