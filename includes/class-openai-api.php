@@ -250,57 +250,71 @@ class AITRFOEL_OpenAI_API {
             'info'
         );
 
-        // Translate each chunk and reassemble.
+        // Translate chunks and reassemble.
         // Each completed chunk is stored in a short-lived transient so that a
         // timed-out request can be retried without re-doing already-done work.
-        $translated_chunks = [];
+        // Uncached chunks are sent to the server in PARALLEL (one /translate
+        // request per chunk, fired concurrently) instead of one-at-a-time — this
+        // is what collapses ~N×20s of sequential calls into ~one chunk's time.
+        $translated_chunks    = []; // index => translated text (reassembled by ksort below)
         $chunk_timed_out      = false;
         $chunk_word_limit_hit = false;
 
+        // Pass 1: load any chunks already completed in a previous (timed-out) pass.
+        $to_translate = []; // index => chunk text (the uncached ones)
         foreach ($chunks as $i => $chunk) {
-            // --- transient cache (survives across retries) ---
-            $tkey   = $cache_key_base . '_' . $i;
-            $cached = get_transient($tkey);
+            $cached = get_transient($cache_key_base . '_' . $i);
             if ($cached !== false) {
-                $translated_chunks[] = $cached;
+                $translated_chunks[$i] = $cached;
                 AITRFOEL_Logger::log(sprintf('Chunk %d/%d loaded from transient cache', $i + 1, $total_chunks), 'debug');
-                continue;
+            } else {
+                $to_translate[$i] = $chunk;
             }
+        }
 
-            // --- time budget guard (leave 30 s headroom for engine to save partial page) ---
+        // Pass 2: fire all uncached chunks in parallel (unless the time budget is nearly spent).
+        if (!empty($to_translate)) {
             if (self::$budget_start > 0.0 && self::$budget_seconds < PHP_INT_MAX &&
                 (microtime(true) - self::$budget_start) >= (self::$budget_seconds - 30)) {
                 AITRFOEL_Logger::log(
-                    sprintf('[TIMING] Time budget nearly exhausted — stopping large-text chunking after %d/%d chunks. Remaining chunks will be retried.', $i, $total_chunks),
+                    sprintf('[TIMING] Time budget nearly exhausted — deferring %d/%d remaining chunks to retry pass.', count($to_translate), $total_chunks),
                     'warning'
                 );
                 $chunk_timed_out = true;
-                break;
-            }
-
-            $result = $this->translate_via_meeptech($chunk, $target_lang, $source_lang);
-            if (is_wp_error($result)) {
-                $err_msg = $result->get_error_message();
-                AITRFOEL_Logger::log(
-                    sprintf('Large text chunk %d/%d failed: %s — keeping original', $i + 1, $total_chunks, $err_msg),
-                    'error'
-                );
-                // Word-limit errors will affect every remaining chunk — abort now so
-                // the transient cache preserves already-translated chunks for the retry.
-                if (stripos($err_msg, 'word limit') !== false || stripos($err_msg, 'limit exceeded') !== false) {
-                    AITRFOEL_Logger::log(
-                        sprintf('[WORD LIMIT] Aborting large-text chunking after %d/%d chunks due to word limit. Retry will resume from this chunk.', $i, $total_chunks),
-                        'warning'
-                    );
-                    $chunk_word_limit_hit = true;
-                    break;
-                }
-                $translated_chunks[] = $chunk;
             } else {
-                set_transient($tkey, $result, HOUR_IN_SECONDS);
-                $translated_chunks[] = $result;
+                $results = $this->translate_chunks_parallel($to_translate, $target_lang, $source_lang);
+
+                foreach ($to_translate as $i => $chunk) {
+                    $result = isset($results[$i]) ? $results[$i] : new WP_Error('missing_chunk', 'No result returned for chunk');
+
+                    if (is_wp_error($result)) {
+                        $err_msg = $result->get_error_message();
+                        AITRFOEL_Logger::log(
+                            sprintf('Large text chunk %d/%d failed: %s — keeping original', $i + 1, $total_chunks, $err_msg),
+                            'error'
+                        );
+                        // Word-limit errors affect every remaining chunk — abort now so the
+                        // transient cache preserves already-translated chunks for the retry.
+                        if ($result->get_error_code() === 'word_limit_exceeded' ||
+                            stripos($err_msg, 'word limit') !== false || stripos($err_msg, 'limit exceeded') !== false) {
+                            AITRFOEL_Logger::log(
+                                sprintf('[WORD LIMIT] Aborting large-text chunking due to word limit. Retry will resume from cached chunks.'),
+                                'warning'
+                            );
+                            $chunk_word_limit_hit = true;
+                            break;
+                        }
+                        $translated_chunks[$i] = $chunk; // keep original on hard failure
+                    } else {
+                        set_transient($cache_key_base . '_' . $i, $result, HOUR_IN_SECONDS);
+                        $translated_chunks[$i] = $result;
+                    }
+                }
             }
         }
+
+        // Reassemble in original chunk order (parallel results may arrive keyed out of order).
+        ksort($translated_chunks);
 
         if ($chunk_word_limit_hit) {
             // The completed-chunk transients ensure a retry only calls the API
@@ -509,16 +523,135 @@ class AITRFOEL_OpenAI_API {
         }
         
         $translated = $data['translated_text'];
-        
+
         // Clean up AI artifacts that sometimes appear in translations
         $translated = $this->cleanup_ai_artifacts($translated);
-        
+
         // Post-process: detect chatty AI responses and keep original
         $translated = $this->sanitize_chatty_response($text, $translated);
-        
+
         return $translated;
     }
-    
+
+    /**
+     * Translate an ordered set of large-text chunks in PARALLEL via the MeepTech
+     * /translate endpoint.
+     *
+     * Each chunk is sent exactly as translate_via_meeptech() would send it (one
+     * chunk per request, plain `text` payload) so HTML fidelity is identical —
+     * only the requests are fired concurrently instead of one-at-a-time. This is
+     * the transport that turns ~N×20s of sequential chunk calls into roughly the
+     * time of the single slowest chunk.
+     *
+     * Falls back to sequential translate_via_meeptech() when parallel transport
+     * is unavailable, and retries any individually-failed chunk sequentially.
+     * Word-limit errors are surfaced as a WP_Error('word_limit_exceeded') so the
+     * caller can abort and resume from the transient cache.
+     *
+     * @param array  $chunks      Map of index => chunk text (keys preserved in result)
+     * @param string $target_lang Target language code
+     * @param string $source_lang Source language code or 'auto'
+     * @return array Map of index => translated string | WP_Error (same keys as $chunks)
+     */
+    public function translate_chunks_parallel(array $chunks, $target_lang, $source_lang = 'auto') {
+        if (empty($chunks)) {
+            return [];
+        }
+
+        $requests_class = class_exists('WpOrg\Requests\Requests') ? 'WpOrg\Requests\Requests' : (class_exists('Requests') ? 'Requests' : null);
+
+        // No parallel transport available, or a single chunk — just go sequential.
+        if (!$requests_class || !method_exists($requests_class, 'request_multiple') || count($chunks) < 2) {
+            $out = [];
+            foreach ($chunks as $i => $chunk) {
+                $out[$i] = $this->translate_via_meeptech($chunk, $target_lang, $source_lang);
+            }
+            return $out;
+        }
+
+        static $license_info_cache = null;
+        if ($license_info_cache === null) {
+            $license_info_cache = AITRFOEL_License_Manager::get_instance()->get_license_status();
+        }
+
+        $source_language = ($source_lang === 'auto') ? 'auto' : AITRFOEL_Language_Mapper::get_language_name($source_lang);
+        $target_language = AITRFOEL_Language_Mapper::get_language_name($target_lang);
+        $lang_instructions = AITRFOEL_Language_Mapper::get_language_specific_instructions($target_lang);
+        $general_instructions = "CRITICAL: If a string is already in the target language or contains only numbers/symbols/short codes (e.g. 36K, 500+, 24/7, 100%), return it EXACTLY as-is. NEVER add explanations, commentary, or notes. Output ONLY the translated text.";
+        $lang_instructions = !empty($lang_instructions) ? $general_instructions . "\n" . $lang_instructions : $general_instructions;
+
+        $url     = self::MEEPTECH_TRANSLATE_ENDPOINT;
+        $headers = ['Content-Type' => 'application/json'];
+
+        $requests = [];
+        $sources  = []; // index => normalized source text, for sanitize + sequential retry
+        foreach ($chunks as $i => $chunk) {
+            $text = $chunk;
+            if (class_exists('Normalizer') && is_string($text)) {
+                $text = Normalizer::normalize($text, Normalizer::FORM_C);
+            }
+            $sources[$i] = $text;
+            $body = [
+                'text'                  => $text,
+                'source_language'       => $source_language,
+                'target_language'       => $target_language,
+                'target_lang_code'      => $target_lang,
+                'language_instructions' => $lang_instructions,
+                'site_url'              => home_url(),
+                'plan'                  => $license_info_cache['plan'],
+                'license_key'           => $license_info_cache['license_key'],
+            ];
+            $requests[$i] = [
+                'url'     => $url,
+                'headers' => $headers,
+                'data'    => json_encode($body),
+                'type'    => 'POST',
+                'options' => ['timeout' => 90],
+            ];
+        }
+
+        AITRFOEL_Logger::log(
+            sprintf('Sending %d large-text chunks in PARALLEL to MeepTech (%s → %s)', count($requests), $source_language, $target_language),
+            'info'
+        );
+
+        $responses = $requests_class::request_multiple($requests, []);
+
+        $out = [];
+        foreach ($requests as $i => $_unused) {
+            $response = isset($responses[$i]) ? $responses[$i] : null;
+
+            // Transport-level failure → retry this one chunk sequentially.
+            if ($response instanceof \Exception || $response === null) {
+                $msg = $response instanceof \Exception ? $response->getMessage() : 'No response';
+                AITRFOEL_Logger::log(sprintf('Parallel chunk %d failed: %s — retrying sequentially', $i, $msg), 'warning');
+                $out[$i] = $this->translate_via_meeptech($sources[$i], $target_lang, $source_lang);
+                continue;
+            }
+
+            $status = isset($response->status_code) ? $response->status_code : 0;
+            $data   = json_decode(isset($response->body) ? $response->body : '', true);
+
+            if ($status !== 200 || !isset($data['success']) || !$data['success'] || !isset($data['translated_text'])) {
+                $error_message = isset($data['error']) ? $data['error'] : ('Chunk request failed (HTTP ' . $status . ')');
+                // Word-limit errors affect every remaining chunk — surface so the caller aborts and resumes.
+                if (stripos($error_message, 'word limit') !== false || stripos($error_message, 'limit exceeded') !== false) {
+                    $out[$i] = new WP_Error('word_limit_exceeded', $error_message);
+                    continue;
+                }
+                AITRFOEL_Logger::log(sprintf('Parallel chunk %d error (%s): %s — retrying sequentially', $i, $status, $error_message), 'warning');
+                $out[$i] = $this->translate_via_meeptech($sources[$i], $target_lang, $source_lang);
+                continue;
+            }
+
+            $translated = $this->cleanup_ai_artifacts($data['translated_text']);
+            $translated = $this->sanitize_chatty_response($sources[$i], $translated);
+            $out[$i]    = $translated;
+        }
+
+        return $out;
+    }
+
     /**
      * Clean up AI artifacts from translation responses
      * Removes instruction text, wrapper tags, etc.

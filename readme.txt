@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.5.11
+Stable tag: 1.5.12
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,9 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.5.12 =
+* Improved: Large text chunks are now sent in parallel instead of sequentially, reducing translation time for long pages from ~N×20s down to ~one chunk time (~20-30s)
+
 = 1.5.11 =
 * Fixed: Word usage double-counting — removed legacy report-usage API call that was charging words twice per translation run
 * Fixed: Word limit precheck now only counts uncached strings, allowing partial translations to be retried without being blocked by an overstated word estimate
