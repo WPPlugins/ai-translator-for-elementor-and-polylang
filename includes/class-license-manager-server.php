@@ -149,6 +149,15 @@ class AITRFOEL_License_Manager_Server {
             $word_limit = $this->get_word_limit_for_plan($plan_name);
         }
         
+        // Add addon words to the effective limit when the 50K addon is active.
+        $addon_words = 0;
+        if (!empty($server_usage['addon_active']) && isset($server_usage['addon_words'])) {
+            $addon_words = intval($server_usage['addon_words']);
+            if ($word_limit !== -1) {
+                $word_limit += $addon_words;
+            }
+        }
+
         $words_used = $server_usage['words_used'];
         $words_left = $word_limit === -1 ? -1 : max(0, $word_limit - $words_used);
         
@@ -161,7 +170,7 @@ class AITRFOEL_License_Manager_Server {
             'freemius_validated' => isset($server_usage['freemius_validated']) ? $server_usage['freemius_validated'] : false,
             'license_expired' => isset($server_usage['license_expired']) ? $server_usage['license_expired'] : false,
             'addon_active' => isset($server_usage['addon_active']) ? (bool) $server_usage['addon_active'] : false,
-            'addon_words' => isset($server_usage['addon_words']) ? intval($server_usage['addon_words']) : 0,
+            'addon_words' => $addon_words,
         ];
         
         return $this->cached_license_status;

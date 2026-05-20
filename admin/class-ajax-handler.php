@@ -125,19 +125,17 @@ class AITRFOEL_Ajax_Handler {
             }
             
             $args = [
-                'post_type' => ['page', 'post'],
-                'post_status' => 'publish',
+                'post_type'      => ['page', 'post'],
+                'post_status'    => 'publish',
                 'posts_per_page' => -1,
-                'orderby' => 'title',
-                'order' => 'ASC',
-                'meta_key' => '_elementor_edit_mode',
-                'meta_value' => 'builder'
+                'orderby'        => 'title',
+                'order'          => 'ASC',
             ];
             
             $pages = get_posts($args);
             
             if (empty($pages)) {
-                wp_send_json_error(__('No Elementor pages or posts found.', 'ai-translator-for-elementor-and-polylang'));
+                wp_send_json_error(__('No published pages or posts found.', 'ai-translator-for-elementor-and-polylang'));
                 return;
             }
             
@@ -1307,7 +1305,26 @@ class AITRFOEL_Ajax_Handler {
 
                 // Success
                 $completed_so_far++;
-                $is_partial = (bool) get_post_meta($new_page_id, '_aitrfoel_partial_translation', true);
+                $is_partial       = (bool) get_post_meta($new_page_id, '_aitrfoel_partial_translation', true);
+                $is_word_limit    = (bool) get_post_meta($new_page_id, '_aitrfoel_word_limit_hit', true);
+
+                // If the partial was caused by word limit exhaustion, stop the queue now
+                // instead of retrying (retries would just hit the same wall and waste words).
+                if ($is_partial && $is_word_limit) {
+                    $queue->update_job($job_id, [
+                        'status'          => 'paused',
+                        'completed_items' => $completed_so_far - 1, // this page did not fully complete
+                        'current_step'    => 'Paused: Word limit reached',
+                        'error_type'      => 'limit_reached_during_process',
+                    ]);
+                    wp_send_json_success([
+                        'status'    => 'limit_reached',
+                        'completed' => $completed_so_far - 1,
+                        'total'     => $total_items,
+                    ]);
+                    return;
+                }
+
                 $queue->update_job($job_id, [
                     'progress'           => round((($item_index + 1) / $total_items) * 100),
                     'current_step'       => "Completed: {$page_title}",

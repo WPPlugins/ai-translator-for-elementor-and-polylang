@@ -10,6 +10,19 @@ class AITRFOEL_OpenAI_API {
     private static $instance = null;
     private $api_key;
     private $model;
+
+    /** Time budget forwarded from the translation engine for large-text chunking. */
+    private static $budget_start   = 0.0;
+    private static $budget_seconds = PHP_INT_MAX;
+
+    /**
+     * Called by the translation engine before the batch loop so that
+     * translate_large_text() can honour the same time budget.
+     */
+    public static function set_time_budget(float $start, int $seconds): void {
+        self::$budget_start   = $start;
+        self::$budget_seconds = $seconds;
+    }
     private $max_retries = 3;
     private $retry_delay = 500; // milliseconds - reduced from 1000ms for better performance
     private $usage_session = [
@@ -162,13 +175,249 @@ class AITRFOEL_OpenAI_API {
     }
 
     /**
-     * Translate single text
+     * Character length above which a single string is split into chunks before
+     * being sent to the API.  Keeping chunks ≤ 5 000 chars (~1 000 words) stays
+     * well within the 60 s per-request timeout even for slow API responses.
+     */
+    const LARGE_TEXT_THRESHOLD = 5000;
+
+    /**
+     * Translate single text.
+     * Strings longer than LARGE_TEXT_THRESHOLD are automatically split into
+     * paragraph-level chunks, translated individually and reassembled so that
+     * no single API call ever times out on giant legal / long-form content.
      */
     public function translate_text($text, $target_lang, $source_lang = 'auto') {
+        if (strlen($text) > self::LARGE_TEXT_THRESHOLD) {
+            return $this->translate_large_text($text, $target_lang, $source_lang);
+        }
         // Always use MeepTech server
         return $this->translate_via_meeptech($text, $target_lang, $source_lang);
     }
-    
+
+    /**
+     * Translate a string that is too long for a single API call.
+     * Splits the content at HTML block-level tag boundaries, groups split
+     * segments into chunks ≤ LARGE_TEXT_THRESHOLD chars, translates each
+     * chunk and concatenates the results.
+     */
+    private function translate_large_text($text, $target_lang, $source_lang = 'auto') {
+        $max = self::LARGE_TEXT_THRESHOLD;
+
+        // Insert a unique sentinel after every closing block-level tag so we
+        // can explode cleanly while keeping each segment a complete element.
+        $sentinel = "\x00SPLIT\x00";
+        $split_tags = 'p|h[1-6]|li|ul|ol|blockquote|table|thead|tbody|tfoot|tr|td|th|div|section|article|header|footer|figure|figcaption';
+        $chunked = preg_replace(
+            '/<\/(' . $split_tags . ')>/iS',
+            '</$1>' . $sentinel,
+            $text
+        );
+
+        $segments = array_values(array_filter(
+            explode($sentinel, $chunked),
+            static fn($s) => trim($s) !== ''
+        ));
+
+        // If no block tags found, fall back to sentence-level splitting.
+        if (count($segments) <= 1) {
+            return $this->translate_large_text_plain($text, $target_lang, $source_lang, $max);
+        }
+
+        // Group segments into chunks that fit within $max chars.
+        // If a single segment already exceeds $max (one very long <p>),
+        // treat it as its own chunk — it is still far smaller than the
+        // original 53 k+ string so the API will usually cope.
+        $chunks = [];
+        $current = '';
+        foreach ($segments as $segment) {
+            if ($current !== '' && strlen($current) + strlen($segment) > $max) {
+                $chunks[] = $current;
+                $current  = $segment;
+            } else {
+                $current .= $segment;
+            }
+        }
+        if ($current !== '') {
+            $chunks[] = $current;
+        }
+
+        $total_chunks   = count($chunks);
+        $cache_key_base = 'aitrfoel_chunk_' . md5($text . $target_lang);
+
+        AITRFOEL_Logger::log(
+            sprintf('Large string (%d chars) split into %d chunks for translation', strlen($text), $total_chunks),
+            'info'
+        );
+
+        // Translate each chunk and reassemble.
+        // Each completed chunk is stored in a short-lived transient so that a
+        // timed-out request can be retried without re-doing already-done work.
+        $translated_chunks = [];
+        $chunk_timed_out      = false;
+        $chunk_word_limit_hit = false;
+
+        foreach ($chunks as $i => $chunk) {
+            // --- transient cache (survives across retries) ---
+            $tkey   = $cache_key_base . '_' . $i;
+            $cached = get_transient($tkey);
+            if ($cached !== false) {
+                $translated_chunks[] = $cached;
+                AITRFOEL_Logger::log(sprintf('Chunk %d/%d loaded from transient cache', $i + 1, $total_chunks), 'debug');
+                continue;
+            }
+
+            // --- time budget guard (leave 30 s headroom for engine to save partial page) ---
+            if (self::$budget_start > 0.0 && self::$budget_seconds < PHP_INT_MAX &&
+                (microtime(true) - self::$budget_start) >= (self::$budget_seconds - 30)) {
+                AITRFOEL_Logger::log(
+                    sprintf('[TIMING] Time budget nearly exhausted — stopping large-text chunking after %d/%d chunks. Remaining chunks will be retried.', $i, $total_chunks),
+                    'warning'
+                );
+                $chunk_timed_out = true;
+                break;
+            }
+
+            $result = $this->translate_via_meeptech($chunk, $target_lang, $source_lang);
+            if (is_wp_error($result)) {
+                $err_msg = $result->get_error_message();
+                AITRFOEL_Logger::log(
+                    sprintf('Large text chunk %d/%d failed: %s — keeping original', $i + 1, $total_chunks, $err_msg),
+                    'error'
+                );
+                // Word-limit errors will affect every remaining chunk — abort now so
+                // the transient cache preserves already-translated chunks for the retry.
+                if (stripos($err_msg, 'word limit') !== false || stripos($err_msg, 'limit exceeded') !== false) {
+                    AITRFOEL_Logger::log(
+                        sprintf('[WORD LIMIT] Aborting large-text chunking after %d/%d chunks due to word limit. Retry will resume from this chunk.', $i, $total_chunks),
+                        'warning'
+                    );
+                    $chunk_word_limit_hit = true;
+                    break;
+                }
+                $translated_chunks[] = $chunk;
+            } else {
+                set_transient($tkey, $result, HOUR_IN_SECONDS);
+                $translated_chunks[] = $result;
+            }
+        }
+
+        if ($chunk_word_limit_hit) {
+            // The completed-chunk transients ensure a retry only calls the API
+            // for the remaining chunks, not the entire string again.
+            return new WP_Error('word_limit_exceeded', 'Word limit reached mid-chunk; will resume on retry.');
+        }
+
+        if ($chunk_timed_out) {
+            // Signal the engine to save a partial page and retry.
+            // The completed-chunk transients ensure the retry only calls the API
+            // for the remaining chunks, not the entire string again.
+            return new WP_Error('chunk_timeout', 'Large text chunking timed out; will resume on retry.');
+        }
+
+        // All chunks done — clean up transients.
+        for ($i = 0; $i < $total_chunks; $i++) {
+            delete_transient($cache_key_base . '_' . $i);
+        }
+
+        return implode('', $translated_chunks);
+    }
+
+    /**
+     * Sentence-level chunking fallback for plain text with no HTML block tags.
+     */
+    private function translate_large_text_plain($text, $target_lang, $source_lang, $max) {
+        // Split on sentence-ending punctuation followed by whitespace.
+        $sentences = preg_split('/(?<=[.!?…])\s+/u', $text, -1, PREG_SPLIT_NO_EMPTY);
+
+        $chunks  = [];
+        $current = '';
+        foreach ($sentences as $sentence) {
+            $glue = $current !== '' ? ' ' : '';
+            if ($current !== '' && strlen($current) + strlen($glue) + strlen($sentence) > $max) {
+                $chunks[] = $current;
+                $current  = $sentence;
+            } else {
+                $current .= $glue . $sentence;
+            }
+        }
+        if ($current !== '') {
+            $chunks[] = $current;
+        }
+
+        if (empty($chunks)) {
+            // Absolute last resort: hard-split at byte boundaries.
+            $chunks = str_split($text, $max);
+        }
+
+        $total_chunks   = count($chunks);
+        $cache_key_base = 'aitrfoel_chunk_' . md5($text . $target_lang);
+
+        AITRFOEL_Logger::log(
+            sprintf('Large plain text (%d chars) split into %d sentence chunks for translation', strlen($text), $total_chunks),
+            'info'
+        );
+
+        $translated_chunks = [];
+        $chunk_timed_out      = false;
+        $chunk_word_limit_hit = false;
+
+        foreach ($chunks as $i => $chunk) {
+            $tkey   = $cache_key_base . '_' . $i;
+            $cached = get_transient($tkey);
+            if ($cached !== false) {
+                $translated_chunks[] = $cached;
+                AITRFOEL_Logger::log(sprintf('Plain chunk %d/%d loaded from transient cache', $i + 1, $total_chunks), 'debug');
+                continue;
+            }
+
+            if (self::$budget_start > 0.0 && self::$budget_seconds < PHP_INT_MAX &&
+                (microtime(true) - self::$budget_start) >= (self::$budget_seconds - 30)) {
+                AITRFOEL_Logger::log(
+                    sprintf('[TIMING] Time budget nearly exhausted — stopping plain-text chunking after %d/%d chunks. Remaining chunks will be retried.', $i, $total_chunks),
+                    'warning'
+                );
+                $chunk_timed_out = true;
+                break;
+            }
+
+            $result = $this->translate_via_meeptech($chunk, $target_lang, $source_lang);
+            if (is_wp_error($result)) {
+                $err_msg = $result->get_error_message();
+                AITRFOEL_Logger::log(
+                    sprintf('Large plain text chunk %d/%d failed: %s — keeping original', $i + 1, $total_chunks, $err_msg),
+                    'error'
+                );
+                if (stripos($err_msg, 'word limit') !== false || stripos($err_msg, 'limit exceeded') !== false) {
+                    AITRFOEL_Logger::log(
+                        sprintf('[WORD LIMIT] Aborting plain-text chunking after %d/%d chunks due to word limit. Retry will resume from this chunk.', $i, $total_chunks),
+                        'warning'
+                    );
+                    $chunk_word_limit_hit = true;
+                    break;
+                }
+                $translated_chunks[] = $chunk;
+            } else {
+                set_transient($tkey, $result, HOUR_IN_SECONDS);
+                $translated_chunks[] = $result;
+            }
+        }
+
+        if ($chunk_word_limit_hit) {
+            return new WP_Error('word_limit_exceeded', 'Word limit reached mid-chunk; will resume on retry.');
+        }
+
+        if ($chunk_timed_out) {
+            return new WP_Error('chunk_timeout', 'Large plain text chunking timed out; will resume on retry.');
+        }
+
+        for ($i = 0; $i < $total_chunks; $i++) {
+            delete_transient($cache_key_base . '_' . $i);
+        }
+
+        return implode(' ', $translated_chunks);
+    }
+
     /**
      * Translate text via MeepTech server proxy
      */

@@ -6,6 +6,12 @@
 if (!defined('ABSPATH')) exit;
 
 final class AITRFOEL_Gap_Filler {
+    /** Fields longer than this (chars) are left to the chunked first pass, not re-translated/diffed here. */
+    const MAX_CANDIDATE_LEN = 8000;
+
+    /** Wall-clock budget (seconds) for the whole gap-filler pass, so it returns before max_execution_time. */
+    const TIME_BUDGET_SEC = 60;
+
     /**
      * Run gap-filler on provided strings and translations (by reference)
      *
@@ -50,6 +56,13 @@ final class AITRFOEL_Gap_Filler {
             $orig = (string)($row['original'] ?? '');
             $tr   = (string)($translations[$path] ?? '');
 
+            // Skip very large fields. These are handled by the chunked first pass; re-translating
+            // them here as a single request would truncate the output, and diffing them is what
+            // makes similar_text() blow the time budget. Leave the first-pass result in place.
+            if (mb_strlen($orig) > self::MAX_CANDIDATE_LEN) {
+                continue;
+            }
+
             // Skip proper nouns and acronyms - they shouldn't be translated
             if (self::isProperNounOrAcronym($orig)) {
                 // If translation is empty or same as original, that's correct for names
@@ -84,7 +97,14 @@ final class AITRFOEL_Gap_Filler {
 
         // Process one by one (sequential for now)
         $debug_shown = 0;
+        $pass_start  = microtime(true);
         foreach ($candidates as $row) {
+            // Respect a wall-clock budget so we hand control back to the engine (which still has
+            // to apply_translations() and save) instead of risking a max_execution_time fatal.
+            if ((microtime(true) - $pass_start) > self::TIME_BUDGET_SEC) {
+                AITRFOEL_Logger::log(sprintf('[EAT gap-filler] time budget (%ds) reached, stopping early after %d of %d candidates', self::TIME_BUDGET_SEC, $metrics['retried'], count($candidates)), 'warning', $page);
+                break;
+            }
             $metrics['retried']++;
             $path = (string)$row['path'];
             $orig = (string)$row['original'];
@@ -216,8 +236,15 @@ final class AITRFOEL_Gap_Filler {
         // For strings longer than 200 chars, use percentage-based comparison instead of levenshtein
         // (PHP's levenshtein has a 255 char limit)
         if (mb_strlen($a_clean) > 200 || mb_strlen($b_clean) > 200) {
-            // Use similar_text percentage - if less than 85% similar, it's different enough
-            similar_text($a_clean, $b_clean, $percent);
+            // IMPORTANT: PHP's similar_text() is O(n^3). On large fields (e.g. multi-thousand
+            // character Elementor text-editor blocks) it can run for minutes and blow past
+            // max_execution_time, fataling the whole request before translations are saved.
+            // Compare a bounded prefix sample instead — more than enough to tell whether the
+            // translation meaningfully changed.
+            $cap   = 2000;
+            $a_cmp = mb_substr($a_clean, 0, $cap);
+            $b_cmp = mb_substr($b_clean, 0, $cap);
+            similar_text($a_cmp, $b_cmp, $percent);
             return $percent < 85;
         }
         

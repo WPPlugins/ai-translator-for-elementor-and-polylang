@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.5.9
+Stable tag: 1.5.11
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,18 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.5.11 =
+* Fixed: Word usage double-counting — removed legacy report-usage API call that was charging words twice per translation run
+* Fixed: Word limit precheck now only counts uncached strings, allowing partial translations to be retried without being blocked by an overstated word estimate
+* Fixed: Translation queue no longer retries indefinitely when word limit is exhausted — shows upgrade prompt instead
+* Fixed: Gap-filler PHP fatal on large pages — similar_text() now operates on bounded 2000-char prefix, fields over 8000 chars are skipped, 60s time budget prevents request timeout
+* Fixed: Added set_time_limit(120) before saving translated page to prevent fatal timeout after a long translation pass
+
+= 1.5.10 =
+* Fixed: Very large pages (300+ strings) now fully complete — increased time budget per pass from 120 s to 200 s (50% more strings per pass) and increased max retry passes from 6 to 11, handling pages with up to 660+ strings
+* Fixed: Partial-save retries no longer create duplicate translated pages with slug suffixes like "-2" or "-3" — added a tracking meta key so the plugin can find an existing partial translation even when the multilingual plugin hasn't committed the relationship yet
+* Fixed: Pages built with Gutenberg, Classic editor, or third-party page builders now appear in the translation interface — the page list no longer filters exclusively to Elementor pages
+
 = 1.5.9 =
 * Fixed: Very large pages no longer hang for 16+ minutes without saving — added time-budget check inside the per-string fallback loop so a partial save fires even when a batch API call times out and the fallback iterates 20 individual strings (each up to 60 s)
 * Fixed: SEO/meta field translation and title translation are now skipped during partial saves, preventing additional API calls from blocking the response after a time-budget break

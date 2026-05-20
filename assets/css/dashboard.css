@@ -544,7 +544,7 @@
     justify-content: flex-start;
     text-align: left;
     font-size: 12px;
-    padding: 3px 26px 3px 8px;
+    padding: 3px 22px 3px 6px;
     white-space: nowrap;
     flex-shrink: 0;
 }
@@ -553,7 +553,7 @@
 #aitrfoel-select-languages::after {
     content: '';
     position: absolute;
-    right: 10px;
+    right: 7px;
     top: 50%;
     transform: translateY(-50%);
     width: 7px;

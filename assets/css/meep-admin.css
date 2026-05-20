@@ -1046,7 +1046,7 @@
 
 .aitrfoel-dashboard-wrapper #aitrfoel-bulk-bar .aitrfoel-source-languages .button,
 .aitrfoel-dashboard-wrapper #aitrfoel-bulk-bar .aitrfoel-target-languages .button {
-  min-width: 140px; /* reduced from 180 — buttons still expand to content width */
+  min-width: 108px;
   width: 100%;       /* fill the flex container */
   justify-content: center;
 }
@@ -3308,7 +3308,11 @@
 
 .aitrfoel-dashboard-wrapper #aitrfoel-select-source-language,
 .aitrfoel-dashboard-wrapper #aitrfoel-select-languages {
-  padding-right: 28px !important;
+  padding-right: 22px !important;
+}
+
+.aitrfoel-dashboard-wrapper #aitrfoel-select-languages {
+  padding-left: 6px !important;
 }
 
 .aitrfoel-dashboard-wrapper #aitrfoel-select-source-language::after,
@@ -3317,7 +3321,7 @@
   border: 0 !important;
   width: auto !important;
   height: auto !important;
-  right: 10px !important;
+  right: 7px !important;
   top: 50% !important;
   transform: translateY(-50%) !important;
   color: #59657a !important;

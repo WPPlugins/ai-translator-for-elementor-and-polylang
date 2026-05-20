@@ -143,11 +143,6 @@ class AITRFOEL_Translation_Engine {
         $source  = $parse['detected_lang'];
         $extra   = $parse['extra'];
 
-        $check = $this->check_word_limit($strings, $page_id);
-        if (is_wp_error($check)) {
-            return $check;
-        }
-
         // Separate cache hits from strings that must go to the proxy
         $cache      = AITRFOEL_Cache_Manager::get_instance();
         $cached_map = [];
@@ -162,6 +157,16 @@ class AITRFOEL_Translation_Engine {
                 $cached_map[$orig] = $hit;
             } else {
                 $to_send[] = $orig;
+            }
+        }
+
+        // Check word limit only against uncached strings — already-cached content is free.
+        // This allows retrying a partially-translated page even when the budget is tight.
+        if (!empty($to_send)) {
+            $to_send_for_check = array_map(static function($s) { return ['original' => $s]; }, $to_send);
+            $check = $this->check_word_limit($to_send_for_check, $page_id);
+            if (is_wp_error($check)) {
+                return $check;
             }
         }
 
@@ -546,11 +551,87 @@ class AITRFOEL_Translation_Engine {
             $page_id
         );
         $server_factor = defined('AITRFOEL_Translate_All::SERVER_USAGE_FACTOR') ? AITRFOEL_Translate_All::SERVER_USAGE_FACTOR : 2;
-        $estimated_words = $source_words * $server_factor;
-        
+
+        // Refine the estimate by subtracting words for strings already in cache.
+        // On retries, most strings are cached so the real cost is a small fraction
+        // of the full page — without this, retries are blocked unnecessarily.
+        $prelim_source_lang = $source_lang;
+        if ($source_lang === 'auto') {
+            $cached_lang_transient = get_transient('aitrfoel_detected_lang_' . $page_id . '_' . $target_lang);
+            if ($cached_lang_transient) {
+                $prelim_source_lang = $cached_lang_transient;
+            }
+        }
         AITRFOEL_Logger::log(
-            sprintf('Word limit check: Plan=%s, Limit=%d, Used=%d, Left=%d, SourceWords=%d, EstimatedUsage=%d (×%d)', 
-                $plan, $word_limit, $words_used, $words_left, $source_words, $estimated_words, $server_factor),
+            sprintf('[WORD-PRECHECK] source_lang=%s, prelim_source_lang=%s, cache_enabled=%s',
+                $source_lang, $prelim_source_lang, $this->cache_enabled ? 'yes' : 'no'),
+            'debug', $page_id
+        );
+        $cache_precheck       = AITRFOEL_Cache_Manager::get_instance();
+        $uncached_source_words = 0;
+        foreach ($strings_to_translate as $string_data) {
+            if (!isset($string_data['original'])) continue;
+            $raw = (string) $string_data['original'];
+            $stripped = html_entity_decode(wp_strip_all_tags($raw), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $wc = self::count_words($stripped);
+            if ($wc === 0) continue;
+
+            if (strlen($raw) > AITRFOEL_OpenAI_API::LARGE_TEXT_THRESHOLD) {
+                // Large string: check regular cache first (set when translation completes fully).
+                if ($this->cache_enabled) {
+                    $prepared_large = $raw;
+                    if (method_exists($parser, 'i18n_extract_with_placeholders')) {
+                        list($prepared_large,) = $parser->i18n_extract_with_placeholders($raw);
+                    }
+                    $large_cached = $cache_precheck->get_from_cache($prepared_large, $target_lang, $prelim_source_lang);
+                    AITRFOEL_Logger::log(
+                        sprintf('[WORD-PRECHECK] Large string (%d chars, %d words): regular cache %s (lang=%s→%s)',
+                            strlen($raw), $wc, $large_cached !== null ? 'HIT' : 'MISS', $prelim_source_lang, $target_lang),
+                        'debug', $page_id
+                    );
+                    if ($large_cached !== null) {
+                        continue; // fully translated and in regular cache
+                    }
+                }
+                // Not in regular cache: check per-chunk transients to gauge remaining cost.
+                $total_approx    = (int) ceil(strlen($raw) / AITRFOEL_OpenAI_API::LARGE_TEXT_THRESHOLD);
+                $chunk_key_base  = 'aitrfoel_chunk_' . md5($raw . $target_lang);
+                $cached_chunks   = 0;
+                for ($ci = 0; $ci < $total_approx; $ci++) {
+                    if (get_transient($chunk_key_base . '_' . $ci) !== false) {
+                        $cached_chunks++;
+                    }
+                }
+                $uncached_ratio = $total_approx > 0
+                    ? max(0.0, ($total_approx - $cached_chunks) / $total_approx)
+                    : 1.0;
+                AITRFOEL_Logger::log(
+                    sprintf('[WORD-PRECHECK] Large string chunk transients: %d/%d cached, ratio_uncached=%.2f',
+                        $cached_chunks, $total_approx, $uncached_ratio),
+                    'debug', $page_id
+                );
+                $uncached_source_words += (int) ceil($wc * $uncached_ratio);
+                continue;
+            }
+
+            // Regular string: check translation cache.
+            if ($this->cache_enabled) {
+                $prepared = $raw;
+                if (method_exists($parser, 'i18n_extract_with_placeholders')) {
+                    list($prepared,) = $parser->i18n_extract_with_placeholders($raw);
+                }
+                if ($cache_precheck->get_from_cache($prepared, $target_lang, $prelim_source_lang) !== null) {
+                    continue; // already translated and cached — no words needed
+                }
+            }
+            $uncached_source_words += $wc;
+        }
+
+        $estimated_words = $uncached_source_words * $server_factor;
+
+        AITRFOEL_Logger::log(
+            sprintf('Word limit check: Plan=%s, Limit=%d, Used=%d, Left=%d, TotalSourceWords=%d, UncachedWords=%d, EstimatedUsage=%d (×%d)',
+                $plan, $word_limit, $words_used, $words_left, $source_words, $uncached_source_words, $estimated_words, $server_factor),
             'info',
             $page_id
         );
@@ -783,17 +864,33 @@ class AITRFOEL_Translation_Engine {
         // PHP can run for 20+ minutes on a huge page and be killed with nothing saved.
         // We cap each call at 200 s, save whatever was translated, and return 'partial' so
         // the caller retries — the retry is fast because all strings are now in cache.
-        $budget_seconds = (int) apply_filters('aitrfoel_translate_time_budget', 120);
+        $budget_seconds = (int) apply_filters('aitrfoel_translate_time_budget', 200);
         $budget_start   = microtime(true);
         $timed_out      = false;
+        $word_limit_hit = false;
+
+        // Propagate time budget to the API class so translate_large_text() can
+        // honour the same deadline and cache completed chunks for fast retries.
+        AITRFOEL_OpenAI_API::set_time_budget($budget_start, $budget_seconds);
 
         // Process uncached strings in batches
         if (!empty($uncached_items)) {
             $cache_elapsed = round((microtime(true) - $batch_start_time) * 1000);
-            AITRFOEL_Logger::log(sprintf('[TIMING] Cache check done in %dms: %d cached, %d uncached', $cache_elapsed, count($cached_translations), count($uncached_items)), 'info', $page_id);
-            // OPTIMIZED: Process all strings together for maximum batch efficiency
-            // No grouping by widget - creates larger batches = faster translation
-            $batches = array_chunk($uncached_items, $this->batch_size);
+
+            // Separate large strings from normal strings. Large strings are sent
+            // directly to translate_text() (which chunks them) so they never block
+            // the batch API and waste the time budget on a 60-second cURL timeout.
+            $large_items  = [];
+            $normal_items = [];
+            foreach ($uncached_items as $item) {
+                if (strlen($item['src']) > AITRFOEL_OpenAI_API::LARGE_TEXT_THRESHOLD) {
+                    $large_items[] = $item;
+                } else {
+                    $normal_items[] = $item;
+                }
+            }
+            AITRFOEL_Logger::log(sprintf('[TIMING] Cache check done in %dms: %d cached, %d uncached (%d large, %d normal)', $cache_elapsed, count($cached_translations), count($uncached_items), count($large_items), count($normal_items)), 'info', $page_id);
+            $batches = array_chunk($normal_items, $this->batch_size);
             
             foreach ($batches as $batch_index => $batch_items) {
                 // Group key is now just "batch" since we're not grouping by widget
@@ -999,6 +1096,60 @@ class AITRFOEL_Translation_Engine {
                         $page_id
                     );
                     break;
+                }
+            }
+
+            // Process large strings individually — they bypass the batch API entirely
+            // to avoid wasting the time budget on a 60-second cURL timeout.
+            if (!empty($large_items) && !$timed_out) {
+                AITRFOEL_Logger::log(sprintf('[TIMING] Processing %d large string(s) individually', count($large_items)), 'info', $page_id);
+                foreach ($large_items as $item) {
+                    if ((microtime(true) - $budget_start) >= $budget_seconds) {
+                        $timed_out = true;
+                        AITRFOEL_Logger::log(
+                            sprintf('[TIMING] Time budget of %ds reached before large string processing. Saving partial page.', $budget_seconds),
+                            'warning', $page_id
+                        );
+                        break;
+                    }
+                    $text     = $item['src'];
+                    $path     = $item['path'];
+                    $original = $item['original'];
+                    $ph_map   = $item['ph_map'];
+
+                    $translated = $api->translate_text($text, $target_lang, $detected_lang);
+
+                    if (is_wp_error($translated)) {
+                        $err     = $translated->get_error_message();
+                        $err_code = $translated->get_error_code();
+                        // chunk_timeout / word_limit_exceeded: partial progress was cached; will retry next pass
+                        if ($err_code === 'word_limit_exceeded') {
+                            $timed_out      = true;
+                            $word_limit_hit = true; // word limit exhausted — do not auto-retry
+                        } elseif ($err_code === 'chunk_timeout' ||
+                            strpos($err, 'chunk_timeout') !== false || strpos($err, 'timed out') !== false) {
+                            $timed_out = true;
+                        }
+                        AITRFOEL_Logger::log('Large string translation failed: ' . $err, 'error', $page_id);
+                    } else {
+                        if ($this->cache_enabled) {
+                            $cache->set_to_cache($text, $translated, $target_lang, $detected_lang,
+                                get_option('aitrfoel_openai_model', 'gpt-3.5-turbo'));
+                        }
+                        if (!empty($ph_map) && method_exists($parser, 'i18n_restore_placeholders')) {
+                            $final = $parser->i18n_restore_placeholders($translated, $ph_map);
+                        } else {
+                            $final = $this->restore_html_formatting($translated, $original);
+                        }
+                        if (method_exists($parser, 'i18n_cleanup_artifacts')) {
+                            $final = $parser->i18n_cleanup_artifacts($final);
+                        }
+                        if (method_exists($parser, 'restore_lost_links')) {
+                            $final = $parser->restore_lost_links($final, $original);
+                        }
+                        $translations[$path] = $final;
+                    }
+                    $processed++;
                 }
             }
         }
@@ -1243,7 +1394,13 @@ class AITRFOEL_Translation_Engine {
             }
         }
         
-    // Apply translations back to Elementor data
+    // Apply translations back to Elementor data.
+        // Reset the execution timer first: the translation + gap-filler passes may have consumed
+        // most of max_execution_time, and we must not let the request die before the result is
+        // saved (otherwise the words are spent but the page is never updated).
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(120);
+        }
         $translated_data = $parser->apply_translations($elementor_data_array, $translations);
 
         // Deep cleanup pass across all string fields to ensure no escaped tags/orphan placeholders remain
@@ -1331,15 +1488,28 @@ class AITRFOEL_Translation_Engine {
         }
 
         // Tag partial pages so the AJAX handler can trigger an automatic retry.
+        // If the partial was caused by word limit exhaustion, mark it separately so
+        // the AJAX handler can return 'limit_reached' to the JS instead of retrying.
         if ($timed_out) {
             update_post_meta($new_page_id, '_aitrfoel_partial_translation', 1);
-            AITRFOEL_Logger::log(
-                sprintf('Page %d partially translated — retry will complete it from cache.', $new_page_id),
-                'warning',
-                $page_id
-            );
+            if ($word_limit_hit) {
+                update_post_meta($new_page_id, '_aitrfoel_word_limit_hit', 1);
+                AITRFOEL_Logger::log(
+                    sprintf('Page %d partially translated — word limit exhausted, no auto-retry.', $new_page_id),
+                    'warning',
+                    $page_id
+                );
+            } else {
+                delete_post_meta($new_page_id, '_aitrfoel_word_limit_hit');
+                AITRFOEL_Logger::log(
+                    sprintf('Page %d partially translated — retry will complete it from cache.', $new_page_id),
+                    'warning',
+                    $page_id
+                );
+            }
         } else {
             delete_post_meta($new_page_id, '_aitrfoel_partial_translation');
+            delete_post_meta($new_page_id, '_aitrfoel_word_limit_hit');
         }
 
         // Log success
@@ -1350,61 +1520,10 @@ class AITRFOEL_Translation_Engine {
             $new_page_id
         );
         
-        // Report usage to server API
-        // Since we're using OpenAI directly (not through server API),
-        // we need to manually report the word count
-        if (isset($this->last_translation_stats['word_count']) && $this->last_translation_stats['word_count'] > 0) {
-            $word_count = $this->last_translation_stats['word_count'];
-            
-            try {
-                // Report usage to the server API for tracking
-                $license_manager = AITRFOEL_License_Manager_Server::get_instance();
-                $response = wp_remote_post('https://meeptech.com/api/eat/report-usage', [
-                    'timeout' => 5,
-                    'blocking' => true,
-                    'body' => json_encode([
-                        'site_url' => home_url(),
-                        'license_key' => $license_manager->get_license_key(),
-                        'words_used' => $word_count,
-                        'target_lang' => $target_lang
-                    ]),
-                    'headers' => [
-                        'Content-Type' => 'application/json'
-                    ]
-                ]);
-                
-                if (!is_wp_error($response)) {
-                    $status_code = wp_remote_retrieve_response_code($response);
-                    $body = wp_remote_retrieve_body($response);
-                    
-                    // Update local cache from server response
-                    $data = json_decode($body, true);
-                    if (isset($data['total_words_used'])) {
-                        update_option('aitrfoel_words_used_this_month', $data['total_words_used']);
-                    }
-                    
-                    // Handle server-side cooldown state (source of truth)
-                    if (isset($data['cooldown_active']) && $data['cooldown_active'] === true) {
-                        // Server says cooldown is active - use server's end date
-                        $cooldown_end = strtotime($data['cooldown_ends_at']);
-                        update_option('aitrfoel_cooldown_end_date', $cooldown_end);
-                        
-                        // Set a transient to show admin notice
-                        set_transient('aitrfoel_cooldown_activated', true, 60);
-                    } elseif (isset($data['cooldown_active']) && $data['cooldown_active'] === false) {
-                        // Server says no cooldown - clear local cooldown if exists
-                        delete_option('aitrfoel_cooldown_end_date');
-                    }
-                    
-                    // Invalidate cached license status so next check_word_limit() gets fresh data
-                    $license_manager->clear_status_cache();
-                } else {
-                    error_log('EAT: Failed to report usage: ' . $response->get_error_message());
-                }
-            } catch (Exception $e) {
-                error_log('EAT: Exception reporting usage: ' . $e->getMessage());
-            }
-        }
+        // All translations go through MeepTech's /translate endpoint which auto-counts words
+        // server-side — no separate report-usage call is needed (it would double-count).
+        // Just invalidate the cached license status so the next word-limit check is fresh.
+        AITRFOEL_License_Manager_Server::get_instance()->clear_status_cache();
         
         // Track successful translation with PostHog Analytics
         if (function_exists('aitrfoel_analytics')) {
@@ -2069,7 +2188,34 @@ class AITRFOEL_Translation_Engine {
             }
         }
         $existing_page_id = isset($existing_translations[$target_code]) ? (int) $existing_translations[$target_code] : 0;
-        
+
+        // Fallback: if the multilingual plugin didn't register the relationship (e.g. on a
+        // partial-save retry), search for a previously created page by our own tracking meta.
+        if (!$existing_page_id || !get_post($existing_page_id)) {
+            $fallback_posts = get_posts([
+                'post_type'              => $original_page->post_type,
+                'post_status'            => ['publish', 'draft', 'private', 'pending'],
+                'posts_per_page'         => 1,
+                'fields'                 => 'ids',
+                'no_found_rows'          => true,
+                'update_post_meta_cache' => false,
+                'update_post_term_cache' => false,
+                'meta_query'             => [[
+                    'key'     => '_aitrfoel_translated_from',
+                    'value'   => $original_page_id . '_' . $target_code,
+                    'compare' => '=',
+                ]],
+            ]);
+            if (!empty($fallback_posts)) {
+                $existing_page_id = (int) $fallback_posts[0];
+                AITRFOEL_Logger::log(
+                    sprintf('Fallback lookup: found existing %s translation (ID %d) for page %d → %s via tracking meta.', $content_type, $existing_page_id, $original_page_id, $target_lang),
+                    'info',
+                    $original_page_id
+                );
+            }
+        }
+
         if ($existing_page_id && get_post($existing_page_id)) {
             AITRFOEL_Logger::log(
                 sprintf('Existing %s translation found (ID %d) for page %d → %s. Updating.', $content_type, $existing_page_id, $original_page_id, $target_lang),
@@ -2222,6 +2368,10 @@ class AITRFOEL_Translation_Engine {
         // Store content type for reference
         update_post_meta($new_page_id, '_aitrfoel_content_type', $content_type);
         update_post_meta($new_page_id, '_aitrfoel_source_page', $original_page_id);
+
+        // Store source-page + language so we can find this page on partial-save retries
+        // even when the multilingual plugin hasn't committed the relationship yet.
+        update_post_meta($new_page_id, '_aitrfoel_translated_from', $original_page_id . '_' . $target_code);
         
         // Translate SEO meta, excerpt, and WooCommerce fields
         $this->translate_post_meta_fields($original_page_id, $new_page_id, $target_lang, $source_lang);
@@ -2284,10 +2434,9 @@ class AITRFOEL_Translation_Engine {
             $new_page_id
         );
         
-        // Report usage to server
-        if (isset($this->last_translation_stats['word_count']) && $this->last_translation_stats['word_count'] > 0) {
-            $this->report_usage_to_server($this->last_translation_stats['word_count'], $target_lang);
-        }
+        // All translations go through MeepTech's /translate endpoint which auto-counts words.
+        // Invalidate cached license status so next word-limit check fetches fresh data.
+        AITRFOEL_License_Manager_Server::get_instance()->clear_status_cache();
         
         // Record in translation history
         $translation_duration = microtime(true) - $translation_start_time;
@@ -2316,56 +2465,6 @@ class AITRFOEL_Translation_Engine {
                 'source_lang' => $source_lang,
                 'target_lang' => $target_lang,
             ]);
-        }
-    }
-    
-    /**
-     * Report usage to server API
-     * 
-     * @param int $word_count Words translated
-     * @param string $target_lang Target language
-     */
-    private function report_usage_to_server($word_count, $target_lang) {
-        try {
-            $license_manager = AITRFOEL_License_Manager_Server::get_instance();
-            $response = wp_remote_post('https://meeptech.com/api/eat/report-usage', [
-                'timeout' => 5,
-                'blocking' => true,
-                'body' => json_encode([
-                    'site_url' => home_url(),
-                    'license_key' => $license_manager->get_license_key(),
-                    'words_used' => $word_count,
-                    'target_lang' => $target_lang
-                ]),
-                'headers' => [
-                    'Content-Type' => 'application/json'
-                ]
-            ]);
-            
-            if (!is_wp_error($response)) {
-                $body = wp_remote_retrieve_body($response);
-                $data = json_decode($body, true);
-                
-                if (isset($data['total_words_used'])) {
-                    update_option('aitrfoel_words_used_this_month', $data['total_words_used']);
-                }
-                
-                // Handle server-side cooldown state (source of truth)
-                if (isset($data['cooldown_active']) && $data['cooldown_active'] === true) {
-                    // Server says cooldown is active - use server's end date
-                    $cooldown_end = strtotime($data['cooldown_ends_at']);
-                    update_option('aitrfoel_cooldown_end_date', $cooldown_end);
-                    set_transient('aitrfoel_cooldown_activated', true, 60);
-                } elseif (isset($data['cooldown_active']) && $data['cooldown_active'] === false) {
-                    // Server says no cooldown - clear local cooldown if exists
-                    delete_option('aitrfoel_cooldown_end_date');
-                }
-                
-                // Invalidate cached license status so next check_word_limit() gets fresh data
-                AITRFOEL_License_Manager_Server::get_instance()->clear_status_cache();
-            }
-        } catch (Exception $e) {
-            error_log('EAT: Exception reporting usage: ' . $e->getMessage());
         }
     }
     
@@ -3186,7 +3285,36 @@ class AITRFOEL_Translation_Engine {
             }
         }
         $existing_page_id = isset($existing_translations[$target_code]) ? (int) $existing_translations[$target_code] : 0;
-        
+
+        // Fallback: if the multilingual plugin didn't register the relationship (e.g. the
+        // first pass was a partial save that returned before Polylang committed the link),
+        // locate the previously created page via our own tracking meta.
+        if (!$existing_page_id || !get_post($existing_page_id)) {
+            $fallback_posts = get_posts([
+                'post_type'              => $original_page->post_type,
+                'post_status'            => ['publish', 'draft', 'private', 'pending'],
+                'posts_per_page'         => 1,
+                'fields'                 => 'ids',
+                'no_found_rows'          => true,
+                'update_post_meta_cache' => false,
+                'update_post_term_cache' => false,
+                'meta_query'             => [[
+                    'key'     => '_aitrfoel_translated_from',
+                    'value'   => $original_page_id . '_' . $target_code,
+                    'compare' => '=',
+                ]],
+            ]);
+            if (!empty($fallback_posts)) {
+                $existing_page_id = (int) $fallback_posts[0];
+                AITRFOEL_Logger::log(
+                    sprintf('Fallback lookup: found existing translation (ID %d) via tracking meta for page %d → %s.',
+                        $existing_page_id, $original_page_id, $target_lang),
+                    'info',
+                    $original_page_id
+                );
+            }
+        }
+
         if ($existing_page_id && get_post($existing_page_id)) {
             AITRFOEL_Logger::log(
                 sprintf('Existing translation found (ID %d) for page %d → %s. Updating instead of creating new.', $existing_page_id, $original_page_id, $target_lang),
@@ -3281,6 +3409,9 @@ class AITRFOEL_Translation_Engine {
             // Translate and assign post categories/tags (non-WooCommerce)
             $this->translate_post_taxonomies($original_page_id, $existing_page_id, $target_lang);
 
+            // Ensure the source-page meta is present (may be missing on older translations)
+            update_post_meta($existing_page_id, '_aitrfoel_source_page', $original_page_id);
+
             AITRFOEL_Logger::log(
                 sprintf('Successfully updated existing translation (ID %d)', $existing_page_id),
                 'info',
@@ -3336,6 +3467,11 @@ class AITRFOEL_Translation_Engine {
         if (is_wp_error($new_page_id)) {
             return $new_page_id;
         }
+
+        // Store the source-page + language so we can find this page on partial-save retries
+        // even when the multilingual plugin hasn't committed the translation relationship yet.
+        update_post_meta($new_page_id, '_aitrfoel_translated_from', $original_page_id . '_' . $target_code);
+        update_post_meta($new_page_id, '_aitrfoel_source_page', $original_page_id);
 
         // Reassert the requested status after insertion in case another hook/plugin
         // forced a different post_status during wp_insert_post().

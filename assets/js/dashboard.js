@@ -823,7 +823,11 @@ jQuery(document).ready(function($) {
             const finalCount = $('.aitrfoel-language-checkbox:checked').length;
 
             // Update button text
-            if (finalCount > 0) {
+            if (finalCount === 1) {
+                const selectedCode = $('.aitrfoel-language-checkbox:checked').val();
+                const langName = (aitrfoelDashboard.languages || {})[selectedCode] || selectedCode.toUpperCase();
+                $('#aitrfoel-select-languages').text('→ ' + langName);
+            } else if (finalCount > 1) {
                 const text = aitrfoelDashboard.strings.languages_selected.replace('%d', finalCount);
                 $('#aitrfoel-select-languages').text(text);
             } else {
@@ -1844,7 +1848,7 @@ jQuery(document).ready(function($) {
         // Calls aitrfoel_process_bulk_item directly with a 360 s XHR timeout to match the
         // PHP set_time_limit(300) already in place on that handler.
         submitSyncItem: function(jobId, items, index, completedCount, errorCount, sourceLang, retryCount) {
-            const MAX_RETRIES = 5;
+            const MAX_RETRIES = 10;
             if (retryCount === undefined) { retryCount = 0; }
             const self  = this;
             const item  = items[index];
