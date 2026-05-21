@@ -201,6 +201,47 @@ class AITRFOEL_OpenAI_API {
      * segments into chunks ≤ LARGE_TEXT_THRESHOLD chars, translates each
      * chunk and concatenates the results.
      */
+    /**
+     * Split a (placeholder-prepared) HTML string into chunks no larger than $max
+     * characters, breaking only at block-level closing tags so each chunk remains a
+     * set of complete elements. Mirrors the chunking inside translate_large_text()
+     * so the async submit path produces identical chunks. Returns [] for empty
+     * input, or a single-element array when no block tags are present.
+     *
+     * @param string $text
+     * @param int    $max
+     * @return string[]
+     */
+    public static function split_html_into_chunks($text, $max = self::LARGE_TEXT_THRESHOLD) {
+        if (!is_string($text) || trim($text) === '') {
+            return [];
+        }
+        $sentinel   = "\x00SPLIT\x00";
+        $split_tags = 'p|h[1-6]|li|ul|ol|blockquote|table|thead|tbody|tfoot|tr|td|th|div|section|article|header|footer|figure|figcaption';
+        $chunked    = preg_replace('/<\/(' . $split_tags . ')>/iS', '</$1>' . $sentinel, $text);
+        $segments   = array_values(array_filter(
+            explode($sentinel, $chunked),
+            static fn($s) => trim($s) !== ''
+        ));
+        if (count($segments) <= 1) {
+            return [$text];
+        }
+        $chunks  = [];
+        $current = '';
+        foreach ($segments as $segment) {
+            if ($current !== '' && strlen($current) + strlen($segment) > $max) {
+                $chunks[] = $current;
+                $current  = $segment;
+            } else {
+                $current .= $segment;
+            }
+        }
+        if ($current !== '') {
+            $chunks[] = $current;
+        }
+        return $chunks;
+    }
+
     private function translate_large_text($text, $target_lang, $source_lang = 'auto') {
         $max = self::LARGE_TEXT_THRESHOLD;
 

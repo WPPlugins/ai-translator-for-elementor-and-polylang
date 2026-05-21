@@ -91,6 +91,14 @@ class AITRFOEL_Settings {
             'sanitize_callback' => 'intval',
             'default' => 30
         ]);
+
+        // Elementor async (submit→poll) translation. Opt-in / experimental: when enabled,
+        // Elementor pages translate via the proxy async job + browser polling instead of
+        // the synchronous path. Default OFF so existing behavior is unchanged.
+        register_setting('aitrfoel_settings_group', 'aitrfoel_elementor_async_enabled', [
+            'sanitize_callback' => 'boolval',
+            'default' => false
+        ]);
         
 
         

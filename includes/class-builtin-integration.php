@@ -100,6 +100,10 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         // Frontend query filtering
         if (!is_admin()) {
+            // Runs before WooCommerce's product_query (priority 10): converts a translated
+            // Shop page that resolved as a singular page into a clean product archive, so the
+            // product loop isn't pinned to the page's own ID (which yields zero products).
+            add_action('pre_get_posts', [$this, 'maybe_convert_shop_page_query'], 5);
             add_action('pre_get_posts', [$this, 'filter_frontend_queries']);
             
             // Filter taxonomy term names to show translated versions
@@ -354,10 +358,103 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         if (!term_exists($code, self::TAXONOMY)) {
             wp_insert_term($code, self::TAXONOMY, ['slug' => $code, 'description' => $name]);
         }
-        
+
+        // Best-effort: fetch the WordPress + plugin/theme (incl. WooCommerce) translation
+        // packs for this language, so front-end UI strings — cart, checkout, my-account,
+        // and other WooCommerce/core strings — render translated when filter_locale()
+        // switches the locale on /<lang>/ pages. The default language is the source and
+        // needs no pack. Failures never block adding the language.
+        if (!$is_default) {
+            try {
+                $this->maybe_download_language_pack($code);
+            } catch (\Throwable $e) {
+                if (class_exists('AITRFOEL_Logger')) {
+                    AITRFOEL_Logger::log('Language pack download error for ' . $code . ': ' . $e->getMessage(), 'warning');
+                }
+            }
+        }
+
         // Note: caller is responsible for calling flush_rewrite_rules() after batch operations
-        
+
         return true;
+    }
+
+    /**
+     * Best-effort install of translation packs for a language's WordPress locale.
+     *
+     * Downloads the core translation (which also registers the locale as "installed"),
+     * then runs the language-pack upgrader to fetch plugin/theme translations (including
+     * WooCommerce) for that locale. This makes WooCommerce's built-in strings render in
+     * the target language via locale switching, without the admin manually installing the
+     * WordPress site language. Entirely best-effort: every failure is swallowed/logged.
+     *
+     * @param string $code Short language code (e.g. 'ru')
+     * @return void
+     */
+    private function maybe_download_language_pack($code) {
+        // Needs admin-side includes, filesystem and network access.
+        if (!is_admin()) {
+            return;
+        }
+
+        $locale = $this->get_wp_locale($code);
+        if (!$locale || $locale === 'en_US') {
+            return; // English / unknown locale needs no pack
+        }
+
+        // Already installed — nothing to do.
+        if (function_exists('get_available_languages') && in_array($locale, get_available_languages(), true)) {
+            return;
+        }
+
+        if (!function_exists('wp_download_language_pack')) {
+            $tr = ABSPATH . 'wp-admin/includes/translation-install.php';
+            if (file_exists($tr)) {
+                require_once $tr;
+            }
+        }
+        if (!function_exists('wp_download_language_pack')) {
+            return; // environment cannot install translations
+        }
+
+        // 1) Core translation for the locale (also marks it as installed/available).
+        $core = wp_download_language_pack($locale);
+        if (is_wp_error($core) || $core === false) {
+            if (class_exists('AITRFOEL_Logger')) {
+                AITRFOEL_Logger::log(sprintf('Language pack: core translation for %s unavailable (continuing).', $locale), 'warning');
+            }
+        } elseif (class_exists('AITRFOEL_Logger')) {
+            AITRFOEL_Logger::log(sprintf('Language pack: installed core translations for %s.', $locale), 'info');
+        }
+
+        // 2) Plugin + theme translations (incl. WooCommerce) for the now-installed locale.
+        if (!class_exists('Language_Pack_Upgrader')) {
+            $up = ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+            if (file_exists($up)) {
+                require_once $up;
+            }
+        }
+        if (!class_exists('Language_Pack_Upgrader')) {
+            return;
+        }
+
+        // Refresh update transients so available translation packs for the new locale
+        // are discoverable by wp_get_translation_updates().
+        if (function_exists('wp_clean_update_cache')) {
+            wp_clean_update_cache();
+        }
+        if (function_exists('wp_update_plugins')) { wp_update_plugins(); }
+        if (function_exists('wp_update_themes'))  { wp_update_themes(); }
+        if (function_exists('wp_version_check'))  { wp_version_check(); }
+
+        $skin     = class_exists('Automatic_Upgrader_Skin') ? new Automatic_Upgrader_Skin() : null;
+        $upgrader = $skin ? new Language_Pack_Upgrader($skin) : new Language_Pack_Upgrader();
+        // Empty first arg → upgrader pulls all pending translation updates for installed locales.
+        $upgrader->bulk_upgrade([], ['clear_update_cache' => false]);
+
+        if (class_exists('AITRFOEL_Logger')) {
+            AITRFOEL_Logger::log(sprintf('Language pack: ran plugin/theme translation install for %s.', $locale), 'info');
+        }
     }
     
     /**
@@ -1690,6 +1787,77 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         return $permalink;
     }
     
+    /**
+     * Convert a translated Shop page resolved as a singular page into a clean product archive.
+     *
+     * When WooCommerce resolves /en/shop/ it uses the product post-type archive (no page_id
+     * constraint). But a translated shop page (e.g. /ru/магазин/) resolves as a normal
+     * singular page (is_page=true, page_id=9673). WooCommerce never strips that singular
+     * constraint, so the product query ends up as:
+     *   WHERE wp_posts.ID = '9673' AND post_type = 'product'
+     * which always returns 0 rows.
+     *
+     * Fix: at priority 5 (before WooCommerce's product_query at priority 10), detect this
+     * case and convert the query into a proper product archive — clearing is_page/is_singular
+     * and the page_id, and setting is_post_type_archive so WooCommerce builds the correct query.
+     *
+     * @param WP_Query $query
+     */
+    public function maybe_convert_shop_page_query($query) {
+        $active  = $this->is_active();
+        $is_main = $query->is_main_query();
+        $is_page = $query->is_page();
+        $qid     = (int) $query->get('page_id') ?: (int) $query->queried_object_id;
+        $wc_ok   = function_exists('wc_get_page_id') && class_exists('WooCommerce');
+        $shop_id = $wc_ok ? (int) wc_get_page_id('shop') : 0;
+
+        if (!$active || is_admin() || !$is_main) {
+            return;
+        }
+
+        if (!$wc_ok) {
+            return;
+        }
+
+        // Only act when the query resolved as a singular page.
+        if (!$is_page) {
+            return;
+        }
+
+        $queried_id = $qid;
+        if (!$queried_id) {
+            return;
+        }
+
+        // Check whether this page is the (translated) WooCommerce shop page.
+        // wc_get_page_id('shop') already returns the translated ID because our
+        // pre_option_woocommerce_shop_page_id filter is in place.
+        $shop_page_id = $shop_id;
+        if (!$shop_page_id || $queried_id !== $shop_page_id) {
+            return;
+        }
+
+        // Convert into a product post-type archive: clear all singular flags,
+        // set the archive flags, remove the page_id constraint.
+        // IMPORTANT: use '' (empty string) not 0 — WordPress uses '' !== $q['page_id']
+        // with strict inequality, so integer 0 would still add AND ID = '0' to the SQL.
+        $query->is_page             = false;
+        $query->is_singular         = false;
+        $query->is_archive          = true;
+        $query->is_post_type_archive = true;
+        $query->set('post_type', 'product');
+        $query->set('page_id', '');
+        $query->set('p', '');
+        $query->set('pagename', '');
+
+        // Preserve WooCommerce's expected per-page count.
+        $per_page = (int) get_option('posts_per_page', 12);
+        if (function_exists('wc_get_default_products_per_row')) {
+            $per_page = max($per_page, (int) get_option('woocommerce_catalog_columns', 4) * (int) get_option('woocommerce_catalog_rows', 4));
+        }
+        $query->set('posts_per_page', $per_page);
+    }
+
     /**
      * Filter frontend queries to show only current language posts
      * @param WP_Query $query

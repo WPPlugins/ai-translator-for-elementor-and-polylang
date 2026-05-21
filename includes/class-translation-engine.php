@@ -86,27 +86,146 @@ class AITRFOEL_Translation_Engine {
             $page_id
         );
         
+        // WooCommerce structural pages (cart / checkout / my-account / terms) hold only a
+        // block/shortcode, so there is nothing to translate in the body — their UI strings
+        // come from WooCommerce core translations via locale switching. We still want a
+        // linked, published shell so the page registers in the admin, routes under the
+        // language prefix, and the wc page-id option filters can swap to it.
+        $is_wc_structural = $this->is_wc_structural_page($page_id);
+
         // Route to appropriate translation method based on content type
+        $result = null;
         switch ($content_type) {
             case AITRFOEL_Content_Detector::TYPE_ELEMENTOR:
-                return $this->translate_elementor_page($page_id, $target_lang, $source_lang, $strings_to_translate, $translation_start_time);
-                
+                $result = $this->translate_elementor_page($page_id, $target_lang, $source_lang, $strings_to_translate, $translation_start_time);
+                break;
+
             case AITRFOEL_Content_Detector::TYPE_GUTENBERG:
-                return $this->translate_gutenberg_page($page_id, $target_lang, $source_lang, $translation_start_time);
-                
+                $result = $this->translate_gutenberg_page($page_id, $target_lang, $source_lang, $translation_start_time);
+                break;
+
             case AITRFOEL_Content_Detector::TYPE_CLASSIC:
-                return $this->translate_classic_page($page_id, $target_lang, $source_lang, $translation_start_time);
-                
+                $result = $this->translate_classic_page($page_id, $target_lang, $source_lang, $translation_start_time);
+                break;
+
             case AITRFOEL_Content_Detector::TYPE_WOOCOMMERCE:
-                return $this->translate_woocommerce_product($page_id, $target_lang, $source_lang, $translation_start_time);
-                
+                $result = $this->translate_woocommerce_product($page_id, $target_lang, $source_lang, $translation_start_time);
+                break;
+
             default:
+                if ($is_wc_structural) {
+                    return $this->translate_wc_structural_page($page_id, $target_lang, $source_lang, $translation_start_time);
+                }
                 $this->track_translation_failure('unsupported_content', 'Unsupported content type', $translation_start_time);
                 return new WP_Error(
                     'unsupported_content',
                     __('This page does not contain any translatable content. Please ensure the page has content created with Elementor, Gutenberg (Block Editor), or Classic Editor.', 'ai-translator-for-elementor-and-polylang')
                 );
         }
+
+        // For WooCommerce structural pages, if normal translation found nothing to translate,
+        // still create the linked shell so the page registers and routes (UI via locale switch).
+        if ($is_wc_structural && is_wp_error($result)
+            && in_array($result->get_error_code(), ['no_translatable_content', 'no_content'], true)) {
+            AITRFOEL_Logger::log(
+                sprintf('WooCommerce structural page %d has no translatable body; creating linked shell.', $page_id),
+                'info', $page_id
+            );
+            return $this->translate_wc_structural_page($page_id, $target_lang, $source_lang, $translation_start_time);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Whether the page is a WooCommerce structural page (cart / checkout / my-account / terms).
+     * The Shop page is intentionally excluded — it has its own handling (classic shell + the
+     * product-archive query conversion).
+     *
+     * @param int $page_id
+     * @return bool
+     */
+    private function is_wc_structural_page($page_id) {
+        if (!function_exists('wc_get_page_id')) {
+            return false;
+        }
+        $page_id = (int) $page_id;
+        foreach (['cart', 'checkout', 'myaccount', 'terms'] as $key) {
+            $pid = (int) wc_get_page_id($key);
+            if ($pid > 0 && $pid === $page_id) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Create a linked, published shell translation for a WooCommerce structural page.
+     * The body (a WooCommerce block/shortcode) is copied as-is; only the title is translated.
+     * The visible UI strings are rendered by WooCommerce core translations via locale switching.
+     *
+     * @param int    $page_id
+     * @param string $target_lang
+     * @param string $source_lang
+     * @param float  $translation_start_time
+     * @return int|WP_Error new page ID or error
+     */
+    private function translate_wc_structural_page($page_id, $target_lang, $source_lang, $translation_start_time) {
+        $post = get_post($page_id);
+        if (!$post) {
+            $this->track_translation_failure('no_content', 'WooCommerce structural page not found', $translation_start_time);
+            return new WP_Error('no_content', __('Page not found.', 'ai-translator-for-elementor-and-polylang'));
+        }
+
+        // Translate just the title; copy the block/shortcode body unchanged.
+        $api              = AITRFOEL_OpenAI_API::get_instance();
+        $translated_title = $api->translate_title($post->post_title, $target_lang, $source_lang);
+        if (is_wp_error($translated_title) || empty($translated_title)) {
+            $translated_title = null; // create_translated_page_generic falls back to "Title (LANG)"
+        }
+
+        $detected_lang = ($source_lang === 'auto') ? 'en' : $source_lang;
+
+        $new_page_id = $this->create_translated_page_generic(
+            $page_id,
+            (string) $post->post_content,
+            $target_lang,
+            $detected_lang,
+            'woocommerce',
+            $translated_title
+        );
+        if (is_wp_error($new_page_id)) {
+            return $new_page_id;
+        }
+
+        // Structural WooCommerce pages must be published: the pre_option page-id filters and
+        // routing only swap to a *published* translation. A draft would silently break the
+        // localized cart/checkout/account routing.
+        if (get_post_status($new_page_id) !== 'publish') {
+            wp_update_post(['ID' => $new_page_id, 'post_status' => 'publish']);
+            clean_post_cache($new_page_id);
+        }
+
+        AITRFOEL_Logger::log(
+            sprintf('WooCommerce structural page %d → %d (%s): linked shell created; UI strings via locale switching.',
+                $page_id, $new_page_id, $target_lang),
+            'success', $page_id, $new_page_id
+        );
+
+        if (class_exists('AITRFOEL_Translation_History')) {
+            AITRFOEL_Translation_History::record([
+                'original_post_id'   => $page_id,
+                'translated_post_id' => $new_page_id,
+                'source_lang'        => $detected_lang,
+                'target_lang'        => $target_lang,
+                'content_type'       => 'woocommerce',
+                'word_count'         => 0,
+                'status'             => 'success',
+                'duration'           => round(microtime(true) - $translation_start_time, 2),
+            ]);
+        }
+
+        return $new_page_id;
     }
 
     // =========================================================================
@@ -129,9 +248,20 @@ class AITRFOEL_Translation_Engine {
     public function submit_page_async($page_id, $target_lang, $source_lang = 'auto') {
         $content_type = AITRFOEL_Content_Detector::get_instance()->detect($page_id);
 
-        // Elementor has complex inline placeholder handling — keep on sync path
+        // Elementor has complex inline placeholder handling. It stays on the proven sync
+        // path by default; the async (submit→poll) path is opt-in via a setting and gated
+        // here so existing behavior is unchanged unless explicitly enabled.
         if ($content_type === AITRFOEL_Content_Detector::TYPE_ELEMENTOR) {
-            return 'sync_required';
+            if (!get_option('aitrfoel_elementor_async_enabled', false)) {
+                return 'sync_required';
+            }
+            $submitted = $this->submit_elementor_async($page_id, $target_lang, $source_lang);
+            // On any failure, fall back to the synchronous path rather than erroring out.
+            if (is_wp_error($submitted)) {
+                AITRFOEL_Logger::log('Elementor async submit failed, falling back to sync: ' . $submitted->get_error_message(), 'warning', $page_id);
+                return 'sync_required';
+            }
+            return $submitted;
         }
 
         $parse = $this->parse_page_content_for_async($page_id, $content_type, $source_lang);
@@ -218,6 +348,15 @@ class AITRFOEL_Translation_Engine {
      *   WP_Error   — on failure
      */
     public function poll_page_async($proxy_job_id) {
+        // Elementor async jobs use a multi-job manifest stored in the context transient;
+        // route them to the dedicated poller before the single-job logic below.
+        $maybe_ctx = get_transient('aitrfoel_async_' . $proxy_job_id);
+        if (is_array($maybe_ctx)
+            && ($maybe_ctx['content_type'] ?? '') === AITRFOEL_Content_Detector::TYPE_ELEMENTOR
+            && !empty($maybe_ctx['jobs'])) {
+            return $this->poll_elementor_async($proxy_job_id, $maybe_ctx);
+        }
+
         $api    = AITRFOEL_OpenAI_API::get_instance();
         $status = $api->get_async_job_status($proxy_job_id);
 
@@ -272,6 +411,279 @@ class AITRFOEL_Translation_Engine {
             }
         }
 
+        return $new_page_id;
+    }
+
+    /**
+     * Elementor async Phase 1: parse the page, extract placeholders, chunk large
+     * fields, and submit all prepared pieces to the proxy async endpoint as one or
+     * more jobs (<=90 texts each, under the server's 100-text cap). A manifest mapping
+     * every submitted text back to its Elementor path + chunk position is stored in a
+     * context transient keyed by the first job id (the returned poll handle).
+     *
+     * @return string|WP_Error first job id (poll handle), or WP_Error to signal the
+     *                         caller to fall back to the synchronous path.
+     */
+    private function submit_elementor_async($page_id, $target_lang, $source_lang = 'auto') {
+        $raw = get_post_meta($page_id, '_elementor_data', true);
+        if (empty($raw)) {
+            return new WP_Error('no_elementor_data', __('No Elementor data found for this page.', 'ai-translator-for-elementor-and-polylang'));
+        }
+        $data = json_decode($raw, true);
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
+            return new WP_Error('json_decode_error', __('Failed to decode Elementor data.', 'ai-translator-for-elementor-and-polylang'));
+        }
+
+        $parser  = AITRFOEL_Widget_Parser::get_instance();
+        $map     = $parser->parse_for_translation($data);
+        $strings = array_values($map);
+        if (empty($strings)) {
+            return new WP_Error('no_translatable_content', __('No translatable content found in this page.', 'ai-translator-for-elementor-and-polylang'));
+        }
+
+        // Resolve a source language for caching/locale (the server still auto-detects).
+        $detected_lang = $source_lang;
+        if ($source_lang === 'auto') {
+            $cached_lang   = get_transient('aitrfoel_detected_lang_' . $page_id . '_' . $target_lang);
+            $detected_lang = $cached_lang ?: 'auto';
+        }
+
+        // Build ordered units: one prepared (placeholder-extracted) text piece per chunk.
+        $max           = AITRFOEL_OpenAI_API::LARGE_TEXT_THRESHOLD;
+        $units         = []; // [ ['path'=>, 'chunk_index'=>, 'n_chunks'=>, 'prepared'=>], ... ]
+        $ph_maps       = []; // path => placeholder map
+        $originals     = []; // path => original (for link restore)
+        $prepared_full = []; // path => full prepared field (cache key, matches sync path)
+        foreach ($strings as $row) {
+            if (!is_array($row)) continue;
+            $path = (string)($row['path'] ?? '');
+            $orig = (string)($row['original'] ?? '');
+            if ($path === '' || trim($orig) === '') continue;
+
+            $prepared = $orig;
+            $ph       = [];
+            if (method_exists($parser, 'i18n_extract_with_placeholders')) {
+                list($prepared, $ph) = $parser->i18n_extract_with_placeholders($orig);
+            }
+            $ph_maps[$path]       = is_array($ph) ? $ph : [];
+            $originals[$path]     = $orig;
+            $prepared_full[$path] = $prepared;
+
+            $pieces = (strlen($prepared) > $max)
+                ? AITRFOEL_OpenAI_API::split_html_into_chunks($prepared, $max)
+                : [$prepared];
+            if (empty($pieces)) { $pieces = [$prepared]; }
+
+            $n = count($pieces);
+            foreach ($pieces as $ci => $piece) {
+                $units[] = ['path' => $path, 'chunk_index' => $ci, 'n_chunks' => $n, 'prepared' => $piece];
+            }
+        }
+
+        if (empty($units)) {
+            return new WP_Error('no_translatable_content', __('No translatable content found in this page.', 'ai-translator-for-elementor-and-polylang'));
+        }
+
+        $api = AITRFOEL_OpenAI_API::get_instance();
+
+        // Submit in jobs of <=90 texts (server caps at 100). Global unit index == send index.
+        $JOB_MAX = 90;
+        $jobs    = []; // ['job_id'=>, 'offset'=>, 'count'=>]
+        $total   = count($units);
+        for ($offset = 0; $offset < $total; $offset += $JOB_MAX) {
+            $slice  = array_slice($units, $offset, $JOB_MAX);
+            $texts  = array_map(static function ($u) { return $u['prepared']; }, $slice);
+            $job_id = $api->submit_batch_async($texts, $target_lang, $source_lang);
+            if (is_wp_error($job_id)) {
+                return $job_id; // caller falls back to sync
+            }
+            $jobs[] = ['job_id' => $job_id, 'offset' => $offset, 'count' => count($texts)];
+        }
+
+        $handle  = $jobs[0]['job_id'];
+        $context = [
+            'content_type'  => AITRFOEL_Content_Detector::TYPE_ELEMENTOR,
+            'page_id'       => $page_id,
+            'target_lang'   => $target_lang,
+            'source_lang'   => $source_lang,
+            'detected_lang' => $detected_lang,
+            'units'         => $units,
+            'ph_maps'       => $ph_maps,
+            'originals'     => $originals,
+            'prepared_full' => $prepared_full,
+            'jobs'          => $jobs,
+            'start_time'    => microtime(true),
+        ];
+        set_transient('aitrfoel_async_' . $handle, $context, HOUR_IN_SECONDS);
+
+        AITRFOEL_Logger::log(
+            sprintf('Elementor async submit: page=%d lang=%s handle=%s units=%d jobs=%d',
+                $page_id, $target_lang, $handle, $total, count($jobs)),
+            'info', $page_id
+        );
+        return $handle;
+    }
+
+    /**
+     * Elementor async Phase 2: poll every job; once all are done, reassemble chunks
+     * per path, restore placeholders, run the (bounded) gap-filler, apply to the
+     * Elementor data, and save the translated page.
+     *
+     * @return string|int|WP_Error 'pending' | new_page_id | WP_Error
+     */
+    private function poll_elementor_async($handle, $context) {
+        $api = AITRFOEL_OpenAI_API::get_instance();
+
+        // Lay every job's translations into a global, send-ordered results array.
+        $resolved = []; // global unit index => translated piece
+        foreach ($context['jobs'] as $job) {
+            $status = $api->get_async_job_status($job['job_id']);
+            if (is_wp_error($status)) {
+                return $status;
+            }
+            $st = $status['status'] ?? 'pending';
+            if (in_array($st, ['pending', 'processing'], true)) {
+                return 'pending';
+            }
+            if ($st === 'error') {
+                return new WP_Error('proxy_job_error', $status['error'] ?? __('Translation job failed on server.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            $job_translations = $status['translations'] ?? [];
+            $offset = (int) $job['offset'];
+            foreach ($job_translations as $k => $tr) {
+                $resolved[$offset + $k] = $tr;
+            }
+        }
+
+        $parser        = AITRFOEL_Widget_Parser::get_instance();
+        $units         = $context['units'];
+        $ph_maps       = $context['ph_maps'];
+        $originals     = $context['originals'];
+        $prepared_full = $context['prepared_full'] ?? [];
+        $target_lang   = $context['target_lang'];
+        $detected_lang = $context['detected_lang'];
+
+        // Reassemble translated pieces per path (ordered by chunk_index via unit order).
+        $assembled = []; // path => reassembled pre-restore translated text
+        foreach ($units as $i => $u) {
+            $path     = $u['path'];
+            $piece_tr = isset($resolved[$i]) ? (string) $resolved[$i] : $u['prepared']; // fallback: keep source piece
+            $assembled[$path] = ($assembled[$path] ?? '') . $piece_tr;
+        }
+
+        // Restore placeholders + cleanup per path → final translation map (by path).
+        $translations = [];
+        foreach ($assembled as $path => $tr_prepared) {
+            $final = $tr_prepared;
+            $pmap  = $ph_maps[$path] ?? [];
+            if (!empty($pmap) && method_exists($parser, 'i18n_restore_placeholders')) {
+                $final = $parser->i18n_restore_placeholders($final, $pmap);
+            }
+            if (method_exists($parser, 'i18n_cleanup_artifacts')) {
+                $final = $parser->i18n_cleanup_artifacts($final);
+            }
+            if (method_exists($parser, 'restore_lost_links') && isset($originals[$path])) {
+                $final = $parser->restore_lost_links($final, $originals[$path]);
+            }
+            $translations[$path] = $final;
+        }
+
+        // Gap-filler second pass (now bounded/fast) to fix missed/under-translated strings.
+        if (class_exists('AITRFOEL_Gap_Filler')) {
+            $gf_strings = [];
+            foreach ($originals as $path => $orig) {
+                $gf_strings[] = ['path' => $path, 'original' => $orig, 'type' => 'field'];
+            }
+            $opts = [
+                'levenshtein_threshold' => (int) get_option('aitrfoel_gap_lev_threshold', 3),
+                'residue_patterns'      => (string) get_option('aitrfoel_gap_residue_patterns', '/\\b(Read more|Číst dál|Читать далее)\\b/ui'),
+                'max_retry'             => (int) get_option('aitrfoel_gap_max_retry', 1),
+                'enable_postprocessor'  => (bool) get_option('aitrfoel_gap_enable_postprocessor', true),
+                'page_id'               => $context['page_id'],
+            ];
+            AITRFOEL_Gap_Filler::run($gf_strings, $translations, $target_lang, $detected_lang, $opts);
+        }
+
+        // Apply to a fresh copy of the Elementor data and save.
+        $raw  = get_post_meta($context['page_id'], '_elementor_data', true);
+        $data = json_decode($raw, true);
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
+            return new WP_Error('json_decode_error', __('Failed to decode Elementor data.', 'ai-translator-for-elementor-and-polylang'));
+        }
+        $translated_data = $parser->apply_translations($data, $translations);
+
+        // Deep cleanup of any escaped tags / orphan placeholders left in string fields.
+        if (method_exists($parser, 'i18n_cleanup_artifacts')) {
+            $walker = function (&$node) use (&$walker, $parser) {
+                if (is_string($node)) {
+                    $node = $parser->i18n_cleanup_artifacts($node);
+                    return;
+                }
+                if (is_array($node)) { foreach ($node as &$v) { $walker($v); } unset($v); }
+            };
+            $walker($translated_data);
+        }
+
+        if (!is_array($translated_data) ||
+            (method_exists($parser, 'validate_structure') && !$parser->validate_structure($translated_data))) {
+            return new WP_Error('invalid_structure', __('Translation resulted in invalid Elementor structure.', 'ai-translator-for-elementor-and-polylang'));
+        }
+
+        // Same post-apply transforms as the sync path: link localization + menu/template swaps.
+        try { $this->localize_internal_links($translated_data, $target_lang); } catch (Exception $e) { /* non-fatal */ }
+        $menu_id_map = get_option('aitrfoel_menu_id_map', []);
+        if (!empty($menu_id_map)) {
+            $this->swap_menu_ids_in_elementor_data($translated_data, $menu_id_map, $target_lang);
+        }
+        if (method_exists($this, 'swap_elementor_template_refs_in_data')) {
+            $this->swap_elementor_template_refs_in_data($translated_data, $target_lang);
+        }
+
+        // Translate the post title (single quick call).
+        $orig_post = get_post($context['page_id']);
+        $pre_title = null;
+        if ($orig_post && !empty($orig_post->post_title)) {
+            $t = $api->translate_title($orig_post->post_title, $target_lang, $context['source_lang']);
+            if (!is_wp_error($t) && !empty($t)) { $pre_title = $t; }
+        }
+
+        $new_page_id = $this->create_translated_page($context['page_id'], $translated_data, $target_lang, $detected_lang, $pre_title, false);
+        if (is_wp_error($new_page_id)) {
+            return $new_page_id;
+        }
+
+        // Persist cache for future reuse (full prepared field => reassembled pre-restore
+        // translated), matching the key/value scheme the sync large-text path uses.
+        if ($this->cache_enabled) {
+            $cache = AITRFOEL_Cache_Manager::get_instance();
+            $model = get_option('aitrfoel_openai_model', 'gpt-4o-mini');
+            foreach ($prepared_full as $path => $src_prep) {
+                if (!empty($assembled[$path]) && !empty($src_prep)) {
+                    $cache->set_to_cache($src_prep, $assembled[$path], $target_lang, $detected_lang, $model);
+                }
+            }
+        }
+
+        if (class_exists('AITRFOEL_Translation_History')) {
+            AITRFOEL_Translation_History::record([
+                'original_post_id'   => $context['page_id'],
+                'translated_post_id' => $new_page_id,
+                'source_lang'        => $detected_lang,
+                'target_lang'        => $target_lang,
+                'content_type'       => 'elementor',
+                'word_count'         => 0,
+                'status'             => 'success',
+                'duration'           => round(microtime(true) - ($context['start_time'] ?? microtime(true)), 2),
+            ]);
+        }
+
+        delete_transient('aitrfoel_async_' . $handle);
+        AITRFOEL_License_Manager_Server::get_instance()->clear_status_cache();
+
+        AITRFOEL_Logger::log(
+            sprintf('Elementor async complete: page=%d → new_page=%d lang=%s', $context['page_id'], $new_page_id, $target_lang),
+            'success', $context['page_id'], $new_page_id
+        );
         return $new_page_id;
     }
 
@@ -1721,16 +2133,26 @@ class AITRFOEL_Translation_Engine {
         }
         
         $post = get_post($page_id);
-        if (!$post || empty($post->post_content)) {
-            $this->track_translation_failure('no_content', 'No content found in Classic page', $translation_start_time);
+        if (!$post) {
+            $this->track_translation_failure('no_content', 'Post not found', $translation_start_time);
             return new WP_Error('no_content', __('No content found in this page.', 'ai-translator-for-elementor-and-polylang'));
         }
-        
-        // Parse Classic Editor content
+
+        // Parse Classic Editor content. Pages with no body (e.g. WooCommerce shop/cart/
+        // checkout pages) are allowed through with an empty map — the title will be
+        // translated below and a shell page created for the language switcher.
         $parser = AITRFOEL_Classic_Parser::get_instance();
-        $translation_map = $parser->parse_for_translation($page_id);
-        
-        if (empty($translation_map)) {
+        $has_body = !empty(trim($post->post_content));
+        $translation_map = $has_body ? $parser->parse_for_translation($page_id) : [];
+
+        if (empty($translation_map) && !$has_body) {
+            // Title-only page: allowed if there is a non-empty title to translate.
+            if (empty(trim($post->post_title))) {
+                $this->track_translation_failure('no_translatable_content', 'No translatable content found in Classic Editor', $translation_start_time);
+                return new WP_Error('no_translatable_content', __('No translatable content found in this page.', 'ai-translator-for-elementor-and-polylang'));
+            }
+            // Proceed with empty map; the title will be added to the batch below.
+        } elseif (empty($translation_map)) {
             $this->track_translation_failure('no_translatable_content', 'No translatable content found in Classic Editor', $translation_start_time);
             return new WP_Error('no_translatable_content', __('No translatable content found in this page.', 'ai-translator-for-elementor-and-polylang'));
         }

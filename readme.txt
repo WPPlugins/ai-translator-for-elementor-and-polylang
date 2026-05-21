@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.5.12
+Stable tag: 1.5.13
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,10 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.5.13 =
+* Fixed: Translated WooCommerce Shop pages now correctly render products by converting translated Shop page requests from singular page queries into product archive queries
+* Fixed: WooCommerce utility pages with title-only content (Shop/Cart/Checkout/My Account) are treated as translatable pages instead of Unknown
+
 = 1.5.12 =
 * Improved: Large text chunks are now sent in parallel instead of sequentially, reducing translation time for long pages from ~N×20s down to ~one chunk time (~20-30s)
 

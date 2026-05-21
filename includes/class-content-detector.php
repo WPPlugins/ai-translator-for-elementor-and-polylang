@@ -72,7 +72,14 @@ class AITRFOEL_Content_Detector {
         if ($post && $post->post_type === 'product') {
             return self::TYPE_WOOCOMMERCE;
         }
-        
+
+        // Pages with a title but no body (e.g. WooCommerce shop/cart/checkout/my-account
+        // pages) are valid classic pages — the classic path will translate just the title
+        // and create a translated shell page needed by the language switcher.
+        if ($post && !empty(trim($post->post_title))) {
+            return self::TYPE_CLASSIC;
+        }
+
         return self::TYPE_UNKNOWN;
     }
     
