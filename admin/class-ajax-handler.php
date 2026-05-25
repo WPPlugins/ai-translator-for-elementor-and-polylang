@@ -3596,11 +3596,24 @@ class AITRFOEL_Ajax_Handler {
 
         $row = $wpdb->get_row($wpdb->prepare(
             "SELECT
-                COUNT(*)                                                              AS total,
-                SUM(CASE WHEN (tm.meta_value IS NULL OR tm.meta_value = ''
-                              OR tm.meta_value = sm.meta_value) THEN 1 ELSE 0 END)   AS needs_retranslation,
-                SUM(CASE WHEN (tm.meta_value IS NOT NULL AND tm.meta_value != ''
-                              AND tm.meta_value != sm.meta_value) THEN 1 ELSE 0 END) AS ok
+                COUNT(*) AS total,
+                SUM(CASE
+                    -- Source HAS a custom title AND target is missing or identical = needs work
+                    WHEN sm.meta_value IS NOT NULL AND sm.meta_value != ''
+                         AND (tm.meta_value IS NULL OR tm.meta_value = '' OR tm.meta_value = sm.meta_value)
+                    THEN 1 ELSE 0
+                END) AS needs_retranslation,
+                SUM(CASE
+                    -- Source has no custom title (both use plugin/theme default = fine)
+                    WHEN (sm.meta_value IS NULL OR sm.meta_value = '')
+                    THEN 1
+                    -- Source has a custom title AND target has a different custom title = translated
+                    WHEN sm.meta_value IS NOT NULL AND sm.meta_value != ''
+                         AND tm.meta_value IS NOT NULL AND tm.meta_value != ''
+                         AND tm.meta_value != sm.meta_value
+                    THEN 1
+                    ELSE 0
+                END) AS ok
              FROM {$table} t
              JOIN {$table} s  ON s.group_id = t.group_id AND s.language_code = %s
              LEFT JOIN {$pm} tm ON tm.post_id = t.post_id AND tm.meta_key = %s
@@ -3613,11 +3626,21 @@ class AITRFOEL_Ajax_Handler {
         if ($row && (int) $row->total > 0 && (int) $row->ok === 0 && $check_key === 'rank_math_title') {
             $row_yoast = $wpdb->get_row($wpdb->prepare(
                 "SELECT
-                    COUNT(*)                                                              AS total,
-                    SUM(CASE WHEN (tm.meta_value IS NULL OR tm.meta_value = ''
-                                  OR tm.meta_value = sm.meta_value) THEN 1 ELSE 0 END)   AS needs_retranslation,
-                    SUM(CASE WHEN (tm.meta_value IS NOT NULL AND tm.meta_value != ''
-                                  AND tm.meta_value != sm.meta_value) THEN 1 ELSE 0 END) AS ok
+                    COUNT(*) AS total,
+                    SUM(CASE
+                        WHEN sm.meta_value IS NOT NULL AND sm.meta_value != ''
+                             AND (tm.meta_value IS NULL OR tm.meta_value = '' OR tm.meta_value = sm.meta_value)
+                        THEN 1 ELSE 0
+                    END) AS needs_retranslation,
+                    SUM(CASE
+                        WHEN (sm.meta_value IS NULL OR sm.meta_value = '')
+                        THEN 1
+                        WHEN sm.meta_value IS NOT NULL AND sm.meta_value != ''
+                             AND tm.meta_value IS NOT NULL AND tm.meta_value != ''
+                             AND tm.meta_value != sm.meta_value
+                        THEN 1
+                        ELSE 0
+                    END) AS ok
                  FROM {$table} t
                  JOIN {$table} s  ON s.group_id = t.group_id AND s.language_code = %s
                  LEFT JOIN {$pm} tm ON tm.post_id = t.post_id AND tm.meta_key = '_yoast_wpseo_title'
