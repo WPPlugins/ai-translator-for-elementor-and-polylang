@@ -86,6 +86,8 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         // Switch WordPress locale on frontend based on detected language
         if (!is_admin()) {
             add_filter('locale', [$this, 'filter_locale']);
+            // Force correct HTML lang attribute regardless of theme or SEO plugin overrides
+            add_filter('language_attributes', [$this, 'filter_language_attributes'], 999);
         }
         
         // Permalink filtering for language prefixes
@@ -1561,6 +1563,33 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         $wp_locale = $this->get_wp_locale($this->current_language);
         return $wp_locale ?: $locale;
+    }
+
+    /**
+     * Force the HTML <html lang=""> attribute to match the current frontend language.
+     * Runs at priority 999 so it overrides any theme or SEO plugin (e.g. Rank Math)
+     * that may have set a different lang code based on the site's default locale.
+     *
+     * @param string $attributes Existing language_attributes string.
+     * @return string Modified attributes with correct lang value.
+     */
+    public function filter_language_attributes($attributes) {
+        if (!$this->current_language) {
+            return $attributes;
+        }
+
+        $wp_locale = $this->get_wp_locale($this->current_language);
+        // Convert locale (en_US) to BCP-47 (en-US), fall back to bare code (en)
+        $lang = $wp_locale ? str_replace('_', '-', $wp_locale) : $this->current_language;
+
+        // Replace existing lang="..." if present, otherwise append it
+        if (strpos($attributes, 'lang=') !== false) {
+            $attributes = preg_replace('/lang="[^"]*"/', 'lang="' . esc_attr($lang) . '"', $attributes);
+        } else {
+            $attributes .= ' lang="' . esc_attr($lang) . '"';
+        }
+
+        return $attributes;
     }
     
     /**

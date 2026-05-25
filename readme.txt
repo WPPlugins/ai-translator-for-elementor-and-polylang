@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.5.14
+Stable tag: 1.5.15
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,10 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.5.15 =
+* Fixed: HTML lang attribute on translated pages now correctly reflects the current language regardless of theme or SEO plugin overrides (Rank Math, Yoast, etc.)
+* Fixed: Re-translating pages now reliably updates Rank Math and Yoast SEO meta title/description fields to the target language
+
 = 1.5.14 =
 * Improved: Added official compatibility support for WordPress 7.0 (metadata and release validation updated)
 
