@@ -78,6 +78,10 @@ class AITRFOEL_Ajax_Handler {
 
         // Auto-translate Elementor templates (headers/footers)
         add_action('wp_ajax_aitrfoel_auto_translate_templates', [$this, 'handle_auto_translate_templates']);
+
+        // SEO meta patch tool (bulk re-translate SEO fields on existing translations)
+        add_action('wp_ajax_aitrfoel_seo_patch_count', [$this, 'handle_seo_patch_count']);
+        add_action('wp_ajax_aitrfoel_seo_patch_batch', [$this, 'handle_seo_patch_batch']);
     }
 
     /**
@@ -3478,6 +3482,91 @@ class AITRFOEL_Ajax_Handler {
             );
         }
         return $html;
+    }
+
+    // =========================================================================
+    // SEO META PATCH TOOL
+    // =========================================================================
+
+    /**
+     * Return total count of translated posts (non-default language) that can be patched.
+     */
+    public function handle_seo_patch_count() {
+        check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        if (!class_exists('AITRFOEL_Builtin_Integration') || !AITRFOEL_Builtin_Integration::is_enabled()) {
+            wp_send_json_error('Built-in language system not active.');
+        }
+
+        global $wpdb;
+        $table        = $wpdb->prefix . AITRFOEL_Builtin_Integration::TABLE_NAME;
+        $default_lang = AITRFOEL_Builtin_Integration::get_instance()->get_default_language();
+
+        $total = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} t
+             JOIN {$table} s ON s.group_id = t.group_id AND s.language_code = %s
+             WHERE t.language_code != %s",
+            $default_lang, $default_lang
+        ));
+
+        wp_send_json_success(['total' => $total]);
+    }
+
+    /**
+     * Process one batch of SEO meta patching.
+     * Expects POST: offset (int), per_page (int, default 20).
+     */
+    public function handle_seo_patch_batch() {
+        check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        if (!class_exists('AITRFOEL_Builtin_Integration') || !AITRFOEL_Builtin_Integration::is_enabled()) {
+            wp_send_json_error('Built-in language system not active.');
+        }
+
+        $offset   = max(0, (int) ($_POST['offset']   ?? 0));
+        $per_page = min(50, max(1, (int) ($_POST['per_page'] ?? 20)));
+
+        global $wpdb;
+        $table        = $wpdb->prefix . AITRFOEL_Builtin_Integration::TABLE_NAME;
+        $default_lang = AITRFOEL_Builtin_Integration::get_instance()->get_default_language();
+
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT t.post_id AS target_id, t.language_code AS target_lang, s.post_id AS source_id
+             FROM {$table} t
+             JOIN {$table} s ON s.group_id = t.group_id AND s.language_code = %s
+             WHERE t.language_code != %s
+             ORDER BY t.post_id
+             LIMIT %d OFFSET %d",
+            $default_lang, $default_lang, $per_page, $offset
+        ));
+
+        if (!class_exists('AITRFOEL_Translation_Engine')) {
+            wp_send_json_error('Translation engine not available.');
+        }
+
+        $engine    = AITRFOEL_Translation_Engine::get_instance();
+        $processed = 0;
+
+        foreach ($rows as $row) {
+            $engine->patch_seo_meta_fields(
+                (int) $row->source_id,
+                (int) $row->target_id,
+                $row->target_lang
+            );
+            $processed++;
+        }
+
+        wp_send_json_success([
+            'processed'   => $processed,
+            'next_offset' => $offset + $processed,
+            'done'        => ($processed < $per_page),
+        ]);
     }
 
 }

@@ -4147,6 +4147,20 @@ class AITRFOEL_Translation_Engine {
     }
 
     /**
+     * Public entry point for the SEO meta patch tool.
+     * Re-translates SEO fields (Yoast / Rank Math title, description, OG, Twitter)
+     * and the post excerpt for an existing translation pair.
+     *
+     * @param int    $original_id  Source (default-language) post ID
+     * @param int    $target_id    Translated post ID
+     * @param string $target_lang  Target language code (e.g. 'en', 'de')
+     * @param string $source_lang  Source language code or 'auto'
+     */
+    public function patch_seo_meta_fields($original_id, $target_id, $target_lang, $source_lang = 'auto') {
+        $this->translate_post_meta_fields($original_id, $target_id, $target_lang, $source_lang);
+    }
+
+    /**
      * Assign translated WooCommerce product categories and tags to a translated product.
      * Uses Polylang/WPML term translation lookup to find equivalent terms.
      * For the built-in language system, assigns original terms and translates their names.
