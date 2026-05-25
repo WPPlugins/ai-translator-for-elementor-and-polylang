@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.5.16
+Stable tag: 1.5.17
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,10 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.5.17 =
+* Improved: SEO retranslation tool — renamed from "Patch" to "Retranslate", added margin so buttons don't collapse, added "Check Translation Status" button that shows how many translated pages have missing or untranslated SEO titles vs correctly translated ones
+* Improved: All 9 UI languages updated with new translations for the SEO tool strings
+
 = 1.5.16 =
 * New: Added "Patch SEO Titles" batch tool in Settings → SEO — re-translates Rank Math / Yoast SEO title and description for all existing translated pages to fix pages translated before SEO translation was active
 

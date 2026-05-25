@@ -2215,3 +2215,75 @@ msgstr "Це переклад і призначить меню + вміст ві
 #: admin/class-settings.php
 msgid "Uses translation credits. Continue?"
 msgstr "Використовує кредити перекладу. Продовжити?"
+
+
+# --- Added by add-seo-tool-translations.php (2026-05-25) ---
+
+msgid "Retranslate Existing SEO Titles"
+msgstr "Перекласти існуючі SEO заголовки"
+
+msgid "Retranslate SEO Titles"
+msgstr "Перекласти SEO заголовки"
+
+msgid "Check Translation Status"
+msgstr "Перевірити статус перекладу"
+
+msgid "Checking…"
+msgstr "Перевірка…"
+
+msgid "Retranslating 0 of"
+msgstr "Перекладається 0 з"
+
+msgid "Error during retranslating."
+msgstr "Помилка під час повторного перекладу."
+
+msgid "Retranslated"
+msgstr "Повторно перекладено"
+
+msgid "Done! Retranslated"
+msgstr "Готово! Повторно перекладено"
+
+msgid "translations have correct SEO titles."
+msgstr "переклади мають правильні SEO заголовки."
+
+msgid "translations need retranslation"
+msgstr "переклади потребують повторного перекладу"
+
+msgid "appear correctly translated."
+msgstr "з'являються правильно перекладеними."
+
+msgid "Counting pages…"
+msgstr "Підрахунок сторінок…"
+
+msgid "No translated pages found."
+msgstr "Не знайдено перекладених сторінок."
+
+msgid "Request failed — try again."
+msgstr "Запит не вдався — спробуйте ще раз."
+
+msgid "Could not connect to server."
+msgstr "Не вдалося підключитися до сервера."
+
+msgid "Error:"
+msgstr "Помилка:"
+
+msgid "translations."
+msgstr "переклади."
+
+msgid "Patching 0 of"
+msgstr "Виправлення 0 з"
+
+msgid "Error during patching."
+msgstr "Помилка під час виправлення."
+
+msgid "Patched"
+msgstr "Виправлено"
+
+msgid "Done! Patched"
+msgstr "Готово! Виправлено"
+
+msgid "Patch SEO Titles for All Translations"
+msgstr "Виправити SEO заголовки для всіх перекладів"
+
+msgid "Patch Existing SEO Titles"
+msgstr "Виправити існуючі SEO заголовки"

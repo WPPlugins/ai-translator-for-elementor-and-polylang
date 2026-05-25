@@ -2293,3 +2293,75 @@ msgstr "Generar slugs de URL traducidos a partir de títulos traducidos"
 
 msgid "When enabled, translated posts/pages/products get localized slugs (post_name). Disable to keep source-style slugs instead of translating them."
 msgstr "Cuando está activado, las entradas/páginas/productos traducidos reciben slugs localizados (post_name). Desactívalo para mantener los slugs del idioma de origen en lugar de traducirlos."
+
+
+# --- Added by add-seo-tool-translations.php (2026-05-25) ---
+
+msgid "Retranslate Existing SEO Titles"
+msgstr "Retraducir Títulos SEO Existentes"
+
+msgid "Retranslate SEO Titles"
+msgstr "Retraducir Títulos SEO"
+
+msgid "Check Translation Status"
+msgstr "Verificar Estado de Traducción"
+
+msgid "Checking…"
+msgstr "Verificando…"
+
+msgid "Retranslating 0 of"
+msgstr "Retraduciendo 0 de"
+
+msgid "Error during retranslating."
+msgstr "Error durante la retraducción."
+
+msgid "Retranslated"
+msgstr "Retraducido"
+
+msgid "Done! Retranslated"
+msgstr "¡Listo! Retraducido"
+
+msgid "translations have correct SEO titles."
+msgstr "las traducciones tienen títulos SEO correctos."
+
+msgid "translations need retranslation"
+msgstr "las traducciones necesitan retraducción"
+
+msgid "appear correctly translated."
+msgstr "aparecen correctamente traducidas."
+
+msgid "Counting pages…"
+msgstr "Contando páginas…"
+
+msgid "No translated pages found."
+msgstr "No se encontraron páginas traducidas."
+
+msgid "Request failed — try again."
+msgstr "La solicitud falló — intente de nuevo."
+
+msgid "Could not connect to server."
+msgstr "No se pudo conectar al servidor."
+
+msgid "Error:"
+msgstr "Error:"
+
+msgid "translations."
+msgstr "traducciones."
+
+msgid "Patching 0 of"
+msgstr "Parcheando 0 de"
+
+msgid "Error during patching."
+msgstr "Error durante el parcheo."
+
+msgid "Patched"
+msgstr "Parcheado"
+
+msgid "Done! Patched"
+msgstr "¡Listo! Parcheado"
+
+msgid "Patch SEO Titles for All Translations"
+msgstr "Parchear Títulos SEO para Todas las Traducciones"
+
+msgid "Patch Existing SEO Titles"
+msgstr "Parchear Títulos SEO Existentes"

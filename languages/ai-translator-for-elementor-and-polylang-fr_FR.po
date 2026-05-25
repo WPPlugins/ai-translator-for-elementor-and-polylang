@@ -2293,3 +2293,75 @@ msgstr "Générer des slugs d'URL traduits à partir des titres traduits"
 
 msgid "When enabled, translated posts/pages/products get localized slugs (post_name). Disable to keep source-style slugs instead of translating them."
 msgstr "Lorsqu'elle est activée, les articles/pages/produits traduits reçoivent des slugs localisés (post_name). Désactivez-la pour conserver des slugs de type langue source au lieu de les traduire."
+
+
+# --- Added by add-seo-tool-translations.php (2026-05-25) ---
+
+msgid "Retranslate Existing SEO Titles"
+msgstr "Retraduire les titres SEO existants"
+
+msgid "Retranslate SEO Titles"
+msgstr "Retraduire les titres SEO"
+
+msgid "Check Translation Status"
+msgstr "Vérifier l'état de la traduction"
+
+msgid "Checking…"
+msgstr "Vérification…"
+
+msgid "Retranslating 0 of"
+msgstr "Retraduisant 0 de"
+
+msgid "Error during retranslating."
+msgstr "Erreur lors de la retraduction."
+
+msgid "Retranslated"
+msgstr "Retraduit"
+
+msgid "Done! Retranslated"
+msgstr "Fait ! Retraduit"
+
+msgid "translations have correct SEO titles."
+msgstr "les traductions ont des titres SEO corrects."
+
+msgid "translations need retranslation"
+msgstr "les traductions nécessitent une retraduction"
+
+msgid "appear correctly translated."
+msgstr "apparaissent correctement traduites."
+
+msgid "Counting pages…"
+msgstr "Comptage des pages…"
+
+msgid "No translated pages found."
+msgstr "Aucune page traduite trouvée."
+
+msgid "Request failed — try again."
+msgstr "La demande a échoué — veuillez réessayer."
+
+msgid "Could not connect to server."
+msgstr "Impossible de se connecter au serveur."
+
+msgid "Error:"
+msgstr "Erreur :"
+
+msgid "translations."
+msgstr "traductions."
+
+msgid "Patching 0 of"
+msgstr "Correction de 0 de"
+
+msgid "Error during patching."
+msgstr "Erreur lors de la correction."
+
+msgid "Patched"
+msgstr "Corrigé"
+
+msgid "Done! Patched"
+msgstr "Fait ! Corrigé"
+
+msgid "Patch SEO Titles for All Translations"
+msgstr "Corriger les titres SEO pour toutes les traductions"
+
+msgid "Patch Existing SEO Titles"
+msgstr "Corriger les titres SEO existants"

@@ -1625,15 +1625,21 @@ class AITRFOEL_Settings {
                     if ($mm && $mm->is_builtin()) :
                     ?>
                     <hr style="margin:24px 0 16px;">
-                    <h4 style="margin:0 0 8px;"><?php esc_html_e('Patch Existing SEO Titles', 'ai-translator-for-elementor-and-polylang'); ?></h4>
+                    <h4 style="margin:0 0 8px;"><?php esc_html_e('Retranslate Existing SEO Titles', 'ai-translator-for-elementor-and-polylang'); ?></h4>
                     <p class="description" style="margin-bottom:12px;">
                         <?php esc_html_e('Re-translates SEO title, meta description, OG, and Twitter fields for all already-translated pages. Use this if translated pages still show the source-language SEO title.', 'ai-translator-for-elementor-and-polylang'); ?>
                     </p>
-                    <div id="aitrfoel-seo-patch-wrap">
-                        <button type="button" id="aitrfoel-seo-patch-start" class="button button-secondary">
-                            <?php esc_html_e('Patch SEO Titles for All Translations', 'ai-translator-for-elementor-and-polylang'); ?>
-                        </button>
-                        <div id="aitrfoel-seo-patch-status" style="display:none;margin-top:12px;">
+                    <div id="aitrfoel-seo-patch-wrap" style="margin-bottom:16px;">
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
+                            <button type="button" id="aitrfoel-seo-patch-start" class="button button-secondary">
+                                <?php esc_html_e('Retranslate SEO Titles', 'ai-translator-for-elementor-and-polylang'); ?>
+                            </button>
+                            <button type="button" id="aitrfoel-seo-check-start" class="button button-secondary">
+                                <?php esc_html_e('Check Translation Status', 'ai-translator-for-elementor-and-polylang'); ?>
+                            </button>
+                        </div>
+                        <div id="aitrfoel-seo-check-result" style="display:none;margin-bottom:10px;padding:10px 12px;background:#f6f7f7;border-left:4px solid #72aee6;font-size:13px;"></div>
+                        <div id="aitrfoel-seo-patch-status" style="display:none;margin-top:4px;">
                             <div style="background:#f0f0f0;border-radius:3px;height:16px;overflow:hidden;max-width:400px;">
                                 <div id="aitrfoel-seo-patch-bar" style="background:#0073aa;height:100%;width:0;transition:width .3s;"></div>
                             </div>
@@ -1644,11 +1650,14 @@ class AITRFOEL_Settings {
                     (function($){
                         var patchNonce = '<?php echo wp_create_nonce('aitrfoel_ajax_nonce'); ?>';
                         var running = false;
+
+                        // ---- Retranslate ----
                         $('#aitrfoel-seo-patch-start').on('click', function(){
                             if (running) return;
                             running = true;
                             var $btn  = $(this).prop('disabled', true);
-                            var $wrap = $('#aitrfoel-seo-patch-status').show();
+                            $('#aitrfoel-seo-check-start').prop('disabled', true);
+                            $('#aitrfoel-seo-patch-status').show();
                             var $bar  = $('#aitrfoel-seo-patch-bar');
                             var $msg  = $('#aitrfoel-seo-patch-msg');
                             $msg.text('<?php echo esc_js(__('Counting pages…', 'ai-translator-for-elementor-and-polylang')); ?>');
@@ -1658,6 +1667,7 @@ class AITRFOEL_Settings {
                                 if (!r.success) {
                                     $msg.text('<?php echo esc_js(__('Error:', 'ai-translator-for-elementor-and-polylang')); ?> ' + (r.data || '?'));
                                     $btn.prop('disabled', false);
+                                    $('#aitrfoel-seo-check-start').prop('disabled', false);
                                     running = false;
                                     return;
                                 }
@@ -1665,29 +1675,32 @@ class AITRFOEL_Settings {
                                 if (total === 0) {
                                     $msg.text('<?php echo esc_js(__('No translated pages found.', 'ai-translator-for-elementor-and-polylang')); ?>');
                                     $btn.prop('disabled', false);
+                                    $('#aitrfoel-seo-check-start').prop('disabled', false);
                                     running = false;
                                     return;
                                 }
-                                $msg.text('<?php echo esc_js(__('Patching 0 of', 'ai-translator-for-elementor-and-polylang')); ?> ' + total + '…');
+                                $msg.text('<?php echo esc_js(__('Retranslating 0 of', 'ai-translator-for-elementor-and-polylang')); ?> ' + total + '…');
                                 var offset = 0, perPage = 20;
 
                                 function nextBatch() {
                                     $.post(ajaxurl, { action: 'aitrfoel_seo_patch_batch', nonce: patchNonce, offset: offset, per_page: perPage })
                                     .done(function(br){
                                         if (!br.success) {
-                                            $msg.text('<?php echo esc_js(__('Error during patching.', 'ai-translator-for-elementor-and-polylang')); ?>');
+                                            $msg.text('<?php echo esc_js(__('Error during retranslating.', 'ai-translator-for-elementor-and-polylang')); ?>');
                                             $btn.prop('disabled', false);
+                                            $('#aitrfoel-seo-check-start').prop('disabled', false);
                                             running = false;
                                             return;
                                         }
                                         offset = br.data.next_offset;
                                         var pct = Math.min(100, Math.round(offset / total * 100));
                                         $bar.css('width', pct + '%');
-                                        $msg.text('<?php echo esc_js(__('Patched', 'ai-translator-for-elementor-and-polylang')); ?> ' + offset + ' <?php echo esc_js(__('of', 'ai-translator-for-elementor-and-polylang')); ?> ' + total + '…');
+                                        $msg.text('<?php echo esc_js(__('Retranslated', 'ai-translator-for-elementor-and-polylang')); ?> ' + offset + ' <?php echo esc_js(__('of', 'ai-translator-for-elementor-and-polylang')); ?> ' + total + '…');
                                         if (br.data.done) {
                                             $bar.css('width', '100%');
-                                            $msg.text('✅ <?php echo esc_js(__('Done! Patched', 'ai-translator-for-elementor-and-polylang')); ?> ' + offset + ' <?php echo esc_js(__('translations.', 'ai-translator-for-elementor-and-polylang')); ?>');
+                                            $msg.text('✅ <?php echo esc_js(__('Done! Retranslated', 'ai-translator-for-elementor-and-polylang')); ?> ' + offset + ' <?php echo esc_js(__('translations.', 'ai-translator-for-elementor-and-polylang')); ?>');
                                             $btn.prop('disabled', false);
+                                            $('#aitrfoel-seo-check-start').prop('disabled', false);
                                             running = false;
                                         } else {
                                             nextBatch();
@@ -1696,6 +1709,7 @@ class AITRFOEL_Settings {
                                     .fail(function(){
                                         $msg.text('<?php echo esc_js(__('Request failed — try again.', 'ai-translator-for-elementor-and-polylang')); ?>');
                                         $btn.prop('disabled', false);
+                                        $('#aitrfoel-seo-check-start').prop('disabled', false);
                                         running = false;
                                     });
                                 }
@@ -1704,6 +1718,45 @@ class AITRFOEL_Settings {
                             .fail(function(){
                                 $msg.text('<?php echo esc_js(__('Could not connect to server.', 'ai-translator-for-elementor-and-polylang')); ?>');
                                 $btn.prop('disabled', false);
+                                $('#aitrfoel-seo-check-start').prop('disabled', false);
+                                running = false;
+                            });
+                        });
+
+                        // ---- Check Status ----
+                        $('#aitrfoel-seo-check-start').on('click', function(){
+                            if (running) return;
+                            running = true;
+                            var $btn = $(this).prop('disabled', true);
+                            $('#aitrfoel-seo-patch-start').prop('disabled', true);
+                            var $result = $('#aitrfoel-seo-check-result').show().text('<?php echo esc_js(__('Checking…', 'ai-translator-for-elementor-and-polylang')); ?>');
+
+                            $.post(ajaxurl, { action: 'aitrfoel_seo_check', nonce: patchNonce })
+                            .done(function(r){
+                                if (!r.success) {
+                                    $result.text('<?php echo esc_js(__('Error:', 'ai-translator-for-elementor-and-polylang')); ?> ' + (r.data || '?'));
+                                } else {
+                                    var d = r.data;
+                                    if (d.total === 0) {
+                                        $result.html('<?php echo esc_js(__('No translated pages found.', 'ai-translator-for-elementor-and-polylang')); ?>');
+                                    } else if (d.needs_retranslation === 0) {
+                                        $result.css('border-left-color', '#00a32a').html('✅ <?php echo esc_js(__('All', 'ai-translator-for-elementor-and-polylang')); ?> ' + d.total + ' <?php echo esc_js(__('translations have correct SEO titles.', 'ai-translator-for-elementor-and-polylang')); ?>');
+                                    } else {
+                                        $result.css('border-left-color', '#dba617').html(
+                                            '⚠️ <strong>' + d.needs_retranslation + ' / ' + d.total + '</strong> <?php echo esc_js(__('translations need retranslation', 'ai-translator-for-elementor-and-polylang')); ?>'
+                                            + ' &nbsp;·&nbsp; '
+                                            + d.ok + ' <?php echo esc_js(__('appear correctly translated.', 'ai-translator-for-elementor-and-polylang')); ?>'
+                                        );
+                                    }
+                                }
+                                $btn.prop('disabled', false);
+                                $('#aitrfoel-seo-patch-start').prop('disabled', false);
+                                running = false;
+                            })
+                            .fail(function(){
+                                $result.text('<?php echo esc_js(__('Could not connect to server.', 'ai-translator-for-elementor-and-polylang')); ?>');
+                                $btn.prop('disabled', false);
+                                $('#aitrfoel-seo-patch-start').prop('disabled', false);
                                 running = false;
                             });
                         });

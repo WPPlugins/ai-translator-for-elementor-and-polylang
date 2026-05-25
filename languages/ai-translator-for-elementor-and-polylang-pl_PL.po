@@ -2049,3 +2049,75 @@ msgstr "To przetłumaczy i przypisze menu + treść widgetów dla"
 #: admin/class-settings.php
 msgid "Uses translation credits. Continue?"
 msgstr "Wykorzystuje kredyty tłumaczeniowe. Kontynuować?"
+
+
+# --- Added by add-seo-tool-translations.php (2026-05-25) ---
+
+msgid "Retranslate Existing SEO Titles"
+msgstr "Ponownie przetłumacz istniejące tytuły SEO"
+
+msgid "Retranslate SEO Titles"
+msgstr "Ponownie przetłumacz tytuły SEO"
+
+msgid "Check Translation Status"
+msgstr "Sprawdź status tłumaczenia"
+
+msgid "Checking…"
+msgstr "Sprawdzanie…"
+
+msgid "Retranslating 0 of"
+msgstr "Ponownie tłumaczenie 0 z"
+
+msgid "Error during retranslating."
+msgstr "Błąd podczas ponownego tłumaczenia."
+
+msgid "Retranslated"
+msgstr "Ponownie przetłumaczone"
+
+msgid "Done! Retranslated"
+msgstr "Gotowe! Ponownie przetłumaczone"
+
+msgid "translations have correct SEO titles."
+msgstr "tłumaczenia mają poprawne tytuły SEO."
+
+msgid "translations need retranslation"
+msgstr "tłumaczenia wymagają ponownego tłumaczenia"
+
+msgid "appear correctly translated."
+msgstr "wydają się poprawnie przetłumaczone."
+
+msgid "Counting pages…"
+msgstr "Liczenie stron…"
+
+msgid "No translated pages found."
+msgstr "Nie znaleziono przetłumaczonych stron."
+
+msgid "Request failed — try again."
+msgstr "Żądanie nie powiodło się — spróbuj ponownie."
+
+msgid "Could not connect to server."
+msgstr "Nie można połączyć się z serwerem."
+
+msgid "Error:"
+msgstr "Błąd:"
+
+msgid "translations."
+msgstr "tłumaczenia."
+
+msgid "Patching 0 of"
+msgstr "Łatanie 0 z"
+
+msgid "Error during patching."
+msgstr "Błąd podczas łatania."
+
+msgid "Patched"
+msgstr "Załatane"
+
+msgid "Done! Patched"
+msgstr "Gotowe! Załatane"
+
+msgid "Patch SEO Titles for All Translations"
+msgstr "Załatanie tytułów SEO dla wszystkich tłumaczeń"
+
+msgid "Patch Existing SEO Titles"
+msgstr "Załatanie istniejących tytułów SEO"

@@ -2049,3 +2049,75 @@ msgstr "Isso traduzirá e atribuirá menus + conteúdo de widgets para"
 #: admin/class-settings.php
 msgid "Uses translation credits. Continue?"
 msgstr "Usa créditos de tradução. Continuar?"
+
+
+# --- Added by add-seo-tool-translations.php (2026-05-25) ---
+
+msgid "Retranslate Existing SEO Titles"
+msgstr "Retraduzir Títulos SEO Existentes"
+
+msgid "Retranslate SEO Titles"
+msgstr "Retraduzir Títulos SEO"
+
+msgid "Check Translation Status"
+msgstr "Verificar Status da Tradução"
+
+msgid "Checking…"
+msgstr "Verificando…"
+
+msgid "Retranslating 0 of"
+msgstr "Retraduzindo 0 de"
+
+msgid "Error during retranslating."
+msgstr "Erro durante a retradução."
+
+msgid "Retranslated"
+msgstr "Retraduzido"
+
+msgid "Done! Retranslated"
+msgstr "Pronto! Retraduzido"
+
+msgid "translations have correct SEO titles."
+msgstr "as traduções têm títulos SEO corretos."
+
+msgid "translations need retranslation"
+msgstr "as traduções precisam de retradução"
+
+msgid "appear correctly translated."
+msgstr "aparecem corretamente traduzidas."
+
+msgid "Counting pages…"
+msgstr "Contando páginas…"
+
+msgid "No translated pages found."
+msgstr "Nenhuma página traduzida encontrada."
+
+msgid "Request failed — try again."
+msgstr "Solicitação falhou — tente novamente."
+
+msgid "Could not connect to server."
+msgstr "Não foi possível conectar ao servidor."
+
+msgid "Error:"
+msgstr "Erro:"
+
+msgid "translations."
+msgstr "traduções."
+
+msgid "Patching 0 of"
+msgstr "Aplicando patch em 0 de"
+
+msgid "Error during patching."
+msgstr "Erro durante a aplicação do patch."
+
+msgid "Patched"
+msgstr "Patch aplicado"
+
+msgid "Done! Patched"
+msgstr "Pronto! Patch aplicado"
+
+msgid "Patch SEO Titles for All Translations"
+msgstr "Aplicar Patch nos Títulos SEO para Todas as Traduções"
+
+msgid "Patch Existing SEO Titles"
+msgstr "Aplicar Patch nos Títulos SEO Existentes"

@@ -2293,3 +2293,75 @@ msgstr "Übersetzte URL-Slugs aus übersetzten Titeln erzeugen"
 
 msgid "When enabled, translated posts/pages/products get localized slugs (post_name). Disable to keep source-style slugs instead of translating them."
 msgstr "Wenn aktiviert, erhalten übersetzte Beiträge/Seiten/Produkte lokalisierte Slugs (post_name). Deaktivieren Sie dies, um Slugs im Stil der Quellsprache beizubehalten, anstatt sie zu übersetzen."
+
+
+# --- Added by add-seo-tool-translations.php (2026-05-25) ---
+
+msgid "Retranslate Existing SEO Titles"
+msgstr "Vorhandene SEO-Titel neu übersetzen"
+
+msgid "Retranslate SEO Titles"
+msgstr "SEO-Titel neu übersetzen"
+
+msgid "Check Translation Status"
+msgstr "Übersetzungsstatus überprüfen"
+
+msgid "Checking…"
+msgstr "Überprüfe…"
+
+msgid "Retranslating 0 of"
+msgstr "Neu übersetze 0 von"
+
+msgid "Error during retranslating."
+msgstr "Fehler beim Neuübersetzen."
+
+msgid "Retranslated"
+msgstr "Neu übersetzt"
+
+msgid "Done! Retranslated"
+msgstr "Fertig! Neu übersetzt"
+
+msgid "translations have correct SEO titles."
+msgstr "Übersetzungen haben korrekte SEO-Titel."
+
+msgid "translations need retranslation"
+msgstr "Übersetzungen benötigen eine Neuübersetzung"
+
+msgid "appear correctly translated."
+msgstr "scheinen korrekt übersetzt zu sein."
+
+msgid "Counting pages…"
+msgstr "Seiten zählen…"
+
+msgid "No translated pages found."
+msgstr "Keine übersetzten Seiten gefunden."
+
+msgid "Request failed — try again."
+msgstr "Anfrage fehlgeschlagen — bitte erneut versuchen."
+
+msgid "Could not connect to server."
+msgstr "Konnte keine Verbindung zum Server herstellen."
+
+msgid "Error:"
+msgstr "Fehler:"
+
+msgid "translations."
+msgstr "Übersetzungen."
+
+msgid "Patching 0 of"
+msgstr "Patching 0 von"
+
+msgid "Error during patching."
+msgstr "Fehler beim Patchen."
+
+msgid "Patched"
+msgstr "Gepatched"
+
+msgid "Done! Patched"
+msgstr "Fertig! Gepatched"
+
+msgid "Patch SEO Titles for All Translations"
+msgstr "SEO-Titel für alle Übersetzungen patchen"
+
+msgid "Patch Existing SEO Titles"
+msgstr "Vorhandene SEO-Titel patchen"

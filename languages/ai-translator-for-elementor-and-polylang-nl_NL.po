@@ -2127,3 +2127,75 @@ msgstr "Vertaalde URL-slugs genereren op basis van vertaalde titels"
 
 msgid "When enabled, translated posts/pages/products get localized slugs (post_name). Disable to keep source-style slugs instead of translating them."
 msgstr "Wanneer ingeschakeld, krijgen vertaalde berichten/pagina's/producten gelokaliseerde slugs (post_name). Schakel uit om bronstijl-slugs te behouden in plaats van ze te vertalen."
+
+
+# --- Added by add-seo-tool-translations.php (2026-05-25) ---
+
+msgid "Retranslate Existing SEO Titles"
+msgstr "Hertaal Bestaande SEO-titels"
+
+msgid "Retranslate SEO Titles"
+msgstr "Hertaal SEO-titels"
+
+msgid "Check Translation Status"
+msgstr "Controleer Vertaalstatus"
+
+msgid "Checking…"
+msgstr "Controleren…"
+
+msgid "Retranslating 0 of"
+msgstr "Hertalen 0 van"
+
+msgid "Error during retranslating."
+msgstr "Fout tijdens het hertalen."
+
+msgid "Retranslated"
+msgstr "Hertaalde"
+
+msgid "Done! Retranslated"
+msgstr "Klaar! Hertaalde"
+
+msgid "translations have correct SEO titles."
+msgstr "vertalingen hebben correcte SEO-titels."
+
+msgid "translations need retranslation"
+msgstr "vertalingen hebben hertaling nodig"
+
+msgid "appear correctly translated."
+msgstr "lijken correct vertaald."
+
+msgid "Counting pages…"
+msgstr "Pagina's tellen…"
+
+msgid "No translated pages found."
+msgstr "Geen vertaalde pagina's gevonden."
+
+msgid "Request failed — try again."
+msgstr "Verzoek mislukt — probeer het opnieuw."
+
+msgid "Could not connect to server."
+msgstr "Kon geen verbinding maken met de server."
+
+msgid "Error:"
+msgstr "Fout:"
+
+msgid "translations."
+msgstr "vertalingen."
+
+msgid "Patching 0 of"
+msgstr "Patchen 0 van"
+
+msgid "Error during patching."
+msgstr "Fout tijdens het patchen."
+
+msgid "Patched"
+msgstr "Gepatched"
+
+msgid "Done! Patched"
+msgstr "Klaar! Gepatched"
+
+msgid "Patch SEO Titles for All Translations"
+msgstr "Patch SEO-titels voor Alle Vertalingen"
+
+msgid "Patch Existing SEO Titles"
+msgstr "Patch Bestaande SEO-titels"

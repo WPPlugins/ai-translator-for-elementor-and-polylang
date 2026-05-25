@@ -2127,3 +2127,75 @@ msgstr "Genera slug URL tradotti dai titoli tradotti"
 
 msgid "When enabled, translated posts/pages/products get localized slugs (post_name). Disable to keep source-style slugs instead of translating them."
 msgstr "Quando è abilitata, i post/pagine/prodotti tradotti ottengono slug localizzati (post_name). Disabilitala per mantenere slug in stile lingua sorgente invece di tradurli."
+
+
+# --- Added by add-seo-tool-translations.php (2026-05-25) ---
+
+msgid "Retranslate Existing SEO Titles"
+msgstr "Ritradurre i titoli SEO esistenti"
+
+msgid "Retranslate SEO Titles"
+msgstr "Ritradurre i titoli SEO"
+
+msgid "Check Translation Status"
+msgstr "Controlla lo stato della traduzione"
+
+msgid "Checking…"
+msgstr "Controllo in corso…"
+
+msgid "Retranslating 0 of"
+msgstr "Ritraducendo 0 di"
+
+msgid "Error during retranslating."
+msgstr "Errore durante la ritraduzione."
+
+msgid "Retranslated"
+msgstr "Ritradotto"
+
+msgid "Done! Retranslated"
+msgstr "Fatto! Ritradotto"
+
+msgid "translations have correct SEO titles."
+msgstr "le traduzioni hanno titoli SEO corretti."
+
+msgid "translations need retranslation"
+msgstr "le traduzioni necessitano di ritraduzione"
+
+msgid "appear correctly translated."
+msgstr "appaiono correttamente tradotte."
+
+msgid "Counting pages…"
+msgstr "Conteggio delle pagine…"
+
+msgid "No translated pages found."
+msgstr "Nessuna pagina tradotta trovata."
+
+msgid "Request failed — try again."
+msgstr "Richiesta fallita — riprova."
+
+msgid "Could not connect to server."
+msgstr "Impossibile connettersi al server."
+
+msgid "Error:"
+msgstr "Errore:"
+
+msgid "translations."
+msgstr "traduzioni."
+
+msgid "Patching 0 of"
+msgstr "Patchando 0 di"
+
+msgid "Error during patching."
+msgstr "Errore durante il patching."
+
+msgid "Patched"
+msgstr "Patchato"
+
+msgid "Done! Patched"
+msgstr "Fatto! Patchato"
+
+msgid "Patch SEO Titles for All Translations"
+msgstr "Patchare i titoli SEO per tutte le traduzioni"
+
+msgid "Patch Existing SEO Titles"
+msgstr "Patchare i titoli SEO esistenti"

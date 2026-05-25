@@ -2773,3 +2773,75 @@ msgstr "Это переведёт и назначит меню + содержи�
 #: admin/class-settings.php
 msgid "Uses translation credits. Continue?"
 msgstr "Использует кредиты на перевод. Продолжить?"
+
+
+# --- Added by add-seo-tool-translations.php (2026-05-25) ---
+
+msgid "Retranslate Existing SEO Titles"
+msgstr "Перевести существующие SEO заголовки заново"
+
+msgid "Retranslate SEO Titles"
+msgstr "Перевести SEO заголовки заново"
+
+msgid "Check Translation Status"
+msgstr "Проверить статус перевода"
+
+msgid "Checking…"
+msgstr "Проверка…"
+
+msgid "Retranslating 0 of"
+msgstr "Переводится 0 из"
+
+msgid "Error during retranslating."
+msgstr "Ошибка при повторном переводе."
+
+msgid "Retranslated"
+msgstr "Переведено заново"
+
+msgid "Done! Retranslated"
+msgstr "Готово! Переведено заново"
+
+msgid "translations have correct SEO titles."
+msgstr "переводы имеют правильные SEO заголовки."
+
+msgid "translations need retranslation"
+msgstr "переводы нуждаются в повторном переводе"
+
+msgid "appear correctly translated."
+msgstr "выглядят правильно переведенными."
+
+msgid "Counting pages…"
+msgstr "Подсчет страниц…"
+
+msgid "No translated pages found."
+msgstr "Переведенных страниц не найдено."
+
+msgid "Request failed — try again."
+msgstr "Запрос не удался — попробуйте снова."
+
+msgid "Could not connect to server."
+msgstr "Не удалось подключиться к серверу."
+
+msgid "Error:"
+msgstr "Ошибка:"
+
+msgid "translations."
+msgstr "переводы."
+
+msgid "Patching 0 of"
+msgstr "Патчинг 0 из"
+
+msgid "Error during patching."
+msgstr "Ошибка при патчинге."
+
+msgid "Patched"
+msgstr "Запатчено"
+
+msgid "Done! Patched"
+msgstr "Готово! Запатчено"
+
+msgid "Patch SEO Titles for All Translations"
+msgstr "Патчить SEO заголовки для всех переводов"
+
+msgid "Patch Existing SEO Titles"
+msgstr "Патчить существующие SEO заголовки"

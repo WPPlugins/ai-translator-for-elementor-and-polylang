@@ -82,6 +82,7 @@ class AITRFOEL_Ajax_Handler {
         // SEO meta patch tool (bulk re-translate SEO fields on existing translations)
         add_action('wp_ajax_aitrfoel_seo_patch_count', [$this, 'handle_seo_patch_count']);
         add_action('wp_ajax_aitrfoel_seo_patch_batch', [$this, 'handle_seo_patch_batch']);
+        add_action('wp_ajax_aitrfoel_seo_check',       [$this, 'handle_seo_check']);
     }
 
     /**
@@ -3566,6 +3567,73 @@ class AITRFOEL_Ajax_Handler {
             'processed'   => $processed,
             'next_offset' => $offset + $processed,
             'done'        => ($processed < $per_page),
+        ]);
+    }
+
+    /**
+     * Check how many existing translated posts have SEO titles that need retranslation.
+     * A post "needs retranslation" if its rank_math_title (or _yoast_wpseo_title as fallback)
+     * is empty or identical to the source post's value.
+     */
+    public function handle_seo_check() {
+        check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+
+        if (!class_exists('AITRFOEL_Builtin_Integration') || !AITRFOEL_Builtin_Integration::is_enabled()) {
+            wp_send_json_error('Built-in language system not active.');
+        }
+
+        global $wpdb;
+        $table        = $wpdb->prefix . AITRFOEL_Builtin_Integration::TABLE_NAME;
+        $pm           = $wpdb->postmeta;
+        $default_lang = AITRFOEL_Builtin_Integration::get_instance()->get_default_language();
+
+        $check_key = class_exists('RankMath') || defined('RANK_MATH_VERSION')
+            ? 'rank_math_title'
+            : '_yoast_wpseo_title';
+
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT
+                COUNT(*)                                                              AS total,
+                SUM(CASE WHEN (tm.meta_value IS NULL OR tm.meta_value = ''
+                              OR tm.meta_value = sm.meta_value) THEN 1 ELSE 0 END)   AS needs_retranslation,
+                SUM(CASE WHEN (tm.meta_value IS NOT NULL AND tm.meta_value != ''
+                              AND tm.meta_value != sm.meta_value) THEN 1 ELSE 0 END) AS ok
+             FROM {$table} t
+             JOIN {$table} s  ON s.group_id = t.group_id AND s.language_code = %s
+             LEFT JOIN {$pm} tm ON tm.post_id = t.post_id AND tm.meta_key = %s
+             LEFT JOIN {$pm} sm ON sm.post_id = s.post_id AND sm.meta_key = %s
+             WHERE t.language_code != %s",
+            $default_lang, $check_key, $check_key, $default_lang
+        ));
+
+        // If no Rank Math data found at all, try Yoast as fallback
+        if ($row && (int) $row->total > 0 && (int) $row->ok === 0 && $check_key === 'rank_math_title') {
+            $row_yoast = $wpdb->get_row($wpdb->prepare(
+                "SELECT
+                    COUNT(*)                                                              AS total,
+                    SUM(CASE WHEN (tm.meta_value IS NULL OR tm.meta_value = ''
+                                  OR tm.meta_value = sm.meta_value) THEN 1 ELSE 0 END)   AS needs_retranslation,
+                    SUM(CASE WHEN (tm.meta_value IS NOT NULL AND tm.meta_value != ''
+                                  AND tm.meta_value != sm.meta_value) THEN 1 ELSE 0 END) AS ok
+                 FROM {$table} t
+                 JOIN {$table} s  ON s.group_id = t.group_id AND s.language_code = %s
+                 LEFT JOIN {$pm} tm ON tm.post_id = t.post_id AND tm.meta_key = '_yoast_wpseo_title'
+                 LEFT JOIN {$pm} sm ON sm.post_id = s.post_id AND sm.meta_key = '_yoast_wpseo_title'
+                 WHERE t.language_code != %s",
+                $default_lang, $default_lang
+            ));
+            if ($row_yoast && (int) $row_yoast->ok > 0) {
+                $row = $row_yoast;
+            }
+        }
+
+        wp_send_json_success([
+            'total'               => $row ? (int) $row->total               : 0,
+            'ok'                  => $row ? (int) $row->ok                  : 0,
+            'needs_retranslation' => $row ? (int) $row->needs_retranslation : 0,
         ]);
     }
 
