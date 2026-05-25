@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.5.18
+Stable tag: 1.5.19
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,10 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 6. WooCommerce settings — configure product translation options.
 
 == Changelog ==
+= 1.5.19 =
+* Fixed: "Check Translation Status" now correctly treats SEO titles using Rank Math/Yoast template variables (%%title%%, %%sep%%, etc.) as correctly translated — these are language-neutral and do not need retranslation
+* Fixed: Check status total count now matches the retranslate total (subquery deduplication prevents duplicate postmeta rows from inflating the count)
+
 = 1.5.18 =
 * Fixed: "Check Translation Status" now correctly counts posts without a custom SEO title (using Rank Math/Yoast default) as "correctly translated" instead of incorrectly flagging them as needing retranslation
 

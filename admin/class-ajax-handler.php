@@ -3594,31 +3594,48 @@ class AITRFOEL_Ajax_Handler {
             ? 'rank_math_title'
             : '_yoast_wpseo_title';
 
+        // Subquery groups by post first to avoid duplicate postmeta rows inflating COUNT(*).
+        // MAX(meta_value) collapses any duplicate meta entries into one value per post.
+        // Template-variable titles (containing '%%') are language-neutral — if source=target that is OK.
         $row = $wpdb->get_row($wpdb->prepare(
             "SELECT
                 COUNT(*) AS total,
                 SUM(CASE
-                    -- Source HAS a custom title AND target is missing or identical = needs work
-                    WHEN sm.meta_value IS NOT NULL AND sm.meta_value != ''
-                         AND (tm.meta_value IS NULL OR tm.meta_value = '' OR tm.meta_value = sm.meta_value)
+                    -- Source has a custom title AND target is missing, empty, or identical
+                    -- BUT only flag as needing retranslation if it's a literal title (no %% variables)
+                    WHEN sm_val IS NOT NULL AND sm_val != ''
+                         AND (
+                             tm_val IS NULL OR tm_val = ''
+                             OR (tm_val = sm_val AND LOCATE('%%', sm_val) = 0)
+                         )
                     THEN 1 ELSE 0
                 END) AS needs_retranslation,
                 SUM(CASE
-                    -- Source has no custom title (both use plugin/theme default = fine)
-                    WHEN (sm.meta_value IS NULL OR sm.meta_value = '')
+                    -- Source has no custom title (Rank Math uses post title = fine)
+                    WHEN (sm_val IS NULL OR sm_val = '')
                     THEN 1
-                    -- Source has a custom title AND target has a different custom title = translated
-                    WHEN sm.meta_value IS NOT NULL AND sm.meta_value != ''
-                         AND tm.meta_value IS NOT NULL AND tm.meta_value != ''
-                         AND tm.meta_value != sm.meta_value
+                    -- Source uses template variables (%%title%% etc.) — same value in target is correct
+                    WHEN sm_val IS NOT NULL AND sm_val != ''
+                         AND tm_val = sm_val AND LOCATE('%%', sm_val) > 0
+                    THEN 1
+                    -- Source has a literal title AND target has a different literal title = translated
+                    WHEN sm_val IS NOT NULL AND sm_val != ''
+                         AND tm_val IS NOT NULL AND tm_val != ''
+                         AND tm_val != sm_val
                     THEN 1
                     ELSE 0
                 END) AS ok
-             FROM {$table} t
-             JOIN {$table} s  ON s.group_id = t.group_id AND s.language_code = %s
-             LEFT JOIN {$pm} tm ON tm.post_id = t.post_id AND tm.meta_key = %s
-             LEFT JOIN {$pm} sm ON sm.post_id = s.post_id AND sm.meta_key = %s
-             WHERE t.language_code != %s",
+             FROM (
+                 SELECT t.post_id,
+                        MAX(sm.meta_value) AS sm_val,
+                        MAX(tm.meta_value) AS tm_val
+                 FROM {$table} t
+                 JOIN {$table} s  ON s.group_id = t.group_id AND s.language_code = %s
+                 LEFT JOIN {$pm} tm ON tm.post_id = t.post_id AND tm.meta_key = %s
+                 LEFT JOIN {$pm} sm ON sm.post_id = s.post_id AND sm.meta_key = %s
+                 WHERE t.language_code != %s
+                 GROUP BY t.post_id, s.post_id
+             ) AS per_post",
             $default_lang, $check_key, $check_key, $default_lang
         ));
 
@@ -3628,24 +3645,36 @@ class AITRFOEL_Ajax_Handler {
                 "SELECT
                     COUNT(*) AS total,
                     SUM(CASE
-                        WHEN sm.meta_value IS NOT NULL AND sm.meta_value != ''
-                             AND (tm.meta_value IS NULL OR tm.meta_value = '' OR tm.meta_value = sm.meta_value)
+                        WHEN sm_val IS NOT NULL AND sm_val != ''
+                             AND (
+                                 tm_val IS NULL OR tm_val = ''
+                                 OR (tm_val = sm_val AND LOCATE('%%', sm_val) = 0)
+                             )
                         THEN 1 ELSE 0
                     END) AS needs_retranslation,
                     SUM(CASE
-                        WHEN (sm.meta_value IS NULL OR sm.meta_value = '')
+                        WHEN (sm_val IS NULL OR sm_val = '')
                         THEN 1
-                        WHEN sm.meta_value IS NOT NULL AND sm.meta_value != ''
-                             AND tm.meta_value IS NOT NULL AND tm.meta_value != ''
-                             AND tm.meta_value != sm.meta_value
+                        WHEN sm_val IS NOT NULL AND sm_val != ''
+                             AND tm_val = sm_val AND LOCATE('%%', sm_val) > 0
+                        THEN 1
+                        WHEN sm_val IS NOT NULL AND sm_val != ''
+                             AND tm_val IS NOT NULL AND tm_val != ''
+                             AND tm_val != sm_val
                         THEN 1
                         ELSE 0
                     END) AS ok
-                 FROM {$table} t
-                 JOIN {$table} s  ON s.group_id = t.group_id AND s.language_code = %s
-                 LEFT JOIN {$pm} tm ON tm.post_id = t.post_id AND tm.meta_key = '_yoast_wpseo_title'
-                 LEFT JOIN {$pm} sm ON sm.post_id = s.post_id AND sm.meta_key = '_yoast_wpseo_title'
-                 WHERE t.language_code != %s",
+                 FROM (
+                     SELECT t.post_id,
+                            MAX(sm.meta_value) AS sm_val,
+                            MAX(tm.meta_value) AS tm_val
+                     FROM {$table} t
+                     JOIN {$table} s  ON s.group_id = t.group_id AND s.language_code = %s
+                     LEFT JOIN {$pm} tm ON tm.post_id = t.post_id AND tm.meta_key = '_yoast_wpseo_title'
+                     LEFT JOIN {$pm} sm ON sm.post_id = s.post_id AND sm.meta_key = '_yoast_wpseo_title'
+                     WHERE t.language_code != %s
+                     GROUP BY t.post_id, s.post_id
+                 ) AS per_post",
                 $default_lang, $default_lang
             ));
             if ($row_yoast && (int) $row_yoast->ok > 0) {
