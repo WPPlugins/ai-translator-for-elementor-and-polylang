@@ -51,7 +51,13 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
      * @var string|null
      */
     private $current_language = null;
-    
+
+    /**
+     * Per-request memo of get_post_translations() results, keyed by post ID.
+     * @var array
+     */
+    private static $translations_memo = [];
+
     /**
      * Get singleton instance
      * @return AITRFOEL_Builtin_Integration
@@ -119,8 +125,27 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             add_filter('pre_option_woocommerce_checkout_page_id', [$this, 'filter_translated_page_option'], 10, 2);
             add_filter('pre_option_woocommerce_myaccount_page_id', [$this, 'filter_translated_page_option'], 10, 2);
             add_filter('pre_option_woocommerce_terms_page_id', [$this, 'filter_translated_page_option'], 10, 2);
+
+            // Localize WooCommerce / Elementor "Products" widget queries to the current language.
+            // Manual selection (post__in/include) is remapped to the current-language translations;
+            // category / generic queries are scoped to the current language via tax_query so shared
+            // product categories don't leak default-language products into translated pages.
+            if (class_exists('WooCommerce') && get_option('aitrfoel_woocommerce_support', true)) {
+                add_filter('woocommerce_shortcode_products_query', [$this, 'filter_products_widget_query'], 20, 3);
+                add_filter('woocommerce_shortcode_products_query_results', [$this, 'filter_products_widget_results'], 20, 2);
+            }
+
+            // Localize absolute internal links (e.g. /fr/...) inside post content and Elementor
+            // widgets to the current-language translated target.
+            if (get_option('aitrfoel_localize_internal_links', true)) {
+                add_filter('the_content', [$this, 'localize_internal_links'], 99);
+                add_filter('elementor/frontend/the_content', [$this, 'localize_internal_links'], 99);
+                // Catch Elementor widgets whose links are rendered outside the_content
+                // (Button, Icon, Image, Call to Action, etc.).
+                add_filter('elementor/widget/render_content', [$this, 'localize_elementor_widget_links'], 99, 2);
+            }
         }
-        
+
         // SEO: hreflang tags
         add_action('wp_head', [$this, 'output_hreflang_tags']);
         
@@ -175,6 +200,10 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         // so they never compete with the original in Elementor's conditions resolver.
         add_filter('get_post_metadata', [$this, 'elementor_conditions_empty_on_translations'], 10, 3);
         
+        // Warn admins when Elementor "Element Caching" is active, as it can serve
+        // cached (wrong-language) widget output across translated pages.
+        add_action('admin_notices', [$this, 'maybe_warn_elementor_element_cache']);
+
         // REST API language fields
         add_action('rest_api_init', [$this, 'register_rest_fields']);
         
@@ -674,26 +703,33 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
      * @inheritDoc
      */
     public function get_post_translations($post_id) {
+        $post_id = (int) $post_id;
+
+        // Per-request memo: this is called many times per page (menus, permalinks,
+        // product/link localization, dedupe), so avoid re-running 2 queries each time.
+        if (isset(self::$translations_memo[$post_id])) {
+            return self::$translations_memo[$post_id];
+        }
+
         global $wpdb;
         $table = $this->get_table_name();
-        
+
         // Get the group_id for this post
         $group_id = $this->get_post_group_id($post_id);
         if (!$group_id) {
             // If no group, return just this post with its language
             $lang = $this->get_post_language($post_id);
-            if ($lang) {
-                return [$lang => $post_id];
-            }
-            return [];
+            $result = $lang ? [$lang => $post_id] : [];
+            self::$translations_memo[$post_id] = $result;
+            return $result;
         }
-        
+
         // Get all posts in this group
         $results = $wpdb->get_results($wpdb->prepare(
             "SELECT post_id, language_code FROM {$table} WHERE group_id = %d",
             $group_id
         ));
-        
+
         $translations = [];
         foreach ($results as $row) {
             // Verify the post still exists and is not trashed/deleted
@@ -702,8 +738,22 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
                 $translations[$row->language_code] = intval($row->post_id);
             }
         }
-        
+
+        // Memoize for every member of the group, since they share translations.
+        foreach ($translations as $member_id) {
+            self::$translations_memo[(int) $member_id] = $translations;
+        }
+        self::$translations_memo[$post_id] = $translations;
+
         return $translations;
+    }
+
+    /**
+     * Clear the per-request translation memo. Call after any change to the
+     * translation-group table so stale relationships aren't served.
+     */
+    public function flush_translations_memo() {
+        self::$translations_memo = [];
     }
     
     /**
@@ -781,7 +831,10 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             }
             return new WP_Error('db_error', 'Failed to save translation relationship.');
         }
-        
+
+        // Relationship changed — drop the per-request memo so lookups don't go stale.
+        $this->flush_translations_memo();
+
         if (class_exists('AITRFOEL_Logger')) {
             AITRFOEL_Logger::log(
                 sprintf('✅ Built-in relationship created: post %d (%s) → post %d (%s), group %d',
@@ -852,7 +905,10 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             
             // Remove language taxonomy
             wp_set_object_terms($post_id, [], self::TAXONOMY);
-            
+
+            // Relationship changed — drop the per-request memo.
+            $this->flush_translations_memo();
+
             return true;
         } catch (Exception $e) {
             if (class_exists('AITRFOEL_Logger')) {
@@ -3119,7 +3175,313 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         
         return $items;
     }
-    
+
+    /**
+     * Remap a single post/product ID to its translation in the current language.
+     * Returns the original ID when no translation exists or when on the default language.
+     *
+     * @param int $post_id
+     * @return int
+     */
+    public function remap_id_to_current_language($post_id) {
+        $post_id = (int) $post_id;
+        if ($post_id <= 0) {
+            return $post_id;
+        }
+
+        $current_lang = $this->get_current_language();
+        $default_lang = $this->get_default_language();
+        if (!$current_lang || $current_lang === $default_lang) {
+            return $post_id;
+        }
+
+        $translations = $this->get_post_translations($post_id);
+        if (isset($translations[$current_lang]) && get_post_status($translations[$current_lang]) === 'publish') {
+            return (int) $translations[$current_lang];
+        }
+
+        return $post_id;
+    }
+
+    /**
+     * Localize WooCommerce / Elementor "Products" widget queries.
+     *
+     * Two cases:
+     *  1. Manual selection — the widget stores default-language product IDs in
+     *     post__in / include. We remap each to its current-language translation.
+     *  2. Category / generic queries — product categories are shared across
+     *     languages, so we add a tax_query clause restricting results to the
+     *     current language. This prevents default-language products (which are
+     *     usually the oldest and sort first) from showing on translated pages.
+     *
+     * @param array  $query_args
+     * @param array  $atts
+     * @param string $type
+     * @return array
+     */
+    public function filter_products_widget_query($query_args, $atts = [], $type = '') {
+        if (!$this->is_active() || !is_array($query_args)) {
+            return $query_args;
+        }
+
+        $current_lang = $this->get_current_language();
+        $default_lang = $this->get_default_language();
+        if (!$current_lang || $current_lang === $default_lang) {
+            return $query_args;
+        }
+
+        // Case 1: explicit product IDs (manual selection).
+        $has_manual = false;
+        foreach (['post__in', 'include'] as $key) {
+            if (!empty($query_args[$key]) && is_array($query_args[$key])) {
+                $has_manual = true;
+                $query_args[$key] = array_map([$this, 'remap_id_to_current_language'], $query_args[$key]);
+            }
+        }
+
+        // Case 2: category / generic query — scope to the current language.
+        // (Skip when a manual ID list is present; that's already been remapped.)
+        if (!$has_manual) {
+            // Mirror archive/shop behavior: when product fallback is enabled,
+            // also include default-language products so untranslated products
+            // still appear. filter_products_widget_results() then remaps each
+            // returned ID to its translation and de-duplicates, so a source +
+            // its translation collapse to the single current-language product.
+            $terms = [$current_lang];
+            if (class_exists('WooCommerce') && get_option('aitrfoel_woo_product_fallback', true)) {
+                $terms[] = $default_lang;
+            }
+
+            $lang_clause = [
+                'taxonomy' => self::TAXONOMY,
+                'field'    => 'slug',
+                'terms'    => $terms,
+                'operator' => 'IN',
+            ];
+
+            // Nest any existing tax_query as a single group AND'd with the language
+            // clause. This is correct regardless of the existing query's relation
+            // (e.g. an inner OR between categories stays intact and is still
+            // constrained to the current language).
+            $existing_tax_query = (!empty($query_args['tax_query']) && is_array($query_args['tax_query']))
+                ? $query_args['tax_query']
+                : [];
+
+            if (empty($existing_tax_query)) {
+                $query_args['tax_query'] = [$lang_clause];
+            } else {
+                $query_args['tax_query'] = [
+                    'relation' => 'AND',
+                    $lang_clause,
+                    $existing_tax_query,
+                ];
+            }
+        }
+
+        return $query_args;
+    }
+
+    /**
+     * Belt-and-suspenders remap of returned product IDs to the current language.
+     * Covers query paths where tax_query / post__in remapping couldn't apply
+     * (e.g. cached or pre-resolved ID lists).
+     *
+     * @param object $results WC results object exposing ->ids
+     * @param mixed  $context
+     * @return object
+     */
+    public function filter_products_widget_results($results, $context = null) {
+        if (!$this->is_active() || !is_object($results) || empty($results->ids) || !is_array($results->ids)) {
+            return $results;
+        }
+
+        $current_lang = $this->get_current_language();
+        $default_lang = $this->get_default_language();
+        if (!$current_lang || $current_lang === $default_lang) {
+            return $results;
+        }
+
+        $remapped = array_map([$this, 'remap_id_to_current_language'], $results->ids);
+        $deduped  = array_values(array_unique($remapped));
+
+        // Keep ->total consistent with the (possibly smaller) id list so the
+        // widget's pagination/count doesn't reference dropped duplicates.
+        if (isset($results->total) && count($deduped) !== count($results->ids)) {
+            $removed = count($results->ids) - count($deduped);
+            $results->total = max(0, (int) $results->total - $removed);
+        }
+
+        $results->ids = $deduped;
+
+        return $results;
+    }
+
+    /**
+     * Resolve an absolute internal URL (optionally language-prefixed) to its
+     * underlying post ID, ignoring the language prefix.
+     *
+     * @param string $url
+     * @return int Post ID, or 0 if not resolvable.
+     */
+    private function resolve_internal_url_to_post($url) {
+        $raw_home = trailingslashit(get_option('home'));
+        if (strpos($url, $raw_home) !== 0) {
+            return 0; // External or relative — leave alone.
+        }
+
+        $relative = ltrim(substr($url, strlen($raw_home)), '/');
+        $segments = $relative === '' ? [] : explode('/', $relative);
+
+        // Strip a leading language-code segment if present.
+        if (!empty($segments)) {
+            $lang_codes = wp_list_pluck($this->get_stored_languages(), 'code');
+            if (in_array($segments[0], $lang_codes, true)) {
+                array_shift($segments);
+            }
+        }
+
+        $clean = $raw_home . implode('/', $segments);
+
+        // Resolve against the unfiltered home URL so our own prefix filter
+        // doesn't interfere with url_to_postid(). Only restore the filter if it
+        // was actually registered (it isn't in admin/preview contexts), so we
+        // never accidentally add it where it wasn't.
+        $had_home_filter = (false !== has_filter('home_url', [$this, 'filter_home_url']));
+        if ($had_home_filter) {
+            remove_filter('home_url', [$this, 'filter_home_url'], 10);
+        }
+        $post_id = url_to_postid($clean);
+        if ($had_home_filter) {
+            add_filter('home_url', [$this, 'filter_home_url'], 10, 4);
+        }
+
+        return (int) $post_id;
+    }
+
+    /**
+     * Localize absolute internal links in rendered content to the current
+     * language's translated target. Only rewrites links whose source post has a
+     * translation in the current language; everything else is left untouched.
+     *
+     * @param string $content
+     * @return string
+     */
+    public function localize_internal_links($content) {
+        if (!$this->is_active() || !is_string($content) || $content === '') {
+            return $content;
+        }
+        if (!get_option('aitrfoel_localize_internal_links', true)) {
+            return $content;
+        }
+
+        $current_lang = $this->get_current_language();
+        $default_lang = $this->get_default_language();
+        if (!$current_lang || $current_lang === $default_lang) {
+            return $content;
+        }
+
+        $raw_home = rtrim(get_option('home'), '/');
+        if ($raw_home === '' || strpos($content, $raw_home) === false) {
+            return $content;
+        }
+
+        static $cache = [];
+        $self = $this;
+
+        return preg_replace_callback(
+            '/href=("|\')(' . preg_quote($raw_home, '/') . '[^"\'#?]*)((?:[?#][^"\']*)?)\1/i',
+            function ($m) use (&$cache, $current_lang, $self) {
+                $base = $m[2];
+                $suffix = $m[3]; // preserve query string / fragment
+
+                if (!array_key_exists($base, $cache)) {
+                    $new = null; // null => leave the original link untouched
+                    $post_id = $self->resolve_internal_url_to_post_public($base);
+                    if ($post_id) {
+                        $translations = $self->get_post_translations($post_id);
+                        if (isset($translations[$current_lang])
+                            && get_post_status($translations[$current_lang]) === 'publish') {
+                            $new = get_permalink((int) $translations[$current_lang]);
+                        }
+                    }
+                    $cache[$base] = $new;
+                }
+
+                if ($cache[$base] === null) {
+                    return $m[0]; // unchanged
+                }
+
+                return 'href=' . $m[1] . $cache[$base] . $suffix . $m[1];
+            },
+            $content
+        );
+    }
+
+    /**
+     * Localize links inside individual Elementor widgets (Button, Icon, Image,
+     * Call to Action, etc.) whose markup is rendered outside the_content and so
+     * is not reached by the the_content / elementor frontend content filters.
+     *
+     * @param string $widget_content
+     * @param mixed  $widget
+     * @return string
+     */
+    public function localize_elementor_widget_links($widget_content, $widget = null) {
+        if (!is_string($widget_content) || strpos($widget_content, 'href') === false) {
+            return $widget_content;
+        }
+        return $this->localize_internal_links($widget_content);
+    }
+
+    /**
+     * Public proxy so the link-localization closure can call the private resolver.
+     *
+     * @param string $url
+     * @return int
+     */
+    public function resolve_internal_url_to_post_public($url) {
+        return $this->resolve_internal_url_to_post($url);
+    }
+
+    /**
+     * Warn admins when Elementor's "Element Caching" experiment is active while
+     * our language localization is in use. Element caching keys rendered widget
+     * HTML by element settings (not by URL/language), so a header/footer/template
+     * element can be cached once and served with its original-language links and
+     * products across every translated page. Elementor provides no per-language
+     * cache-key filter, so the safe mitigation is to disable Element Caching —
+     * the same guidance other multilingual/dynamic plugins give.
+     */
+    public function maybe_warn_elementor_element_cache() {
+        if (!current_user_can('manage_options') || !$this->is_active()) {
+            return;
+        }
+
+        // Only relevant when one of the render-time localization features is on.
+        $links_on = (bool) get_option('aitrfoel_localize_internal_links', true);
+        $woo_on   = class_exists('WooCommerce') && (bool) get_option('aitrfoel_woocommerce_support', true);
+        if (!$links_on && !$woo_on) {
+            return;
+        }
+
+        // Detect the active Elementor element-caching experiment.
+        if (!class_exists('\Elementor\Plugin') || !isset(\Elementor\Plugin::$instance->experiments)) {
+            return;
+        }
+        $experiments = \Elementor\Plugin::$instance->experiments;
+        if (!method_exists($experiments, 'is_feature_active')
+            || !$experiments->is_feature_active('e_element_cache')) {
+            return;
+        }
+
+        echo '<div class="notice notice-warning is-dismissible"><p><strong>'
+            . esc_html__('Meep AI Translator:', 'ai-translator-for-elementor-and-polylang') . '</strong> '
+            . esc_html__('Elementor "Element Caching" is enabled. It can cache widget output (links and products) in a single language and show it on translated pages, bypassing Meep\'s localization. We recommend turning it off at Elementor → Settings → Features while using translated pages.', 'ai-translator-for-elementor-and-polylang')
+            . ' <a href="' . esc_url(admin_url('admin.php?page=elementor-settings#tab-experiments')) . '">'
+            . esc_html__('Open Elementor Features', 'ai-translator-for-elementor-and-polylang') . '</a>'
+            . '</p></div>';
+    }
+
     /**
      * Redirect untranslated pages to their default language version.
      * If a user visits /de/services/ but no German translation exists,

@@ -172,6 +172,12 @@ class AITRFOEL_Settings {
             'default' => true
         ]);
 
+        // Localize absolute internal links (/fr/...) in content/widgets to the current language
+        register_setting('aitrfoel_settings_group', 'aitrfoel_localize_internal_links', [
+            'sanitize_callback' => 'boolval',
+            'default' => true
+        ]);
+
         // Default language URL prefix
         register_setting('aitrfoel_settings_group', 'aitrfoel_default_lang_prefix', [
             'sanitize_callback' => 'boolval',
@@ -636,6 +642,19 @@ class AITRFOEL_Settings {
                                 </label>
                                 <p class="description">
                                     <?php esc_html_e('When enabled, translated posts/pages/products get localized slugs (post_name). Disable to keep source-style slugs instead of translating them.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php esc_html_e('Localize Internal Links', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                            <td>
+                                <?php $localize_internal_links = get_option('aitrfoel_localize_internal_links', true); ?>
+                                <label>
+                                    <input type="checkbox" name="aitrfoel_localize_internal_links" value="1" <?php checked($localize_internal_links); ?> />
+                                    <?php esc_html_e('Rewrite absolute internal links (e.g. /fr/...) in content and widgets to the current language', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </label>
+                                <p class="description">
+                                    <?php esc_html_e('When enabled, hard-coded internal links inside content/Elementor widgets are pointed to the translated target on translated pages (when a translation exists). Links without a translation are left unchanged.', 'ai-translator-for-elementor-and-polylang'); ?>
                                 </p>
                             </td>
                         </tr>
@@ -2186,6 +2205,7 @@ Contact Us = Contactez-nous (fr), Contáctenos (es)"><?php echo esc_textarea(get
                     },
                     multilingual: {
                         'aitrfoel_translate_url_slugs': {type: 'checkbox', val: true},
+                        'aitrfoel_localize_internal_links': {type: 'checkbox', val: true},
                         'aitrfoel_default_lang_prefix': {type: 'checkbox', val: false}
                     },
                     cache: {

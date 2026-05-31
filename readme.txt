@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.5.19
+Stable tag: 1.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -102,8 +102,18 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 4. Language switcher settings — customize the frontend language switcher.
 5. SEO translation settings — translate meta titles, descriptions, and slugs.
 6. WooCommerce settings — configure product translation options.
+7. Menu and widgets translation.
+8. Elementor Templates translation.
+9. Page translation review and edit system.
+10. Translation history management.
 
 == Changelog ==
+= 1.6 =
+* Fixed: WooCommerce/Elementor Products widget now localizes manual and category queries to current language, with fallback-consistent behavior and deduped remapped IDs.
+* Fixed: Internal absolute links are localized in content and Elementor widget render output (Button/Icon/Image/CTA/Text Editor), including header/footer templates.
+* Improved: Added per-request memoization for get_post_translations with cache flush on relationship changes for faster multilingual lookups.
+* Added: Admin warning when Elementor Element Caching experiment is active with localization features enabled, with direct link to Elementor Features settings.
+
 = 1.5.19 =
 * Fixed: "Check Translation Status" now correctly treats SEO titles using Rank Math/Yoast template variables (%%title%%, %%sep%%, etc.) as correctly translated — these are language-neutral and do not need retranslation
 * Fixed: Check status total count now matches the retranslate total (subquery deduplication prevents duplicate postmeta rows from inflating the count)
