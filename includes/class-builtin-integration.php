@@ -133,6 +133,11 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             if (class_exists('WooCommerce') && get_option('aitrfoel_woocommerce_support', true)) {
                 add_filter('woocommerce_shortcode_products_query', [$this, 'filter_products_widget_query'], 20, 3);
                 add_filter('woocommerce_shortcode_products_query_results', [$this, 'filter_products_widget_results'], 20, 2);
+
+                // Display-time safety net: if a source-language product is rendered on a
+                // translated page (single product, related/upsell/cross-sell, Elementor
+                // single-product templates), show its translated short description.
+                add_filter('woocommerce_short_description', [$this, 'filter_product_short_description'], 20, 1);
             }
 
             // Localize absolute internal links (e.g. /fr/...) inside post content and Elementor
@@ -3415,6 +3420,61 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             },
             $content
         );
+    }
+
+    /**
+     * Show the current-language short description for a product that is being
+     * rendered on a translated page. The woocommerce_short_description filter
+     * only passes the description string, so the product is resolved from the
+     * global $product / $post context.
+     *
+     * Behavior:
+     *  - If the rendered product is already in the current language, leave it.
+     *  - If it's another language and a published current-language translation
+     *    exists with a non-empty short description, return that instead.
+     *  - Otherwise return the original unchanged (no worse than before).
+     *
+     * @param string $short_description
+     * @return string
+     */
+    public function filter_product_short_description($short_description) {
+        if (!$this->is_active()) {
+            return $short_description;
+        }
+
+        $current_lang = $this->get_current_language();
+        $default_lang = $this->get_default_language();
+        if (!$current_lang || $current_lang === $default_lang) {
+            return $short_description;
+        }
+
+        // Resolve the product currently being rendered.
+        $product_id = 0;
+        if (isset($GLOBALS['product']) && $GLOBALS['product'] instanceof \WC_Product) {
+            $product_id = $GLOBALS['product']->get_id();
+        } elseif (isset($GLOBALS['post']) && isset($GLOBALS['post']->ID)) {
+            $product_id = (int) $GLOBALS['post']->ID;
+        }
+
+        if ($product_id <= 0 || get_post_type($product_id) !== 'product') {
+            return $short_description;
+        }
+
+        // Already in the current language — nothing to do.
+        if ($this->get_post_language($product_id) === $current_lang) {
+            return $short_description;
+        }
+
+        $translations = $this->get_post_translations($product_id);
+        if (isset($translations[$current_lang])
+            && get_post_status($translations[$current_lang]) === 'publish') {
+            $translated = get_post($translations[$current_lang]);
+            if ($translated && trim((string) $translated->post_excerpt) !== '') {
+                return $translated->post_excerpt;
+            }
+        }
+
+        return $short_description;
     }
 
     /**
