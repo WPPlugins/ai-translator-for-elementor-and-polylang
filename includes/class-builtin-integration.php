@@ -138,6 +138,14 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
                 // translated page (single product, related/upsell/cross-sell, Elementor
                 // single-product templates), show its translated short description.
                 add_filter('woocommerce_short_description', [$this, 'filter_product_short_description'], 20, 1);
+
+                // Routing-independent loop localization: when any product loop (Elementor
+                // Products / Loop Grid, related, up-sells, shortcodes, theme loops) renders
+                // a source-language product on a translated page, swap the post/product
+                // globals to the translation so title, link, price, short description and
+                // add-to-cart all render in the current language. This covers widgets that
+                // build their query without passing through woocommerce_shortcode_products_query.
+                add_action('the_post', [$this, 'localize_loop_product'], 10, 1);
             }
 
             // Localize absolute internal links (e.g. /fr/...) inside post content and Elementor
@@ -1522,6 +1530,77 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
      * when the aitrfoel_default_lang_prefix option is enabled.
      * E.g., /my-page/ → /fr/my-page/ if French is the default language.
      */
+    /**
+     * Decide whether the current (or given) request path must be excluded from
+     * language routing — i.e. never prefixed and never redirected.
+     *
+     * Always excludes non-page endpoints (REST, admin-ajax, WooCommerce API,
+     * webhooks, feeds, login/xmlrpc) plus any custom paths the site owner lists
+     * under Settings → "Exclude paths from language routing". This prevents the
+     * router from prepending a language prefix to plugin API/rewrite endpoints
+     * (e.g. /wcsag-api/...), which would 404 the request.
+     *
+     * @param string|null $request_path Optional path; defaults to REQUEST_URI.
+     * @return bool
+     */
+    public function is_path_excluded_from_routing($request_path = null) {
+        // REST API requests.
+        if (defined('REST_REQUEST') && REST_REQUEST) {
+            return true;
+        }
+
+        if ($request_path === null) {
+            $request_path = isset($_SERVER['REQUEST_URI'])
+                ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI']))
+                : '/';
+        }
+
+        // Strip query string.
+        $path = (string) $request_path;
+        $qpos = strpos($path, '?');
+        if ($qpos !== false) {
+            $path = substr($path, 0, $qpos);
+        }
+
+        // Strip the site's home path (subdirectory installs) and normalize.
+        $home_path = wp_parse_url(home_url(), PHP_URL_PATH) ?: '';
+        if ($home_path && $home_path !== '/' && strpos($path, $home_path) === 0) {
+            $path = substr($path, strlen($home_path));
+        }
+        $path = '/' . ltrim($path, '/');
+
+        // Built-in, always-excluded non-page endpoints.
+        $builtin_prefixes = [
+            '/wp-json',       // REST
+            '/wp-admin',
+            '/wp-login.php',
+            '/xmlrpc.php',
+            '/wc-api',        // WooCommerce legacy API / webhooks
+            '/feed',
+            '/sitemap',       // sitemaps and sitemap.xml
+        ];
+        foreach ($builtin_prefixes as $prefix) {
+            if (strpos($path, $prefix) === 0) {
+                return true;
+            }
+        }
+
+        // User-defined excluded paths/tokens (one per line). A line such as
+        // "wcsag-api" matches any path containing that segment.
+        $custom = get_option('aitrfoel_routing_excluded_paths', '');
+        if (!empty($custom)) {
+            $lines = preg_split('/[\r\n]+/', (string) $custom);
+            foreach ($lines as $line) {
+                $token = trim($line, " \t/");
+                if ($token !== '' && stripos($path, $token) !== false) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     public function maybe_redirect_default_lang_prefix() {
         if (is_admin() || wp_doing_ajax() || wp_doing_cron()) {
             return;
@@ -1534,9 +1613,15 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         if (!$this->is_active()) {
             return;
         }
-        
+
+        // Never prefix/redirect non-page endpoints (REST, WooCommerce API,
+        // webhooks, feeds) or user-excluded custom paths (e.g. plugin API roots).
+        if ($this->is_path_excluded_from_routing()) {
+            return;
+        }
+
         $default_lang = $this->get_default_language();
-        
+
         // If we already detected a language from URL prefix, no redirect needed
         if ($this->current_language && $this->current_language !== $default_lang) {
             return;
@@ -3423,6 +3508,66 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
     }
 
     /**
+     * Localize a product loop item at render time. Fires on `the_post` for every
+     * loop iteration (Elementor Products/Loop Grid, related, up-sells, cross-sells,
+     * shortcodes, theme loops). When the iterated post is a product that is not in
+     * the current language but has a published translation, swap the post/product
+     * globals so all loop output (title, link, price, short description, add-to-cart)
+     * renders in the current language. Routing-independent: works even when the
+     * widget builds its query without passing through the WooCommerce shortcode
+     * query filter.
+     *
+     * @param \WP_Post $post
+     * @return void
+     */
+    public function localize_loop_product($post) {
+        if (is_admin() || !$this->is_active()) {
+            return;
+        }
+        if (!is_object($post) || empty($post->ID) || get_post_type($post) !== 'product') {
+            return;
+        }
+
+        $current_lang = $this->get_current_language();
+        $default_lang = $this->get_default_language();
+        if (!$current_lang || $current_lang === $default_lang) {
+            return;
+        }
+
+        // Already in the current language — nothing to swap.
+        if ($this->get_post_language($post->ID) === $current_lang) {
+            return;
+        }
+
+        $translations = $this->get_post_translations($post->ID);
+        if (empty($translations[$current_lang])) {
+            return;
+        }
+        $translated_id = (int) $translations[$current_lang];
+        if ($translated_id === (int) $post->ID || get_post_status($translated_id) !== 'publish') {
+            return;
+        }
+
+        $translated_post = get_post($translated_id);
+        if (!$translated_post) {
+            return;
+        }
+
+        // Swap the global post so post-based template tags (title, permalink,
+        // excerpt) use the translation.
+        $GLOBALS['post'] = $translated_post;
+        setup_postdata($translated_post);
+
+        // Swap the global product so WooCommerce loop output (price, add-to-cart)
+        // uses the translation.
+        if (function_exists('wc_setup_product_data')) {
+            wc_setup_product_data($translated_post);
+        } elseif (function_exists('wc_get_product')) {
+            $GLOBALS['product'] = wc_get_product($translated_id);
+        }
+    }
+
+    /**
      * Show the current-language short description for a product that is being
      * rendered on a translated page. The woocommerce_short_description filter
      * only passes the description string, so the product is resolved from the
@@ -3555,14 +3700,18 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         if (!$this->is_active() || !is_singular()) {
             return;
         }
-        
+
+        if ($this->is_path_excluded_from_routing()) {
+            return;
+        }
+
         $current_lang = $this->get_current_language();
         $default_lang = $this->get_default_language();
-        
+
         if ($current_lang === $default_lang) {
             return;
         }
-        
+
         $post_id = get_queried_object_id();
         if (!$post_id) {
             return;

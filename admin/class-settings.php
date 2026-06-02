@@ -178,6 +178,12 @@ class AITRFOEL_Settings {
             'default' => true
         ]);
 
+        // Paths excluded from language routing (no prefix, no redirect)
+        register_setting('aitrfoel_settings_group', 'aitrfoel_routing_excluded_paths', [
+            'sanitize_callback' => 'sanitize_textarea_field',
+            'default' => ''
+        ]);
+
         // Default language URL prefix
         register_setting('aitrfoel_settings_group', 'aitrfoel_default_lang_prefix', [
             'sanitize_callback' => 'boolval',
@@ -668,6 +674,18 @@ class AITRFOEL_Settings {
                                 </label>
                                 <p class="description">
                                     <?php esc_html_e('When enabled, the default language will also get a URL prefix like other languages. Visitors accessing pages without a prefix will be redirected to the prefixed version. Only works with the built-in language system.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php esc_html_e('Exclude Paths from Language Routing', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                            <td>
+                                <?php $routing_excluded_paths = get_option('aitrfoel_routing_excluded_paths', ''); ?>
+                                <textarea name="aitrfoel_routing_excluded_paths" rows="4" cols="50" class="large-text code" placeholder="wcsag-api&#10;my-plugin-endpoint"><?php echo esc_textarea($routing_excluded_paths); ?></textarea>
+                                <p class="description">
+                                    <?php esc_html_e('One path or token per line. Matching URLs are never given a language prefix and never redirected — useful for plugin API/rewrite endpoints, webhooks, and callbacks. Example: enter "wcsag-api" to exclude /wcsag-api/... requests.', 'ai-translator-for-elementor-and-polylang'); ?>
+                                    <br>
+                                    <?php esc_html_e('REST API (/wp-json/), admin-ajax, WooCommerce API (/wc-api/), feeds, login and XML-RPC are always excluded automatically.', 'ai-translator-for-elementor-and-polylang'); ?>
                                 </p>
                             </td>
                         </tr>
@@ -1644,14 +1662,14 @@ class AITRFOEL_Settings {
                     if ($mm && $mm->is_builtin()) :
                     ?>
                     <hr style="margin:24px 0 16px;">
-                    <h4 style="margin:0 0 8px;"><?php esc_html_e('Retranslate Existing SEO Titles', 'ai-translator-for-elementor-and-polylang'); ?></h4>
+                    <h4 style="margin:0 0 8px;"><?php esc_html_e('Retranslate SEO Fields & Short Descriptions', 'ai-translator-for-elementor-and-polylang'); ?></h4>
                     <p class="description" style="margin-bottom:12px;">
-                        <?php esc_html_e('Re-translates SEO title, meta description, OG, and Twitter fields for all already-translated pages. Use this if translated pages still show the source-language SEO title.', 'ai-translator-for-elementor-and-polylang'); ?>
+                        <?php esc_html_e('Re-translates SEO title, meta description, OG/Twitter fields, and the WooCommerce product short description (post excerpt) for all already-translated pages and products. Use this if translated pages still show the source-language SEO title, or if product short descriptions still appear in the source language.', 'ai-translator-for-elementor-and-polylang'); ?>
                     </p>
                     <div id="aitrfoel-seo-patch-wrap" style="margin-bottom:16px;">
                         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
                             <button type="button" id="aitrfoel-seo-patch-start" class="button button-secondary">
-                                <?php esc_html_e('Retranslate SEO Titles', 'ai-translator-for-elementor-and-polylang'); ?>
+                                <?php esc_html_e('Retranslate SEO & Short Descriptions', 'ai-translator-for-elementor-and-polylang'); ?>
                             </button>
                             <button type="button" id="aitrfoel-seo-check-start" class="button button-secondary">
                                 <?php esc_html_e('Check Translation Status', 'ai-translator-for-elementor-and-polylang'); ?>

@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.6.1
+Stable tag: 1.6.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -108,6 +108,11 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 10. Translation history management.
 
 == Changelog ==
+= 1.6.2 =
+* Fixed: Added loop-level product localization on the_post so Elementor Products/Loop Grid and Woo related/up-sell/cross-sell render current-language products even when widget queries bypass shortcode query hooks.
+* Improved: Updated SEO retranslation tool to "Retranslate SEO & Short Descriptions" and expanded copy to cover WooCommerce product short-description backfill for older translations.
+* Added: Configurable "Exclude Paths from Language Routing" plus endpoint guards for default-prefix and untranslated-page redirects (including support for tokens like wcsag-api).
+
 = 1.6.1 =
 * Fixed: Added display-time WooCommerce short-description localization so translated pages render the current-language short description for products shown via single product, related, upsell, cross-sell, and Elementor product templates.
 * Improved: Added fallback behavior for short descriptions to keep original text when no published translation exists or translated excerpt is empty.
