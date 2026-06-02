@@ -146,6 +146,11 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
                 // add-to-cart all render in the current language. This covers widgets that
                 // build their query without passing through woocommerce_shortcode_products_query.
                 add_action('the_post', [$this, 'localize_loop_product'], 10, 1);
+
+                // Scope Elementor Pro's native Products / Loop Grid widget queries to the
+                // current language. These widgets build their own WP_Query via
+                // elementor/query/query_args and bypass woocommerce_shortcode_products_query.
+                add_filter('elementor/query/query_args', [$this, 'filter_elementor_query_lang'], 20, 2);
             }
 
             // Localize absolute internal links (e.g. /fr/...) inside post content and Elementor
@@ -2880,8 +2885,10 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
 })();
 </script>';
         }
-        
-        return ob_get_clean();
+
+        // Wrap in no-localize markers so localize_internal_links does not
+        // rewrite the intentional cross-language href targets of the switcher.
+        return '<!-- aitrfoel-no-localize -->' . ob_get_clean() . '<!-- /aitrfoel-no-localize -->';
     }
     
     /**
@@ -3407,6 +3414,58 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
     }
 
     /**
+     * Scope Elementor Pro's native Products / Loop Grid widget query to the
+     * current language. Elementor Pro builds its own WP_Query via the
+     * `elementor/query/query_args` filter, bypassing
+     * `woocommerce_shortcode_products_query`. This method adds the same
+     * language tax_query clause used by filter_products_widget_query so all
+     * Elementor query widgets that target `product` post type return only the
+     * current-language products.
+     *
+     * @param array $query_args
+     * @param mixed $widget  Elementor widget instance (unused).
+     * @return array
+     */
+    public function filter_elementor_query_lang($query_args, $widget = null) {
+        if (!$this->is_active() || !is_array($query_args)) {
+            return $query_args;
+        }
+
+        // Only apply to product queries.
+        $post_types = isset($query_args['post_type']) ? (array) $query_args['post_type'] : [];
+        if (!in_array('product', $post_types, true)) {
+            return $query_args;
+        }
+
+        $current_lang = $this->get_current_language();
+        $default_lang = $this->get_default_language();
+        if (!$current_lang || $current_lang === $default_lang) {
+            return $query_args;
+        }
+
+        $terms = [$current_lang];
+        if (get_option('aitrfoel_woo_product_fallback', true)) {
+            $terms[] = $default_lang;
+        }
+
+        $lang_clause = [
+            'taxonomy' => self::TAXONOMY,
+            'field'    => 'slug',
+            'terms'    => $terms,
+            'operator' => 'IN',
+        ];
+
+        $existing = (!empty($query_args['tax_query']) && is_array($query_args['tax_query']))
+            ? $query_args['tax_query'] : [];
+
+        $query_args['tax_query'] = empty($existing)
+            ? [$lang_clause]
+            : ['relation' => 'AND', $lang_clause, $existing];
+
+        return $query_args;
+    }
+
+    /**
      * Resolve an absolute internal URL (optionally language-prefixed) to its
      * underlying post ID, ignoring the language prefix.
      *
@@ -3478,7 +3537,24 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
         static $cache = [];
         $self = $this;
 
-        return preg_replace_callback(
+        // Protect language-switcher blocks and other explicitly marked regions
+        // from link rewriting. The switcher contains intentional cross-language
+        // hrefs (e.g. /fr/page/, /de/page/) that must not be redirected to the
+        // current language.
+        $stash = [];
+        if (strpos($content, '<!-- aitrfoel-no-localize -->') !== false) {
+            $content = preg_replace_callback(
+                '/<!-- aitrfoel-no-localize -->[\s\S]*?<!-- \/aitrfoel-no-localize -->/U',
+                function ($m) use (&$stash) {
+                    $key = "\x00NL_" . count($stash) . "\x00";
+                    $stash[] = $m[0];
+                    return $key;
+                },
+                $content
+            );
+        }
+
+        $result = preg_replace_callback(
             '/href=("|\')(' . preg_quote($raw_home, '/') . '[^"\'#?]*)((?:[?#][^"\']*)?)\1/i',
             function ($m) use (&$cache, $current_lang, $self) {
                 $base = $m[2];
@@ -3505,6 +3581,15 @@ class AITRFOEL_Builtin_Integration extends AITRFOEL_Multilingual_Interface {
             },
             $content
         );
+
+        // Restore protected regions.
+        if (!empty($stash)) {
+            foreach ($stash as $i => $original) {
+                $result = str_replace("\x00NL_{$i}\x00", $original, $result ?? $content);
+            }
+        }
+
+        return $result ?? $content;
     }
 
     /**

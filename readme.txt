@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.6.2
+Stable tag: 1.6.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -108,6 +108,10 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 10. Translation history management.
 
 == Changelog ==
+= 1.6.3 =
+* Fixed: Language switcher links broken when link localization is active — switcher hrefs are now protected from being rewritten to the current language
+* Fixed: Elementor Pro Products / Loop Grid widget still showing default-language products — now also filtered via elementor/query/query_args hook
+
 = 1.6.2 =
 * Fixed: Added loop-level product localization on the_post so Elementor Products/Loop Grid and Woo related/up-sell/cross-sell render current-language products even when widget queries bypass shortcode query hooks.
 * Improved: Updated SEO retranslation tool to "Retranslate SEO & Short Descriptions" and expanded copy to cover WooCommerce product short-description backfill for older translations.
