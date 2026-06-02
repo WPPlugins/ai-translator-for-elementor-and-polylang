@@ -83,6 +83,10 @@ class AITRFOEL_Ajax_Handler {
         add_action('wp_ajax_aitrfoel_seo_patch_count', [$this, 'handle_seo_patch_count']);
         add_action('wp_ajax_aitrfoel_seo_patch_batch', [$this, 'handle_seo_patch_batch']);
         add_action('wp_ajax_aitrfoel_seo_check',       [$this, 'handle_seo_check']);
+
+        // Excerpt / short description patch tool (WooCommerce section)
+        add_action('wp_ajax_aitrfoel_excerpt_patch_count', [$this, 'handle_excerpt_patch_count']);
+        add_action('wp_ajax_aitrfoel_excerpt_patch_batch', [$this, 'handle_excerpt_patch_batch']);
     }
 
     /**
@@ -3560,6 +3564,97 @@ class AITRFOEL_Ajax_Handler {
                 (int) $row->target_id,
                 $row->target_lang
             );
+            $processed++;
+        }
+
+        wp_send_json_success([
+            'processed'   => $processed,
+            'next_offset' => $offset + $processed,
+            'done'        => ($processed < $per_page),
+        ]);
+    }
+
+    /**
+     * Count product translation pairs that have a non-empty excerpt to retranslate.
+     */
+    public function handle_excerpt_patch_count() {
+        check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+        if (!class_exists('AITRFOEL_Builtin_Integration') || !AITRFOEL_Builtin_Integration::is_enabled()) {
+            wp_send_json_error('Built-in language system not active.');
+        }
+
+        global $wpdb;
+        $table        = $wpdb->prefix . AITRFOEL_Builtin_Integration::TABLE_NAME;
+        $default_lang = AITRFOEL_Builtin_Integration::get_instance()->get_default_language();
+
+        // Count translated product pairs (source OR target has a non-empty excerpt)
+        $total = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*)
+             FROM {$table} t
+             JOIN {$table} s ON s.group_id = t.group_id AND s.language_code = %s
+             JOIN {$wpdb->posts} p ON p.ID = t.post_id AND p.post_type = 'product' AND p.post_status != 'trash'
+             WHERE t.language_code != %s",
+            $default_lang, $default_lang
+        ));
+
+        wp_send_json_success(['total' => $total]);
+    }
+
+    /**
+     * Process one batch of product excerpt retranslations.
+     * Uses source excerpt when available; falls back to translating the target's
+     * existing excerpt (handles cases where the excerpt was copied verbatim to
+     * the translated product without being translated).
+     */
+    public function handle_excerpt_patch_batch() {
+        check_ajax_referer('aitrfoel_ajax_nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
+        }
+        if (!class_exists('AITRFOEL_Builtin_Integration') || !AITRFOEL_Builtin_Integration::is_enabled()) {
+            wp_send_json_error('Built-in language system not active.');
+        }
+
+        $offset   = max(0, (int) ($_POST['offset']   ?? 0));
+        $per_page = min(20, max(1, (int) ($_POST['per_page'] ?? 10)));
+
+        global $wpdb;
+        $table        = $wpdb->prefix . AITRFOEL_Builtin_Integration::TABLE_NAME;
+        $default_lang = AITRFOEL_Builtin_Integration::get_instance()->get_default_language();
+
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT t.post_id AS target_id, t.language_code AS target_lang, s.post_id AS source_id
+             FROM {$table} t
+             JOIN {$table} s ON s.group_id = t.group_id AND s.language_code = %s
+             JOIN {$wpdb->posts} p ON p.ID = t.post_id AND p.post_type = 'product' AND p.post_status != 'trash'
+             WHERE t.language_code != %s
+             ORDER BY t.post_id
+             LIMIT %d OFFSET %d",
+            $default_lang, $default_lang, $per_page, $offset
+        ));
+
+        $api       = AITRFOEL_OpenAI_API::get_instance();
+        $processed = 0;
+
+        foreach ($rows as $row) {
+            $source_post = get_post((int) $row->source_id);
+            $target_post = get_post((int) $row->target_id);
+            $source_exc  = $source_post ? trim($source_post->post_excerpt) : '';
+            $target_exc  = $target_post ? trim($target_post->post_excerpt) : '';
+
+            // Prefer translating from source; fall back to target's existing text
+            // (covers the case where excerpt was copied verbatim instead of translated)
+            $text = !empty($source_exc) ? $source_exc : $target_exc;
+
+            if (!empty($text)) {
+                $translated = $api->translate_text($text, $row->target_lang, $default_lang);
+                if (!is_wp_error($translated) && !empty(trim((string) $translated))) {
+                    wp_update_post(['ID' => (int) $row->target_id, 'post_excerpt' => $translated]);
+                }
+            }
             $processed++;
         }
 

@@ -1964,6 +1964,90 @@ class AITRFOEL_Settings {
                             </td>
                         </tr>
                     </table>
+
+                    <?php
+                    $mm_woo = class_exists('AITRFOEL_Multilingual_Manager') ? AITRFOEL_Multilingual_Manager::get_instance() : null;
+                    if ($mm_woo && $mm_woo->is_builtin() && class_exists('WooCommerce')) :
+                    ?>
+                    <hr style="margin:24px 0 16px;">
+                    <h4 style="margin:0 0 8px;"><?php esc_html_e('Retranslate Product Short Descriptions', 'ai-translator-for-elementor-and-polylang'); ?></h4>
+                    <p class="description" style="margin-bottom:12px;">
+                        <?php esc_html_e('Re-translates the short description (excerpt) for all translated products. Use this if product short descriptions still appear in the source language.', 'ai-translator-for-elementor-and-polylang'); ?>
+                    </p>
+                    <div id="aitrfoel-excerpt-patch-wrap" style="margin-bottom:16px;">
+                        <button type="button" id="aitrfoel-excerpt-patch-start" class="button button-secondary">
+                            <?php esc_html_e('Retranslate Short Descriptions', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </button>
+                        <div id="aitrfoel-excerpt-patch-status" style="display:none;margin-top:10px;">
+                            <div style="background:#f0f0f0;border-radius:3px;height:16px;overflow:hidden;max-width:400px;">
+                                <div id="aitrfoel-excerpt-patch-bar" style="background:#0073aa;height:100%;width:0;transition:width .3s;"></div>
+                            </div>
+                            <p id="aitrfoel-excerpt-patch-msg" style="margin:6px 0 0;color:#555;font-size:13px;"></p>
+                        </div>
+                    </div>
+                    <script>
+                    (function($){
+                        var excNonce = '<?php echo wp_create_nonce('aitrfoel_ajax_nonce'); ?>';
+                        var excRunning = false;
+
+                        $('#aitrfoel-excerpt-patch-start').on('click', function(){
+                            if (excRunning) return;
+                            excRunning = true;
+                            var $btn = $(this).prop('disabled', true);
+                            var $status = $('#aitrfoel-excerpt-patch-status').show();
+                            var $bar = $('#aitrfoel-excerpt-patch-bar');
+                            var $msg = $('#aitrfoel-excerpt-patch-msg');
+                            $msg.text('<?php echo esc_js(__('Counting products…', 'ai-translator-for-elementor-and-polylang')); ?>');
+
+                            $.post(ajaxurl, { action: 'aitrfoel_excerpt_patch_count', nonce: excNonce })
+                            .done(function(r){
+                                if (!r.success) {
+                                    $msg.text('<?php echo esc_js(__('Error:', 'ai-translator-for-elementor-and-polylang')); ?> ' + (r.data || '?'));
+                                    $btn.prop('disabled', false); excRunning = false; return;
+                                }
+                                var total = r.data.total;
+                                if (total === 0) {
+                                    $msg.text('<?php echo esc_js(__('No translated products found.', 'ai-translator-for-elementor-and-polylang')); ?>');
+                                    $btn.prop('disabled', false); excRunning = false; return;
+                                }
+                                $msg.text('<?php echo esc_js(__('Retranslating 0 of', 'ai-translator-for-elementor-and-polylang')); ?> ' + total + '…');
+                                var offset = 0, perPage = 10;
+
+                                function nextBatch() {
+                                    $.post(ajaxurl, { action: 'aitrfoel_excerpt_patch_batch', nonce: excNonce, offset: offset, per_page: perPage })
+                                    .done(function(br){
+                                        if (!br.success) {
+                                            $msg.text('<?php echo esc_js(__('Error during retranslating.', 'ai-translator-for-elementor-and-polylang')); ?>');
+                                            $btn.prop('disabled', false); excRunning = false; return;
+                                        }
+                                        offset = br.data.next_offset;
+                                        var pct = Math.min(100, Math.round(offset / total * 100));
+                                        $bar.css('width', pct + '%');
+                                        $msg.text('<?php echo esc_js(__('Retranslated', 'ai-translator-for-elementor-and-polylang')); ?> ' + offset + ' <?php echo esc_js(__('of', 'ai-translator-for-elementor-and-polylang')); ?> ' + total + '…');
+                                        if (br.data.done) {
+                                            $bar.css('width', '100%');
+                                            $msg.text('✅ <?php echo esc_js(__('Done! Retranslated', 'ai-translator-for-elementor-and-polylang')); ?> ' + offset + ' <?php echo esc_js(__('short descriptions.', 'ai-translator-for-elementor-and-polylang')); ?>');
+                                            $btn.prop('disabled', false); excRunning = false;
+                                        } else {
+                                            nextBatch();
+                                        }
+                                    })
+                                    .fail(function(){
+                                        $msg.text('<?php echo esc_js(__('Request failed — try again.', 'ai-translator-for-elementor-and-polylang')); ?>');
+                                        $btn.prop('disabled', false); excRunning = false;
+                                    });
+                                }
+                                nextBatch();
+                            })
+                            .fail(function(){
+                                $msg.text('<?php echo esc_js(__('Could not connect to server.', 'ai-translator-for-elementor-and-polylang')); ?>');
+                                $btn.prop('disabled', false); excRunning = false;
+                            });
+                        });
+                    }(jQuery));
+                    </script>
+                    <?php endif; ?>
+
                     <!-- Inline Save (after WooCommerce) -->
                     <div class="aitrfoel-inline-save">
                         <?php submit_button(__('Save Settings', 'ai-translator-for-elementor-and-polylang'), 'primary', 'submit', false); ?>
