@@ -4094,11 +4094,22 @@ class AITRFOEL_Translation_Engine {
             }
         }
 
-        // Translate post excerpt (also serves as WooCommerce short description)
+        // Translate post excerpt (also serves as WooCommerce short description).
+        // Primary source is the original post's excerpt. Fallback: if the source
+        // excerpt is empty but the TARGET carries an untranslated excerpt (common
+        // for older translations where the source-language text was copied onto
+        // the translation and never translated), translate that text in place.
         $original_post = get_post($original_id);
-        $original_excerpt = $original_post ? $original_post->post_excerpt : '';
-        if (!empty(trim($original_excerpt))) {
+        $original_excerpt = $original_post ? trim((string) $original_post->post_excerpt) : '';
+
+        if ($original_excerpt !== '') {
             $to_translate['__excerpt__'] = $original_excerpt;
+        } else {
+            $target_post = get_post($target_id);
+            $target_excerpt = $target_post ? trim((string) $target_post->post_excerpt) : '';
+            if ($target_excerpt !== '') {
+                $to_translate['__excerpt__'] = $target_excerpt;
+            }
         }
 
         if (!empty($to_translate)) {

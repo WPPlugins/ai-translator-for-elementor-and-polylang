@@ -4,7 +4,7 @@ Tags: translation, elementor, multilingual, woocommerce, ai
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.6.4
+Stable tag: 1.6.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -108,6 +108,11 @@ Go to AI Translator → Dashboard to see your current usage, words remaining, an
 10. Translation history management.
 
 == Changelog ==
+= 1.6.5 =
+* Improved: Retranslate Short Descriptions tool now skips already-translated products (idempotent re-runs)
+* Added: Force re-translate checkbox to override skip logic and redo all short descriptions
+* Changed: Retranslate SEO button now labelled SEO Titles only, with pointer to the dedicated Short Descriptions tool
+
 = 1.6.4 =
 * Added: Separate Retranslate Short Descriptions button in WooCommerce settings section
 * Fixed: Short descriptions (post_excerpt) not retranslated when source product has empty excerpt

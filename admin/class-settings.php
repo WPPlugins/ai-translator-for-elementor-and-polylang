@@ -1662,14 +1662,14 @@ class AITRFOEL_Settings {
                     if ($mm && $mm->is_builtin()) :
                     ?>
                     <hr style="margin:24px 0 16px;">
-                    <h4 style="margin:0 0 8px;"><?php esc_html_e('Retranslate SEO Fields & Short Descriptions', 'ai-translator-for-elementor-and-polylang'); ?></h4>
+                    <h4 style="margin:0 0 8px;"><?php esc_html_e('Retranslate Existing SEO Titles', 'ai-translator-for-elementor-and-polylang'); ?></h4>
                     <p class="description" style="margin-bottom:12px;">
-                        <?php esc_html_e('Re-translates SEO title, meta description, OG/Twitter fields, and the WooCommerce product short description (post excerpt) for all already-translated pages and products. Use this if translated pages still show the source-language SEO title, or if product short descriptions still appear in the source language.', 'ai-translator-for-elementor-and-polylang'); ?>
+                        <?php esc_html_e('Re-translates SEO title, meta description, OG, and Twitter fields for all already-translated pages. Use this if translated pages still show the source-language SEO title. (To fix product short descriptions, use the "Retranslate Short Descriptions" tool below.)', 'ai-translator-for-elementor-and-polylang'); ?>
                     </p>
                     <div id="aitrfoel-seo-patch-wrap" style="margin-bottom:16px;">
                         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
                             <button type="button" id="aitrfoel-seo-patch-start" class="button button-secondary">
-                                <?php esc_html_e('Retranslate SEO & Short Descriptions', 'ai-translator-for-elementor-and-polylang'); ?>
+                                <?php esc_html_e('Retranslate SEO Titles', 'ai-translator-for-elementor-and-polylang'); ?>
                             </button>
                             <button type="button" id="aitrfoel-seo-check-start" class="button button-secondary">
                                 <?php esc_html_e('Check Translation Status', 'ai-translator-for-elementor-and-polylang'); ?>
@@ -1972,12 +1972,16 @@ class AITRFOEL_Settings {
                     <hr style="margin:24px 0 16px;">
                     <h4 style="margin:0 0 8px;"><?php esc_html_e('Retranslate Product Short Descriptions', 'ai-translator-for-elementor-and-polylang'); ?></h4>
                     <p class="description" style="margin-bottom:12px;">
-                        <?php esc_html_e('Re-translates the short description (excerpt) for all translated products. Use this if product short descriptions still appear in the source language.', 'ai-translator-for-elementor-and-polylang'); ?>
+                        <?php esc_html_e('Re-translates the short description (excerpt) for all translated products. Use this if product short descriptions still appear in the source language. Safe to re-run: already-translated products are skipped unless their source text changed, or you tick "Force re-translate".', 'ai-translator-for-elementor-and-polylang'); ?>
                     </p>
                     <div id="aitrfoel-excerpt-patch-wrap" style="margin-bottom:16px;">
                         <button type="button" id="aitrfoel-excerpt-patch-start" class="button button-secondary">
                             <?php esc_html_e('Retranslate Short Descriptions', 'ai-translator-for-elementor-and-polylang'); ?>
                         </button>
+                        <label style="margin-left:10px;font-size:13px;">
+                            <input type="checkbox" id="aitrfoel-excerpt-patch-force" value="1" />
+                            <?php esc_html_e('Force re-translate (ignore already-translated)', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </label>
                         <div id="aitrfoel-excerpt-patch-status" style="display:none;margin-top:10px;">
                             <div style="background:#f0f0f0;border-radius:3px;height:16px;overflow:hidden;max-width:400px;">
                                 <div id="aitrfoel-excerpt-patch-bar" style="background:#0073aa;height:100%;width:0;transition:width .3s;"></div>
@@ -2013,8 +2017,9 @@ class AITRFOEL_Settings {
                                 $msg.text('<?php echo esc_js(__('Retranslating 0 of', 'ai-translator-for-elementor-and-polylang')); ?> ' + total + '…');
                                 var offset = 0, perPage = 10;
 
+                                var forceVal = $('#aitrfoel-excerpt-patch-force').is(':checked') ? 1 : 0;
                                 function nextBatch() {
-                                    $.post(ajaxurl, { action: 'aitrfoel_excerpt_patch_batch', nonce: excNonce, offset: offset, per_page: perPage })
+                                    $.post(ajaxurl, { action: 'aitrfoel_excerpt_patch_batch', nonce: excNonce, offset: offset, per_page: perPage, force: forceVal })
                                     .done(function(br){
                                         if (!br.success) {
                                             $msg.text('<?php echo esc_js(__('Error during retranslating.', 'ai-translator-for-elementor-and-polylang')); ?>');

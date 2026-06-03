@@ -3638,10 +3638,13 @@ class AITRFOEL_Ajax_Handler {
 
         $api       = AITRFOEL_OpenAI_API::get_instance();
         $processed = 0;
+        $skipped   = 0;
+        $force     = !empty($_POST['force']);
 
         foreach ($rows as $row) {
+            $target_id   = (int) $row->target_id;
             $source_post = get_post((int) $row->source_id);
-            $target_post = get_post((int) $row->target_id);
+            $target_post = get_post($target_id);
             $source_exc  = $source_post ? trim($source_post->post_excerpt) : '';
             $target_exc  = $target_post ? trim($target_post->post_excerpt) : '';
 
@@ -3650,9 +3653,23 @@ class AITRFOEL_Ajax_Handler {
             $text = !empty($source_exc) ? $source_exc : $target_exc;
 
             if (!empty($text)) {
+                // Idempotency: skip if this exact source text + language was already
+                // translated on a previous run (unless "force" is requested). This
+                // avoids needless API calls and text drift on repeated runs, while
+                // still re-translating when the source text actually changes.
+                $signature = md5($text . '|' . $row->target_lang);
+                $previous  = get_post_meta($target_id, '_aitrfoel_excerpt_sig', true);
+
+                if (!$force && $previous === $signature && $target_exc !== '') {
+                    $skipped++;
+                    $processed++;
+                    continue;
+                }
+
                 $translated = $api->translate_text($text, $row->target_lang, $default_lang);
                 if (!is_wp_error($translated) && !empty(trim((string) $translated))) {
-                    wp_update_post(['ID' => (int) $row->target_id, 'post_excerpt' => $translated]);
+                    wp_update_post(['ID' => $target_id, 'post_excerpt' => $translated]);
+                    update_post_meta($target_id, '_aitrfoel_excerpt_sig', $signature);
                 }
             }
             $processed++;
@@ -3660,6 +3677,7 @@ class AITRFOEL_Ajax_Handler {
 
         wp_send_json_success([
             'processed'   => $processed,
+            'skipped'     => $skipped,
             'next_offset' => $offset + $processed,
             'done'        => ($processed < $per_page),
         ]);
