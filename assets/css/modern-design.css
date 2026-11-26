@@ -45,7 +45,7 @@
 }
 
 /* ── Plugin Header — Modern Gradient ─────────────────────────── */
-.eat-plugin-header {
+.aitrfoel-plugin-header {
     background: linear-gradient(135deg, var(--mt-gray-50) 0%, #fff 50%, var(--mt-blue-50) 100%) !important;
     border-bottom: 1px solid var(--mt-gray-200) !important;
     box-shadow: var(--mt-shadow-sm) !important;
@@ -53,24 +53,24 @@
     transition: var(--mt-transition);
 }
 
-.eat-plugin-title {
+.aitrfoel-plugin-title {
     font-size: 15px !important;
     font-weight: 600 !important;
     color: var(--mt-gray-800) !important;
     letter-spacing: -0.01em !important;
 }
 
-.eat-current-page {
+.aitrfoel-current-page {
     color: var(--mt-blue) !important;
     font-weight: 600 !important;
 }
 
-.eat-breadcrumb-separator {
+.aitrfoel-breadcrumb-separator {
     color: var(--mt-gray-400) !important;
 }
 
 /* ── Cards — Soft & Elevated ─────────────────────────────────── */
-.eat-card,
+.aitrfoel-card,
 .aitrfoel-settings-section {
     background: #fff !important;
     border: 1px solid var(--mt-gray-200) !important;
@@ -82,7 +82,7 @@
     animation: mtFadeIn 0.4s ease-out;
 }
 
-.eat-card:hover,
+.aitrfoel-card:hover,
 .aitrfoel-settings-section:hover {
     box-shadow: var(--mt-shadow-md) !important;
     border-color: var(--mt-gray-300) !important;
@@ -99,7 +99,7 @@
 }
 
 /* ── Compact Stats Bar ───────────────────────────────────────── */
-.eat-compact-stats-bar {
+.aitrfoel-compact-stats-bar {
     background: linear-gradient(135deg, #fff 0%, var(--mt-blue-50) 100%) !important;
     border-bottom: 1px solid var(--mt-gray-200) !important;
     box-shadow: var(--mt-shadow) !important;
@@ -107,7 +107,7 @@
     transition: var(--mt-transition);
 }
 
-.eat-compact-stat {
+.aitrfoel-compact-stat {
     background: rgba(255, 255, 255, 0.8) !important;
     backdrop-filter: blur(8px);
     border: 1px solid var(--mt-gray-200) !important;
@@ -116,13 +116,13 @@
     transition: var(--mt-transition);
 }
 
-.eat-compact-stat:hover {
+.aitrfoel-compact-stat:hover {
     transform: translateY(-1px);
     box-shadow: var(--mt-shadow-md);
     border-color: var(--mt-blue) !important;
 }
 
-.eat-compact-label {
+.aitrfoel-compact-label {
     color: var(--mt-gray-500) !important;
     font-size: 11px !important;
     text-transform: uppercase !important;
@@ -130,25 +130,25 @@
     font-weight: 600 !important;
 }
 
-.eat-compact-value {
+.aitrfoel-compact-value {
     color: var(--mt-gray-900) !important;
     font-weight: 700 !important;
 }
 
 /* Words Left — Modern gradient */
-.eat-words-left-stat {
+.aitrfoel-words-left-stat {
     background: linear-gradient(135deg, var(--mt-green) 0%, #16a34a 100%) !important;
     border-radius: 10px !important;
     transition: var(--mt-transition);
 }
 
-.eat-words-left-stat:hover {
+.aitrfoel-words-left-stat:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
 }
 
 /* ── Buttons — Modern Style ──────────────────────────────────── */
-.eat-compact-buy-btn {
+.aitrfoel-compact-buy-btn {
     background: linear-gradient(135deg, var(--mt-blue) 0%, var(--mt-blue-dark) 100%) !important;
     color: white !important;
     border: none !important;
@@ -160,11 +160,22 @@
     box-shadow: 0 2px 4px rgba(20, 71, 230, 0.2);
 }
 
-.eat-compact-buy-btn:hover {
+.aitrfoel-compact-buy-btn:hover {
     background: linear-gradient(135deg, var(--mt-blue-light) 0%, var(--mt-blue) 100%) !important;
     color: white !important;
     transform: translateY(-1px) !important;
     box-shadow: 0 4px 12px rgba(20, 71, 230, 0.3) !important;
+}
+
+.aitrfoel-compact-addon-badge {
+    display: inline-block !important;
+    background: linear-gradient(135deg, #e8f5e9, #c8e6c9) !important;
+    color: #2e7d32 !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 2px 8px !important;
+    border-radius: 6px !important;
+    border: 1px solid #a5d6a7 !important;
 }
 
 .button-primary,
@@ -203,7 +214,7 @@
 }
 
 /* ── Stat Cards ──────────────────────────────────────────────── */
-.eat-stat-card {
+.aitrfoel-stat-card {
     border-radius: var(--mt-radius) !important;
     border: 1px solid var(--mt-gray-200) !important;
     box-shadow: var(--mt-shadow) !important;
@@ -211,31 +222,31 @@
     background: #fff !important;
 }
 
-.eat-stat-card:hover {
+.aitrfoel-stat-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--mt-shadow-lg) !important;
     border-color: var(--mt-blue) !important;
 }
 
-.eat-stat-number {
+.aitrfoel-stat-number {
     color: var(--mt-blue) !important;
     font-weight: 800 !important;
 }
 
-.eat-stat-label {
+.aitrfoel-stat-label {
     color: var(--mt-gray-500) !important;
     font-weight: 600 !important;
     letter-spacing: 0.05em !important;
 }
 
 /* ── Progress Bars — Smooth Gradient ─────────────────────────── */
-.eat-progress-bar {
+.aitrfoel-progress-bar {
     background: var(--mt-gray-100) !important;
     border-radius: 12px !important;
     overflow: hidden !important;
 }
 
-.eat-progress-fill {
+.aitrfoel-progress-fill {
     background: linear-gradient(90deg, var(--mt-blue) 0%, var(--mt-blue-light) 50%, var(--mt-green) 100%) !important;
     border-radius: 12px !important;
     transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -243,7 +254,7 @@
     overflow: hidden;
 }
 
-.eat-progress-fill::after {
+.aitrfoel-progress-fill::after {
     content: '';
     position: absolute;
     top: 0;
@@ -255,20 +266,20 @@
 }
 
 /* ── Usage Bar ───────────────────────────────────────────────── */
-.eat-usage-bar {
+.aitrfoel-usage-bar {
     border-radius: 6px !important;
     background: var(--mt-gray-100) !important;
     height: 10px !important;
 }
 
-.eat-usage-progress {
+.aitrfoel-usage-progress {
     border-radius: 6px !important;
     background: linear-gradient(90deg, var(--mt-green) 0%, var(--mt-amber) 60%, var(--mt-red) 100%) !important;
     transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 /* ── Plan Badge ──────────────────────────────────────────────── */
-.eat-plan-name {
+.aitrfoel-plan-name {
     background: linear-gradient(135deg, var(--mt-blue) 0%, var(--mt-blue-dark) 100%) !important;
     border-radius: 6px !important;
     padding: 4px 12px !important;
@@ -311,7 +322,8 @@
 }
 
 /* ── Bulk Translation Bar ────────────────────────────────────── */
-#eat-translate-all-site {
+#aitrfoel-translate-all-site,
+#aitrfoel-bulk-settings {
     border: 1.5px dashed var(--mt-blue) !important;
     color: var(--mt-blue) !important;
     background: var(--mt-blue-50) !important;
@@ -328,7 +340,8 @@
     gap: 0 !important;
 }
 
-#eat-translate-all-site .eat-btn-sub {
+#aitrfoel-translate-all-site .aitrfoel-btn-sub,
+#aitrfoel-bulk-settings .aitrfoel-btn-sub {
     font-size: 9px;
     opacity: 0.6;
     font-weight: 400;
@@ -336,7 +349,7 @@
     text-transform: uppercase;
 }
 
-#eat-translate-all-site:hover {
+#aitrfoel-translate-all-site:hover {
     background: var(--mt-blue) !important;
     color: #fff !important;
     border-style: solid !important;
@@ -345,8 +358,8 @@
 }
 
 /* ── Bulk Action Buttons — Icon Centering ──────────────────── */
-.eat-bulk-actions .button,
-.eat-bulk-actions .button-primary {
+.aitrfoel-bulk-actions .button,
+.aitrfoel-bulk-actions .button-primary {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -354,7 +367,7 @@
     vertical-align: middle !important;
 }
 
-.eat-bulk-translation-bar {
+.aitrfoel-bulk-translation-bar {
     background: rgba(255, 255, 255, 0.95) !important;
     backdrop-filter: blur(16px) !important;
     -webkit-backdrop-filter: blur(16px) !important;
@@ -364,74 +377,74 @@
     transition: var(--mt-transition);
 }
 
-.eat-bulk-translation-bar.is-sticky {
+.aitrfoel-bulk-translation-bar.is-sticky {
     box-shadow: var(--mt-shadow-lg) !important;
     border-color: var(--mt-blue) !important;
     border-left: 4px solid var(--mt-blue) !important;
 }
 
-.eat-bulk-translation-bar.is-sticky::before {
+.aitrfoel-bulk-translation-bar.is-sticky::before {
     background: linear-gradient(90deg, var(--mt-blue), var(--mt-blue-light)) !important;
 }
 
 /* ── Status Messages ─────────────────────────────────────────── */
-#eat-status.success {
+#aitrfoel-status.success {
     border-radius: var(--mt-radius) !important;
 }
 
-#eat-status.error {
+#aitrfoel-status.error {
     border-radius: var(--mt-radius) !important;
 }
 
-#eat-status.info {
+#aitrfoel-status.info {
     border-radius: var(--mt-radius) !important;
 }
 
-.eat-status-green {
+.aitrfoel-status-green {
     border-radius: 10px !important;
     border-left: 4px solid var(--mt-green) !important;
 }
 
-.eat-status-yellow {
+.aitrfoel-status-yellow {
     border-radius: 10px !important;
 }
 
-.eat-status-red {
+.aitrfoel-status-red {
     border-radius: 10px !important;
 }
 
 /* ── String Selection Area ───────────────────────────────────── */
-#eat-string-selection-area {
+#aitrfoel-string-selection-area {
     background: var(--mt-gray-50) !important;
     border: 1px solid var(--mt-gray-200) !important;
     border-radius: var(--mt-radius) !important;
 }
 
-#eat-string-list {
+#aitrfoel-string-list {
     border-radius: 10px !important;
     border: 1px solid var(--mt-gray-200) !important;
 }
 
-#eat-string-list label:hover {
+#aitrfoel-string-list label:hover {
     background: var(--mt-blue-50) !important;
     border-radius: 8px !important;
 }
 
 /* ── Model Selector Cards ────────────────────────────────────── */
-.eat-model-option {
+.aitrfoel-model-option {
     border-radius: var(--mt-radius) !important;
     border: 2px solid var(--mt-gray-200) !important;
     transition: var(--mt-transition);
 }
 
-.eat-model-option:hover {
+.aitrfoel-model-option:hover {
     border-color: var(--mt-blue) !important;
     background: var(--mt-blue-50) !important;
     transform: translateY(-2px);
     box-shadow: var(--mt-shadow-md);
 }
 
-.eat-model-option.selected {
+.aitrfoel-model-option.selected {
     border-color: var(--mt-blue) !important;
     background: var(--mt-blue-50) !important;
     box-shadow: 0 0 0 3px rgba(20, 71, 230, 0.1) !important;
@@ -458,14 +471,14 @@
 }
 
 /* ── Translation Success ─────────────────────────────────────── */
-.eat-translation-success {
+.aitrfoel-translation-success {
     border-radius: var(--mt-radius) !important;
     background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
     border-left: 4px solid var(--mt-green) !important;
 }
 
 /* ── Preview & Publish Buttons ───────────────────────────────── */
-.eat-preview-btn {
+.aitrfoel-preview-btn {
     background: linear-gradient(135deg, var(--mt-blue) 0%, var(--mt-blue-dark) 100%) !important;
     border: none !important;
     border-radius: 8px !important;
@@ -473,12 +486,12 @@
     transition: var(--mt-transition);
 }
 
-.eat-preview-btn:hover {
+.aitrfoel-preview-btn:hover {
     transform: translateY(-1px) !important;
     box-shadow: 0 4px 16px rgba(20, 71, 230, 0.35) !important;
 }
 
-.eat-publish-btn {
+.aitrfoel-publish-btn {
     background: linear-gradient(135deg, var(--mt-green) 0%, #16a34a 100%) !important;
     border: none !important;
     border-radius: 8px !important;
@@ -486,7 +499,7 @@
     transition: var(--mt-transition);
 }
 
-.eat-publish-btn:hover {
+.aitrfoel-publish-btn:hover {
     transform: translateY(-1px) !important;
     box-shadow: 0 4px 16px rgba(34, 197, 94, 0.35) !important;
 }
@@ -503,6 +516,28 @@
     background: linear-gradient(135deg, #fef2f2 0%, #fff 100%) !important;
     border: 1px solid var(--mt-red) !important;
     border-radius: var(--mt-radius) !important;
+}
+
+/* ── Inline Save + Reset Bars ──────────────────────────────── */
+.aitrfoel-inline-save {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0 16px 0;
+}
+.aitrfoel-inline-save .button-primary {
+    margin: 0 !important;
+}
+.aitrfoel-inline-save .aitrfoel-reset-defaults {
+    margin-left: auto;
+    color: #787c82;
+    border-color: #c3c4c7;
+    font-size: 12px;
+}
+.aitrfoel-inline-save .aitrfoel-reset-defaults:hover {
+    color: var(--mt-red);
+    border-color: var(--mt-red);
+    background: #fef2f2;
 }
 
 /* ── MeepTech Footer Branding ────────────────────────────────── */
@@ -547,23 +582,18 @@
     color: var(--mt-blue);
 }
 
-/* ── Tooltip Override ────────────────────────────────────────── */
-.eat-tooltip:hover::after {
-    border-radius: 10px !important;
-    background: var(--mt-gray-900) !important;
-    box-shadow: var(--mt-shadow-lg) !important;
-}
+/* ── Tooltip Override — Native browser tooltips ──────────────── */
 
 /* ── Dropdown Button Arrow ────────────────────────────────────── */
-#eat-select-source-language,
-#eat-select-languages {
+#aitrfoel-select-source-language,
+#aitrfoel-select-languages {
     position: relative;
     padding-right: 24px !important;
     text-align: left;
 }
 
 /* ── Dropdown Override ───────────────────────────────────────── */
-.eat-dropdown-content {
+.aitrfoel-dropdown-content {
     border-radius: 10px !important;
     box-shadow: var(--mt-shadow-lg) !important;
     border: 1px solid var(--mt-gray-200) !important;
@@ -572,17 +602,17 @@
     max-height: 400px !important;
 }
 
-#eat-source-dropdown,
-#eat-languages-dropdown {
+#aitrfoel-source-dropdown,
+#aitrfoel-languages-dropdown {
     max-height: 50vh !important;
     overflow-y: auto !important;
 }
 
-.eat-dropdown-item {
+.aitrfoel-dropdown-item {
     transition: var(--mt-transition);
 }
 
-.eat-dropdown-item:hover {
+.aitrfoel-dropdown-item:hover {
     background: var(--mt-blue-50) !important;
 }
 
@@ -665,6 +695,7 @@
     vertical-align: middle;
     margin: 0 !important;
     flex-shrink: 0;
+    accent-color: var(--mt-blue);
 }
 
 .aitrfoel-admin-wrapper label {
@@ -681,34 +712,10 @@
     gap: 6px;
 }
 
-.aitrfoel-admin-wrapper input[type="checkbox"]:checked,
-.aitrfoel-admin-wrapper input[type="radio"]:checked {
-    background-color: var(--mt-blue);
-    border-color: var(--mt-blue);
-    color: #fff;
-    accent-color: var(--mt-blue);
-}
-
-/* Make checkbox a flex container so the ::before checkmark is centered */
-.aitrfoel-admin-wrapper input[type="checkbox"]:checked {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-/* Keep language-card checkboxes hidden (override the inline-flex above) */
+/* Keep language-card checkboxes hidden */
 .aitrfoel-admin-wrapper .aitrfoel-ta-lang-card input[type="checkbox"],
 .aitrfoel-admin-wrapper .aitrfoel-ta-lang-card input[type="checkbox"]:checked {
     display: none !important;
-}
-
-/* Ensure white checkmark on blue background */
-.aitrfoel-admin-wrapper input[type="checkbox"]:checked::before {
-    content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='%23ffffff' d='M14.83 4.89l1.34.94-5.81 8.38H9.02L5.78 9.67l1.34-1.25 2.57 2.4z'/%3E%3C/svg%3E") !important;
-    width: 1.0625rem !important;
-    height: 1.0625rem !important;
-    margin: 0 !important;
-    float: none !important;
 }
 
 /* ── Smooth page load animation ──────────────────────────────── */
@@ -787,37 +794,37 @@
 /* Medium screens: 1180px breakpoint */
 @media (max-width: 1180px) {
     /* Stats bar: regular stats in row, license on second row right */
-    .eat-compact-stats-bar {
+    .aitrfoel-compact-stats-bar {
         flex-wrap: wrap !important;
         gap: 8px !important;
     }
 
-    .eat-compact-stat:not(.eat-compact-license) {
+    .aitrfoel-compact-stat:not(.aitrfoel-compact-license) {
         flex: 1 1 auto !important;
     }
 
-    .eat-compact-stat.eat-compact-license {
+    .aitrfoel-compact-stat.aitrfoel-compact-license {
         flex: 1 1 100% !important;
         margin-left: 0 !important;
     }
 
     /* Bulk bar: languages first row, buttons second row right */
-    .eat-bulk-content {
+    .aitrfoel-bulk-content {
         flex-wrap: wrap !important;
     }
 
-    .eat-bulk-languages {
+    .aitrfoel-bulk-languages {
         flex: 1 1 100% !important;
     }
 
-    .eat-bulk-actions {
+    .aitrfoel-bulk-actions {
         margin-left: auto !important;
         flex-wrap: wrap !important;
     }
 }
 
 @media (max-width: 782px) {
-    .eat-card,
+    .aitrfoel-card,
     .aitrfoel-settings-section {
         padding: 16px !important;
         border-radius: 10px !important;
@@ -830,7 +837,7 @@
     }
 
     /* Fix compact stats bar negative margin and overflow */
-    .eat-compact-stats-bar {
+    .aitrfoel-compact-stats-bar {
         margin-left: 0 !important;
         margin-right: 0 !important;
         padding: 12px !important;
@@ -843,7 +850,7 @@
         box-shadow: var(--mt-shadow-sm) !important;
     }
 
-    .eat-compact-stat {
+    .aitrfoel-compact-stat {
         flex: 1 1 calc(50% - 8px) !important;
         min-width: 0 !important;
         padding: 8px 12px !important;
@@ -854,34 +861,34 @@
         font-size: 12px !important;
     }
 
-    .eat-compact-stat.eat-compact-license {
+    .aitrfoel-compact-stat.aitrfoel-compact-license {
         flex: 1 1 100% !important;
         margin-left: 0 !important;
     }
 
     /* Fix bulk translation bar responsive layout */
-    .eat-bulk-translation-bar {
+    .aitrfoel-bulk-translation-bar {
         padding: 14px !important;
         border-radius: 10px !important;
         margin-left: 0 !important;
         margin-right: 0 !important;
     }
 
-    .eat-bulk-content {
+    .aitrfoel-bulk-content {
         flex-direction: column !important;
         gap: 12px !important;
         align-items: stretch !important;
     }
 
-    .eat-bulk-actions {
+    .aitrfoel-bulk-actions {
         margin-left: 0 !important;
         flex-wrap: wrap !important;
         gap: 8px !important;
         justify-content: stretch !important;
     }
 
-    .eat-bulk-actions .button,
-    .eat-bulk-actions .button-primary {
+    .aitrfoel-bulk-actions .button,
+    .aitrfoel-bulk-actions .button-primary {
         flex: 1 1 auto !important;
         min-width: 0 !important;
         text-align: center !important;
@@ -890,34 +897,34 @@
         padding: 8px 12px !important;
     }
 
-    #eat-translate-all-site {
+    #aitrfoel-translate-all-site {
         order: 3 !important;
         flex: 1 1 100% !important;
     }
 }
 
 @media (max-width: 480px) {
-    .eat-compact-stat {
+    .aitrfoel-compact-stat {
         flex: 1 1 100% !important;
     }
 
-    .eat-bulk-actions {
+    .aitrfoel-bulk-actions {
         flex-direction: column !important;
     }
 
-    .eat-bulk-actions .button,
-    .eat-bulk-actions .button-primary {
+    .aitrfoel-bulk-actions .button,
+    .aitrfoel-bulk-actions .button-primary {
         width: 100% !important;
         flex: none !important;
     }
 
-    #eat-translate-all-site {
+    #aitrfoel-translate-all-site {
         order: unset !important;
     }
 }
 
 /* ── Toast Notifications ─────────────────────────────────────── */
-#eat-toast-container {
+#aitrfoel-toast-container {
     position: fixed;
     top: 40px;
     right: 20px;
@@ -928,7 +935,7 @@
     pointer-events: none;
 }
 
-.eat-toast {
+.aitrfoel-toast {
     pointer-events: auto;
     display: flex;
     align-items: center;
@@ -948,21 +955,21 @@
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-.eat-toast.eat-toast-show {
+.aitrfoel-toast.aitrfoel-toast-show {
     opacity: 1;
     transform: translateX(0);
 }
 
-.eat-toast-icon {
+.aitrfoel-toast-icon {
     flex-shrink: 0;
     font-size: 18px;
 }
 
-.eat-toast-msg {
+.aitrfoel-toast-msg {
     flex: 1;
 }
 
-.eat-toast-close {
+.aitrfoel-toast-close {
     flex-shrink: 0;
     background: none;
     border: none;
@@ -974,14 +981,14 @@
     transition: color 0.2s;
 }
 
-.eat-toast-close:hover {
+.aitrfoel-toast-close:hover {
     color: var(--mt-gray-700);
 }
 
-.eat-toast-success { border-left-color: #22c55e; }
-.eat-toast-error   { border-left-color: #ef4444; }
-.eat-toast-warning { border-left-color: #f59e0b; }
-.eat-toast-info    { border-left-color: var(--mt-blue); }
+.aitrfoel-toast-success { border-left-color: #22c55e; }
+.aitrfoel-toast-error   { border-left-color: #ef4444; }
+.aitrfoel-toast-warning { border-left-color: #f59e0b; }
+.aitrfoel-toast-info    { border-left-color: var(--mt-blue); }
 
 /* ── Settings Section Navigation ─────────────────────────────── */
 .aitrfoel-settings-nav {

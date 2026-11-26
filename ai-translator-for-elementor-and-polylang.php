@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Meep AI Translator
  * Plugin URI: https://meeptech.com/products/ai-translator-for-elementor-polylang
- * Description: AI-powered translation for Elementor, Gutenberg, Classic & WooCommerce. Preserves your design perfectly. Built-in languages or Polylang/WPML.
- * Version: 1.4.5
+ * Description: Translate Elementor, Gutenberg and WooCommerce sites with AI in one click. Works with Polylang, WPML or built-in languages. Layouts stay intact.
+ * Version: 1.8.51
  * Author: Meep Tech
  * Author URI: https://meeptech.com
  * License: GPL v2 or later
@@ -12,9 +12,8 @@
  * Domain Path: /languages
  * Requires at least: 5.8
  * Requires PHP: 7.4
- * Tested up to: 6.9
- * Elementor tested up to: 3.18.0
- * Elementor Pro tested up to: 3.18.0
+ * Elementor tested up to: 4.1.3
+ * Elementor Pro tested up to: 4.0.4
  */
 
 // Exit if accessed directly
@@ -23,7 +22,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('AITRFOEL_VERSION', '1.4.5');
+define('AITRFOEL_VERSION', '1.8.51');
 define('AITRFOEL_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AITRFOEL_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AITRFOEL_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -48,6 +47,30 @@ if (!defined('AITRFOEL_FEATURES')) {
 if (!defined('ABSPATH')) {
     exit;
 }
+
+    // Activation redirect to dashboard
+    function eatp_activation_redirect( $plugin ) {
+        if ( $plugin == plugin_basename( __FILE__ ) ) {
+            // Set flag to show welcome popup on first visit
+            update_option( 'aitrfoel_show_welcome_popup', 'yes' );
+            
+            // For PRO: Only redirect if Freemius opt-in is already completed
+            // For FREE: Always redirect (no Freemius opt-in screen)
+            if ( defined('AITRFOEL_VERSION_TYPE') && AITRFOEL_VERSION_TYPE === 'pro' ) {
+                // PRO version - let Freemius show opt-in screen if not registered
+                if ( eatp_fs()->is_registered() ) {
+                    wp_safe_redirect( admin_url( 'admin.php?page=ai-translator-for-elementor-and-polylang&welcome=1' ) );
+                    exit;
+                }
+                // Otherwise, Freemius will show its opt-in screen and redirect after
+            } else {
+                // FREE version - always redirect to plugin page
+                wp_safe_redirect( admin_url( 'admin.php?page=ai-translator-for-elementor-and-polylang&welcome=1' ) );
+                exit;
+            }
+        }
+    }
+    add_action( 'activated_plugin', 'eatp_activation_redirect' );
 
     /**
      * Main Plugin Class
@@ -95,6 +118,15 @@ class AITRFOEL_Main {
         
         // Enqueue scripts
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_scripts']);
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_deactivation_survey']);
+        
+        // Enqueue editor inline translations script (Elementor & Gutenberg)
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_editor_inline_scripts']);
+        add_action('elementor/editor/after_enqueue_scripts', [$this, 'enqueue_editor_inline_scripts']);
+        add_action('enqueue_block_editor_assets', [$this, 'enqueue_editor_inline_scripts']);
+
+        // Plugin list row actions
+        add_filter('plugin_action_links_' . AITRFOEL_PLUGIN_BASENAME, [$this, 'add_plugin_action_links']);
         
         // Hide Elementor admin elements on our plugin pages
         add_action('admin_init', [$this, 'disable_elementor_admin_ui']);
@@ -103,27 +135,86 @@ class AITRFOEL_Main {
         add_action('admin_footer', [$this, 'render_welcome_popup']);
         add_action('wp_ajax_aitrfoel_dismiss_welcome', [$this, 'dismiss_welcome_popup']);
         
-        // Test analytics (for debugging) - add ?test_analytics=1 to plugin URL
-        add_action('admin_init', [$this, 'maybe_test_analytics']);
+
+        // Auto-repair previously translated Elementor templates missing taxonomy terms
+        add_action('admin_init', [$this, 'repair_translated_elementor_templates']);
         
         // Removed: Background processing (using direct processing now)
         // add_action('aitrfoel_process_bulk_translation', [$this, 'process_bulk_translation_background'], 10, 4);
     }
-    
+
     /**
-     * Test analytics if URL parameter is set
+     * Self-healing repair: automatically assigns missing elementor_library_type taxonomy terms
+     * and regenerates CSS for any previously translated Elementor templates that were created
+     * without taxonomy terms (restoring them from Theme Builder back to Saved Templates).
      */
-    public function maybe_test_analytics() {
-        if (isset($_GET['test_analytics']) && $_GET['test_analytics'] === '1' && current_user_can('manage_options')) {
-            if (function_exists('aitrfoel_analytics')) {
-                $result = aitrfoel_analytics()->send_test_event();
-                add_action('admin_notices', function() use ($result) {
-                    $class = $result ? 'notice-success' : 'notice-error';
-                    $message = $result ? 'PostHog test event sent successfully! Check your PostHog dashboard.' : 'PostHog test event failed. Check wp-content/debug.log for details.';
-                    echo '<div class="notice ' . esc_attr( $class ) . ' is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
-                });
+    public function repair_translated_elementor_templates() {
+        if (!is_admin() || !post_type_exists('elementor_library')) {
+            return;
+        }
+
+        $repair_flag = 'aitrfoel_tpl_tax_repaired_v315';
+        if (get_option($repair_flag, false)) {
+            return;
+        }
+
+        if (!class_exists('AITRFOEL_Translation_Engine')) {
+            return;
+        }
+
+        $engine = AITRFOEL_Translation_Engine::get_instance();
+
+        $translated_templates = get_posts([
+            'post_type'      => 'elementor_library',
+            'post_status'    => 'any',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'meta_query'     => [
+                [
+                    'key'     => '_aitrfoel_source_page',
+                    'compare' => 'EXISTS',
+                ],
+            ],
+        ]);
+
+        if (!empty($translated_templates)) {
+            foreach ($translated_templates as $tpl_id) {
+                $source_id = (int) get_post_meta($tpl_id, '_aitrfoel_source_page', true);
+                if ($source_id > 0 && $source_id !== (int) $tpl_id) {
+                    $engine->sync_elementor_template_meta_and_taxonomies($source_id, $tpl_id);
+                } else {
+                    $tpl_type = get_post_meta($tpl_id, '_elementor_template_type', true);
+                    $existing_terms = wp_get_object_terms($tpl_id, 'elementor_library_type', ['fields' => 'slugs']);
+                    if (empty($existing_terms) && !empty($tpl_type)) {
+                        wp_set_object_terms($tpl_id, (string) $tpl_type, 'elementor_library_type');
+                    }
+                }
             }
         }
+
+        update_option($repair_flag, true);
+    }
+    
+
+    /**
+     * Add plugin row action links on the Plugins screen.
+     *
+     * @param array $links Existing action links.
+     * @return array
+     */
+    public function add_plugin_action_links($links) {
+        $dashboard_link = '<a href="' . esc_url(admin_url('admin.php?page=ai-translator-for-elementor-and-polylang')) . '">' . esc_html__('Dashboard', 'ai-translator-for-elementor-and-polylang') . '</a>';
+        $settings_link  = '<a href="' . esc_url(admin_url('admin.php?page=ai-translator-for-elementor-and-polylang-settings')) . '">' . esc_html__('Settings', 'ai-translator-for-elementor-and-polylang') . '</a>';
+
+        array_unshift($links, $dashboard_link, $settings_link);
+
+        $is_pro = (defined('AITRFOEL_VERSION_TYPE') && AITRFOEL_VERSION_TYPE === 'pro');
+        if (!$is_pro) {
+            $upgrade_url  = aitrfoel_free_upgrade_url('plugins-list');
+            $links['aitrfoel_upgrade'] = '<a href="' . esc_url($upgrade_url) . '" target="_blank" rel="noopener noreferrer" style="color:#0a66ff;font-weight:700;">' . esc_html__('Upgrade to Pro', 'ai-translator-for-elementor-and-polylang') . '</a>';
+        }
+
+        return $links;
     }
     
     /**
@@ -160,13 +251,17 @@ class AITRFOEL_Main {
         // Always load admin menu so plugin is visible, even when dependencies aren't met
         if (is_admin()) {
             // Load classes required for admin pages to work
+            require_once AITRFOEL_PLUGIN_DIR . 'includes/class-upgrade-links.php';
             require_once AITRFOEL_PLUGIN_DIR . 'includes/class-license-manager-server.php';
             require_once AITRFOEL_PLUGIN_DIR . 'includes/class-license-manager.php';
             require_once AITRFOEL_PLUGIN_DIR . 'admin/class-admin-menu.php';
             require_once AITRFOEL_PLUGIN_DIR . 'admin/class-settings.php';
-            
+            // Wizard AJAX must work even when deps are missing (it IS the onboarding path)
+            require_once AITRFOEL_PLUGIN_DIR . 'admin/class-wizard-controller.php';
+
             // Initialize admin menu directly (not in a hook since we're already in plugins_loaded)
             AITRFOEL_Admin_Menu::get_instance();
+            AITRFOEL_Wizard_Controller::get_instance();
         }
         
         // If dependencies are not met, don't load the rest of the plugin
@@ -187,6 +282,7 @@ class AITRFOEL_Main {
     private function load_includes() {
         // Core includes - Load logger FIRST (used by many classes)
         require_once AITRFOEL_PLUGIN_DIR . 'includes/class-logger.php';
+        require_once AITRFOEL_PLUGIN_DIR . 'includes/class-upgrade-links.php';
         
         // Load language mapper and widget parser
         require_once AITRFOEL_PLUGIN_DIR . 'includes/class-language-mapper.php';
@@ -204,6 +300,7 @@ class AITRFOEL_Main {
             throw new Exception('AITRFOEL_Widget_Parser class not defined');
         }
         
+        require_once AITRFOEL_PLUGIN_DIR . 'includes/class-translation-memory.php';
         require_once AITRFOEL_PLUGIN_DIR . 'includes/class-openai-api.php';
         require_once AITRFOEL_PLUGIN_DIR . 'includes/class-post-processor.php';
         require_once AITRFOEL_PLUGIN_DIR . 'includes/class-gap-filler.php';
@@ -226,6 +323,7 @@ class AITRFOEL_Main {
         require_once AITRFOEL_PLUGIN_DIR . 'includes/class-license-manager-server.php';
         require_once AITRFOEL_PLUGIN_DIR . 'includes/class-license-manager.php'; // Backward compatibility alias
         require_once AITRFOEL_PLUGIN_DIR . 'includes/class-api-client.php';
+        require_once AITRFOEL_PLUGIN_DIR . 'includes/class-background-sync.php';
         
         // Admin includes (may already be loaded in load_plugin for dependency-failed cases)
         if (is_admin()) {
@@ -235,20 +333,37 @@ class AITRFOEL_Main {
             if (!class_exists('AITRFOEL_Settings')) {
                 require_once AITRFOEL_PLUGIN_DIR . 'admin/class-settings.php';
             }
-            if (!class_exists('AITRFOEL_Translation_Metabox')) {
-                require_once AITRFOEL_PLUGIN_DIR . 'admin/class-translation-metabox.php';
-            }
             if (!class_exists('AITRFOEL_Translate_All')) {
                 require_once AITRFOEL_PLUGIN_DIR . 'admin/class-translate-all.php';
             }
             if (!class_exists('AITRFOEL_Translation_History')) {
                 require_once AITRFOEL_PLUGIN_DIR . 'admin/class-translation-history.php';
             }
+            if (!class_exists('AITRFOEL_Review_Editor')) {
+                require_once AITRFOEL_PLUGIN_DIR . 'admin/class-review-editor.php';
+            }
+            if (!class_exists('AITRFOEL_Wizard_Controller')) {
+                require_once AITRFOEL_PLUGIN_DIR . 'admin/class-wizard-controller.php';
+            }
+        }
+
+        // Translation Metabox & Admin Top Bar menu must be loaded for both admin and frontend
+        if (!class_exists('AITRFOEL_Translation_Metabox')) {
+            require_once AITRFOEL_PLUGIN_DIR . 'admin/class-translation-metabox.php';
+        }
+        if (!class_exists('AITRFOEL_Admin_Bar')) {
+            require_once AITRFOEL_PLUGIN_DIR . 'includes/class-admin-bar.php';
+        }
+        if (!class_exists('AITRFOEL_WP_List_Translator')) {
+            require_once AITRFOEL_PLUGIN_DIR . 'includes/class-wp-list-translator.php';
         }
         
-        // Translate All must also be loaded for WP-Cron (non-admin context)
+        // Translate All and Translation History must also be loaded for WP-Cron / Background Sync (non-admin context)
         if (!is_admin() && !class_exists('AITRFOEL_Translate_All')) {
             require_once AITRFOEL_PLUGIN_DIR . 'admin/class-translate-all.php';
+        }
+        if (!is_admin() && !class_exists('AITRFOEL_Translation_History')) {
+            require_once AITRFOEL_PLUGIN_DIR . 'admin/class-translation-history.php';
         }
         
         // AJAX handler must be loaded for both admin and frontend AJAX requests
@@ -272,10 +387,18 @@ class AITRFOEL_Main {
      */
     private function init_components() {
         try {
+            // Run database migration if version upgraded
+            $db_version = get_option('aitrfoel_db_version', '0.0.0');
+            if (version_compare($db_version, AITRFOEL_VERSION, '<')) {
+                $this->create_tables();
+                update_option('aitrfoel_db_version', AITRFOEL_VERSION);
+            }
+
             // PERFORMANCE: Disable Freemius background sync during AJAX translation requests
             $this->maybe_disable_freemius_sync();
             
             // Initialize core components
+            AITRFOEL_Content_Detector::get_instance();
             AITRFOEL_Widget_Parser::get_instance();
             AITRFOEL_License_Manager_Server::get_instance(); // Initialize server-based license manager
             AITRFOEL_OpenAI_API::get_instance();
@@ -290,16 +413,23 @@ class AITRFOEL_Main {
             
             AITRFOEL_Usage_Tracker::get_instance(); // Initialize usage tracker
             AITRFOEL_Bulk_Translation_Queue::get_instance(); // Initialize bulk translation queue
+            AITRFOEL_Background_Sync::get_instance(); // Initialize background auto-sync manager
+
+            // Initialize translation metabox & admin bar menu (active on frontend & admin)
+            if (class_exists('AITRFOEL_Translation_Metabox')) {
+                AITRFOEL_Translation_Metabox::get_instance();
+            }
+            if (class_exists('AITRFOEL_Admin_Bar')) {
+                AITRFOEL_Admin_Bar::get_instance();
+            }
+            if (class_exists('AITRFOEL_WP_List_Translator')) {
+                AITRFOEL_WP_List_Translator::get_instance();
+            }
             
             // Initialize admin with error checking
             if (is_admin()) {
                 AITRFOEL_Admin_Menu::get_instance();
                 AITRFOEL_Settings::init();
-                
-                // Initialize translation metabox for post/page edit screens
-                if (class_exists('AITRFOEL_Translation_Metabox')) {
-                    AITRFOEL_Translation_Metabox::get_instance();
-                }
                 
                 // Initialize Translate All feature
                 if (class_exists('AITRFOEL_Translate_All')) {
@@ -315,7 +445,7 @@ class AITRFOEL_Main {
                 if (!isset($schedules['aitrfoel_five_minutes'])) {
                     $schedules['aitrfoel_five_minutes'] = [
                         'interval' => 300,
-                        'display'  => __('Every 5 Minutes (AI Translator)', 'ai-translator-for-elementor-and-polylang'),
+                        'display'  => __('Every 5 Minutes (Meep Translator)', 'ai-translator-for-elementor-and-polylang'),
                     ];
                 }
                 return $schedules;
@@ -328,6 +458,21 @@ class AITRFOEL_Main {
                 error_log('EAT Error: AITRFOEL_Ajax_Handler class not found - using fallback');
             }
             
+            // Initialize Translation History (registers AJAX handler for clear history)
+            if (class_exists('AITRFOEL_Translation_History')) {
+                AITRFOEL_Translation_History::get_instance();
+            }
+
+            // Initialize Review Editor (hidden subpage + save-segment AJAX)
+            if (class_exists('AITRFOEL_Review_Editor')) {
+                AITRFOEL_Review_Editor::get_instance();
+            }
+
+            // Initialize Wizard Controller (wizard AJAX actions)
+            if (class_exists('AITRFOEL_Wizard_Controller')) {
+                AITRFOEL_Wizard_Controller::get_instance();
+            }
+            
             // Initialize multilingual integration manager (auto-detects Polylang or WPML)
             AITRFOEL_Multilingual_Manager::get_instance();
             
@@ -336,6 +481,10 @@ class AITRFOEL_Main {
             add_action('init', function() {
                 if (!shortcode_exists('aitrfoel_language_switcher')) {
                     add_shortcode('aitrfoel_language_switcher', function($atts) {
+                        if (!get_option('aitrfoel_switcher_enabled', true)) {
+                            return '';
+                        }
+                        
                         $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
                         if (!$multilingual->is_active()) {
                             return '';
@@ -572,6 +721,7 @@ class AITRFOEL_Main {
      * Restore admin footer text
      */
     public function restore_admin_footer($text) {
+        $text = (string) $text;
         // Remove Elementor's custom footer text
         if (strpos($text, 'Elementor') !== false) {
             return '';
@@ -583,6 +733,9 @@ class AITRFOEL_Main {
      * Enqueue admin scripts and styles
      */
     public function enqueue_admin_scripts($hook) {
+        $hook = (string) $hook;
+        $page = isset($_GET['page']) ? (string) $_GET['page'] : '';
+
         // Only load on our plugin pages - use NEW plugin slug
         // Be more inclusive to catch Freemius pages and any related admin pages
         $is_our_page = (
@@ -591,30 +744,33 @@ class AITRFOEL_Main {
             strpos($hook, 'freemius') !== false || // Freemius pages
             $hook === 'admin_page_aitrfoel-debug' ||
             // Also check for any admin page that might be related
-            (isset($_GET['page']) && strpos($_GET['page'], 'ai-translator-for-elementor-and-polylang') !== false)
+            strpos($page, 'ai-translator-for-elementor-and-polylang') !== false
         );
         
         if (!$is_our_page) {
             return;
         }
         
-        // Enqueue styles
+        // Enqueue unified admin stylesheet (covers Elementor-bar hiding, design tokens, all page styles)
         wp_enqueue_style(
-            'aitrfoel-admin-style',
-            AITRFOEL_PLUGIN_URL . 'assets/css/admin.css',
+            'aitrfoel-meep-admin',
+            AITRFOEL_PLUGIN_URL . 'assets/css/meep-admin.css',
             [],
             AITRFOEL_VERSION
         );
-        
-        // Modern design overrides
-        wp_enqueue_style(
-            'aitrfoel-modern-design',
-            AITRFOEL_PLUGIN_URL . 'assets/css/modern-design.css',
-            ['aitrfoel-admin-style'],
-            AITRFOEL_VERSION
-        );
-        
 
+        // Runtime DOM enhancements for Phase B UI (icons, eyebrows, hero, counters).
+        wp_enqueue_script(
+            'aitrfoel-meep-admin',
+            AITRFOEL_PLUGIN_URL . 'assets/js/meep-admin.js',
+            [],
+            AITRFOEL_VERSION,
+            true
+        );
+        wp_localize_script( 'aitrfoel-meep-admin', 'meepAdmin', [
+            'pluginName' => __( 'Meep AI Translator', 'ai-translator-for-elementor-and-polylang' ),
+            'logoUrl' => AITRFOEL_PLUGIN_URL . 'assets/img/meep-ai-translator.png',
+        ] );
         
         // Enqueue scripts
         wp_enqueue_script(
@@ -624,7 +780,8 @@ class AITRFOEL_Main {
             AITRFOEL_VERSION,
             true
         );
-
+        
+        
         wp_enqueue_script(
             'aitrfoel-admin-script',
             AITRFOEL_PLUGIN_URL . 'assets/js/admin.js',
@@ -802,9 +959,103 @@ class AITRFOEL_Main {
     }
     
     /**
+     * Enqueue deactivation survey script and style on plugins.php page
+     */
+    public function enqueue_deactivation_survey($hook) {
+        if ($hook !== 'plugins.php') {
+            return;
+        }
+        
+        // Only load in the FREE version (Freemius handles PRO version surveys)
+        if (defined('AITRFOEL_VERSION_TYPE') && AITRFOEL_VERSION_TYPE !== 'free') {
+            return;
+        }
+
+        wp_enqueue_style(
+            'aitrfoel-deactivation-survey-style',
+            AITRFOEL_PLUGIN_URL . 'assets/css/deactivation-survey.css',
+            [],
+            AITRFOEL_VERSION
+        );
+
+        wp_enqueue_script(
+            'aitrfoel-deactivation-survey',
+            AITRFOEL_PLUGIN_URL . 'assets/js/deactivation-survey.js',
+            ['jquery'],
+            AITRFOEL_VERSION,
+            true
+        );
+
+        wp_localize_script('aitrfoel-deactivation-survey', 'aitrfoelDeactivation', [
+            'siteUrl' => esc_url(home_url()),
+        ]);
+    }
+    
+    /**
+     * Enqueue inline translation scripts in Gutenberg and Elementor editor sessions
+     */
+    public function enqueue_editor_inline_scripts() {
+        global $pagenow;
+        
+        $is_editor_page = ($pagenow === 'post.php' || $pagenow === 'post-new.php' || (isset($_GET['action']) && $_GET['action'] === 'elementor'));
+        $is_hook_call = current_action() === 'elementor/editor/after_enqueue_scripts' || current_action() === 'enqueue_block_editor_assets';
+        
+        if ( ! $is_editor_page && ! $is_hook_call ) {
+            return;
+        }
+
+        wp_enqueue_script(
+            'aitrfoel-editor-inline-translation',
+            AITRFOEL_PLUGIN_URL . 'assets/js/editor-inline-translation.js',
+            ['jquery'],
+            AITRFOEL_VERSION,
+            true
+        );
+        
+        $post_id = 0;
+        if (isset($_GET['post'])) {
+            $post_id = intval($_GET['post']);
+        } elseif (isset($_POST['post_ID'])) {
+            $post_id = intval($_POST['post_ID']);
+        }
+        
+        $current_lang = 'en';
+        if ($post_id > 0 && class_exists('AITRFOEL_Multilingual_Manager')) {
+            $current_lang = AITRFOEL_Multilingual_Manager::get_instance()->get_post_language($post_id);
+        }
+        if (empty($current_lang) && class_exists('AITRFOEL_Multilingual_Manager')) {
+            $current_lang = AITRFOEL_Multilingual_Manager::get_instance()->get_default_language();
+        }
+        if (empty($current_lang)) {
+            $current_lang = 'en';
+        }
+        
+        $target_lang_name = 'English';
+        if (class_exists('AITRFOEL_Language_Mapper')) {
+            $target_lang_name = AITRFOEL_Language_Mapper::get_language_name($current_lang);
+        }
+        
+        // Pass REST API information to the script
+        wp_localize_script('aitrfoel-editor-inline-translation', 'aitrfoelEditorInline', [
+            'rest_url' => esc_url_raw(rest_url('meep-translator/v1/translate-string')),
+            'nonce' => wp_create_nonce('wp_rest'),
+            'current_lang' => $current_lang,
+            'current_lang_name' => $target_lang_name,
+            'strings' => [
+                'translate' => sprintf(/* translators: %s: target lang name */ __('Translate to %s', 'ai-translator-for-elementor-and-polylang'), $target_lang_name),
+                'translating' => __('Translating...', 'ai-translator-for-elementor-and-polylang'),
+                'success' => __('Translated successfully!', 'ai-translator-for-elementor-and-polylang'),
+                'failed' => __('Translation failed', 'ai-translator-for-elementor-and-polylang'),
+            ]
+        ]);
+    }
+    
+    /**
      * Plugin activation
      */
     public function activate() {
+        aitrfoel_maybe_register_uninstall_hook(true);
+
         // Create database tables if needed
         $this->create_tables();
         
@@ -817,6 +1068,19 @@ class AITRFOEL_Main {
         // Log activation
         if (class_exists('AITRFOEL_Logger')) {
             AITRFOEL_Logger::log('Plugin activated', 'info');
+        }
+        
+        // Immediately register activation with remote server
+        if (class_exists('AITRFOEL_License_Manager_Server')) {
+            try {
+                $license_server = AITRFOEL_License_Manager_Server::get_instance();
+                $license_key = $license_server->get_license_key();
+                if (empty($license_key)) {
+                    $license_server->initialize_user_in_remote_db('Free', null);
+                }
+            } catch (Exception $e) {
+                // Silent fail on activation hook if network is unreachable
+            }
         }
         
         // Clear rewrite rules
@@ -911,6 +1175,21 @@ class AITRFOEL_Main {
         ) $charset_collate;";
 
         dbDelta($sql);
+
+        // Glossary table
+        $table_name = $wpdb->prefix . 'aitrfoel_glossary';
+        $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            source_text varchar(255) NOT NULL,
+            target_text varchar(255) NOT NULL,
+            lang_code varchar(10) NOT NULL,
+            action varchar(20) NOT NULL DEFAULT 'replace',
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY lang_code (lang_code)
+        ) $charset_collate;";
+
+        dbDelta($sql);
     }
     
     /**
@@ -974,28 +1253,6 @@ class AITRFOEL_Main {
                 file_put_contents($index, '<?php // Silence is golden');
             }
         }
-    }
-    
-    /**
-     * Admin notice - Elementor missing
-     */
-    public function admin_notice_elementor_missing() {
-        ?>
-        <div class="notice notice-warning is-dismissible">
-            <p><?php esc_html_e('Meep AI Translator requires Elementor to be installed and activated.', 'ai-translator-for-elementor-and-polylang'); ?></p>
-        </div>
-        <?php
-    }
-    
-    /**
-     * Admin notice - Elementor version
-     */
-    public function admin_notice_elementor_version() {
-        ?>
-        <div class="notice notice-warning is-dismissible">
-            <p><?php esc_html_e('Meep AI Translator requires Elementor version 3.0.0 or higher.', 'ai-translator-for-elementor-and-polylang'); ?></p>
-        </div>
-        <?php
     }
     
     /**
@@ -1099,6 +1356,12 @@ class AITRFOEL_Main {
         
         // Allow forcing welcome popup with URL parameter for testing: ?show_welcome=1
         $force_show = isset($_GET['show_welcome']) && $_GET['show_welcome'] === '1';
+
+        // Legacy popup is superseded by the onboarding wizard. Keep it only as an
+        // explicit test surface for ?show_welcome=1.
+        if (!$force_show) {
+            return;
+        }
         
         // Check if we should show the popup
         $show_popup = get_option('aitrfoel_show_welcome_popup', 'no');
@@ -1130,7 +1393,10 @@ class AITRFOEL_Main {
             <div class="aitrfoel-welcome-container">
                 <!-- Header -->
                 <div class="aitrfoel-welcome-header">
-                    <h1>👋 <?php esc_html_e('Welcome to AI Translator!', 'ai-translator-for-elementor-and-polylang'); ?></h1>
+                    <div class="aitrfoel-welcome-logo">
+                        <img src="<?php echo esc_url(AITRFOEL_PLUGIN_URL . 'assets/img/meep-ai-translator.png'); ?>" alt="Meep AI Translator" style="height: 56px; width: auto; display: block; margin: 0 auto 12px;">
+                    </div>
+                    <h1><?php esc_html_e('Welcome to Meep Translator!', 'ai-translator-for-elementor-and-polylang'); ?></h1>
                     <p class="aitrfoel-welcome-subtitle">
                         <?php esc_html_e('Translate your Elementor pages instantly with AI.', 'ai-translator-for-elementor-and-polylang'); ?>
                     </p>
@@ -1196,22 +1462,22 @@ class AITRFOEL_Main {
                     $status_bg = $status_ready ? 'rgba(76, 175, 80, 0.15)' : 'rgba(255, 152, 0, 0.15)';
                     $lang_setup_url = $detected_plugin === 'wpml' ? $wpml_url : $polylang_url;
                     ?>
-                    <div class="aitrfoel-welcome-status-inline" style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 6px; background: <?php echo $status_bg; ?>; font-size: 14px;">
+                    <div class="aitrfoel-welcome-status-inline" style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 6px; background: <?php echo esc_attr($status_bg); ?>; font-size: 14px;">
                         <?php if ($status_ready): ?>
-                            <span style="font-size: 16px;">✅</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
                             <span style="color: #2e7d32; font-weight: 500;">
-                                <?php echo esc_html(sprintf(__('%s is active (%d languages)', 'ai-translator-for-elementor-and-polylang'), $plugin_display_name, $language_count)); ?>
+                                <?php echo esc_html(sprintf(/* translators: 1: plugin display name, 2: language count */ __('%s is active (%d languages)', 'ai-translator-for-elementor-and-polylang'), $plugin_display_name, $language_count)); ?>
                             </span>
                         <?php elseif ($status_needs_languages): ?>
-                            <span style="font-size: 16px;">⚠️</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e65100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                             <span style="color: #e65100; font-weight: 500;">
-                                <?php echo esc_html(sprintf(__('%s active - set up languages', 'ai-translator-for-elementor-and-polylang'), $plugin_display_name)); ?>
+                                <?php echo esc_html(sprintf(/* translators: %s: plugin display name */ __('%s active - set up languages', 'ai-translator-for-elementor-and-polylang'), $plugin_display_name)); ?>
                             </span>
                             <a href="<?php echo esc_url($lang_setup_url); ?>" style="color: #1976d2; font-size: 12px;">
                                 <?php esc_html_e('Configure', 'ai-translator-for-elementor-and-polylang'); ?> →
                             </a>
                         <?php else: ?>
-                            <span style="font-size: 16px;">⚠️</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e65100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                             <span style="color: #e65100; font-weight: 500;">
                                 <?php esc_html_e('No multilingual plugin', 'ai-translator-for-elementor-and-polylang'); ?>
                             </span>
@@ -1642,7 +1908,7 @@ function aitrfoel_render_language_switcher($switcher_data, $atts = []) {
     }
     
     ob_start();
-    echo $css;
+    echo $css; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSS only: built-in rules, sanitize_hex_color/(int) values, custom CSS sanitized on save with wp_strip_all_tags
     
     if ($style === 'list') {
         echo '<ul class="aitrfoel-language-switcher aitrfoel-switcher-list">';
@@ -1650,7 +1916,7 @@ function aitrfoel_render_language_switcher($switcher_data, $atts = []) {
             $active_class = !empty($lang['is_current']) ? ' active' : '';
             $flag_html = $show_flags && class_exists('AITRFOEL_Language_Mapper') ? AITRFOEL_Language_Mapper::get_flag_html($lang['code'], 20, 'margin-right: 6px;') : '';
             $name_html = $show_names ? esc_html($lang['native_name'] ?? $lang['name'] ?? strtoupper($lang['code'])) : esc_html(strtoupper($lang['code']));
-            printf('<li class="aitrfoel-switcher-item%s"><a href="%s">%s%s</a></li>', esc_attr($active_class), esc_url($lang['url'] ?? '#'), $flag_html, $name_html);
+            printf('<li class="aitrfoel-switcher-item%s"><a href="%s">%s%s</a></li>', esc_attr($active_class), esc_url($lang['url'] ?? '#'), $flag_html, $name_html); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- flag <img> from AITRFOEL_Language_Mapper::get_flag_html(), which escapes its URL, alt and style; already escaped with esc_html()/esc_attr() where the value is built
         }
         echo '</ul>';
     } elseif ($style === 'flags') {
@@ -1658,7 +1924,7 @@ function aitrfoel_render_language_switcher($switcher_data, $atts = []) {
         foreach ($switcher_data as $lang) {
             $active_class = !empty($lang['is_current']) ? ' active' : '';
             $flag_html = class_exists('AITRFOEL_Language_Mapper') ? AITRFOEL_Language_Mapper::get_flag_html($lang['code'], 24, '') : esc_html(strtoupper($lang['code']));
-            printf('<a href="%s" class="aitrfoel-flag-link%s" title="%s">%s</a>', esc_url($lang['url'] ?? '#'), esc_attr($active_class), esc_attr($lang['name'] ?? ''), $flag_html);
+            printf('<a href="%s" class="aitrfoel-flag-link%s" title="%s">%s</a>', esc_url($lang['url'] ?? '#'), esc_attr($active_class), esc_attr($lang['name'] ?? ''), $flag_html); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- flag <img> from AITRFOEL_Language_Mapper::get_flag_html(), which escapes its URL, alt and style
         }
         echo '</div>';
     } elseif ($style === 'flags-text') {
@@ -1666,7 +1932,7 @@ function aitrfoel_render_language_switcher($switcher_data, $atts = []) {
         foreach ($switcher_data as $lang) {
             $active_class = !empty($lang['is_current']) ? ' active' : '';
             $flag_html = class_exists('AITRFOEL_Language_Mapper') ? AITRFOEL_Language_Mapper::get_flag_html($lang['code'], 20, 'margin-right: 4px;') : '';
-            printf('<a href="%s" class="aitrfoel-flag-text-link%s" title="%s">%s<span>%s</span></a>', esc_url($lang['url'] ?? '#'), esc_attr($active_class), esc_attr($lang['name'] ?? ''), $flag_html, esc_html(strtoupper($lang['code'])));
+            printf('<a href="%s" class="aitrfoel-flag-text-link%s" title="%s">%s<span>%s</span></a>', esc_url($lang['url'] ?? '#'), esc_attr($active_class), esc_attr($lang['name'] ?? ''), $flag_html, esc_html(strtoupper($lang['code']))); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- flag <img> from AITRFOEL_Language_Mapper::get_flag_html(), which escapes its URL, alt and style
         }
         echo '</div>';
     } else {
@@ -1682,7 +1948,7 @@ function aitrfoel_render_language_switcher($switcher_data, $atts = []) {
         
         echo '<div class="aitrfoel-language-switcher aitrfoel-switcher-dropdown-wrapper">';
         echo '<button type="button" class="aitrfoel-dropdown-trigger" aria-expanded="false" aria-haspopup="listbox">';
-        echo $current_flag . '<span>' . $current_label . '</span>';
+        echo $current_flag . '<span>' . $current_label . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- flag <img> from AITRFOEL_Language_Mapper::get_flag_html(), which escapes its URL, alt and style; already escaped with esc_html()/esc_attr() where the value is built
         echo '<svg class="aitrfoel-dropdown-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         echo '</button>';
         echo '<ul class="aitrfoel-dropdown-list" role="listbox" style="display:none;">';
@@ -1690,28 +1956,85 @@ function aitrfoel_render_language_switcher($switcher_data, $atts = []) {
             $active_class = !empty($lang['is_current']) ? ' active' : '';
             $flag_html = $show_flags && class_exists('AITRFOEL_Language_Mapper') ? AITRFOEL_Language_Mapper::get_flag_html($lang['code'], 20, 'margin-right: 6px;') : '';
             $label = $show_names ? esc_html($lang['native_name'] ?? $lang['name'] ?? strtoupper($lang['code'])) : esc_html(strtoupper($lang['code']));
-            printf('<li role="option" class="aitrfoel-dropdown-item%s"><a href="%s">%s%s</a></li>', esc_attr($active_class), esc_url($lang['url'] ?? '#'), $flag_html, $label);
+            printf('<li role="option" class="aitrfoel-dropdown-item%s"><a href="%s">%s%s</a></li>', esc_attr($active_class), esc_url($lang['url'] ?? '#'), $flag_html, $label); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- flag <img> from AITRFOEL_Language_Mapper::get_flag_html(), which escapes its URL, alt and style; already escaped with esc_html()/esc_attr() where the value is built
         }
         echo '</ul>';
         echo '</div>';
-        echo '<script>
-(function(){
-    var wrappers = document.querySelectorAll(".aitrfoel-switcher-dropdown-wrapper");
-    wrappers.forEach(function(w){
-        var btn = w.querySelector(".aitrfoel-dropdown-trigger");
-        var list = w.querySelector(".aitrfoel-dropdown-list");
-        if(!btn||!list) return;
-        btn.addEventListener("click",function(e){
-            e.stopPropagation();
-            var open = list.style.display !== "none";
-            list.style.display = open ? "none" : "block";
-            btn.setAttribute("aria-expanded", open ? "false" : "true");
-        });
-        document.addEventListener("click",function(){ list.style.display="none"; btn.setAttribute("aria-expanded","false"); });
-    });
-})();
-</script>';
+        if (class_exists('AITRFOEL_Builtin_Integration')) {
+            AITRFOEL_Builtin_Integration::get_instance()->register_switcher_javascript();
+        }
     }
     
     return ob_get_clean();
+}
+
+
+/**
+ * Register the uninstall cleanup for builds without Freemius (WordPress.org free build).
+ * Runs on activation and once for existing installs (activation hooks don't fire on update).
+ */
+function aitrfoel_maybe_register_uninstall_hook($force = false) {
+    if (function_exists('eatp_fs')) {
+        return; // Freemius build: handled via eatp_fs()->add_action('after_uninstall').
+    }
+    if (!$force && get_option('aitrfoel_uninstall_hook_registered') === '1') {
+        return;
+    }
+    register_uninstall_hook(__FILE__, 'aitrfoel_uninstall_cleanup');
+    update_option('aitrfoel_uninstall_hook_registered', '1', false);
+}
+add_action('admin_init', 'aitrfoel_maybe_register_uninstall_hook');
+
+/**
+ * Remove plugin data when the plugin is deleted — only if the admin opted in
+ * (Settings > Tools & Advanced > "Delete plugin data on uninstall").
+ * Translated pages/posts are site content and are always kept.
+ */
+function aitrfoel_uninstall_cleanup() {
+    $run = function () {
+        if (!get_option('aitrfoel_delete_data_on_uninstall')) {
+            return;
+        }
+        global $wpdb;
+        // Plugin tables (cache, usage stats, translation memory, history, bulk jobs, built-in language map).
+        $like   = $wpdb->esc_like($wpdb->prefix . 'aitrfoel_') . '%';
+        $tables = $wpdb->get_col($wpdb->prepare('SHOW TABLES LIKE %s', $like));
+        foreach ((array) $tables as $table) {
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange -- table names come from SHOW TABLES with our prefix.
+            $wpdb->query('DROP TABLE IF EXISTS `' . esc_sql($table) . '`');
+        }
+        // Options and transients.
+        $wpdb->query($wpdb->prepare(
+            "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s",
+            $wpdb->esc_like('aitrfoel_') . '%',
+            $wpdb->esc_like('_transient_aitrfoel_') . '%',
+            $wpdb->esc_like('_transient_timeout_aitrfoel_') . '%'
+        ));
+        // Per-user dismissals and preferences.
+        $wpdb->query($wpdb->prepare(
+            "DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE %s",
+            $wpdb->esc_like('aitrfoel_') . '%'
+        ));
+        // Scheduled events.
+        $crons = _get_cron_array();
+        if (is_array($crons)) {
+            foreach ($crons as $events) {
+                foreach (array_keys((array) $events) as $hook) {
+                    if (strpos($hook, 'aitrfoel_') === 0) {
+                        wp_clear_scheduled_hook($hook);
+                    }
+                }
+            }
+        }
+    };
+
+    if (is_multisite() && function_exists('get_sites')) {
+        foreach (get_sites(['fields' => 'ids', 'number' => 0]) as $site_id) {
+            switch_to_blog($site_id);
+            $run();
+            restore_current_blog();
+        }
+    } else {
+        $run();
+    }
 }

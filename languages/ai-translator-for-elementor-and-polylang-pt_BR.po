@@ -690,3 +690,3788 @@ msgstr "Chaves de API ou credenciais"
 
 msgid "Data is never shared with third parties."
 msgstr "Os dados nunca são compartilhados com terceiros."
+
+
+# --- Added by add-missing-translations.php (2026-04-02) ---
+
+msgid "%s items"
+msgstr "%s itens"
+
+msgid "(no title)"
+msgstr "(sem título)"
+
+msgid "Active Plugin"
+msgstr "Plugin Ativo"
+
+msgid "Add Language"
+msgstr "Adicionar Idioma"
+
+msgid "Add custom CSS to override the default language switcher styles. This CSS is loaded on the frontend wherever the shortcode or widget is used."
+msgstr "Adicione CSS personalizado para substituir os estilos padrão do seletor de idiomas. Este CSS é carregado no frontend sempre que o shortcode ou widget é utilizado."
+
+msgid "Additional Meta Fields"
+msgstr "Campos Meta Adicionais"
+
+msgid "Advanced"
+msgstr "Avançado"
+
+msgid "Advanced setting. Add comma-separated meta field keys here if the auto-detection misses something for your theme."
+msgstr "Configuração avançada. Adicione chaves de campos meta separadas por vírgula aqui se a detecção automática não encontrar algo para seu tema."
+
+msgid "All Languages"
+msgstr "Todos os Idiomas"
+
+msgid "All Statuses"
+msgstr "Todos os Status"
+
+msgid "All Types"
+msgstr "Todos os Tipos"
+
+msgid "All menu locations"
+msgstr "Todos os locais de menu"
+
+msgid "Already Translated"
+msgstr "Já Traduzido"
+
+msgid "Alternative Ways to Add:"
+msgstr "Formas Alternativas de Adicionar:"
+
+msgid "An error occurred."
+msgstr "Ocorreu um erro."
+
+msgid "Appearance → Widgets"
+msgstr "Aparência → Widgets"
+
+msgid "Are you sure you want to clear all cached translations? This cannot be undone."
+msgstr "Você tem certeza de que deseja limpar todas as traduções em cache? Isso não pode ser desfeito."
+
+msgid "Are you sure you want to clear all translation history? This cannot be undone."
+msgstr "Você tem certeza de que deseja limpar todo o histórico de traduções? Isso não pode ser desfeito."
+
+msgid "Are you sure you want to disable the built-in language system? You will need Polylang or WPML to manage translations."
+msgstr "Você tem certeza de que deseja desativar o sistema de idiomas embutido? Você precisará do Polylang ou WPML para gerenciar traduções."
+
+msgid ""
+"Are you sure you want to reset all plugin data? This will:\n"
+"\n"
+"• Disable the built-in language system\n"
+"• Remove all configured languages\n"
+"• Reset the onboarding/welcome screen\n"
+"• Clear dependency status cache\n"
+"\n"
+"Your API key, translated pages, and other settings will be preserved.\n"
+"\n"
+"Continue?"
+msgstr ""
+"Você tem certeza de que deseja redefinir todos os dados do plugin? Isso irá:\n"
+"\n"
+"• Desativar o sistema de idiomas embutido\n"
+"• Remover todos os idiomas configurados\n"
+"• Redefinir a tela de onboarding/boas-vindas\n"
+"• Limpar o cache de status de dependência\n"
+"\n"
+"Sua chave API, páginas traduzidas e outras configurações serão preservadas.\n"
+"\n"
+"Continuar?"
+
+msgid "Assign translated product categories"
+msgstr "Atribuir categorias de produtos traduzidas"
+
+msgid "Assign translated product tags"
+msgstr "Atribuir tags de produtos traduzidas"
+
+msgid "Automatically add language switcher to a navigation menu"
+msgstr "Adicionar automaticamente o seletor de idiomas a um menu de navegação"
+
+msgid "Automatically translates SEO meta title, description, and focus keywords when translating pages."
+msgstr "Traduz automaticamente o título meta de SEO, descrição e palavras-chave de foco ao traduzir páginas."
+
+msgid "Available CSS classes:"
+msgstr "Classes CSS disponíveis:"
+
+msgid "Available Languages:"
+msgstr "Idiomas Disponíveis:"
+
+msgid "Cache"
+msgstr "Cache"
+
+msgid "Cancel Scheduled Translation"
+msgstr "Cancelar Tradução Agendada"
+
+msgid "Choose which languages to translate your content into. Your default language content will be used as source."
+msgstr "Escolha quais idiomas traduzir seu conteúdo. O conteúdo em seu idioma padrão será usado como fonte."
+
+msgid "Choose which menu location gets the language switcher appended, or select \"All\" to add to every menu."
+msgstr "Escolha qual local de menu receberá o seletor de idiomas anexado, ou selecione \"Todos\" para adicionar a todos os menus."
+
+msgid "Choose which types of content to translate."
+msgstr "Escolha quais tipos de conteúdo traduzir."
+
+msgid "Clear"
+msgstr "Limpar"
+
+msgid "Clear History"
+msgstr "Limpar Histórico"
+
+msgid "Clearing..."
+msgstr "Limpando..."
+
+msgid "Code"
+msgstr "Código"
+
+msgid "Compatibility Status"
+msgstr "Status de Compatibilidade"
+
+msgid "Configure the language switcher that visitors use to change the language on your site. You can add it using a shortcode, a WordPress widget, or a nav menu integration."
+msgstr "Configure o seletor de idiomas que os visitantes usam para mudar o idioma em seu site. Você pode adicioná-lo usando um shortcode, um widget do WordPress ou uma integração de menu de navegação."
+
+msgid "Connection error"
+msgstr "Erro de conexão"
+
+msgid "Content Type"
+msgstr "Tipo de Conteúdo"
+
+msgid "Content exceeds your current word allowance. Schedule translation to process over multiple billing cycles using your monthly word limit."
+msgstr "O conteúdo excede sua cota atual de palavras. Programe a tradução para processar em vários ciclos de faturamento usando seu limite mensal de palavras."
+
+msgid "Content you translate is sent to OpenAI for translation processing. Review their"
+msgstr "O conteúdo que você traduzir é enviado para a OpenAI para processamento de tradução. Revise os seus"
+
+msgid "Cooldown saved"
+msgstr "Cooldown salvo"
+
+msgid "Copied!"
+msgstr "Copiado!"
+
+msgid "Copy"
+msgstr "Copiar"
+
+msgid "Copy this shortcode and paste it into any page, post, or text widget where you want the language switcher to appear."
+msgstr "Copie este shortcode e cole-o em qualquer página, post ou widget de texto onde você deseja que o seletor de idioma apareça."
+
+msgid "Creates translated variations for variable products, preserving parent-child relationships, pricing, and per-variation data (SKU, stock, dimensions)."
+msgstr "Cria variações traduzidas para produtos variáveis, preservando relações pai-filho, preços e dados por variação (SKU, estoque, dimensões)."
+
+msgid "Current Plan"
+msgstr "Plano Atual"
+
+msgid "Custom CSS"
+msgstr "CSS Personalizado"
+
+msgid "Data sent to our server:"
+msgstr "Dados enviados para o nosso servidor:"
+
+msgid "Debug Mode"
+msgstr "Modo de Depuração"
+
+msgid "Default"
+msgstr "Padrão"
+
+msgid "Default Language:"
+msgstr "Idioma Padrão:"
+
+msgid "Define terms that should always be translated a specific way. The AI will follow these rules for every translation to ensure consistency across your site."
+msgstr "Defina termos que devem sempre ser traduzidos de uma maneira específica. A IA seguirá essas regras para cada tradução para garantir consistência em todo o seu site."
+
+msgid "Deselect All"
+msgstr "Desmarcar Tudo"
+
+msgid "Disable Built-in Language System"
+msgstr "Desativar Sistema de Idioma Integrado"
+
+msgid "Display Options"
+msgstr "Opções de Exibição"
+
+msgid "Dropdown"
+msgstr "Dropdown"
+
+msgid "Editor"
+msgstr "Editor"
+
+msgid "Elementor:"
+msgstr "Elementor:"
+
+msgid "Enable WooCommerce product translation"
+msgstr "Ativar tradução de produtos WooCommerce"
+
+msgid "Enable debug logging"
+msgstr "Ativar registro de depuração"
+
+msgid "Enforce monthly word limits based on your plan"
+msgstr "Impor limites mensais de palavras com base no seu plano"
+
+msgid "Error clearing cache: "
+msgstr "Erro ao limpar cache: "
+
+msgid "Error detecting multilingual plugin"
+msgstr "Erro ao detectar plugin multilíngue"
+
+msgid "Error resetting plugin data: "
+msgstr "Erro ao redefinir dados do plugin: "
+
+msgid "Estimated time remaining"
+msgstr "Tempo estimado restante"
+
+msgid "Example:"
+msgstr "Exemplo:"
+
+msgid "Exclude Words"
+msgstr "Excluir Palavras"
+
+msgid "Excluded Terms"
+msgstr "Termos Excluídos"
+
+msgid "Failed to clear cache. Please try again."
+msgstr "Falha ao limpar o cache. Por favor, tente novamente."
+
+msgid "Filter by %s"
+msgstr "Filtrar por %s"
+
+msgid "Flags + Language Code"
+msgstr "Bandeiras + Código de Idioma"
+
+msgid "Flags Only"
+msgstr "Somente Bandeiras"
+
+msgid "Fully Translated"
+msgstr "Totalmente Traduzido"
+
+msgid "Gallery & Image ALT"
+msgstr "Galeria & ALT da Imagem"
+
+msgid "Get a bigger word allowance to translate all your content at once."
+msgstr "Obtenha uma maior cota de palavras para traduzir todo o seu conteúdo de uma vez."
+
+msgid "Get your License from:"
+msgstr "Obtenha sua Licença de:"
+
+msgid "Glossary"
+msgstr "Glossário"
+
+msgid "Glossary Terms"
+msgstr "Termos do Glossário"
+
+msgid "Go to %s and add the \"AI Translator – Language Switcher\" widget to any sidebar or widget area."
+msgstr "Vá para %s e adicione o widget \"AI Translator – Language Switcher\" a qualquer barra lateral ou área de widget."
+
+msgid "Hide languages that have no translation for the current page"
+msgstr "Ocultar idiomas que não têm tradução para a página atual"
+
+msgid "History table not found. Please deactivate and reactivate the plugin to create it, or translate a page to start recording."
+msgstr "Tabela de histórico não encontrada. Por favor, desative e reative o plugin para criá-la, ou traduza uma página para começar a registrar."
+
+msgid "Horizontal List"
+msgstr "Lista Horizontal"
+
+msgid "How long to keep translations in cache before refreshing."
+msgstr "Quanto tempo manter traduções em cache antes de atualizar."
+
+msgid "IP addresses (beyond standard server logs)"
+msgstr "Endereços IP (além dos logs padrão do servidor)"
+
+msgid "Inherit from Original"
+msgstr "Herdar do Original"
+
+msgid "Insufficient permissions."
+msgstr "Permissões insuficientes."
+
+msgid "Items"
+msgstr "Itens"
+
+msgid "Job not found."
+msgstr "Trabalho não encontrado."
+
+msgid "Lang"
+msgstr "Idioma"
+
+msgid "License key (if applicable)"
+msgstr "Chave de licença (se aplicável)"
+
+msgid "LiteSpeed Cache optimizations only apply to published pages viewed by visitors."
+msgstr "As otimizações do LiteSpeed Cache se aplicam apenas a páginas publicadas visualizadas por visitantes."
+
+msgid "Loading status..."
+msgstr "Carregando status..."
+
+msgid "Manage Languages"
+msgstr "Gerenciar Idiomas"
+
+msgid "Menu Location:"
+msgstr "Localização do Menu:"
+
+msgid "Monthly Limit"
+msgstr "Limite Mensal"
+
+msgid "Multilingual"
+msgstr "Multilíngue"
+
+msgid "Nav Menu Integration"
+msgstr "Integração de Menu de Navegação"
+
+msgid "Needs Translation"
+msgstr "Precisa de Tradução"
+
+msgid "Next run:"
+msgstr "Próxima execução:"
+
+msgid "No content or languages selected."
+msgstr "Nenhum conteúdo ou idiomas selecionados."
+
+msgid "No content types selected."
+msgstr "Nenhum tipo de conteúdo selecionado."
+
+msgid "No languages configured yet. Add languages in the Multilingual Plugin section above."
+msgstr "Nenhum idioma configurado ainda. Adicione idiomas na seção do Plugin Multilíngue acima."
+
+msgid "No languages configured. Please set up languages in your multilingual plugin first."
+msgstr "Nenhum idioma configurado. Por favor, configure os idiomas em seu plugin multilíngue primeiro."
+
+msgid "No multilingual plugin active. Configure one first."
+msgstr "Nenhum plugin multilíngue ativo. Configure um primeiro."
+
+msgid "No multilingual plugin detected"
+msgstr "Nenhum plugin multilíngue detectado"
+
+msgid "No supported SEO plugin detected. Install Yoast SEO or Rank Math to enable SEO meta translation."
+msgstr "Nenhum plugin de SEO suportado detectado. Instale o Yoast SEO ou o Rank Math para habilitar a tradução de meta SEO."
+
+msgid "No target languages selected."
+msgstr "Nenhum idioma alvo selecionado."
+
+msgid "No translatable content found for the selected types."
+msgstr "Nenhum conteúdo traduzível encontrado para os tipos selecionados."
+
+msgid "No translation history yet. Translations will appear here as you translate pages."
+msgstr "Nenhum histórico de tradução ainda. As traduções aparecerão aqui à medida que você traduzir páginas."
+
+msgid "Note:"
+msgstr "Nota:"
+
+msgid "One term per line. Format:"
+msgstr "Um termo por linha. Formato:"
+
+msgid "One word or phrase per line. These terms will be preserved as-is during translation."
+msgstr "Uma palavra ou frase por linha. Esses termos serão preservados como estão durante a tradução."
+
+msgid "Open Graph Tags"
+msgstr "Tags Open Graph"
+
+msgid "Original Page"
+msgstr "Página Original"
+
+msgid "Page-by-Page Breakdown"
+msgstr "Análise Página por Página"
+
+msgid "Pages"
+msgstr "Páginas"
+
+msgid "Pause"
+msgstr "Pausar"
+
+msgid "Per Language"
+msgstr "Por Idioma"
+
+msgid "Personal information or email addresses"
+msgstr "Informações pessoais ou endereços de e-mail"
+
+msgid "Please install and activate either Polylang or WPML, or use the built-in language system."
+msgstr "Por favor, instale e ative o Polylang ou o WPML, ou utilize o sistema de idiomas integrado."
+
+msgid "Please select at least one content type."
+msgstr "Por favor, selecione pelo menos um tipo de conteúdo."
+
+msgid "Please select at least one target language."
+msgstr "Por favor, selecione pelo menos um idioma de destino."
+
+msgid "Plugin data reset successfully! Redirecting to welcome screen..."
+msgstr "Dados do plugin redefinidos com sucesso! Redirecionando para a tela de boas-vindas..."
+
+msgid "Posts"
+msgstr "Postagens"
+
+msgid "Powered by"
+msgstr "Desenvolvido por"
+
+msgid "Preview"
+msgstr "Pré-visualização"
+
+msgid "Privacy"
+msgstr "Privacidade"
+
+msgid "Process AI-powered translations"
+msgstr "Processar traduções com inteligência artificial"
+
+msgid "Product Attributes"
+msgstr "Atributos do Produto"
+
+msgid "Product Categories"
+msgstr "Categorias de Produto"
+
+msgid "Product Support"
+msgstr "Suporte ao Produto"
+
+msgid "Product Tags"
+msgstr "Etiquetas de Produto"
+
+msgid "Progress:"
+msgstr "Progresso:"
+
+msgid "Published (Auto-publish)"
+msgstr "Publicado (Publicação automática)"
+
+msgid "Remove"
+msgstr "Remover"
+
+msgid "Remove all cached translations. Useful when you want to regenerate translations with updated content or settings."
+msgstr "Remover todas as traduções em cache. Útil quando você deseja regenerar traduções com conteúdo ou configurações atualizadas."
+
+msgid "Remove this language? Existing translations in this language will remain but will no longer be managed."
+msgstr "Remover este idioma? As traduções existentes neste idioma permanecerão, mas não serão mais gerenciadas."
+
+msgid "Reset Plugin Data"
+msgstr "Redefinir Dados do Plugin"
+
+msgid "Resetting..."
+msgstr "Redefinindo..."
+
+msgid "Resume"
+msgstr "Retomar"
+
+msgid "SEO"
+msgstr "SEO"
+
+msgid "SEO Meta Translation"
+msgstr "Tradução de Meta SEO"
+
+msgid "Same as categories — assigns translated product tag equivalents to the translated product."
+msgstr "Mesmo que categorias — atribui equivalentes de etiquetas de produto traduzidas ao produto traduzido."
+
+msgid "Scan Results"
+msgstr "Resultados da Varredura"
+
+msgid "Scan complete"
+msgstr "Varredura completa"
+
+msgid "Scan your content to calculate word counts and estimate translation effort."
+msgstr "Varra seu conteúdo para calcular contagens de palavras e estimar o esforço de tradução."
+
+msgid "Scanning content..."
+msgstr "Varrendo conteúdo..."
+
+msgid "Scheduled Translation"
+msgstr "Tradução Agendada"
+
+msgid "Scheduled translation created. It will process content using your monthly word allowance."
+msgstr "Tradução agendada criada. Ela processará o conteúdo usando sua cota mensal de palavras."
+
+msgid "Scheduled translation started! It will process content using your monthly word allowance."
+msgstr "Tradução agendada iniciada! Ela processará o conteúdo usando sua cota mensal de palavras."
+
+msgid "Scheduled translation will process content over multiple billing cycles using your monthly word allowance."
+msgstr "A tradução agendada processará o conteúdo ao longo de vários ciclos de faturamento usando sua cota mensal de palavras."
+
+msgid "Select Untranslated"
+msgstr "Selecionar Não Traduzido"
+
+msgid "Select all"
+msgstr "Selecionar tudo"
+
+msgid "Set Up Built-in"
+msgstr "Configurar Integrado"
+
+msgid "Set as default"
+msgstr "Definir como padrão"
+
+msgid "Shortcode"
+msgstr "Código de Atalho"
+
+msgid "Show country flags"
+msgstr "Mostrar bandeiras de países"
+
+msgid "Show language names"
+msgstr "Mostrar nomes de idiomas"
+
+msgid "Source language: %s (default)"
+msgstr "Idioma de origem: %s (padrão)"
+
+msgid "Start translation? This will translate all selected content."
+msgstr "Iniciar tradução? Isso irá traduzir todo o conteúdo selecionado."
+
+msgid "Status for newly created translated pages. Draft is recommended for review before publishing."
+msgstr "Status para páginas traduzidas recém-criadas. Rascunho é recomendado para revisão antes da publicação."
+
+msgid "Status:"
+msgstr "Status:"
+
+msgid "Step 1: Select Content Types"
+msgstr "Passo 1: Selecionar Tipos de Conteúdo"
+
+msgid "Step 2: Select Target Languages"
+msgstr "Passo 2: Selecionar Idiomas Alvo"
+
+msgid "Step 3: Scan & Calculate"
+msgstr "Passo 3: Escanear e Calcular"
+
+msgid "Step 4: Start Translation"
+msgstr "Passo 4: Iniciar Tradução"
+
+msgid "Supported plugins: Yoast SEO, Rank Math. Both are auto-detected at runtime."
+msgstr "Plugins suportados: Yoast SEO, Rank Math. Ambos são detectados automaticamente em tempo de execução."
+
+msgid "Switch to Polylang or WPML instead."
+msgstr "Mudar para Polylang ou WPML em vez disso."
+
+msgid "Switcher"
+msgstr "Alternador"
+
+msgid "Switcher Style"
+msgstr "Estilo do Alternador"
+
+msgid "Sync Plan"
+msgstr "Plano de Sincronização"
+
+msgid "Syncing..."
+msgstr "Sincronizando..."
+
+msgid "Theme Header/Footer:"
+msgstr "Cabeçalho/Rodapé do Tema:"
+
+msgid "Third-party services:"
+msgstr "Serviços de terceiros:"
+
+msgid "This plugin connects to our translation API at"
+msgstr "Este plugin se conecta à nossa API de tradução em"
+
+msgid "This will reset all built-in language settings, disable the built-in system, and clear the onboarding state. Useful for re-testing the welcome screen and language setup. Your API key and other settings will be preserved. Translated pages will NOT be deleted."
+msgstr "Isso irá redefinir todas as configurações de idioma integradas, desativar o sistema integrado e limpar o estado de integração. Útil para re-testar a tela de boas-vindas e a configuração de idioma. Sua chave de API e outras configurações serão preservadas. Páginas traduzidas NÃO serão excluídas."
+
+msgid "Tip: You can also quickly add/remove words from the ⚙️ Settings button on the main plugin page."
+msgstr "Dica: Você também pode adicionar/remover palavras rapidamente pelo botão ⚙️ Configurações na página principal do plugin."
+
+msgid "Total Words"
+msgstr "Total de Palavras"
+
+msgid "Total words exceed your plan limit."
+msgstr "Total de palavras excede o limite do seu plano."
+
+msgid "Track word usage for plan limits and licensing"
+msgstr "Rastrear uso de palavras para limites de plano e licenciamento"
+
+msgid "Translate All"
+msgstr "Traduzir Tudo"
+
+msgid "Translate Now"
+msgstr "Traduzir Agora"
+
+msgid "Translate Open Graph title & description"
+msgstr "Traduzir título e descrição do Open Graph"
+
+msgid "Translate SEO title & meta description"
+msgstr "Traduzir título SEO e meta descrição"
+
+msgid "Translate Twitter card title & description"
+msgstr "Traduzir título e descrição do cartão do Twitter"
+
+msgid "Translate all your website content at once. Select content types and target languages, then start translating."
+msgstr "Traduzir todo o conteúdo do seu site de uma vez. Selecione tipos de conteúdo e idiomas alvo, depois comece a traduzir."
+
+msgid "Translate product attributes"
+msgstr "Traduzir atributos do produto"
+
+msgid "Translate product image alt text"
+msgstr "Traduzir texto alternativo da imagem do produto"
+
+msgid "Translate product variations"
+msgstr "Traduzir variações do produto"
+
+msgid "Translated Page"
+msgstr "Página Traduzida"
+
+msgid "Translates alt text, captions, and descriptions of product images and gallery images for multilingual SEO."
+msgstr "Traduz textos alternativos, legendas e descrições de imagens de produtos e imagens de galeria para SEO multilíngue."
+
+msgid "Translates custom product attribute labels and values (e.g., Color, Size). For global taxonomy attributes (pa_*), assigns translated terms if available."
+msgstr "Traduz rótulos e valores de atributos de produtos personalizados (por exemplo, Cor, Tamanho). Para atributos de taxonomia global (pa_*), atribui termos traduzidos se disponíveis."
+
+msgid "Translates og:title and og:description for Facebook/social sharing previews."
+msgstr "Traduz og:title e og:description para prévias de compartilhamento no Facebook/social."
+
+msgid "Translates product descriptions, short descriptions, and copies product data (price, SKU, stock, etc.) to translated products."
+msgstr "Traduz descrições de produtos, descrições curtas e copia dados do produto (preço, SKU, estoque, etc.) para produtos traduzidos."
+
+msgid "Translates twitter:title and twitter:description for Twitter/X sharing."
+msgstr "Traduz twitter:title e twitter:description para compartilhamento no Twitter/X."
+
+msgid "Translation History"
+msgstr "Histórico de Tradução"
+
+msgid "Translation Progress"
+msgstr "Progresso da Tradução"
+
+msgid "Translation cache cleared successfully!"
+msgstr "Cache de tradução limpo com sucesso!"
+
+msgid "Translation cancelled."
+msgstr "Tradução cancelada."
+
+msgid "Translation completed!"
+msgstr "Tradução concluída!"
+
+msgid "Translation engine not available."
+msgstr "Motor de tradução não disponível."
+
+msgid "Translation paused."
+msgstr "Tradução pausada."
+
+msgid "Translation resumed."
+msgstr "Tradução retomada."
+
+msgid "Translation started."
+msgstr "Tradução iniciada."
+
+msgid "Translations"
+msgstr "Traduções"
+
+msgid "Twitter Card Tags"
+msgstr "Tags de Cartão do Twitter"
+
+msgid "Type"
+msgstr "Tipo"
+
+msgid "Upgrade License"
+msgstr "Atualizar Licença"
+
+msgid "Upgrade page"
+msgstr "Página de atualização"
+
+msgid "Upgrade your plan for more words or use scheduled translation."
+msgstr "Atualize seu plano para mais palavras ou use tradução agendada."
+
+msgid "Use do_shortcode() in your theme template:"
+msgstr "Use do_shortcode() no seu template de tema:"
+
+msgid "Use the \"Shortcode\" widget in Elementor and paste the shortcode above."
+msgstr "Use o widget \"Shortcode\" no Elementor e cole o shortcode acima."
+
+msgid "User or visitor data"
+msgstr "Dados do usuário ou visitante"
+
+msgid "Variable Products"
+msgstr "Produtos Variáveis"
+
+msgid "WP_DEBUG and WP_DEBUG_LOG must be enabled in wp-config.php for logging to work."
+msgstr "WP_DEBUG e WP_DEBUG_LOG devem estar habilitados no wp-config.php para que o registro funcione."
+
+msgid "We DO NOT collect:"
+msgstr "NÓS NÃO coletamos:"
+
+msgid "When enabled, detailed debug information will be written to the WordPress debug.log file."
+msgstr "Quando habilitado, informações detalhadas de depuração serão escritas no arquivo debug.log do WordPress."
+
+msgid "When enabled, only languages with an existing translation of the current page will appear in the language switcher. The default language is always shown."
+msgstr "Quando habilitado, apenas idiomas com uma tradução existente da página atual aparecerão no seletor de idiomas. O idioma padrão é sempre exibido."
+
+msgid "When translating products, automatically assigns the translated category equivalents (if they exist in the target language via Polylang/WPML)."
+msgstr "Ao traduzir produtos, atribui automaticamente os equivalentes de categoria traduzidos (se existirem no idioma de destino via Polylang/WPML)."
+
+msgid "WooCommerce"
+msgstr "WooCommerce"
+
+msgid "WooCommerce is not active. These settings will apply when WooCommerce is installed and activated."
+msgstr "WooCommerce não está ativo. Essas configurações serão aplicadas quando o WooCommerce estiver instalado e ativado."
+
+msgid "Word count validated"
+msgstr "Contagem de palavras validada"
+
+msgid "Word counts and language pairs (for usage tracking)"
+msgstr "Contagens de palavras e pares de idiomas (para rastreamento de uso)"
+
+msgid "Word limit exceeded"
+msgstr "Limite de palavras excedido"
+
+msgid "WordPress Widget:"
+msgstr "Widget do WordPress:"
+
+msgid "Words Remaining"
+msgstr "Palavras Restantes"
+
+msgid "Words Used"
+msgstr "Palavras Usadas"
+
+msgid "Words or terms listed here will never be translated — they will be kept exactly as-is in every language. Use this for brand names, product names, technical terms, or any text that should remain untranslated."
+msgstr "Palavras ou termos listados aqui nunca serão traduzidos — eles serão mantidos exatamente como estão em todos os idiomas. Use isso para nomes de marcas, nomes de produtos, termos técnicos ou qualquer texto que deva permanecer não traduzido."
+
+msgid "You can also use a simple format without language codes — the AI will apply the term to the closest matching language:"
+msgstr "Você também pode usar um formato simples sem códigos de idioma — a IA aplicará o termo ao idioma mais próximo correspondente:"
+
+msgid "Your actual translated content"
+msgstr "Seu conteúdo traduzido real"
+
+msgid "Your content fits within your current word allowance. Translate everything now."
+msgstr "Seu conteúdo se encaixa dentro da sua cota atual de palavras. Traduza tudo agora."
+
+msgid "Your current theme has no registered navigation menu locations. The switcher will be appended to all menus when enabled."
+msgstr "Seu tema atual não possui locais de menu de navegação registrados. O seletor será adicionado a todos os menus quando habilitado."
+
+msgid "Your website URL (for service authentication)"
+msgstr "A URL do seu site (para autenticação de serviço)"
+
+msgid "already translated"
+msgstr "já traduzido"
+
+msgid "detected — SEO meta fields will be translated automatically."
+msgstr "detectado — campos meta de SEO serão traduzidos automaticamente."
+
+msgid "detected — product translation support is available."
+msgstr "detectado — suporte à tradução de produtos está disponível."
+
+msgid "estimated API words"
+msgstr "palavras estimadas da API"
+
+msgid "items"
+msgstr "itens"
+
+msgid "needs translation"
+msgstr "precisa de tradução"
+
+msgid "of"
+msgstr "de"
+
+msgid "pages"
+msgstr "páginas"
+
+msgid "pages selected"
+msgstr "páginas selecionadas"
+
+msgid "posts"
+msgstr "postagens"
+
+msgid "privacy policy"
+msgstr "política de privacidade"
+
+msgid "to:"
+msgstr "para:"
+
+msgid "used"
+msgstr "usado"
+
+msgid "words"
+msgstr "palavras"
+
+msgid "— Select a language to add —"
+msgstr "— Selecione um idioma para adicionar —"
+
+msgid "⏰ Start Scheduled Translation"
+msgstr "⏰ Iniciar Tradução Agendada"
+
+msgid "⬆️ Upgrade Plan"
+msgstr "⬆️ Atualizar Plano"
+
+msgid "🌍 Language Switcher"
+msgstr "🌍 Seletor de Idiomas"
+
+msgid "🌐 Multilingual Plugin"
+msgstr "🌐 Plugin Multilíngue"
+
+msgid "📅 Active Scheduled Translation"
+msgstr "📅 Tradução Agendada Ativa"
+
+msgid "📊 Plan & Usage"
+msgstr "📊 Plano e Uso"
+
+msgid "📖 Translation Glossary"
+msgstr "📖 Glossário de Tradução"
+
+msgid "🔍 SEO Translation"
+msgstr "🔍 Tradução SEO"
+
+msgid "🔍 Scan Content"
+msgstr "🔍 Escanear Conteúdo"
+
+msgid "🔧 Advanced Settings"
+msgstr "🔧 Configurações Avançadas"
+
+msgid "🚀 Translate All Now"
+msgstr "🚀 Traduzir Tudo Agora"
+
+msgid "🚫 Exclude Words"
+msgstr "🚫 Excluir Palavras"
+
+msgid "🛒 WooCommerce"
+msgstr "🛒 WooCommerce"
+
+
+# --- Setup checklist, info card & metabox translations (2026-04-02) ---
+
+msgid "Setup Checklist"
+msgstr "Lista de Verificação de Configuração"
+
+msgid "%1$d of %2$d completed"
+msgstr "%1$d de %2$d concluídos"
+
+msgid "Dismiss checklist"
+msgstr "Descartar lista de verificação"
+
+msgid "Skip"
+msgstr "Pular"
+
+msgid "At least two languages are set up for translation."
+msgstr "Pelo menos dois idiomas estão configurados para tradução."
+
+msgid "Configure Languages"
+msgstr "Configurar Idiomas"
+
+msgid "First Translation"
+msgstr "Primeira Tradução"
+
+msgid "Translate your first page or post into another language."
+msgstr "Traduza sua primeira página ou post para outro idioma."
+
+msgid "Let visitors switch between languages on the front end."
+msgstr "Permita que os visitantes alternem entre idiomas na interface."
+
+msgid "Set Up Switcher"
+msgstr "Configurar Alternador"
+
+msgid "Rate Our Plugin"
+msgstr "Avalie Nosso Plugin"
+
+msgid "If you enjoy using Meep AI Translator, please take a moment to rate us on WordPress.org! Your feedback helps us improve the plugin and reach more users who could benefit from it."
+msgstr "Se você gosta de usar o Meep AI Translator, por favor, reserve um momento para nos avaliar no WordPress.org! Seu feedback nos ajuda a melhorar o plugin e alcançar mais usuários que podem se beneficiar dele."
+
+msgid "Leave a Review"
+msgstr "Deixe uma Avaliação"
+
+msgid "Translation engine is not ideal - errors can be spotted in translated pages. We are constantly updating algorithm to provide you with the best experience. If you spot a bug in translation contact us via feedback form."
+msgstr "O mecanismo de tradução não é ideal - erros podem ser encontrados nas páginas traduzidas. Estamos constantemente atualizando o algoritmo para proporcionar a melhor experiência. Se você encontrar um erro na tradução, entre em contato conosco através do formulário de feedback."
+
+msgid "Please select at least one language."
+msgstr "Por favor, selecione pelo menos um idioma."
+
+msgid "Start translating to the selected languages?"
+msgstr "Começar a traduzir para os idiomas selecionados?"
+
+msgid "Set up a multilingual plugin to enable quick translations."
+msgstr "Configure um plugin multilíngue para permitir traduções rápidas."
+
+msgid "No translatable content detected."
+msgstr "Nenhum conteúdo traduzível detectado."
+
+msgid "Word limit reached. Please upgrade your plan."
+msgstr "Limite de palavras atingido. Por favor, atualize seu plano."
+
+msgid "Set up your languages for quick translations. %1$sGo to Dashboard%2$s"
+msgstr "Configure seus idiomas para traduções rápidas. %1$sVá para o Painel%2$s"
+
+msgid "Please %sconfigure your languages%s first."
+msgstr "Por favor, %sconfigure seus idiomas%s primeiro."
+
+msgid "Not set"
+msgstr "Não definido"
+
+msgid "Content:"
+msgstr "Conteúdo:"
+
+msgid "Translations:"
+msgstr "Traduções:"
+
+msgid "Quick Translate:"
+msgstr "Tradução Rápida:"
+
+msgid "Will create a new translation (overwrites existing)"
+msgstr "Criará uma nova tradução (sobrescreve a existente)"
+
+msgid "Quick Translate is available on the source post."
+msgstr "A Tradução Rápida está disponível no post de origem."
+
+msgid "Go to Source Post →"
+msgstr "Ir para o Post de Origem →"
+
+msgid "Open Translation Dashboard →"
+msgstr "Abrir Painel de Tradução →"
+
+msgid "Missing required parameters."
+msgstr "Faltando parâmetros obrigatórios."
+
+msgid "Invalid post."
+msgstr "Post inválido."
+
+msgid "All translations failed."
+msgstr "Todas as traduções falharam."
+
+msgid "%d translation(s) completed successfully."
+msgstr "%d tradução(ões) concluída(s) com sucesso."
+
+msgid "Private"
+msgstr "Privado"
+
+#: admin/class-settings.php
+msgid "Templates"
+msgstr "Modelos"
+
+#: admin/class-settings.php
+msgid "Menus & Widgets"
+msgstr "Menus e Widgets"
+
+#: admin/class-settings.php
+msgid "📋 Menus & Widgets"
+msgstr "📋 Menus e Widgets"
+
+#: admin/class-settings.php
+msgid "Assign different navigation menus and control widget visibility per language. Only available when the built-in language system is active."
+msgstr "Atribua diferentes menus de navegação e controle a visibilidade dos widgets por idioma. Disponível apenas quando o sistema de idiomas integrado está ativo."
+
+#: admin/class-settings.php
+msgid "Enable the built-in language system in the Multilingual section to use per-language menus and widget visibility."
+msgstr "Ative o sistema de idiomas integrado na seção Multilíngue para usar menus e visibilidade de widgets por idioma."
+
+#: admin/class-settings.php
+msgid "Add at least one additional language in the Multilingual section to configure per-language menus and widgets."
+msgstr "Adicione pelo menos um idioma adicional na seção Multilíngue para configurar menus e widgets por idioma."
+
+#: admin/class-settings.php
+msgid "Auto-Translate & Assign"
+msgstr "Traduzir e atribuir automaticamente"
+
+#: admin/class-settings.php
+msgid "Automatically clone your menus, translate menu item labels and widget content, and assign everything per language. Uses your translation credits."
+msgstr "Clone automaticamente seus menus, traduza os rótulos dos itens de menu e o conteúdo dos widgets, e atribua tudo por idioma. Usa seus créditos de tradução."
+
+#: admin/class-settings.php
+msgid "Translate All Languages"
+msgstr "Traduzir todos os idiomas"
+
+#: admin/class-settings.php
+msgid "Advanced: Manual Menu & Widget Assignment"
+msgstr "Avançado: Atribuição manual de menus e widgets"
+
+#: admin/class-settings.php
+msgid "Per-Language Menus"
+msgstr "Menus por idioma"
+
+#: admin/class-settings.php
+msgid "The default language uses the menu assigned in Appearance → Menus. Select a different menu for each additional language below."
+msgstr "O idioma padrão usa o menu atribuído em Aparência → Menus. Selecione um menu diferente para cada idioma adicional abaixo."
+
+#: admin/class-settings.php
+msgid "— Same as default —"
+msgstr "— Mesmo que o padrão —"
+
+#: admin/class-settings.php
+msgid "Widget Language Visibility"
+msgstr "Visibilidade de widgets por idioma"
+
+#: admin/class-settings.php
+msgid "Control which language(s) each widget is displayed for. Widgets with no language selected will show for all languages. Duplicate your footer/sidebar widgets and assign each copy to a specific language."
+msgstr "Controle para qual(is) idioma(s) cada widget é exibido. Widgets sem idioma selecionado serão exibidos para todos os idiomas. Duplique seus widgets de rodapé/barra lateral e atribua cada cópia a um idioma específico."
+
+#: admin/class-settings.php
+msgid "Widget"
+msgstr "Widget"
+
+#: admin/class-settings.php
+msgid "Show in Languages"
+msgstr "Mostrar nos idiomas"
+
+#: admin/class-settings.php
+msgid "Reset Menus & Widgets Defaults"
+msgstr "Redefinir menus e widgets para o padrão"
+
+#: admin/class-settings.php
+msgid "Reset Menus & Widgets settings to defaults"
+msgstr "Redefinir as configurações de menus e widgets para o padrão"
+
+#: admin/class-settings.php
+msgid "🧩 Elementor Templates"
+msgstr "🧩 Modelos do Elementor"
+
+#: admin/class-settings.php
+msgid "Enable the built-in language system in the Multilingual section to translate Elementor templates."
+msgstr "Ative o sistema de idiomas integrado na seção Multilíngue para traduzir modelos do Elementor."
+
+#: admin/class-settings.php
+msgid "Add at least one additional language in the Multilingual section first."
+msgstr "Primeiro, adicione pelo menos um idioma adicional na seção Multilíngue."
+
+#: admin/class-settings.php
+msgid "No Elementor templates found."
+msgstr "Nenhum modelo do Elementor encontrado."
+
+#: admin/class-settings.php
+msgid "These templates are actively displayed on your site (headers, footers, and page templates with display conditions). Translate them to show the correct content for each language."
+msgstr "Estes modelos são exibidos ativamente em seu site (cabeçalhos, rodapés e modelos com condições de exibição). Traduza-os para mostrar o conteúdo correto para cada idioma."
+
+#: admin/class-settings.php
+msgid "Template"
+msgstr "Modelo"
+
+#: admin/class-settings.php
+msgid "No active templates detected. Your Elementor templates may not have display conditions set. Check the Advanced section below for all templates."
+msgstr "Nenhum modelo ativo detectado. Seus modelos do Elementor podem não ter condições de exibição definidas. Verifique a seção Avançado abaixo para todos os modelos."
+
+#: admin/class-settings.php
+msgid "Translate Active Templates"
+msgstr "Traduzir modelos ativos"
+
+#: admin/class-settings.php
+msgid "Translates your headers, footers, and other active page templates. Already translated templates will be skipped. Uses your translation credits."
+msgstr "Traduz seus cabeçalhos, rodapés e outros modelos de página ativos. Modelos já traduzidos serão ignorados. Usa seus créditos de tradução."
+
+#: admin/class-settings.php
+msgid "Force re-translate (replace existing translations)"
+msgstr "Forçar retradução (substituir traduções existentes)"
+
+#: admin/class-settings.php
+msgid "These are reusable sections, containers, popups, and loop templates. They are usually embedded inside pages that are already translated, so translating them separately is optional."
+msgstr "Estas são seções reutilizáveis, contêineres, popups e modelos de loop. Eles geralmente estão incorporados em páginas que já foram traduzidas, então traduzi-los separadamente é opcional."
+
+#: admin/class-settings.php
+msgid "Translate All Templates (including advanced)"
+msgstr "Traduzir todos os modelos (incluindo avançados)"
+
+#: admin/class-settings.php
+msgid "Header"
+msgstr "Cabeçalho"
+
+#: admin/class-settings.php
+msgid "Footer"
+msgstr "Rodapé"
+
+#: admin/class-settings.php
+msgid "Single Page"
+msgstr "Página única"
+
+#: admin/class-settings.php
+msgid "Blog Post"
+msgstr "Postagem do blog"
+
+#: admin/class-settings.php
+msgid "Archive"
+msgstr "Arquivo"
+
+#: admin/class-settings.php
+msgid "Product"
+msgstr "Produto"
+
+#: admin/class-settings.php
+msgid "Shop Page"
+msgstr "Página da loja"
+
+#: admin/class-settings.php
+msgid "404 Page"
+msgstr "Página 404"
+
+#: admin/class-settings.php
+msgid "Search Results"
+msgstr "Resultados da pesquisa"
+
+#: admin/class-settings.php
+msgid "Section"
+msgstr "Seção"
+
+#: admin/class-settings.php
+msgid "Popup"
+msgstr "Popup"
+
+#: admin/class-settings.php
+msgid "Loop Item"
+msgstr "Item de loop"
+
+#: admin/class-settings.php
+msgid "Kit"
+msgstr "Kit"
+
+#: admin/class-settings.php
+msgid "Name format:"
+msgstr "Formato do nome:"
+
+#: admin/class-settings.php
+msgid "Native (Français, Deutsch)"
+msgstr "Nativo (Français, Deutsch)"
+
+#: admin/class-settings.php
+msgid "English (French, German)"
+msgstr "Inglês (French, German)"
+
+#: admin/class-settings.php
+msgid "Code uppercase (FR, DE)"
+msgstr "Código maiúsculo (FR, DE)"
+
+#: admin/class-settings.php
+msgid "Code lowercase (fr, de)"
+msgstr "Código minúsculo (fr, de)"
+
+#: admin/class-settings.php
+msgid "Custom names (optional — overrides the format above):"
+msgstr "Nomes personalizados (opcional — substitui o formato acima):"
+
+#: admin/class-settings.php
+msgid "Leave empty to use the selected format above."
+msgstr "Deixe vazio para usar o formato selecionado acima."
+
+#: admin/class-settings.php
+msgid "This preview shows the exact output that will appear on the frontend. Save settings to update."
+msgstr "Esta prévia mostra a saída exata que aparecerá no frontend. Salve as configurações para atualizar."
+
+#: admin/class-settings.php
+msgid "Enable Switcher"
+msgstr "Ativar seletor"
+
+#: admin/class-settings.php
+msgid "Output the language switcher on the frontend (shortcode, widget, and nav menu)"
+msgstr "Exibir o seletor de idiomas no frontend (shortcode, widget e menu de navegação)"
+
+#: admin/class-settings.php
+msgid "Default Language URL Prefix"
+msgstr "Prefixo de URL do idioma padrão"
+
+#: admin/class-settings.php
+msgid "Translate Category & Tag Names"
+msgstr "Traduzir nomes de categorias e tags"
+
+#: admin/class-settings.php
+msgid "Product Fallback"
+msgstr "Fallback de produto"
+
+#: admin/class-settings.php
+msgid "Show default language products when no translation exists"
+msgstr "Mostrar produtos no idioma padrão quando não existe tradução"
+
+#: admin/class-settings.php
+msgid "Add language prefix to the default language URLs (e.g., /fr/page/ instead of /page/)"
+msgstr "Adicionar prefixo de idioma às URLs do idioma padrão (ex., /fr/page/ em vez de /page/)"
+
+#: admin/class-settings.php
+msgid "When enabled, the default language will also get a URL prefix like other languages. Visitors accessing pages without a prefix will be redirected to the prefixed version. Only works with the built-in language system."
+msgstr "Quando ativado, o idioma padrão também receberá um prefixo de URL como outros idiomas. Visitantes acessando páginas sem prefixo serão redirecionados para a versão com prefixo. Funciona apenas com o sistema de idiomas integrado."
+
+#: admin/class-settings.php
+msgid "Uncheck to completely disable all language switcher output on your site."
+msgstr "Desmarque para desativar completamente toda a saída do seletor de idiomas no seu site."
+
+#: admin/class-settings.php
+msgid "No languages configured yet."
+msgstr "Nenhum idioma configurado ainda."
+
+#: admin/class-settings.php
+msgid "Reset Language Switcher settings to defaults"
+msgstr "Redefinir as configurações do seletor de idiomas para o padrão"
+
+#: admin/class-settings.php
+msgid "Reset Switcher Defaults"
+msgstr "Redefinir padrões do seletor"
+
+#: admin/class-settings.php
+msgid "Reset Cache settings to defaults"
+msgstr "Redefinir as configurações de cache para o padrão"
+
+#: admin/class-settings.php
+msgid "Reset Cache Defaults"
+msgstr "Redefinir padrões de cache"
+
+#: admin/class-settings.php
+msgid "Reset Page Creation settings to defaults"
+msgstr "Redefinir as configurações de criação de páginas para o padrão"
+
+#: admin/class-settings.php
+msgid "Reset Pages Defaults"
+msgstr "Redefinir padrões de páginas"
+
+#: admin/class-settings.php
+msgid "Reset SEO settings to defaults"
+msgstr "Redefinir as configurações de SEO para o padrão"
+
+#: admin/class-settings.php
+msgid "Reset SEO Defaults"
+msgstr "Redefinir padrões de SEO"
+
+#: admin/class-settings.php
+msgid "Reset WooCommerce settings to defaults"
+msgstr "Redefinir as configurações do WooCommerce para o padrão"
+
+#: admin/class-settings.php
+msgid "Reset WooCommerce Defaults"
+msgstr "Redefinir padrões do WooCommerce"
+
+#: admin/class-settings.php
+msgid "Reset these settings to their defaults?"
+msgstr "Redefinir estas configurações para o padrão?"
+
+#: admin/class-settings.php
+msgid "✓ Reset — click Save to apply"
+msgstr "✓ Redefinido — clique em Salvar para aplicar"
+
+#: admin/class-settings.php
+msgid "When browsing the shop in a non-default language, untranslated products will still appear (in the default language) instead of being hidden. Translated products always take priority."
+msgstr "Ao navegar na loja em um idioma não padrão, produtos não traduzidos ainda aparecerão (no idioma padrão) em vez de serem ocultados. Produtos traduzidos sempre têm prioridade."
+
+#: admin/class-settings.php
+msgid "Translate taxonomy term names into the target language"
+msgstr "Traduzir nomes de termos de taxonomia para o idioma de destino"
+
+#: admin/class-settings.php
+msgid "When translating posts or products, category and tag names are translated via AI and displayed in the correct language on the frontend. Works with WooCommerce product categories/tags and regular post categories/tags. Requires the built-in language system."
+msgstr "Ao traduzir postagens ou produtos, os nomes de categorias e tags são traduzidos via IA e exibidos no idioma correto no frontend. Funciona com categorias/tags de produtos WooCommerce e categorias/tags de postagens regulares. Requer o sistema de idiomas integrado."
+
+#: admin/class-settings.php
+msgid "Translating menus for"
+msgstr "Traduzindo menus para"
+
+#: admin/class-settings.php
+msgid "Translating menus →"
+msgstr "Traduzindo menus →"
+
+#: admin/class-settings.php
+msgid "already assigned"
+msgstr "já atribuído"
+
+#: admin/class-settings.php
+msgid "Menus"
+msgstr "Menus"
+
+#: admin/class-settings.php
+msgid "Menu translation request failed"
+msgstr "Falha na solicitação de tradução do menu"
+
+#: admin/class-settings.php
+msgid "Translating widgets for"
+msgstr "Traduzindo widgets para"
+
+#: admin/class-settings.php
+msgid "Translating widgets →"
+msgstr "Traduzindo widgets →"
+
+#: admin/class-settings.php
+msgid "Widgets"
+msgstr "Widgets"
+
+#: admin/class-settings.php
+msgid "Widget translation request failed"
+msgstr "Falha na solicitação de tradução do widget"
+
+#: admin/class-settings.php
+msgid "Done! Reload the page to see updated assignments."
+msgstr "Pronto! Recarregue a página para ver as atribuições atualizadas."
+
+#: admin/class-settings.php
+msgid "All translations complete."
+msgstr "Todas as traduções concluídas."
+
+#: admin/class-settings.php
+msgid "This will translate and assign menus + widget content for ALL languages. Uses translation credits. Continue?"
+msgstr "Isso traduzirá e atribuirá menus + conteúdo de widgets para TODOS os idiomas. Usa créditos de tradução. Continuar?"
+
+#: admin/class-settings.php
+msgid "Translating templates for"
+msgstr "Traduzindo modelos para"
+
+#: admin/class-settings.php
+msgid "Translating templates →"
+msgstr "Traduzindo modelos →"
+
+#: admin/class-settings.php
+msgid "force re-translate"
+msgstr "forçar retradução"
+
+#: admin/class-settings.php
+msgid "Request failed"
+msgstr "Falha na solicitação"
+
+#: admin/class-settings.php
+msgid "Done! Reload to see updated status."
+msgstr "Pronto! Recarregue para ver o status atualizado."
+
+#: admin/class-settings.php
+msgid "All template translations complete."
+msgstr "Todas as traduções de modelos concluídas."
+
+#: admin/class-settings.php
+msgid "all"
+msgstr "todos"
+
+#: admin/class-settings.php
+msgid "active"
+msgstr "ativos"
+
+#: admin/class-settings.php
+msgid "Elementor templates for"
+msgstr "Modelos do Elementor para"
+
+#: admin/class-settings.php
+msgid "Uses translation credits."
+msgstr "Usa créditos de tradução."
+
+#: admin/class-settings.php
+msgid "ALL templates (including advanced)"
+msgstr "TODOS os modelos (incluindo avançados)"
+
+#: admin/class-settings.php
+msgid "active templates"
+msgstr "modelos ativos"
+
+#: admin/class-settings.php
+msgid "for ALL languages? Uses translation credits."
+msgstr "para TODOS os idiomas? Usa créditos de tradução."
+
+
+
+
+#: admin/class-settings.php
+msgid "Translate → %s"
+msgstr "Traduzir → %s"
+
+
+
+#: admin/class-settings.php
+msgid "Are you sure you want to reset all plugin data? This will:\n\n• Disable the built-in language system\n• Remove all configured languages\n• Reset the onboarding/welcome screen\n• Clear dependency status cache\n\nYour API key, translated pages, and other settings will be preserved.\n\nContinue?"
+msgstr "Tem certeza de que deseja redefinir todos os dados do plugin? Isso irá:\n\n• Desativar o sistema de idiomas integrado\n• Remover todos os idiomas configurados\n• Redefinir a tela de integração/boas-vindas\n• Limpar o cache de status de dependências\n\nSua chave API, páginas traduzidas e outras configurações serão preservadas.\n\nContinuar?"
+
+#: admin/class-settings.php
+msgid "Your current theme has no registered navigation menu locations. Menu assignment per language is not available."
+msgstr "Seu tema atual não possui localizações de menu de navegação registradas. A atribuição de menus por idioma não está disponível."
+
+#: admin/class-settings.php
+msgid "No menus found. %sCreate menus%s in Appearance → Menus first, then assign them per language here."
+msgstr "Nenhum menu encontrado. %sCriar menus%s em Aparência → Menus primeiro, depois atribua-os por idioma aqui."
+
+#: admin/class-settings.php
+msgid "No active widgets found. %sAdd widgets%s to your sidebars first, then configure their language visibility here."
+msgstr "Nenhum widget ativo encontrado. %sAdicione widgets%s às suas barras laterais primeiro, depois configure a visibilidade por idioma aqui."
+
+#: admin/class-settings.php
+msgid "Advanced: %d other templates (sections, popups, loops...)"
+msgstr "Avançado: %d outros modelos (seções, popups, loops...)"
+
+#: admin/class-settings.php
+msgid "This will translate and assign menus + widget content for"
+msgstr "Isso traduzirá e atribuirá menus + conteúdo de widgets para"
+
+#: admin/class-settings.php
+msgid "Uses translation credits. Continue?"
+msgstr "Usa créditos de tradução. Continuar?"
+
+
+# --- Added by add-seo-tool-translations.php (2026-05-25) ---
+
+msgid "Retranslate Existing SEO Titles"
+msgstr "Retraduzir Títulos SEO Existentes"
+
+msgid "Retranslate SEO Titles"
+msgstr "Retraduzir Títulos SEO"
+
+msgid "Check Translation Status"
+msgstr "Verificar Status da Tradução"
+
+msgid "Checking…"
+msgstr "Verificando…"
+
+msgid "Retranslating 0 of"
+msgstr "Retraduzindo 0 de"
+
+msgid "Error during retranslating."
+msgstr "Erro durante a retradução."
+
+msgid "Retranslated"
+msgstr "Retraduzido"
+
+msgid "Done! Retranslated"
+msgstr "Pronto! Retraduzido"
+
+msgid "translations have correct SEO titles."
+msgstr "as traduções têm títulos SEO corretos."
+
+msgid "translations need retranslation"
+msgstr "as traduções precisam de retradução"
+
+msgid "appear correctly translated."
+msgstr "aparecem corretamente traduzidas."
+
+msgid "Counting pages…"
+msgstr "Contando páginas…"
+
+msgid "No translated pages found."
+msgstr "Nenhuma página traduzida encontrada."
+
+msgid "Request failed — try again."
+msgstr "Solicitação falhou — tente novamente."
+
+msgid "Could not connect to server."
+msgstr "Não foi possível conectar ao servidor."
+
+msgid "Error:"
+msgstr "Erro:"
+
+msgid "translations."
+msgstr "traduções."
+
+msgid "Patching 0 of"
+msgstr "Aplicando patch em 0 de"
+
+msgid "Error during patching."
+msgstr "Erro durante a aplicação do patch."
+
+msgid "Patched"
+msgstr "Patch aplicado"
+
+msgid "Done! Patched"
+msgstr "Pronto! Patch aplicado"
+
+msgid "Patch SEO Titles for All Translations"
+msgstr "Aplicar Patch nos Títulos SEO para Todas as Traduções"
+
+msgid "Patch Existing SEO Titles"
+msgstr "Aplicar Patch nos Títulos SEO Existentes"
+
+
+# --- Added by add-minicart-translations.php (2026-06-03) ---
+
+msgid "Exclude Paths from Language Routing"
+msgstr "Excluir Caminhos da Roteamento de Idioma"
+
+msgid "One path or token per line. Matching URLs are never given a language prefix and never redirected — useful for plugin API/rewrite endpoints, webhooks, and callbacks. Example: enter \"wcsag-api\" to exclude /wcsag-api/... requests."
+msgstr "Um caminho ou token por linha. URLs correspondentes nunca recebem um prefixo de idioma e nunca são redirecionadas — útil para endpoints de API/rewrite de plugins, webhooks e callbacks. Exemplo: insira \"wcsag-api\" para excluir solicitações de /wcsag-api/..."
+
+msgid "REST API (/wp-json/), admin-ajax, WooCommerce API (/wc-api/), feeds, login and XML-RPC are always excluded automatically."
+msgstr "REST API (/wp-json/), admin-ajax, WooCommerce API (/wc-api/), feeds, login e XML-RPC são sempre excluídos automaticamente."
+
+msgid "Retranslate Product Short Descriptions"
+msgstr "Retraduzir Descrições Curtas de Produtos"
+
+msgid "Re-translates the short description (excerpt) for all translated products. Use this if product short descriptions still appear in the source language. Safe to re-run: already-translated products are skipped unless their source text changed, or you tick \"Force re-translate\"."
+msgstr "Retraduz a descrição curta (excerto) para todos os produtos traduzidos. Use isso se as descrições curtas dos produtos ainda aparecerem no idioma original. Seguro para reexecutar: produtos já traduzidos são ignorados, a menos que seu texto original tenha mudado, ou você marque \"Forçar retradução\"."
+
+msgid "Retranslate Short Descriptions"
+msgstr "Retraduzir Descrições Curtas"
+
+msgid "Force re-translate (ignore already-translated)"
+msgstr "Forçar retradução (ignorar já traduzido)"
+
+
+# --- Added by add-repair-tool-translations.php (2026-06-04) ---
+
+msgid "Repair Translation Links"
+msgstr "Reparar Links de Tradução"
+
+msgid "Reconciles translation links so the dashboard list, language switcher, and the cart/checkout page swap all agree. Fixes translated pages that wrongly appear as their own source, and links broken by older versions. Run \"Scan\" first to preview, then \"Repair\"."
+msgstr "Reconcilia os links de tradução para que a lista do painel, o seletor de idiomas e a página do carrinho/checkout concordem. Corrige páginas traduzidas que aparecem erroneamente como sua própria fonte e links quebrados por versões anteriores. Execute \"Escanear\" primeiro para visualizar, depois \"Reparar\"."
+
+msgid "Scan (preview)"
+msgstr "Escanear (visualizar)"
+
+msgid "Repair Links"
+msgstr "Reparar Links"
+
+msgid "Repaired"
+msgstr "Reparado"
+
+msgid "Would repair"
+msgstr "Repararia"
+
+msgid "groups"
+msgstr "grupos"
+
+msgid "links"
+msgstr "links"
+
+msgid "source refs"
+msgstr "referências de origem"
+
+msgid "language tags"
+msgstr "etiquetas de idioma"
+
+msgid "Need manual review (no source link found):"
+msgstr "Necessita de revisão manual (nenhum link de origem encontrado):"
+
+msgid "Conflicts:"
+msgstr "Conflitos:"
+
+msgid "Reload the page list to see the result."
+msgstr "Recarregue a lista de páginas para ver o resultado."
+
+msgid "Repair translation links now? This updates link data and is safe to run multiple times."
+msgstr "Reparar links de tradução agora? Isso atualiza os dados dos links e é seguro executar várias vezes."
+
+
+# --- Added by add-repair-tool-translations.php (2026-06-04) ---
+
+msgid "All translation links are already consistent."
+msgstr "Todos os links de tradução já estão consistentes."
+
+msgid "missing links"
+msgstr "links ausentes"
+
+
+# --- Added by add-string-translations-ui.php (2026-06-13) ---
+
+msgid "String Translations"
+msgstr "Traduções de strings"
+
+msgid "Translate interface strings that aren't covered by automatic translation — payment method titles/descriptions, the checkout privacy notice, and text from other plugins. Enter the exact source text on the left, then its translation for each language. Leave a language blank to keep the original."
+msgstr "Traduza strings de interface não cobertas pela tradução automática — títulos/descrições de métodos de pagamento, o aviso de privacidade no checkout e textos de outros plugins. Insira o texto fonte exato à esquerda, depois sua tradução para cada idioma. Deixe um idioma em branco para manter o original."
+
+msgid "Source text"
+msgstr "Texto fonte"
+
+
+msgid "+ Add string"
+msgstr "+ Adicionar string"
+
+
+# --- Added by append-string-translations.php (2026-06-13) ---
+
+msgid "Original text…"
+msgstr "Texto original…"
+
+# --- Added by add-v1702-translations.php (2026-06-14) ---
+
+msgid "Auto-translate strings"
+msgstr "Traduzir automaticamente strings"
+
+msgid "Overwrite existing"
+msgstr "Sobrescrever existente"
+
+msgid "Auto-translate fills every language for the detected strings (your saved entries plus the site's WooCommerce payment titles/descriptions and checkout privacy text) using the translation engine. Review the results — save afterwards is automatic."
+msgstr "A tradução automática preenche todos os idiomas para as strings detectadas (suas entradas salvas mais os títulos/descrições de pagamento do WooCommerce do site e o texto de privacidade do checkout) usando o mecanismo de tradução. Revise os resultados — salvar depois é automático."
+
+msgid "🎨 Theme Compatibility (optional)"
+msgstr "🎨 Compatibilidade com o Tema (opcional)"
+
+msgid "Most sites need nothing here — page content, Elementor/Gutenberg data, and WooCommerce fields are translated automatically. This section is only for themes that store translatable text in custom meta fields. If the status below says \"Standard\", you can ignore it."
+msgstr "A maioria dos sites não precisa de nada aqui — o conteúdo da página, dados do Elementor/Gutenberg e campos do WooCommerce são traduzidos automaticamente. Esta seção é apenas para temas que armazenam texto traduzível em campos meta personalizados. Se o status abaixo disser \"Padrão\", você pode ignorá-lo."
+
+msgid "Custom Types"
+msgstr "Tipos Personalizados"
+
+msgid "Translating…"
+msgstr "Traduzindo…"
+
+
+# --- Added by add-v1703-translations.php (2026-06-14) ---
+
+msgid "Used in"
+msgstr "Usado em"
+
+msgid "WooCommerce · Checkout privacy"
+msgstr "WooCommerce · Privacidade do checkout"
+
+msgid "WooCommerce · Payment title (%s)"
+msgstr "WooCommerce · Título do pagamento (%s)"
+
+msgid "WooCommerce · Payment description"
+msgstr "WooCommerce · Descrição do pagamento"
+
+msgid "Custom"
+msgstr "Personalizado"
+
+msgid "Override UI strings not covered automatically (gateway titles, privacy text, plugin strings)."
+msgstr "Substituir strings da interface do usuário que não são cobertas automaticamente (títulos de gateway, texto de privacidade, strings do plugin)."
+
+
+# --- Added by add-v1710-translations.php (2026-06-16) ---
+
+msgid "Reconcile inconsistent translation links (dashboard list, switcher, cart/checkout swap)."
+msgstr "Reconcilie links de tradução inconsistentes (lista do painel, seletor de idioma, troca de carrinho/checkout)."
+
+msgid "Rewrite [elementor-template id=\"X\"] shortcodes in translated posts to use the per-language template."
+msgstr "Reescreva os shortcodes [elementor-template id=\"X\"] em postagens traduzidas para usar o template por idioma."
+
+msgid "Re-translate SEO title, description, OG/Twitter for existing translations."
+msgstr "Re-traduza o título SEO, a descrição, OG/Twitter para traduções existentes."
+
+msgid "Re-translate WooCommerce product short descriptions (post excerpt)."
+msgstr "Re-traduza as descrições curtas dos produtos do WooCommerce (excerto do post)."
+
+msgid "Stop the router from prefixing custom plugin/API endpoints."
+msgstr "Impeça o roteador de prefixar endpoints de plugin/API personalizados."
+
+msgid "Fix Elementor Template Shortcodes"
+msgstr "Corrigir Shortcodes de Template do Elementor"
+
+msgid "Rewrites [elementor-template id=\"X\"] shortcodes embedded in translated posts so each id points at the per-language translated template instead of the source-language one. Run \"Scan\" to preview which posts would change, then \"Fix Shortcodes\"."
+msgstr "Reescreve os shortcodes [elementor-template id=\"X\"] incorporados em postagens traduzidas para que cada id aponte para o template traduzido por idioma em vez do template na língua original. Execute \"Scan\" para visualizar quais postagens mudariam, depois \"Fix Shortcodes\"."
+
+msgid "Fix Shortcodes"
+msgstr "Corrigir Shortcodes"
+
+msgid "Fixed"
+msgstr "Corrigido"
+
+msgid "Would fix"
+msgstr "Corrigiria"
+
+msgid "No translated posts have source-language template shortcodes."
+msgstr "Nenhuma postagem traduzida possui shortcodes de template na língua original."
+
+msgid "translated post(s) with [elementor-template id=\"X\"] shortcodes updated to the per-language template."
+msgstr "postagem(ns) traduzida(s) com shortcodes [elementor-template id=\"X\"] atualizados para o template por idioma."
+
+msgid "Reload the affected pages to see the result."
+msgstr "Recarregue as páginas afetadas para ver o resultado."
+
+msgid "Rewrite Elementor template shortcodes now? This updates post content and is safe to run multiple times."
+msgstr "Reescrever shortcodes de template do Elementor agora? Isso atualiza o conteúdo do post e é seguro executar várias vezes."
+
+msgid "Reconciles translation links so the dashboard page list, language switcher, and the cart/checkout page swap all agree. Fixes translated pages that wrongly appear as their own source and links left inconsistent by older versions. Run \"Scan\" first to preview the number of inconsistencies, then \"Repair Links\"."
+msgstr "Reconcilia links de tradução para que a lista da página do painel, o seletor de idioma e a troca da página de carrinho/checkout concordem. Corrige páginas traduzidas que aparecem erroneamente como sua própria fonte e links deixados inconsistentes por versões anteriores. Execute \"Scan\" primeiro para visualizar o número de inconsistências, depois \"Repair Links\"."
+
+msgid "Delete translations"
+msgstr "Excluir traduções"
+
+msgid "Permanently delete all translations of this page. The source page is kept. Cannot be undone."
+msgstr "Excluir permanentemente todas as traduções desta página. A página de origem é mantida. Não pode ser desfeito."
+
+msgid "Permanently delete (cannot be undone)"
+msgstr "Excluir permanentemente (não pode ser desfeito)"
+
+msgid "Delete selected translations"
+msgstr "Excluir traduções selecionadas"
+
+
+# --- Added by add-v1711-translations.php (2026-06-16) ---
+
+msgid "Delete page"
+msgstr "Excluir página"
+
+msgid "More actions"
+msgstr "Mais ações"
+
+msgid "Delete translations (%d)"
+msgstr "Excluir traduções (%d)"
+
+# --- Automatically added for v1.8.0 release ---
+
+msgid "Meep AI Translator"
+msgstr "Meep AI Translator"
+
+msgid "Meep Translator"
+msgstr "Meep Translator"
+
+msgid "History"
+msgstr "Histórico"
+
+msgid "Activate License"
+msgstr "Ativar Licença"
+
+msgid "License activation failed."
+msgstr "A ativação da licença falhou."
+
+msgid "Please enter a valid license key."
+msgstr "Por favor, insira uma chave de licença válida."
+
+msgid "License Status: Active"
+msgstr "Status da Licença: Ativa"
+
+msgid "Expires:"
+msgstr "Expira:"
+
+msgid "License Status: Expired"
+msgstr "Status da Licença: Expirada"
+
+msgid "Please renew your license or enter a new license key below."
+msgstr "Por favor, renove sua licença ou insira uma nova chave de licença abaixo."
+
+msgid "Enter Your License Key"
+msgstr "Insira Sua Chave de Licença"
+
+msgid "Enter the license key you received after purchasing the PRO version:"
+msgstr "Insira a chave de licença que você recebeu após a compra da versão PRO:"
+
+msgid "License Key"
+msgstr "Chave de Licença"
+
+msgid "Your license key was sent to your email after purchase."
+msgstr "Sua chave de licença foi enviada para seu e-mail após a compra."
+
+msgid "Go to Account"
+msgstr "Ir para Conta"
+
+msgid "Need Help?"
+msgstr "Precisa de Ajuda?"
+
+msgid "Check your email for the license key (it was sent after purchase)"
+msgstr "Verifique seu e-mail para a chave de licença (ela foi enviada após a compra)"
+
+msgid "Make sure you're using the PRO version of the plugin"
+msgstr "Certifique-se de que você está usando a versão PRO do plugin"
+
+msgid "The license key starts with \"sk_\" followed by 32 characters"
+msgstr "A chave de licença começa com \"sk_\" seguida de 32 caracteres"
+
+msgid "Contact support if you need assistance"
+msgstr "Entre em contato com o suporte se precisar de assistência"
+
+msgid "Alternative Method"
+msgstr "Método Alternativo"
+
+msgid "If direct activation doesn't work, you can also:"
+msgstr "Se a ativação direta não funcionar, você também pode:"
+
+msgid "Go to Plugins → Installed Plugins"
+msgstr "Ir para Plugins → Plugins Instalados"
+
+msgid "Deactivate \"Meep AI Translator PRO\""
+msgstr "Desativar \"Meep AI Translator PRO\""
+
+msgid "Activate it again - the license activation dialog will appear"
+msgstr "Ative-o novamente - a caixa de diálogo de ativação da licença aparecerá"
+
+msgid "Cached Translations"
+msgstr "Traduções em Cache"
+
+msgid "Recent API Calls"
+msgstr "Chamadas de API Recentes"
+
+msgid "Active Model"
+msgstr "Modelo Ativo"
+
+msgid "Pages Available"
+msgstr "Páginas Disponíveis"
+
+msgid "Translate Content"
+msgstr "Traduzir Conteúdo"
+
+msgid "-- Select a Page --"
+msgstr "-- Selecione uma Página --"
+
+msgid "Only pages with Elementor content are shown"
+msgstr "Apenas páginas com conteúdo do Elementor são exibidas"
+
+msgid "Leave as auto-detect for automatic language detection"
+msgstr "Deixe como auto-detectar para detecção automática de idioma"
+
+msgid "Select Content to Translate"
+msgstr "Selecione o Conteúdo para Traduzir"
+
+msgid "Total strings:"
+msgstr "Total de strings:"
+
+msgid "💰 Estimate Cost"
+msgstr "💰 Estimar Custo"
+
+msgid "Translate Selected"
+msgstr "Traduzir Selecionados"
+
+msgid "Monthly Usage Statistics"
+msgstr "Estatísticas de Uso Mensal"
+
+msgid "🔄 Refresh Stats"
+msgstr "🔄 Atualizar Estatísticas"
+
+msgid "Rated 5 out of 5 on WordPress.org"
+msgstr "Avaliado em 5 de 5 no WordPress.org"
+
+msgid "⚠️ API Key Required"
+msgstr "⚠️ Chave da API Necessária"
+
+msgid "To start translating your Elementor content, you need to configure your OpenAI API key."
+msgstr "Para começar a traduzir seu conteúdo do Elementor, você precisa configurar sua chave da API OpenAI."
+
+msgid "Configure API Key"
+msgstr "Configurar Chave da API"
+
+msgid "How to get your API key:"
+msgstr "Como obter sua chave da API:"
+
+msgid "Visit"
+msgstr "Visite"
+
+msgid "Sign in with your OpenAI account"
+msgstr "Faça login na sua conta OpenAI"
+
+msgid "Click \"Create new secret key\""
+msgstr "Clique em \"Criar nova chave secreta\""
+
+msgid "Copy the key and paste it in the settings page"
+msgstr "Copie a chave e cole na página de configurações"
+
+msgid "English"
+msgstr "Inglês"
+
+msgid "Spanish"
+msgstr "Espanhol"
+
+msgid "French"
+msgstr "Francês"
+
+msgid "German"
+msgstr "Alemão"
+
+msgid "Italian"
+msgstr "Italiano"
+
+msgid "Portuguese"
+msgstr "Português"
+
+msgid "Russian"
+msgstr "Russo"
+
+msgid "Ukrainian"
+msgstr "Ucraniano"
+
+msgid "Belarusian"
+msgstr "Bielorrusso"
+
+msgid "Czech"
+msgstr "Tcheco"
+
+msgid "Polish"
+msgstr "Polonês"
+
+msgid "Vietnamese"
+msgstr "Vietnamita"
+
+msgid "Chinese (Simplified)"
+msgstr "Chinês (Simplificado)"
+
+msgid "Japanese"
+msgstr "Japonês"
+
+msgid "Korean"
+msgstr "Coreano"
+
+msgid "Arabic"
+msgstr "Árabe"
+
+msgid "Hebrew"
+msgstr "Hebraico"
+
+msgid "Hindi"
+msgstr "Hindi"
+
+msgid "Turkish"
+msgstr "Turco"
+
+msgid "Dutch"
+msgstr "Holandês"
+
+msgid "Swedish"
+msgstr "Sueco"
+
+msgid "Norwegian"
+msgstr "Norueguês"
+
+msgid "Danish"
+msgstr "Dinamarquês"
+
+msgid "Finnish"
+msgstr "Finlandês"
+
+msgid "System"
+msgstr "Sistema"
+
+msgid "Ready"
+msgstr "Pronto"
+
+msgid "step.01 - language system"
+msgstr "passo.01 - sistema de idiomas"
+
+msgid "Choose your multilingual"
+msgstr "Escolha seu"
+
+msgid "engine"
+msgstr "motor multilíngue"
+
+msgid "Meep AI Translator includes a lightning-fast native multilingual engine or seamlessly connects to existing WordPress translation plugins."
+msgstr "O Meep AI Translator inclui um motor multilíngue nativo ultrarrápido ou se conecta perfeitamente a plugins de tradução do WordPress existentes."
+
+msgid "Recommended"
+msgstr "Recomendado"
+
+msgid "Meep Built-in System"
+msgstr "Sistema Integrado do Meep"
+
+msgid "Zero extra plugins. Clean /es/ subdirectories, SEO hreflang tags, automatic URL routing, and built-in language switchers."
+msgstr "Zero plugins extras. Subdiretórios limpos /es/, tags hreflang SEO, roteamento automático de URLs e alternadores de idioma embutidos."
+
+msgid "Active & Detected"
+msgstr "Ativo & Detectado"
+
+msgid "Installed"
+msgstr "Instalado"
+
+msgid "Not installed"
+msgstr "Não instalado"
+
+msgid "Use Polylang to manage language taxonomies, translations relationships, and switcher widgets."
+msgstr "Use o Polylang para gerenciar taxonomias de idioma, relacionamentos de traduções e widgets de alternador."
+
+msgid "Connect directly to WPML translation management and ICL language tables."
+msgstr "Conecte-se diretamente à gestão de traduções do WPML e às tabelas de idiomas ICL."
+
+msgid "Continue to Languages"
+msgstr "Continuar para Idiomas"
+
+msgid "step.02 - languages"
+msgstr "passo.02 - idiomas"
+
+msgid "Pick the languages your site"
+msgstr "Escolha os idiomas que seu site"
+
+msgid "speaks"
+msgstr "fala"
+
+msgid "Add 100+ languages in minutes - no copy-paste, no manual work. Choose your default and targets, and AI handles the rest."
+msgstr "Adicione mais de 100 idiomas em minutos - sem copiar e colar, sem trabalho manual. Escolha seu padrão e alvos, e a IA cuida do resto."
+
+msgid "detected"
+msgstr "detectado"
+
+msgid "Your language setup is already configured. Meep will connect to it automatically."
+msgstr "Sua configuração de idioma já está configurada. O Meep se conectará automaticamente a ela."
+
+msgid "Default language"
+msgstr "Idioma padrão"
+
+msgid "site.locale"
+msgstr "site.locale"
+
+msgid "The original content language. Everything else translates from this."
+msgstr "O idioma original do conteúdo. Tudo o mais é traduzido a partir disso."
+
+msgid "Target languages"
+msgstr "Idiomas alvo"
+
+msgid "Popular languages"
+msgstr "Idiomas populares"
+
+msgid "Add other languages"
+msgstr "Adicionar outros idiomas"
+
+msgid "Search for a language..."
+msgstr "Pesquisar um idioma..."
+
+msgid "Back"
+msgstr "Voltar"
+
+msgid "Connect & continue"
+msgstr "Conectar & continuar"
+
+msgid "Set up my site"
+msgstr "Configurar meu site"
+
+msgid "step.03 - installing"
+msgstr "passo.03 - instalando"
+
+msgid "Configuring your site"
+msgstr "Configurando seu site"
+
+msgid "Setting up multilingual support — this takes just a moment."
+msgstr "Configurando suporte multilíngue — isso leva apenas um momento."
+
+msgid "Language management system initialized"
+msgstr "Sistema de gerenciamento de idiomas inicializado"
+
+msgid "Applying language settings & taxonomies"
+msgstr "Aplicando configurações de idioma & taxonomias"
+
+msgid "in progress"
+msgstr "em progresso"
+
+msgid "Generating hreflang and URL prefixes"
+msgstr "Gerando hreflang e prefixos de URL"
+
+msgid "pending"
+msgstr "pendente"
+
+msgid "step.04 - ready"
+msgstr "passo.04 - pronto"
+
+msgid "You're ready to ship"
+msgstr "Você está pronto para enviar"
+
+msgid "multilingual"
+msgstr "multilíngue"
+
+msgid "Your site is configured. Translate any page or post and keep Elementor layouts intact."
+msgstr "Seu site está configurado. Traduza qualquer página ou post e mantenha os layouts do Elementor intactos."
+
+msgid "session.summary"
+msgstr "sessão.resumo"
+
+msgid "Setup Time"
+msgstr "Tempo de Configuração"
+
+msgid "Help improve Meep AI Translator"
+msgstr "Ajude a melhorar o Meep AI Translator"
+
+msgid "Share anonymous usage data to help us improve the plugin. No personal data is collected."
+msgstr "Compartilhe dados de uso anônimos para nos ajudar a melhorar o plugin. Nenhum dado pessoal é coletado."
+
+msgid "Translate your first page"
+msgstr "Traduza sua primeira página"
+
+msgid "You can change these settings at any time from"
+msgstr "Você pode alterar essas configurações a qualquer momento em"
+
+msgid "default"
+msgstr "padrão"
+
+msgid "All Set!"
+msgstr "Tudo Pronto!"
+
+msgid "Moving to next step..."
+msgstr "Indo para o próximo passo..."
+
+msgid "Setup failed. Please try again."
+msgstr "Configuração falhou. Por favor, tente novamente."
+
+msgid "Network error. Please try again."
+msgstr "Erro de rede. Por favor, tente novamente."
+
+msgid "Setup Failed"
+msgstr "Configuração Falhou"
+
+msgid "Try again"
+msgstr "Tente novamente"
+
+msgid "Translating your homepage…"
+msgstr "Traduzindo sua página inicial…"
+
+msgid "Homepage translated!"
+msgstr "Página inicial traduzida!"
+
+msgid "Homepage skipped (too large)"
+msgstr "Página inicial ignorada (muito grande)"
+
+msgid "Security check failed."
+msgstr "Verificação de segurança falhou."
+
+msgid "Language code and name are required."
+msgstr "O código e o nome do idioma são obrigatórios."
+
+msgid "Language added."
+msgstr "Idioma adicionado."
+
+msgid "Language already exists or could not be added."
+msgstr "O idioma já existe ou não pôde ser adicionado."
+
+msgid "Language removed."
+msgstr "Idioma removido."
+
+msgid "Cannot remove this language."
+msgstr "Não é possível remover este idioma."
+
+msgid "Default language updated."
+msgstr "Idioma padrão atualizado."
+
+msgid "Could not set default language."
+msgstr "Não foi possível definir o idioma padrão."
+
+msgid "Built-in language system disabled."
+msgstr "Sistema de idioma embutido desativado."
+
+msgid "Invalid operation."
+msgstr "Operação inválida."
+
+msgid "License activated successfully!"
+msgstr "Licença ativada com sucesso!"
+
+msgid "Your plan has been upgraded."
+msgstr "Seu plano foi atualizado."
+
+msgid "Almost there!"
+msgstr "Quase lá!"
+
+msgid "Please check your email and click the confirmation link to complete the license activation."
+msgstr "Por favor, verifique seu e-mail e clique no link de confirmação para concluir a ativação da licença."
+
+msgid "Meep AI Translator Dashboard"
+msgstr "Painel do Meep AI Translator"
+
+msgid "Required Plugins Missing"
+msgstr "Plugins Requeridos Ausentes"
+
+msgid "The Meep AI Translator plugin requires the following plugins to be installed and activated:"
+msgstr "O plugin Meep AI Translator requer que os seguintes plugins estejam instalados e ativados:"
+
+msgid "Install now"
+msgstr "Instalar agora"
+
+msgid "Please update Elementor to version 3.0 or higher"
+msgstr "Por favor, atualize o Elementor para a versão 3.0 ou superior"
+
+msgid "Multilingual Plugin"
+msgstr "Plugin Multilíngue"
+
+msgid "Install one of the following:"
+msgstr "Instale um dos seguintes:"
+
+msgid "free"
+msgstr "gratuito"
+
+msgid "premium"
+msgstr "premium"
+
+msgid "Please contact your hosting provider to upgrade PHP"
+msgstr "Por favor, entre em contato com seu provedor de hospedagem para atualizar o PHP"
+
+msgid "After installing the required plugins and setting up the languages, please refresh this page."
+msgstr "Após instalar os plugins necessários e configurar os idiomas, por favor, atualize esta página."
+
+msgid "Translation Dashboard"
+msgstr "Painel de Tradução"
+
+msgid "%s is installed - Languages needed"
+msgstr "%s está instalado - Idiomas necessários"
+
+msgid "No languages have been configured yet. You need at least 2 languages to use the translation feature."
+msgstr "Nenhum idioma foi configurado ainda. Você precisa de pelo menos 2 idiomas para usar o recurso de tradução."
+
+msgid "Only 1 language is configured. You need at least 2 languages to translate between."
+msgstr "Apenas 1 idioma está configurado. Você precisa de pelo menos 2 idiomas para traduzir entre."
+
+msgid "Set up languages in %s"
+msgstr "Configurar idiomas em %s"
+
+msgid "After setting up the languages, please refresh this page."
+msgstr "Após configurar os idiomas, por favor, atualize esta página."
+
+msgid "Monthly word limit reached (100% used)"
+msgstr "Limite mensal de palavras atingido (100% utilizado)"
+
+msgid "You've used %d%% of your free monthly word quota (%s / %s words)"
+msgstr "Você usou %d%% da sua cota mensal gratuita de palavras (%s / %s palavras)"
+
+msgid "Upgrade to Pro to unlock unlimited words, bulk site translation, automated synchronization, and priority AI processing."
+msgstr "Faça upgrade para Pro para desbloquear palavras ilimitadas, tradução em massa do site, sincronização automatizada e processamento prioritário de IA."
+
+msgid "Dismiss notice"
+msgstr "Descartar aviso"
+
+msgid "Your site is translation-ready"
+msgstr "Seu site está pronto para tradução"
+
+msgid "No translations yet. Select your pages below and hit Translate — results appear here."
+msgstr "Nenhuma tradução ainda. Selecione suas páginas abaixo e clique em Traduzir — os resultados aparecem aqui."
+
+msgid "Translate all pages →"
+msgstr "Traduzir todas as páginas →"
+
+msgid "Or use the bar below to translate page by page."
+msgstr "Ou use a barra abaixo para traduzir página por página."
+
+msgid "Select languages"
+msgstr "Selecionar idiomas"
+
+msgid "Translate your entire site at once"
+msgstr "Traduzir todo o seu site de uma vez"
+
+msgid "Translate All Site"
+msgstr "Traduzir Todo o Site"
+
+msgid "AI is preparing your translations…"
+msgstr "A IA está preparando suas traduções…"
+
+msgid "Products"
+msgstr "Produtos"
+
+msgid "Elements & Templates"
+msgstr "Elementos & Modelos"
+
+msgid "Custom Post Types"
+msgstr "Tipos de Post Personalizados"
+
+msgid "translations selected"
+msgstr "traduções selecionadas"
+
+msgid "Publish selected"
+msgstr "Publicar selecionados"
+
+msgid "Retranslate selected"
+msgstr "Retraduzir selecionados"
+
+msgid "Expand/Collapse"
+msgstr "Expandir/Colapsar"
+
+msgid "Post"
+msgstr "Postagem"
+
+msgid "Product Type"
+msgstr "Tipo de Produto"
+
+msgid "Element / Template"
+msgstr "Elemento / Modelo"
+
+msgid "Element Type"
+msgstr "Tipo de Elemento"
+
+msgid "Item"
+msgstr "Item"
+
+msgid "Enjoying AI Translator?"
+msgstr "Gostando do Meep AI Translator?"
+
+msgid "You've successfully completed several translations! If our plugin is saving you time, could you take 30 seconds to rate us on WordPress.org? It helps us keep improving the plugin."
+msgstr "Você completou várias traduções com sucesso! Se nosso plugin está economizando seu tempo, você poderia levar 30 segundos para nos avaliar no WordPress.org? Isso nos ajuda a continuar melhorando o plugin."
+
+msgid "Leave a 5-Star Review"
+msgstr "Deixar uma Avaliação de 5 Estrelas"
+
+msgid "Remind me later"
+msgstr "Lembrar-me mais tarde"
+
+msgid "Already reviewed / Dismiss"
+msgstr "Já revisado / Descartar"
+
+msgid "Pending Review"
+msgstr "Revisão Pendente"
+
+msgid "Scheduled"
+msgstr "Agendado"
+
+msgid "Built with Elementor - full translation support"
+msgstr "Construído com Elementor - suporte total à tradução"
+
+msgid "Gutenberg"
+msgstr "Gutenberg"
+
+msgid "Built with Block Editor - can be translated"
+msgstr "Construído com o Editor de Blocos - pode ser traduzido"
+
+msgid "Classic"
+msgstr "Clássico"
+
+msgid "Classic Editor content - can be translated"
+msgstr "Conteúdo do Editor Clássico - pode ser traduzido"
+
+msgid "WooCommerce product - title, description, attributes and meta are translated"
+msgstr "Produto WooCommerce - título, descrição, atributos e meta são traduzidos"
+
+msgid "Unknown"
+msgstr "Desconhecido"
+
+msgid "No translatable content detected"
+msgstr "Nenhum conteúdo traduzível detectado"
+
+msgid "Built with Elementor - can be translated"
+msgstr "Construído com Elementor - pode ser traduzido"
+
+msgid "Standard WordPress page - limited translation support"
+msgstr "Página padrão do WordPress - suporte limitado à tradução"
+
+msgid "No pages or posts found."
+msgstr "Nenhuma página ou post encontrado."
+
+msgid "Multilingual plugin not active."
+msgstr "Plugin multilíngue não ativo."
+
+msgid "Header/Footer"
+msgstr "Cabeçalho/Rodapé"
+
+msgid "Form"
+msgstr "Formulário"
+
+msgid "Expand translations"
+msgstr "Expandir traduções"
+
+msgid "Select this translation"
+msgstr "Selecionar esta tradução"
+
+msgid "Translation of"
+msgstr "Tradução de"
+
+msgid "Publish this translation"
+msgstr "Publicar esta tradução"
+
+msgid "Publish"
+msgstr "Publicar"
+
+msgid "Review"
+msgstr "Revisar"
+
+msgid "Re-run translation from the source — replaces this translation (e.g. after adding Exclude Words)"
+msgstr "Reexecutar tradução da fonte — substitui esta tradução (por exemplo, após adicionar Palavras a Excluir)"
+
+msgid "Retranslate"
+msgstr "Retraduzir"
+
+msgid "Est: ~%d words"
+msgstr "Est: ~%d palavras"
+
+msgid "%d languages"
+msgstr "%d idiomas"
+
+msgid "Translation queued, waiting to start"
+msgstr "Tradução na fila, aguardando para iniciar"
+
+msgid "Translation paused: word limit reached"
+msgstr "Tradução pausada: limite de palavras atingido"
+
+msgid "Translation failed to start."
+msgstr "Falha ao iniciar a tradução."
+
+msgid "Translation is already in progress. Please wait for completion."
+msgstr "A tradução já está em andamento. Por favor, aguarde a conclusão."
+
+msgid "Checking active translation status..."
+msgstr "Verificando status de tradução ativa..."
+
+msgid "Processing translation"
+msgstr "Processando tradução"
+
+msgid "Completed"
+msgstr "Concluído"
+
+msgid "Please select at least one page to translate."
+msgstr "Por favor, selecione pelo menos uma página para traduzir."
+
+msgid "Select at least one page to start translation"
+msgstr "Selecione pelo menos uma página para iniciar a tradução"
+
+msgid "Select target languages to start translation"
+msgstr "Selecione idiomas de destino para iniciar a tradução"
+
+msgid "Network error during pre-analysis"
+msgstr "Erro de rede durante a pré-análise"
+
+msgid "Pre-analysis failed"
+msgstr "Pré-análise falhou"
+
+msgid "AI is preparing your translations"
+msgstr "A IA está preparando suas traduções"
+
+msgid "Sending content for translation"
+msgstr "Enviando conteúdo para tradução"
+
+msgid "Processing the data"
+msgstr "Processando os dados"
+
+msgid "Analyzing page structure"
+msgstr "Analisando a estrutura da página"
+
+msgid "Preparing translation request"
+msgstr "Preparando solicitação de tradução"
+
+msgid "Processing translation results"
+msgstr "Processando resultados da tradução"
+
+msgid "Applying translations to content"
+msgstr "Aplicando traduções ao conteúdo"
+
+msgid "Finalizing page creation"
+msgstr "Finalizando a criação da página"
+
+msgid "Optimizing translated content"
+msgstr "Otimizando conteúdo traduzido"
+
+msgid "Completing translation process"
+msgstr "Concluindo o processo de tradução"
+
+msgid "Not Enough Words"
+msgstr "Palavras insuficientes"
+
+msgid "Insufficient words for this translation."
+msgstr "Palavras insuficientes para esta tradução."
+
+msgid "Required"
+msgstr "Obrigatório"
+
+msgid "Available"
+msgstr "Disponível"
+
+msgid "Missing"
+msgstr "Faltando"
+
+msgid "Reduce your selection or upgrade your plan to proceed."
+msgstr "Reduza sua seleção ou faça upgrade para o seu plano para prosseguir."
+
+msgid "Enjoying Meep AI Translator? A quick review helps us a lot!"
+msgstr "Está gostando do Meep AI Translator? Uma rápida avaliação nos ajuda muito!"
+
+msgid "No thanks"
+msgstr "Não, obrigado"
+
+msgid "Choose pages to translate"
+msgstr "Escolha páginas para traduzir"
+
+msgid "Selected: %d page"
+msgstr "Selecionado: %d página"
+
+msgid "Selected: %d pages"
+msgstr "Selecionado: %d páginas"
+
+msgid "Ready: %d translation job"
+msgstr "Pronto: %d trabalho de tradução"
+
+msgid "Ready: %d translation jobs"
+msgstr "Pronto: %d trabalhos de tradução"
+
+msgid "All selected pages are fully translated"
+msgstr "Todas as páginas selecionadas estão totalmente traduzidas"
+
+msgid "Limit reached"
+msgstr "Limite atingido"
+
+msgid "Resets %s"
+msgstr "Redefine %s"
+
+msgid "Unlimited words"
+msgstr "Palavras ilimitadas"
+
+msgid "used this month"
+msgstr "usadas este mês"
+
+msgid "Upgrade for instant access"
+msgstr "Faça upgrade para acesso instantâneo"
+
+msgid "You're almost out of words"
+msgstr "Você está quase sem palavras"
+
+msgid "Upgrade →"
+msgstr "Upgrade →"
+
+msgid "Your license has expired. You have been downgraded to the Free plan."
+msgstr "Sua licença expirou. Você foi rebaixado para o plano Gratuito."
+
+msgid "Expired"
+msgstr "Expirado"
+
+msgid "%1$s Plan: %2$s words included"
+msgstr "%1$s Plano: %2$s palavras incluídas"
+
+msgid "Extra %s words pack activated"
+msgstr "Pacote extra de %s palavras ativado"
+
+msgid "bonus"
+msgstr "bônus"
+
+msgid "Renew License"
+msgstr "Renovar Licença"
+
+msgid "Meep AI Translator PRO"
+msgstr "Meep AI Translator PRO"
+
+msgid "Translate your site, %1$spage by page%2$s."
+msgstr "Traduza seu site, %1$spágina por página%2$s."
+
+msgid "Manage translations for your pages and posts. Select source content to create bulk translations."
+msgstr "Gerencie traduções para suas páginas e posts. Selecione o conteúdo de origem para criar traduções em massa."
+
+msgid "dashboard"
+msgstr "painel"
+
+msgid "settings"
+msgstr "configurações"
+
+msgid "Set up languages, switcher behavior, SEO translation, WooCommerce options, glossary, and advanced rules."
+msgstr "Configure idiomas, comportamento do switcher, tradução SEO, opções do WooCommerce, glossário e regras avançadas."
+
+msgid "translation history"
+msgstr "histórico de tradução"
+
+msgid "Track completed translations, monitor usage trends, and inspect your recent translation records."
+msgstr "Acompanhe traduções concluídas, monitore tendências de uso e inspecione seus registros de tradução recentes."
+
+msgid "translate all"
+msgstr "traduzir tudo"
+
+msgid "Select post types and target languages, estimate words, and launch or schedule large translation batches."
+msgstr "Selecione tipos de post e idiomas-alvo, estime palavras e inicie ou agende grandes lotes de tradução."
+
+msgid "review translation"
+msgstr "revisar tradução"
+
+msgid "Inspect each translated segment side by side with the source. Click any cell to edit and save changes directly."
+msgstr "Inspecione cada segmento traduzido lado a lado com a fonte. Clique em qualquer célula para editar e salvar alterações diretamente."
+
+msgid "Support & Resources"
+msgstr "Suporte & Recursos"
+
+msgid "We continuously improve our translation algorithms. If you have questions, feedback, or need help with any page, we are here for you."
+msgstr "Estamos sempre melhorando nossos algoritmos de tradução. Se você tiver perguntas, feedback ou precisar de ajuda com qualquer página, estamos aqui para você."
+
+msgid "Feedback & Support"
+msgstr "Feedback e Suporte"
+
+msgid "Love Our Plugin?"
+msgstr "Ama nosso Plugin?"
+
+msgid "If you enjoy using Meep AI Translator, please take a moment to rate us on WordPress.org! Your feedback helps us continue improving the plugin."
+msgstr "Se você gosta de usar o Meep AI Translator, por favor, reserve um momento para nos avaliar no WordPress.org! Seu feedback nos ajuda a continuar melhorando o plugin."
+
+msgid "Translation cache: %d entries cleared"
+msgstr "Cache de tradução: %d entradas limpas"
+
+msgid "Usage statistics: %d entries cleared"
+msgstr "Estatísticas de uso: %d entradas limpas"
+
+msgid "WordPress options cleared"
+msgstr "Opções do WordPress limpas"
+
+msgid "Debug logs cleared"
+msgstr "Logs de depuração limpos"
+
+msgid "✅ Translation History Cleared!"
+msgstr "✅ Histórico de Tradução Limpo!"
+
+msgid "Clear Translation History"
+msgstr "Limpar Histórico de Tradução"
+
+msgid "⚠️ Warning: Destructive Action"
+msgstr "⚠️ Aviso: Ação Destrutiva"
+
+msgid "This action will permanently delete:"
+msgstr "Esta ação irá deletar permanentemente:"
+
+msgid "All cached translations (to force re-translation)"
+msgstr "Todas as traduções em cache (para forçar re-tradução)"
+
+msgid "All usage statistics and word counts"
+msgstr "Todas as estatísticas de uso e contagens de palavras"
+
+msgid "Cooldown timers and limits"
+msgstr "Tempos de espera e limites"
+
+msgid "Debug logs and temporary data"
+msgstr "Logs de depuração e dados temporários"
+
+msgid "⚠️ This is useful for testing but will increase API costs as translations will not be cached."
+msgstr "⚠️ Isso é útil para testes, mas aumentará os custos da API, pois as traduções não serão armazenadas em cache."
+
+msgid "Current Statistics"
+msgstr "Estatísticas Atuais"
+
+msgid "entries"
+msgstr "entradas"
+
+msgid "Usage Records"
+msgstr "Registros de Uso"
+
+msgid "records"
+msgstr "registros"
+
+msgid "Words This Month"
+msgstr "Palavras Este Mês"
+
+msgid "Cooldown Status"
+msgstr "Status do Tempo de Espera"
+
+msgid "Active (%s remaining)"
+msgstr "Ativo (%s restantes)"
+
+msgid "Not active"
+msgstr "Não ativo"
+
+msgid "Are you ABSOLUTELY SURE you want to delete ALL translation history? This cannot be undone!"
+msgstr "Você TEM CERTEZA ABSOLUTA de que deseja deletar TODO o histórico de traduções? Isso não pode ser desfeito!"
+
+msgid "Clear All Translation History"
+msgstr "Limpar Todo o Histórico de Tradução"
+
+msgid "This is a temporary debug tool to help test translations. Use with caution!"
+msgstr "Esta é uma ferramenta de depuração temporária para ajudar a testar traduções. Use com cautela!"
+
+msgid "💡 What happens after clearing?"
+msgstr "💡 O que acontece após limpar?"
+
+msgid "You can immediately start new translations"
+msgstr "Você pode imediatamente começar novas traduções"
+
+msgid "Cooldown period will be removed"
+msgstr "O período de espera será removido"
+
+msgid "Word count limit resets to 0"
+msgstr "O limite de contagem de palavras será redefinido para 0"
+
+msgid "All translations will be fetched from OpenAI API again (costs money)"
+msgstr "Todas as traduções serão buscadas novamente da API OpenAI (custa dinheiro)"
+
+msgid "Previously translated pages remain unchanged"
+msgstr "Páginas traduzidas anteriormente permanecem inalteradas"
+
+msgid "Languages Configured"
+msgstr "Idiomas Configurados"
+
+msgid "Language Switcher"
+msgstr "Mudador de Idioma"
+
+msgid "AI Translator - Setup Checklist"
+msgstr "AI Translator - Lista de Verificação de Configuração"
+
+msgid "%1$d of %2$d steps completed"
+msgstr "%1$d de %2$d etapas concluídas"
+
+msgid "Go to AI Translator Dashboard"
+msgstr "Ir para o Painel do AI Translator"
+
+msgid "No supported forms or filters were found on this site."
+msgstr "Nenhum formulário ou filtro suportado foi encontrado neste site."
+
+msgid "Detected — %s. Click \"Auto-translate strings\" to translate them into every language."
+msgstr "Detectado — %s. Clique em \"Traduzir strings automaticamente\" para traduzi-las para todos os idiomas."
+
+msgid "You do not have permission to perform this action."
+msgstr "Você não tem permissão para realizar esta ação."
+
+msgid "No published pages or posts found."
+msgstr "Nenhuma página ou post publicado encontrado."
+
+msgid "Invalid page ID."
+msgstr "ID da página inválido."
+
+msgid "No Elementor data found for this page."
+msgstr "Nenhum dado do Elementor encontrado para esta página."
+
+msgid "Invalid Elementor data format."
+msgstr "Formato de dado do Elementor inválido."
+
+msgid "No translatable content found."
+msgstr "Nenhum conteúdo traduzível encontrado."
+
+msgid "Word count: %1$d words (%2$d elements)"
+msgstr "Contagem de palavras: %1$d palavras (%2$d elementos)"
+
+msgid "Widget parser not available."
+msgstr "Analisador de widget não disponível."
+
+msgid "No Elementor data found."
+msgstr "Nenhum dado do Elementor encontrado."
+
+msgid "Failed to decode Elementor data."
+msgstr "Falha ao decodificar os dados do Elementor."
+
+msgid "Gutenberg parser not available."
+msgstr "Analisador do Gutenberg não disponível."
+
+msgid "Classic parser not available."
+msgstr "Analisador clássico não disponível."
+
+msgid "This page does not contain any translatable content. Please ensure the page has content created with Elementor, Gutenberg (Block Editor), or Classic Editor."
+msgstr "Esta página não contém nenhum conteúdo traduzível. Por favor, verifique se a página possui conteúdo criado com Elementor, Gutenberg (Editor de Blocos) ou Editor Clássico."
+
+msgid "No translatable content found on this page."
+msgstr "Nenhum conteúdo traduzível encontrado nesta página."
+
+msgid "Target language is required."
+msgstr "O idioma de destino é obrigatório."
+
+msgid "Please configure your OpenAI API key in the settings."
+msgstr "Por favor, configure sua chave da API OpenAI nas configurações."
+
+msgid "Translation failed. Please check the logs for details."
+msgstr "Falha na tradução. Por favor, verifique os logs para detalhes."
+
+msgid "Translation completed successfully! %1$d words translated in %2$s seconds."
+msgstr "Tradução concluída com sucesso! %1$d palavras traduzidas em %2$s segundos."
+
+msgid "You do not have permission to view statistics."
+msgstr "Você não tem permissão para visualizar estatísticas."
+
+msgid "You do not have permission to clear cache."
+msgstr "Você não tem permissão para limpar o cache."
+
+msgid "Cache cleared successfully! %d entries removed."
+msgstr "Cache limpo com sucesso! %d entradas removidas."
+
+msgid "You do not have permission to view cache statistics."
+msgstr "Você não tem permissão para visualizar estatísticas de cache."
+
+msgid "Permission denied."
+msgstr "Permissão negada."
+
+msgid "Missing page ID."
+msgstr "ID da página ausente."
+
+msgid "Page not found."
+msgstr "Página não encontrada."
+
+msgid "Page \"%s\" has been published successfully!"
+msgstr "Página \"%s\" foi publicada com sucesso!"
+
+msgid "API key is invalid or missing. Please check your settings."
+msgstr "A chave da API é inválida ou está ausente. Por favor, verifique suas configurações."
+
+msgid "API rate limit exceeded. Please wait a moment and try again."
+msgstr "Limite de taxa da API excedido. Por favor, aguarde um momento e tente novamente."
+
+msgid "API quota exceeded or billing issue. Please check your API account."
+msgstr "Cota da API excedida ou problema de cobrança. Por favor, verifique sua conta da API."
+
+msgid "Network connection error. Please check your internet connection and try again."
+msgstr "Erro de conexão de rede. Por favor, verifique sua conexão com a internet e tente novamente."
+
+msgid "Request timed out. The page might be too large. Try translating smaller sections."
+msgstr "Tempo limite da solicitação excedido. A página pode ser muito grande. Tente traduzir seções menores."
+
+msgid "Data format error. Please try refreshing the page and trying again."
+msgstr "Erro de formato de dados. Por favor, tente atualizar a página e tente novamente."
+
+msgid "Translation error: %s"
+msgstr "Erro de tradução: %s"
+
+msgid "Pages and languages are required."
+msgstr "Páginas e idiomas são obrigatórios."
+
+msgid "Content detector class not loaded. Please refresh the page."
+msgstr "Classe do detector de conteúdo não carregada. Por favor, atualize a página."
+
+msgid "Page ID %d not found."
+msgstr "ID da página %d não encontrado."
+
+msgid "Insufficient words available. This translation requires %1$s words, but you only have %2$s words left in your %3$s plan."
+msgstr "Palavras insuficientes disponíveis. Esta tradução requer %1$s palavras, mas você só tem %2$s palavras restantes em seu plano %3$s."
+
+msgid "Content detector is not available. Please reload the page and try again."
+msgstr "Detector de conteúdo não está disponível. Por favor, recarregue a página e tente novamente."
+
+msgid "Bulk translation queue is not available. Please reload the page and try again."
+msgstr "Fila de tradução em massa não está disponível. Por favor, recarregue a página e tente novamente."
+
+msgid "Translation engine is not available. Please reload the page and try again."
+msgstr "Motor de tradução não está disponível. Por favor, recarregue a página e tente novamente."
+
+msgid "Bulk translation started for %1$d pages to %2$d languages."
+msgstr "A tradução em massa começou para %1$d páginas em %2$d idiomas."
+
+msgid "Missing proxy_job_id."
+msgstr "Faltando proxy_job_id."
+
+msgid "Job ID is required."
+msgstr "O ID do trabalho é obrigatório."
+
+msgid "Translation paused successfully."
+msgstr "Tradução pausada com sucesso."
+
+msgid "Translation resumed successfully."
+msgstr "Tradução retomada com sucesso."
+
+msgid "Translation cancelled successfully."
+msgstr "Tradução cancelada com sucesso."
+
+msgid "You do not have permission to publish pages."
+msgstr "Você não tem permissão para publicar páginas."
+
+msgid "4 translations published successfully."
+msgstr "4 traduções publicadas com sucesso."
+
+msgid "Pages are required."
+msgstr "Páginas são obrigatórias."
+
+msgid "Translation queued and waiting to start..."
+msgstr "Tradução na fila e aguardando para começar..."
+
+msgid "Translation in progress... %d%% completed"
+msgstr "Tradução em andamento... %d%% concluído"
+
+msgid "Translation failed. Please check the error details."
+msgstr "A tradução falhou. Por favor, verifique os detalhes do erro."
+
+msgid "Translation was cancelled."
+msgstr "A tradução foi cancelada."
+
+msgid "Unknown status."
+msgstr "Status desconhecido."
+
+msgid "Cron triggered successfully."
+msgstr "Cron acionado com sucesso."
+
+msgid "You are in a monthly cooldown period. Your translation limit will reset in %d days. Upgrade your plan to continue translating immediately."
+msgstr "Você está em um período de espera mensal. Seu limite de tradução será redefinido em %d dias. Atualize seu plano para continuar traduzindo imediatamente."
+
+msgid "Word limit reached! You have used all %1$s words in your %2$s plan. Upgrade to continue or wait for the monthly reset period."
+msgstr "Limite de palavras atingido! Você usou todas as %1$s palavras no seu plano %2$s. Atualize para continuar ou aguarde o período de redefinição mensal."
+
+msgid "Not enough words remaining. This translation requires approximately %1$s words, but you only have %2$s words left in your %3$s plan."
+msgstr "Palavras restantes insuficientes. Esta tradução requer aproximadamente %1$s palavras, mas você só tem %2$s palavras restantes no seu plano %3$s."
+
+msgid "Built-in language system is not active."
+msgstr "O sistema de idiomas embutido não está ativo."
+
+msgid "Cannot translate to the default language."
+msgstr "Não é possível traduzir para o idioma padrão."
+
+msgid "Menus translated and assigned for %s."
+msgstr "Menus traduzidos e atribuídos para %s."
+
+msgid "No translatable widget content found."
+msgstr "Nenhum conteúdo de widget traduzível encontrado."
+
+msgid "Widget content translated for %s: %d items."
+msgstr "Conteúdo do widget traduzido para %s: %d itens."
+
+msgid "No target language specified."
+msgstr "Nenhum idioma de destino especificado."
+
+msgid "Elementor is not active."
+msgstr "Elementor não está ativo."
+
+msgid "No multilingual system active."
+msgstr "Nenhum sistema multilíngue ativo."
+
+msgid "⏭ %s — already translated"
+msgstr "⏭ %s — já traduzido"
+
+msgid "✗ %s — %s"
+msgstr "✗ %s — %s"
+
+msgid "✓ %s → translated"
+msgstr "✓ %s → traduzido"
+
+msgid "No Elementor templates found to translate."
+msgstr "Nenhum modelo do Elementor encontrado para traduzir."
+
+msgid "No active Elementor templates found to translate."
+msgstr "Nenhum modelo ativo do Elementor encontrado para traduzir."
+
+msgid "No advanced Elementor templates found to translate."
+msgstr "Nenhum modelo avançado do Elementor encontrado para traduzir."
+
+msgid "%d template(s) to translate, %d already done."
+msgstr "%d modelo(s) para traduzir, %d já concluído."
+
+msgid "🔄 %s — re-translating (old translation removed)"
+msgstr "🔄 %s — retraduzindo (tradução antiga removida)"
+
+msgid "Elementor templates for %s: %d translated, %d skipped, %d errors."
+msgstr "Modelos do Elementor para %s: %d traduzido, %d pulado, %d erros."
+
+msgid "Review Translations"
+msgstr "Revisar Traduções"
+
+msgid "Saving…"
+msgstr "Salvando…"
+
+msgid "Saved"
+msgstr "Salvo"
+
+msgid "Save failed. Please try again."
+msgstr "Falha ao salvar. Por favor, tente novamente."
+
+msgid "You do not have permission to access this page."
+msgstr "Você não tem permissão para acessar esta página."
+
+msgid "Post not found."
+msgstr "Post não encontrado."
+
+msgid "Edit in WP"
+msgstr "Editar no WP"
+
+msgid "View Translation"
+msgstr "Ver Tradução"
+
+msgid "Working…"
+msgstr "Trabalhando…"
+
+msgid "Re-translate this page from the source? This refreshes the translation and may overwrite manual edits made here."
+msgstr "Re-traduzir esta página a partir da fonte? Isso atualiza a tradução e pode sobrescrever edições manuais feitas aqui."
+
+msgid "Action failed."
+msgstr "Ação falhou."
+
+msgid "No editable segments were found for this translation."
+msgstr "Nenhum segmento editável foi encontrado para esta tradução."
+
+msgid "Source"
+msgstr "Fonte"
+
+msgid "Translation (%s)"
+msgstr "Tradução (%s)"
+
+msgid "Click to edit"
+msgstr "Clique para editar"
+
+msgid "Missing parameters."
+msgstr "Parâmetros ausentes."
+
+msgid "Insufficient permissions for this post."
+msgstr "Permissões insuficientes para este post."
+
+msgid "Invalid field."
+msgstr "Campo inválido."
+
+msgid "Segment saved."
+msgstr "Segmento salvo."
+
+msgid "Classic parser unavailable."
+msgstr "Analisador clássico indisponível."
+
+msgid "Segment not found."
+msgstr "Segmento não encontrado."
+
+msgid "Gutenberg parser unavailable."
+msgstr "Analisador Gutenberg indisponível."
+
+msgid "Segment not found in Gutenberg content."
+msgstr "Segmento não encontrado no conteúdo do Gutenberg."
+
+msgid "Elementor data could not be decoded."
+msgstr "Os dados do Elementor não puderam ser decodificados."
+
+msgid "Segment path not found in Elementor data."
+msgstr "Caminho do segmento não encontrado nos dados do Elementor."
+
+msgid "Failed to encode Elementor data."
+msgstr "Falha ao codificar dados do Elementor."
+
+msgid "Segment path not found for WooCommerce content."
+msgstr "Caminho do segmento não encontrado para o conteúdo do WooCommerce."
+
+msgid "🔍 Side-by-Side Review Workspace"
+msgstr "🔍 Espaço de Trabalho de Revisão Lado a Lado"
+
+msgid "Select any translated page, template, or post to view its original source text and translated segments side-by-side with full inline editing capability."
+msgstr "Selecione qualquer página, template ou post traduzido para ver seu texto original e segmentos traduzidos lado a lado com total capacidade de edição inline."
+
+msgid "Translate More Content"
+msgstr "Traduzir Mais Conteúdo"
+
+msgid "No Translations Ready for Review Yet"
+msgstr "Nenhuma Tradução Pronta para Revisão Ainda"
+
+msgid "Once you translate pages or posts using Meep AI Translator, they will appear here for side-by-side diff review and granular segment editing."
+msgstr "Uma vez que você traduza páginas ou posts usando o Meep AI Translator, eles aparecerão aqui para revisão de diferenças lado a lado e edição granular de segmentos."
+
+msgid "Start Batch Translation"
+msgstr "Iniciar Tradução em Lote"
+
+msgid "Source Content"
+msgstr "Conteúdo Fonte"
+
+msgid "Available Translations & Review"
+msgstr "Traduções Disponíveis & Revisão"
+
+msgid "General & Performance"
+msgstr "Geral & Desempenho"
+
+msgid "Languages & Switcher"
+msgstr "Idiomas & Seletor"
+
+msgid "Site Elements & Auto-Translate"
+msgstr "Elementos do Site & Tradução Automática"
+
+msgid "Plugin Integrations"
+msgstr "Integrações de Plugin"
+
+msgid "Brand & Glossary"
+msgstr "Marca & Glossário"
+
+msgid "Tools & Advanced"
+msgstr "Ferramentas & Avançado"
+
+msgid "%d%% used"
+msgstr "%d%% usado"
+
+msgid "Published (Recommended)"
+msgstr "Publicado (Recomendado)"
+
+msgid "Draft (Review before publishing)"
+msgstr "Rascunho (Revisar antes de publicar)"
+
+msgid "Status for newly created translated pages. Published makes translations immediately accessible."
+msgstr "Status para páginas traduzidas recém-criadas. Publicado torna as traduções imediatamente acessíveis."
+
+msgid "Translate URL Slugs"
+msgstr "Traduzir Slugs de URL"
+
+msgid "Generate translated URL slugs from translated titles"
+msgstr "Gerar slugs de URL traduzidos a partir de títulos traduzidos"
+
+msgid "When enabled, translated posts/pages/products get localized slugs (post_name). Disable to keep source-style slugs instead of translating them."
+msgstr "Quando ativado, posts/páginas/produtos traduzidos recebem slugs localizados (post_name). Desative para manter slugs no estilo original em vez de traduzi-los."
+
+msgid "Localize Internal Links"
+msgstr "Localizar Links Internos"
+
+msgid "Rewrite absolute internal links (e.g. /fr/...) in content and widgets to the current language"
+msgstr "Reescrever links internos absolutos (por exemplo, /fr/...) no conteúdo e widgets para o idioma atual"
+
+msgid "When enabled, hard-coded internal links inside content/Elementor widgets are pointed to the translated target on translated pages (when a translation exists). Links without a translation are left unchanged."
+msgstr "Quando ativado, links internos codificados diretamente dentro do conteúdo/widgets do Elementor são direcionados para o alvo traduzido em páginas traduzidas (quando uma tradução existe). Links sem tradução permanecem inalterados."
+
+msgid "Switcher Theme"
+msgstr "Tema do Switcher"
+
+msgid "Default (bordered)"
+msgstr "Padrão (com borda)"
+
+msgid "Light border"
+msgstr "Borda leve"
+
+msgid "Minimal (no border / transparent)"
+msgstr "Minimalista (sem borda / transparente)"
+
+msgid "Pill (rounded)"
+msgstr "Pílula (arredondado)"
+
+msgid "Visual style for the Dropdown switcher. Tip: for a compact flag-only switcher, choose the Dropdown style and turn off \"Show language names\" — the languages still appear (with names) inside the dropdown."
+msgstr "Estilo visual para o switcher Dropdown. Dica: para um switcher compacto apenas com bandeiras, escolha o estilo Dropdown e desative \"Mostrar nomes de idiomas\" — os idiomas ainda aparecem (com nomes) dentro do dropdown."
+
+msgid "Border Color"
+msgstr "Cor da Borda"
+
+msgid "Border colour for the switcher (and dropdown). Leave empty to use the theme default."
+msgstr "Cor da borda para o switcher (e dropdown). Deixe vazio para usar o padrão do tema."
+
+msgid "Flag Size (px)"
+msgstr "Tamanho da Bandeira (px)"
+
+msgid "Flag width in pixels (8–128). Leave empty for the default size."
+msgstr "Largura da bandeira em pixels (8–128). Deixe vazio para o tamanho padrão."
+
+msgid "Show language names inside the dropdown list"
+msgstr "Mostrar nomes de idiomas dentro da lista dropdown"
+
+msgid "Applies to the Dropdown style only. Turn the trigger to flag-only above and leave this on to get a compact flag with named entries in the dropdown; turn it off for flags-only entries."
+msgstr "Aplica-se apenas ao estilo Dropdown. Ative o gatilho para apenas bandeira acima e mantenha isso ativado para obter uma bandeira compacta com entradas nomeadas no dropdown; desative para entradas apenas com bandeiras."
+
+msgid "Show language names on mobile (flag-only on desktop)"
+msgstr "Mostrar nomes de idiomas no celular (apenas bandeira no desktop)"
+
+msgid "Dropdown style only, when language names are off. Keeps the desktop header compact (flag only) but shows the language name in the mobile menu, where there is more room."
+msgstr "Apenas estilo Dropdown, quando os nomes de idiomas estão desativados. Mantém o cabeçalho do desktop compacto (apenas bandeira), mas mostra o nome do idioma no menu móvel, onde há mais espaço."
+
+msgid "This preview updates live as you change the options above. Save settings to apply them on the frontend."
+msgstr "Esta pré-visualização é atualizada ao vivo conforme você altera as opções acima. Salve as configurações para aplicá-las no frontend."
+
+msgid "Generate Sample CSS"
+msgstr "Gerar CSS de Exemplo"
+
+msgid "Generates a starting template based on your current switcher style."
+msgstr "Gera um modelo inicial com base no seu estilo de switcher atual."
+
+msgid "detected — template translation is available."
+msgstr "detectado — a tradução do modelo está disponível."
+
+msgid "Elementor is not active. These settings will apply when Elementor is installed and activated."
+msgstr "Elementor não está ativo. Essas configurações serão aplicadas quando o Elementor estiver instalado e ativado."
+
+msgid "Auto-translate templates when translating a page"
+msgstr "Traduzir modelos automaticamente ao traduzir uma página"
+
+msgid "When a page is translated, also translate any Elementor templates that are not yet translated into that language — including embedded templates and theme-builder single/header/footer templates (e.g. a custom-post-type single). This means non-technical users don't have to know a page pulls in an extra template. Note: translating templates uses additional words."
+msgstr "Quando uma página é traduzida, também traduza quaisquer modelos do Elementor que ainda não estão traduzidos para esse idioma — incluindo modelos incorporados e modelos de cabeçalho/rodapé do construtor de temas (por exemplo, um único tipo de post personalizado). Isso significa que usuários não técnicos não precisam saber que uma página puxa um modelo extra. Nota: traduzir modelos usa palavras adicionais."
+
+msgid "Additional template post types"
+msgstr "Tipos de post adicionais para modelos"
+
+msgid "Comma-separated post-type slugs to treat as translatable Elementor templates (translated + swapped at render). Elementor Library and JetEngine listings (jet-engine) are already included. Add others here — e.g. JetThemeCore parts — without editing code."
+msgstr "Slugs de tipos de post separados por vírgula para tratar como modelos do Elementor traduzíveis (traduzidos + trocados na renderização). A Biblioteca do Elementor e listagens do JetEngine (jet-engine) já estão incluídas. Adicione outros aqui — por exemplo, partes do JetThemeCore — sem editar código."
+
+msgid "Currently recognised as translatable templates:"
+msgstr "Atualmente reconhecidos como modelos traduzíveis:"
+
+msgid "Translated template ID"
+msgstr "ID do modelo traduzido"
+
+msgid "Copy [elementor-template id=\"%d\"] to clipboard"
+msgstr "Copiar [elementor-template id=\"%d\"] para a área de transferência"
+
+msgid "Force re-translate this template"
+msgstr "Forçar re-tradução deste modelo"
+
+msgid "Translate this template"
+msgstr "Traduzir este modelo"
+
+msgid "Translate Advanced Templates Only"
+msgstr "Traduzir Apenas Modelos Avançados"
+
+msgid "📝 Contact Forms"
+msgstr "📝 Formulários de Contato"
+
+msgid "Translate the labels, placeholders, options, buttons, and messages of your contact forms — Contact Form 7, WPForms, Gravity Forms, and JetFormBuilder. Scan to see what was detected, then translate. Detected strings also appear in String Translations below, where you can fine-tune any wording. (JetSmartFilters and other filter labels live in String Translations.)"
+msgstr "Traduzir os rótulos, espaços reservados, opções, botões e mensagens dos seus formulários de contato — Contact Form 7, WPForms, Gravity Forms e JetFormBuilder. Escaneie para ver o que foi detectado, depois traduza. Strings detectadas também aparecem em Traduções de Strings abaixo, onde você pode ajustar qualquer redação. (JetSmartFilters e outros rótulos de filtros estão na Traduções de Strings.)"
+
+msgid "Scan forms"
+msgstr "Escanear formulários"
+
+msgid "Translate form strings"
+msgstr "Traduzir strings de formulário"
+
+msgid "Scanning…"
+msgstr "Escaneando…"
+
+msgid "Reloading…"
+msgstr "Recarregando…"
+
+msgid "🔤 String Translations"
+msgstr "🔤 Traduções de Strings"
+
+msgid "JetSmartFilters · \"Show all\""
+msgstr "JetSmartFilters · \"Mostrar todos\""
+
+msgid "JetSmartFilters · Filter label"
+msgstr "JetSmartFilters · Rótulo do filtro"
+
+msgid "JetSmartFilters · Filter option"
+msgstr "JetSmartFilters · Opção de filtro"
+
+msgid "Translate interface strings that aren't covered by automatic translation — payment method titles/descriptions, the checkout privacy notice, JetSmartFilters labels (the \"Show all\" option and filter terms), and text from other plugins. Use Scan strings to detect filter labels, then Auto-translate strings to fill them in — they appear as rows below. You can also enter the exact source text on the left and its translation for each language; leave a language blank to keep the original."
+msgstr "Traduza strings da interface que não são cobertas pela tradução automática — títulos/descrições de métodos de pagamento, o aviso de privacidade do checkout, rótulos do JetSmartFilters (a opção \"Mostrar todos\" e termos de filtro), e texto de outros plugins. Use Escanear strings para detectar rótulos de filtro, depois Auto-traduzir strings para preenchê-los — eles aparecem como linhas abaixo. Você também pode inserir o texto fonte exato à esquerda e sua tradução para cada idioma; deixe um idioma em branco para manter o original."
+
+msgid "Search strings, filters, or translations…"
+msgstr "Pesquisar strings, filtros ou traduções…"
+
+msgid "Scan strings"
+msgstr "Escanear strings"
+
+msgid "Scan forms reports which forms, filters, and SureCart products were detected. Auto-translate then fills every language for all detected strings (your saved entries, WooCommerce payment/checkout text, and the labels of JetFormBuilder, WPForms, Contact Form 7, Gravity Forms, and JetSmartFilters) using the translation engine. SureCart products are translated separately, on the Products tab. Review the results — save afterwards is automatic."
+msgstr "Escanear relatórios de formulários que foram detectados, filtros e produtos SureCart. A Auto-tradução preenche todos os idiomas para todas as strings detectadas (suas entradas salvas, texto de pagamento/checkout do WooCommerce e os rótulos do JetFormBuilder, WPForms, Contact Form 7, Gravity Forms e JetSmartFilters) usando o mecanismo de tradução. Produtos SureCart são traduzidos separadamente, na aba Produtos. Revise os resultados — salvar depois é automático."
+
+msgid "strings found"
+msgstr "strings encontradas"
+
+msgid "Counting products…"
+msgstr "Contando produtos…"
+
+msgid "No translated products found."
+msgstr "Nenhum produto traduzido encontrado."
+
+msgid "short descriptions."
+msgstr "descrições curtas."
+
+msgid "🛍️ SureCart"
+msgstr "🛍️ SureCart"
+
+msgid "detected — product translation is available."
+msgstr "detectado — a tradução do produto está disponível."
+
+msgid "Enable SureCart product translation"
+msgstr "Ativar tradução de produtos SureCart"
+
+msgid "Translates SureCart product names and descriptions and renders the translated version in the visitor's language across product pages, collection grids, and checkout. Products are translated and reviewed on the dashboard's Products tab, just like WooCommerce products — there is nothing else to configure here."
+msgstr "Traduz nomes e descrições de produtos SureCart e exibe a versão traduzida na língua do visitante em páginas de produtos, grades de coleções e checkout. Os produtos são traduzidos e revisados na aba Produtos do painel, assim como os produtos do WooCommerce — não há mais nada para configurar aqui."
+
+msgid "Re-translates SEO title, meta description, OG, and Twitter fields for all already-translated pages. Use this if translated pages still show the source-language SEO title. (To fix product short descriptions, use the \"Retranslate Short Descriptions\" tool below.)"
+msgstr "Retraduz títulos SEO, meta descrição, campos OG e Twitter para todas as páginas já traduzidas. Use isso se as páginas traduzidas ainda mostrarem o título SEO na língua original. (Para corrigir descrições curtas de produtos, use a ferramenta \"Retraduzir Descrições Curtas\" abaixo.)"
+
+msgid "🧠 Brand Intelligence & Glossary"
+msgstr "🧠 Inteligência de Marca & Glossário"
+
+msgid "Define brand names, slogans, and company terminology that must NEVER be translated, or specify exact custom translations for specific terms across languages."
+msgstr "Defina nomes de marcas, slogans e terminologia da empresa que NUNCA devem ser traduzidos, ou especifique traduções personalizadas exatas para termos específicos em diferentes idiomas."
+
+msgid "Add Glossary Term"
+msgstr "Adicionar Termo ao Glossário"
+
+msgid "Export CSV"
+msgstr "Exportar CSV"
+
+msgid "Import CSV"
+msgstr "Importar CSV"
+
+msgid "Term / Phrase"
+msgstr "Termo / Frase"
+
+msgid "Rule / Translation"
+msgstr "Regra / Tradução"
+
+msgid "Action"
+msgstr "Ação"
+
+msgid "No glossary terms added yet. Click \"Add Glossary Term\" above to create your first brand protection rule."
+msgstr "Nenhum termo de glossário adicionado ainda. Clique em \"Adicionar Termo ao Glossário\" acima para criar sua primeira regra de proteção de marca."
+
+msgid "Do Not Translate (Keep exact source)"
+msgstr "Não Traduzir (Manter texto fonte exato)"
+
+msgid "Add Glossary Rule"
+msgstr "Adicionar Regra ao Glossário"
+
+msgid "Term / Phrase / Brand Name"
+msgstr "Termo / Frase / Nome da Marca"
+
+msgid "Rule Type"
+msgstr "Tipo de Regra"
+
+msgid "Do Not Translate (Keep exact source text)"
+msgstr "Não Traduzir (Manter texto fonte exato)"
+
+msgid "Custom Translation (Replace with specific term)"
+msgstr "Tradução Personalizada (Substituir por termo específico)"
+
+msgid "Target Translation Replacement"
+msgstr "Substituição de Tradução Alvo"
+
+msgid "Applies To Language"
+msgstr "Aplica-se ao Idioma"
+
+msgid "All Languages (Universal Rule)"
+msgstr "Todos os Idiomas (Regra Universal)"
+
+msgid "Save Term"
+msgstr "Salvar Termo"
+
+msgid "Raw Text Format (Alternative)"
+msgstr "Formato de Texto Bruto (Alternativo)"
+
+msgid "Glossary Textarea"
+msgstr "Textarea do Glossário"
+
+msgid "Optional quick multiline input: Term = Translation (lang_code)"
+msgstr "Entrada rápida opcional em múltiplas linhas: Termo = Tradução (código_idioma)"
+
+msgid "🚫 Excluded Terms (Quick List)"
+msgstr "🚫 Termos Excluídos (Lista Rápida)"
+
+msgid "Words or terms listed here will never be translated — they are automatically preserved as-is across all languages alongside your Glossary rules. Use this for brand names, company names, or technical terms."
+msgstr "Palavras ou termos listados aqui nunca serão traduzidos — eles são automaticamente preservados como estão em todos os idiomas junto com suas regras de Glossário. Use isso para nomes de marcas, nomes de empresas ou termos técnicos."
+
+msgid "🛠 Tools & Maintenance"
+msgstr "🛠 Ferramentas & Manutenção"
+
+msgid "Maintenance and one-off actions, gathered in one place. Each card opens its tool below."
+msgstr "Manutenção e ações pontuais, reunidas em um só lugar. Cada cartão abre sua ferramenta abaixo."
+
+msgid "Repair Page Content Links"
+msgstr "Reparar Links de Conteúdo da Página"
+
+msgid "Re-localize internal links inside translated page content and Elementor data."
+msgstr "Re-localizar links internos dentro do conteúdo da página traduzida e dados do Elementor."
+
+msgid "Switch Default Language"
+msgstr "Alterar Idioma Padrão"
+
+msgid "Move root URLs and migrate translation groups when changing default language."
+msgstr "Mover URLs raiz e migrar grupos de tradução ao mudar o idioma padrão."
+
+msgid "Reconciles translation links so the dashboard page list, language switcher, and the cart/checkout page swap all agree. Fixes translated pages that wrongly appear as their own source, links left inconsistent by older versions, and re-attaches translated child pages to their translated parent (so a translated sub-page nests under the translated parent instead of the original). Run \"Scan\" first to preview, then \"Repair Links\"."
+msgstr "Reconcilia links de tradução para que a lista de páginas do painel, o seletor de idiomas e a página de carrinho/checkout concordem. Corrige páginas traduzidas que aparecem erroneamente como sua própria fonte, links deixados inconsistentes por versões anteriores e reanexa páginas filhas traduzidas a seus pais traduzidos (para que uma subpágina traduzida fique aninhada sob o pai traduzido em vez do original). Execute \"Escanear\" primeiro para visualizar, depois \"Reparar Links\"."
+
+msgid "Loops through all translated posts/pages and re-localizes internal links inside their Elementor data based on the latest translation mappings and slug resolution fallbacks. Use this after shifting domains or nesting paths to fix outdated or broken links in translations without re-translating."
+msgstr "Percorre todos os posts/páginas traduzidos e re-localiza links internos dentro de seus dados do Elementor com base nos mapeamentos de tradução mais recentes e nas alternativas de resolução de slug. Use isso após mudar de domínio ou caminhos aninhados para corrigir links desatualizados ou quebrados nas traduções sem retraduzir."
+
+msgid "Repair Page Links"
+msgstr "Reparar Links da Página"
+
+msgid "child pages re-parented"
+msgstr "páginas filhas reparentadas"
+
+msgid "language records reconciled"
+msgstr "registros de idioma reconciliados"
+
+msgid "WooCommerce cart/checkout link status:"
+msgstr "status do link do carrinho/checkout do WooCommerce:"
+
+msgid "NONE — not linked"
+msgstr "NENHUM — não vinculado"
+
+msgid "All page links are already localized and up-to-date."
+msgstr "Todos os links de página já estão localizados e atualizados."
+
+msgid "translated page(s) out of"
+msgstr "página(s) traduzida(s) de"
+
+msgid "scanned."
+msgstr "escanear."
+
+msgid "Affected page content and Elementor CSS caches have been updated."
+msgstr "O conteúdo da página afetada e os caches CSS do Elementor foram atualizados."
+
+msgid "Repair links inside translated page content now? This will inspect all translated pages and re-localize their internal links. This is safe to run multiple times."
+msgstr "Reparar links dentro do conteúdo da página traduzida agora? Isso irá inspecionar todas as páginas traduzidas e re-localizar seus links internos. Isso é seguro para executar várias vezes."
+
+msgid "Preserve Post Order"
+msgstr "Preservar Ordem dos Posts"
+
+msgid "Mirror default-language sorting order on translation pages"
+msgstr "Espelhar a ordem de classificação do idioma padrão nas páginas de tradução"
+
+msgid "When enabled, translated posts are automatically sorted to match the order of their original post counterparts. This prevents page builder listings (such as JetEngine grids) from displaying items in a scrambled order due to different translation creation dates."
+msgstr "Quando ativado, os posts traduzidos são automaticamente classificados para corresponder à ordem de seus correspondentes de post original. Isso impede que listagens de construtores de página (como grades do JetEngine) exibam itens em uma ordem embaralhada devido a diferentes datas de criação de tradução."
+
+msgid "Inspect Elementor Data"
+msgstr "Inspecionar Dados do Elementor"
+
+msgid "Post/Template ID"
+msgstr "ID do Post/Modelo"
+
+msgid "Inspect"
+msgstr "Inspecionar"
+
+msgid "Read-only diagnostic: prints the Elementor structure (widget types + setting shapes) for a page/template. Useful for support — paste the result back to us."
+msgstr "Diagnóstico somente leitura: imprime a estrutura do Elementor (tipos de widget + formas de configuração) para uma página/modelo. Útil para suporte — cole o resultado de volta para nós."
+
+msgid "Loading…"
+msgstr "Carregando…"
+
+msgid "Request failed."
+msgstr "Solicitação falhou."
+
+msgid "This will reset all built-in language settings, disable the built-in system, and reset plugin options to defaults. Your API key and license will be preserved. Translated pages will NOT be deleted."
+msgstr "Isso irá redefinir todas as configurações de idioma integradas, desativar o sistema integrado e redefinir as opções do plugin para os padrões. Sua chave API e licença serão preservadas. Páginas traduzidas NÃO serão excluídas."
+
+msgid ""
+"Are you sure you want to reset all plugin data? This will:\n"
+"\n"
+"• Disable the built-in language system\n"
+"• Remove configured languages\n"
+"• Reset plugin options to defaults\n"
+"• Clear cache and temporary state\n"
+"\n"
+"Your API key, translated pages, and license will be preserved.\n"
+"\n"
+"Continue?"
+msgstr ""
+"Você tem certeza de que deseja redefinir todos os dados do plugin? Isso irá:\n"
+"\n"
+"• Desativar o sistema de idioma integrado\n"
+"• Remover idiomas configurados\n"
+"• Redefinir opções do plugin para os padrões\n"
+"• Limpar cache e estado temporário\n"
+"\n"
+"Sua chave API, páginas traduzidas e licença serão preservadas.\n"
+"\n"
+"Continuar?"
+
+msgid "Replace current CSS with the generated sample? Click Cancel to append instead."
+msgstr "Substituir o CSS atual pelo exemplo gerado? Clique em Cancelar para adicionar em vez disso."
+
+msgid "Generated!"
+msgstr "Gerado!"
+
+msgid "Translating"
+msgstr "Traduzindo"
+
+msgid "advanced"
+msgstr "avançado"
+
+msgid "Re-translate"
+msgstr "Retraduzir"
+
+msgid "The existing translation will be replaced. Uses translation credits."
+msgstr "A tradução existente será substituída. Usa créditos de tradução."
+
+msgid "A translation is already in progress. Please wait."
+msgstr "Uma tradução já está em andamento. Por favor, aguarde."
+
+msgid "advanced templates only"
+msgstr "somente modelos avançados"
+
+msgid "🔄 Switch Default Language"
+msgstr "🔄 Alterar Idioma Padrão"
+
+msgid "Make a different language the one served at the root of your site (no /xx/ prefix). This re-homes slug ownership per translation group — the chosen language takes the clean URLs, the current default moves under its prefix — and adds 301 redirects for the old URLs. Translate everything first (pages, posts, products, and your menus & widgets); the migration only re-homes content that already has a version in the new default language. Always run \"Preview\" first, back up your database, and test on staging before production."
+msgstr "Faça com que um idioma diferente seja o servido na raiz do seu site (sem o prefixo /xx/). Isso reatribui a propriedade de slug por grupo de tradução — o idioma escolhido assume as URLs limpas, o atual padrão se move sob seu prefixo — e adiciona redirecionamentos 301 para as URLs antigas. Traduza tudo primeiro (páginas, postagens, produtos e seus menus & widgets); a migração apenas reatribui conteúdo que já tem uma versão no novo idioma padrão. Sempre execute \"Pré-visualizar\" primeiro, faça backup do seu banco de dados e teste em staging antes da produção."
+
+msgid "New default language:"
+msgstr "Novo idioma padrão:"
+
+msgid "current default"
+msgstr "padrão atual"
+
+msgid "Changing the default language has to move your content, not just flip a flag — otherwise the site keeps serving the original language at the root. Use the Switch Default Language migration (with Preview + redirects) below. Jump to it now?"
+msgstr "Mudar o idioma padrão precisa mover seu conteúdo, não apenas alterar uma flag — caso contrário, o site continuará servindo o idioma original na raiz. Use a migração Mudar Idioma Padrão (com Pré-visualização + redirecionamentos) abaixo. Ir para isso agora?"
+
+msgid "translation group(s) will change."
+msgstr "grupo(s) de tradução serão alterados."
+
+msgid "Click \"Switch Default Language\" to apply. Back up first."
+msgstr "Clique em \"Mudar Idioma Padrão\" para aplicar. Faça backup primeiro."
+
+msgid "Done."
+msgstr "Concluído."
+
+msgid "is now the default."
+msgstr "é agora o padrão."
+
+msgid "groups updated,"
+msgstr "grupos atualizados,"
+
+msgid "redirects added. Reloading…"
+msgstr "redirecionamentos adicionados. Recarregando…"
+
+msgid "Switch the default language to"
+msgstr "Mudar o idioma padrão para"
+
+msgid "This rewrites URLs across the site and cannot be auto-undone. Make sure you have a backup and have tested on staging."
+msgstr "Isso reescreve URLs em todo o site e não pode ser desfeito automaticamente. Certifique-se de ter um backup e de ter testado em staging."
+
+msgid "Unauthorized"
+msgstr "Não autorizado"
+
+msgid "Source term cannot be empty"
+msgstr "O termo de origem não pode estar vazio"
+
+msgid "Target translation cannot be empty for replacement rules"
+msgstr "A tradução de destino não pode estar vazia para regras de substituição"
+
+msgid "Failed to save term in database"
+msgstr "Falha ao salvar o termo no banco de dados"
+
+msgid "Term added successfully"
+msgstr "Termo adicionado com sucesso"
+
+msgid "Invalid term ID"
+msgstr "ID de termo inválido"
+
+msgid "Failed to delete term"
+msgstr "Falha ao excluir o termo"
+
+msgid "Term deleted"
+msgstr "Termo excluído"
+
+msgid "No CSV file uploaded"
+msgstr "Nenhum arquivo CSV enviado"
+
+msgid "Could not read uploaded file"
+msgstr "Não foi possível ler o arquivo enviado"
+
+msgid "%d terms imported successfully"
+msgstr "%d termos importados com sucesso"
+
+msgid "Good news!"
+msgstr "Boas notícias!"
+
+msgid "Your selection will use an estimated %1$s words of API quota and you have %2$s words remaining."
+msgstr "Sua seleção usará uma estimativa de %1$s palavras da cota da API e você tem %2$s palavras restantes."
+
+msgid "You can translate everything now!"
+msgstr "Você pode traduzir tudo agora!"
+
+msgid "All content is already translated. Nothing to do!"
+msgstr "Todo o conteúdo já está traduzido. Nada a fazer!"
+
+msgid "Content exceeds your current word allowance"
+msgstr "O conteúdo excede sua cota atual de palavras"
+
+msgid "Your selection will use an estimated %1$s words of API quota, but you only have %2$s words remaining this month."
+msgstr "Sua seleção usará uma estimativa de %1$s palavras da cota da API, mas você só tem %2$s palavras restantes este mês."
+
+msgid "Translate Now (Partial)"
+msgstr "Traduzir Agora (Parcial)"
+
+msgid "Translate as much as possible with your remaining %s words."
+msgstr "Traduza o máximo possível com suas %s palavras restantes."
+
+msgid "Translation failed."
+msgstr "Falha na tradução."
+
+msgid "Plan & Usage"
+msgstr "Plano & Uso"
+
+msgid "Translate All Now"
+msgstr "Traduzir Tudo Agora"
+
+msgid "Start Scheduled Translation"
+msgstr "Iniciar Tradução Agendada"
+
+msgid "SureForms"
+msgstr "SureForms"
+
+msgid "JetFormBuilder Forms"
+msgstr "Formulários JetFormBuilder"
+
+msgid "Header & Footer Builder"
+msgstr "Construtor de Cabeçalho & Rodapé"
+
+msgid "JetThemeCore Templates"
+msgstr "Templates JetThemeCore"
+
+msgid "JetEngine Listings"
+msgstr "Listagens JetEngine"
+
+msgid "Page Generator Pro"
+msgstr "Page Generator Pro"
+
+msgid "Elementor Templates"
+msgstr "Modelos do Elementor"
+
+msgid "Scan failed: %s"
+msgstr "Falha na verificação: %s"
+
+msgid "Language:"
+msgstr "Idioma:"
+
+msgid "Translation"
+msgstr "Tradução"
+
+msgid "Languages configured! %d languages set up. Redirecting to dashboard..."
+msgstr "Idiomas configurados! %d idiomas configurados. Redirecionando para o painel..."
+
+msgid "Setup complete. Ready to translate."
+msgstr "Configuração concluída. Pronto para traduzir."
+
+msgid "Homepage is large — skipped to keep setup fast."
+msgstr "A página inicial é grande — pulado para manter a configuração rápida."
+
+msgid "Every 5 Minutes (AI Translator)"
+msgstr "A cada 5 minutos (Tradutor AI)"
+
+msgid "Buy More Tokens"
+msgstr "Comprar mais tokens"
+
+msgid "Buy More"
+msgstr "Comprar mais"
+
+msgid "Pages Left"
+msgstr "Páginas restantes"
+
+msgid "Used: %1$s of %2$s words"
+msgstr "Usado: %1$s de %2$s palavras"
+
+msgid "Tokens Left"
+msgstr "Tokens restantes"
+
+msgid "Clearing translation cache..."
+msgstr "Limpando o cache de tradução..."
+
+msgid "Failed to clear cache:"
+msgstr "Falha ao limpar o cache:"
+
+msgid "Found"
+msgstr "Encontrado"
+
+msgid "translatable strings."
+msgstr "strings traduzíveis."
+
+msgid "Please select at least one string to translate."
+msgstr "Por favor, selecione pelo menos uma string para traduzir."
+
+msgid "Ready to translate another page."
+msgstr "Pronto para traduzir outra página."
+
+msgid "Cost estimation completed successfully!"
+msgstr "Estimativa de custo concluída com sucesso!"
+
+msgid "Translate to %s"
+msgstr "Traduzir para %s"
+
+msgid "Translated successfully!"
+msgstr "Traduzido com sucesso!"
+
+msgid "Translation failed"
+msgstr "Falha na tradução"
+
+msgid "This plugin requires a multilingual plugin to be installed and activated."
+msgstr "Este plugin requer que um plugin multilíngue esteja instalado e ativado."
+
+msgid "Supported plugins:"
+msgstr "Plugins suportados:"
+
+msgid "or"
+msgstr "ou"
+
+msgid "Meep AI Translator requires PHP version 7.4 or higher."
+msgstr "O Meep AI Translator requer a versão PHP 7.4 ou superior."
+
+msgid "%s is active (%d languages)"
+msgstr "%s está ativo (%d idiomas)"
+
+msgid "%s active - set up languages"
+msgstr "%s ativo - configurar idiomas"
+
+msgid "Configure"
+msgstr "Configurar"
+
+msgid "No multilingual plugin"
+msgstr "Nenhum plugin multilíngue"
+
+msgid "Target language not found."
+msgstr "Idioma de destino não encontrado."
+
+msgid "That language is already the default."
+msgstr "Esse idioma já é o padrão."
+
+msgid "Cannot switch the default language: %d item(s) have an inconsistent language assignment (the translation-group record disagrees with the post's language tag). Run Tools → Repair Translation Links first, then try again. Nothing was changed."
+msgstr "Não é possível mudar o idioma padrão: %d item(s) têm uma atribuição de idioma inconsistente (o registro do grupo de tradução não concorda com a tag de idioma do post). Execute Ferramentas → Reparar Links de Tradução primeiro, depois tente novamente. Nada foi alterado."
+
+msgid "def"
+msgstr "def"
+
+msgid "Post language code"
+msgstr "Código do idioma do post"
+
+msgid "Translations of this post"
+msgstr "Traduções deste post"
+
+msgid "Meep AI Translator:"
+msgstr "Meep AI Translator:"
+
+msgid "Elementor \"Element Caching\" is enabled. It can cache widget output (links and products) in a single language and show it on translated pages, bypassing Meep's localization. We recommend turning it off at Elementor → Settings → Features while using translated pages."
+msgstr "O \"Cache de Elemento\" do Elementor está ativado. Ele pode armazenar em cache a saída do widget (links e produtos) em um único idioma e mostrá-la em páginas traduzidas, ignorando a localização do Meep. Recomendamos desativá-lo em Elementor → Configurações → Recursos enquanto usa páginas traduzidas."
+
+msgid "Open Elementor Features"
+msgstr "Abrir Recursos do Elementor"
+
+msgid "Show in Languages:"
+msgstr "Mostrar em Idiomas:"
+
+msgid "All languages"
+msgstr "Todos os idiomas"
+
+msgid "Select specific languages to show this widget only for those languages, or leave \"All\" checked."
+msgstr "Selecione idiomas específicos para mostrar este widget apenas para esses idiomas, ou deixe \"Todos\" marcado."
+
+msgid "Missing required parameters"
+msgstr "Faltando parâmetros obrigatórios"
+
+msgid "API client not loaded"
+msgstr "Cliente da API não carregado"
+
+msgid "AI Translator – Language Switcher"
+msgstr "Tradutor de IA – Seletor de Idioma"
+
+msgid "Display a language switcher for the built-in language system."
+msgstr "Exibir um seletor de idioma para o sistema de idioma embutido."
+
+msgid "Title:"
+msgstr "Título:"
+
+msgid "Display Style:"
+msgstr "Estilo de Exibição:"
+
+msgid "List"
+msgstr "Lista"
+
+msgid "Flags / Codes"
+msgstr "Bandeiras / Códigos"
+
+msgid "Flags + Text"
+msgstr "Bandeiras + Texto"
+
+msgid "Show flags"
+msgstr "Mostrar bandeiras"
+
+msgid "Show names"
+msgstr "Mostrar nomes"
+
+msgid "Job ID, page IDs, and target languages are required."
+msgstr "ID do trabalho, IDs das páginas e idiomas de destino são obrigatórios."
+
+msgid "Failed to create bulk translation job."
+msgstr "Falha ao criar trabalho de tradução em massa."
+
+msgid "Failed to delete bulk translation job."
+msgstr "Falha ao excluir trabalho de tradução em massa."
+
+msgid "Classic Editor"
+msgstr "Editor Clássico"
+
+msgid "WooCommerce Product"
+msgstr "Produto WooCommerce"
+
+msgid "Failed to connect to translation service: "
+msgstr "Falha ao conectar ao serviço de tradução: "
+
+msgid "Translation service error"
+msgstr "Erro no serviço de tradução"
+
+msgid "Invalid response from translation service"
+msgstr "Resposta inválida do serviço de tradução"
+
+msgid "No translated text in response"
+msgstr "Nenhum texto traduzido na resposta"
+
+msgid "AI Translator: Monthly Limit Reached"
+msgstr "Tradutor de IA: Limite Mensal Atingido"
+
+msgid "You have used all 7,200 words in your free plan this month. Your word count will reset in %d days, or you can "
+msgstr "Você usou todas as 7.200 palavras no seu plano gratuito este mês. Sua contagem de palavras será redefinida em %d dias, ou você pode "
+
+msgid "upgrade now"
+msgstr "fazer upgrade agora"
+
+msgid "for immediate access to more words."
+msgstr "para acesso imediato a mais palavras."
+
+msgid "AI Translator License Expired"
+msgstr "Licença do Tradutor de IA Expirada"
+
+msgid "Your Meep AI Translator license has expired or been cancelled."
+msgstr "Sua licença do Meep AI Translator expirou ou foi cancelada."
+
+msgid "You have been downgraded to the"
+msgstr "Você foi rebaixado para o"
+
+msgid "Free plan (7,200 words/month)"
+msgstr "Plano Gratuito (7.200 palavras/mês)"
+
+msgid "Dismiss"
+msgstr "Dispensar"
+
+msgid "Meep AI Translator Warning"
+msgstr "Aviso do Meep AI Translator"
+
+msgid "Translation Limit Exceeded!"
+msgstr "Limite de Tradução Excedido!"
+
+msgid "You have used all words in your %1\\$s plan. Translations are currently paused. Your limit will reset in %2\\$d days, or upgrade now to resume translating immediately."
+msgstr "Você usou todas as palavras no seu plano %1\\$s. As traduções estão atualmente pausadas. Seu limite será redefinido em %2\\$d dias, ou faça upgrade agora para retomar a tradução imediatamente."
+
+msgid "You have used 100%% of your %1\\$s plan's words. Translations are currently paused. Upgrade your plan or purchase an addon words pack to resume translating immediately."
+msgstr "Você usou 100%% das palavras do seu plano %1\\$s. As traduções estão atualmente pausadas. Faça upgrade no seu plano ou compre um pacote de palavras adicional para retomar a tradução imediatamente."
+
+msgid "Upgrade Plan & Resume"
+msgstr "Fazer Upgrade no Plano & Retomar"
+
+msgid "Dismiss for 24h"
+msgstr "Dispensar por 24h"
+
+msgid "You're almost out of words!"
+msgstr "Você está quase sem palavras!"
+
+msgid "You have used %1\\$s%% of your monthly translation words (%2\\$s / %3\\$s words). Upgrade your plan now to ensure uninterrupted translation."
+msgstr "Você usou %1\\$s%% das suas palavras de tradução mensais (%2\\$s / %3\\$s palavras). Atualize seu plano agora para garantir uma tradução ininterrupta."
+
+msgid "Enjoying the plugin?"
+msgstr "Está gostando do plugin?"
+
+msgid "If Meep AI Translator is helpful, please take a moment to rate us on WordPress.org! Your 5-star review helps us grow and keep improving."
+msgstr "Se o Meep AI Translator está sendo útil, por favor, reserve um momento para nos avaliar no WordPress.org! Sua avaliação de 5 estrelas nos ajuda a crescer e continuar melhorando."
+
+msgid "Meep AI Translator — TranslatePress Detected"
+msgstr "Meep AI Translator — TranslatePress Detectado"
+
+msgid "TranslatePress uses a fundamentally different translation approach (single-post with inline replacements) that is not compatible with this plugin. Meep AI Translator works with duplicate-post translation systems."
+msgstr "O TranslatePress usa uma abordagem de tradução fundamentalmente diferente (pós único com substituições inline) que não é compatível com este plugin. O Meep AI Translator funciona com sistemas de tradução de postagens duplicadas."
+
+msgid "<strong>Supported systems:</strong> Polylang, WPML, or our Built-in Language System (recommended — includes menu and widget translation)."
+msgstr "<strong>Sistemas suportados:</strong> Polylang, WPML ou nosso Sistema de Idioma Integrado (recomendado — inclui tradução de menu e widget)."
+
+msgid "No multilingual plugin is active."
+msgstr "Nenhum plugin multilíngue está ativo."
+
+msgid "Empty translation response"
+msgstr "Resposta de tradução vazia"
+
+msgid "Invalid JSON format (strict)"
+msgstr "Formato JSON inválido (estrito)"
+
+msgid "Failed to parse translation response"
+msgstr "Falha ao analisar a resposta de tradução"
+
+msgid "Translation job failed on server."
+msgstr "A tarefa de tradução falhou no servidor."
+
+msgid "Translation context expired. Please retry the translation."
+msgstr "O contexto de tradução expirou. Por favor, tente a tradução novamente."
+
+msgid "No translatable content found in this page."
+msgstr "Nenhum conteúdo traduzível encontrado nesta página."
+
+msgid "Translation resulted in invalid Elementor structure."
+msgstr "A tradução resultou em uma estrutura inválida do Elementor."
+
+msgid "No content found in this page."
+msgstr "Nenhum conteúdo encontrado nesta página."
+
+msgid "Product not found."
+msgstr "Produto não encontrado."
+
+msgid "This product has no translatable content."
+msgstr "Este produto não possui conteúdo traduzível."
+
+msgid "Content type does not support async translation."
+msgstr "O tipo de conteúdo não suporta tradução assíncrona."
+
+msgid "Cannot apply translations: unsupported content type."
+msgstr "Não é possível aplicar traduções: tipo de conteúdo não suportado."
+
+msgid "You have reached your monthly limit of %1$s words. Free plan users must wait %2$d more days for the limit to reset. Upgrade to a paid plan for immediate access."
+msgstr "Você atingiu seu limite mensal de %1$s palavras. Usuários do plano gratuito devem esperar %2$d dias a mais para que o limite seja redefinido. Atualize para um plano pago para acesso imediato."
+
+msgid "This translation requires approximately %1$s words, but you only have %2$s words remaining in your plan. Please <a href=\"%3$s\">upgrade your plan</a> or wait for your monthly limit to reset."
+msgstr "Esta tradução requer aproximadamente %1$s palavras, mas você só tem %2$s palavras restantes em seu plano. Por favor, <a href=\"%3$s\">atualize seu plano</a> ou aguarde a redefinição do seu limite mensal."
+
+msgid "This product has no translatable content (no title or short description)."
+msgstr "Este produto não possui conteúdo traduzível (sem título ou descrição curta)."
+
+msgid "You have reached your monthly limit. Free plan users must wait %d more days for the limit to reset."
+msgstr "Você atingiu seu limite mensal. Usuários do plano gratuito devem esperar %d dias a mais para que o limite seja redefinido."
+
+msgid "This translation requires approximately %s words, but you only have %s words remaining."
+msgstr "Esta tradução requer aproximadamente %s palavras, mas você só tem %s palavras restantes."
+
+msgid "Original page not found."
+msgstr "Página original não encontrada."
+

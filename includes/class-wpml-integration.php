@@ -312,15 +312,91 @@ class AITRFOEL_WPML_Integration extends AITRFOEL_Multilingual_Interface {
         $trid = apply_filters('wpml_element_trid', null, $original_post_id, $element_type);
         
         if (!$trid) {
-            // Original post doesn't have a trid - create the relationship
+            // Original post doesn't have a trid - register it in WPML first
             AITRFOEL_Logger::log(
-                sprintf('WPML: Original post %d has no trid, will create new translation group', $original_post_id),
+                sprintf('WPML: Original post %d has no trid, registering it first', $original_post_id),
                 'info',
+                $original_post_id
+            );
+            
+            do_action('wpml_set_element_language_details', [
+                'element_id' => $original_post_id,
+                'element_type' => $element_type,
+                'trid' => false,
+                'language_code' => $original_lang_code,
+                'source_language_code' => null
+            ]);
+            
+            // Re-fetch the trid now that original is registered
+            $trid = apply_filters('wpml_element_trid', null, $original_post_id, $element_type);
+            
+            if (!$trid) {
+                AITRFOEL_Logger::log(
+                    sprintf('WPML: Failed to create trid for original post %d', $original_post_id),
+                    'error',
+                    $original_post_id
+                );
+                return new WP_Error('no_trid', 'Failed to create WPML translation group for original post.');
+            }
+            
+            AITRFOEL_Logger::log(
+                sprintf('WPML: Created trid %s for original post %d', $trid, $original_post_id),
+                'success',
                 $original_post_id
             );
         }
         
         // Link translated post to original using WPML API
+        // First, directly check DB for existing stale translation in this trid+language
+        // WPML's API filters (wpml_get_element_translations) don't return trashed/deleted posts,
+        // but their DB rows still exist and cause "Duplicate entry" errors on INSERT.
+        global $wpdb;
+        $icl_table = $wpdb->prefix . 'icl_translations';
+        
+        // Check for ANY existing row with this trid+language_code
+        $stale_row = $wpdb->get_row($wpdb->prepare(
+            "SELECT translation_id, element_id FROM {$icl_table} WHERE trid = %d AND language_code = %s AND element_type = %s",
+            $trid, $wpml_lang_code, $element_type
+        ));
+        
+        if ($stale_row && (int) $stale_row->element_id !== $translated_post_id) {
+            // Remove the stale entry to prevent duplicate key error
+            $wpdb->delete($icl_table, [
+                'translation_id' => $stale_row->translation_id,
+            ]);
+            
+            AITRFOEL_Logger::log(
+                sprintf('WPML: Removed stale %s DB entry (element_id: %d, translation_id: %d) from trid %s before linking new post %d',
+                    $wpml_lang_code, $stale_row->element_id, $stale_row->translation_id, $trid, $translated_post_id),
+                'warning',
+                $original_post_id,
+                $translated_post_id
+            );
+        }
+        
+        // Also remove any existing entry for the translated post itself (might be in wrong trid)
+        $translated_row = $wpdb->get_row($wpdb->prepare(
+            "SELECT translation_id, trid FROM {$icl_table} WHERE element_id = %d AND element_type = %s",
+            $translated_post_id, $element_type
+        ));
+        
+        if ($translated_row && (int) $translated_row->trid !== (int) $trid) {
+            $wpdb->delete($icl_table, [
+                'translation_id' => $translated_row->translation_id,
+            ]);
+            
+            AITRFOEL_Logger::log(
+                sprintf('WPML: Removed orphan entry for post %d (was in trid %s, needs to be in trid %s)',
+                    $translated_post_id, $translated_row->trid, $trid),
+                'warning',
+                $original_post_id,
+                $translated_post_id
+            );
+        }
+        
+        // Clear WPML caches before linking so it sees the cleaned state
+        do_action('wpml_cache_clear');
+        
         do_action('wpml_set_element_language_details', [
             'element_id' => $translated_post_id,
             'element_type' => $element_type,
@@ -358,8 +434,8 @@ class AITRFOEL_WPML_Integration extends AITRFOEL_Multilingual_Interface {
             $translated_post_id
         );
         
-        // Verify the relationship was created
-        $verify_translations = $this->get_post_translations($translated_post_id);
+        // Verify the relationship was created (check from ORIGINAL post's perspective)
+        $verify_translations = $this->get_post_translations($original_post_id);
         
         if (isset($verify_translations[$wpml_lang_code]) && $verify_translations[$wpml_lang_code] == $translated_post_id) {
             AITRFOEL_Logger::log(
@@ -371,12 +447,36 @@ class AITRFOEL_WPML_Integration extends AITRFOEL_Multilingual_Interface {
             return true;
         } else {
             AITRFOEL_Logger::log(
-                sprintf('⚠️ WPML relationship may not be complete. Translations: %s', json_encode($verify_translations)),
+                sprintf('⚠️ WPML relationship may not be complete. Original post %d translations: %s (expected %s => %d)',
+                    $original_post_id,
+                    json_encode($verify_translations),
+                    $wpml_lang_code,
+                    $translated_post_id
+                ),
                 'warning',
                 $original_post_id,
                 $translated_post_id
             );
-            return true; // Still return true as we did our best
+            
+            // Retry once — WPML cache might be stale
+            do_action('wpml_cache_clear');
+            clean_post_cache($original_post_id);
+            clean_post_cache($translated_post_id);
+            
+            $retry_translations = $this->get_post_translations($original_post_id);
+            if (isset($retry_translations[$wpml_lang_code]) && $retry_translations[$wpml_lang_code] == $translated_post_id) {
+                AITRFOEL_Logger::log(
+                    sprintf('✅ WPML relationship confirmed on retry! Group: %s', json_encode($retry_translations)),
+                    'success',
+                    $original_post_id,
+                    $translated_post_id
+                );
+                return true;
+            }
+            
+            return new WP_Error('wpml_link_failed', 
+                sprintf('WPML failed to link post %d as %s translation of post %d', 
+                    $translated_post_id, $wpml_lang_code, $original_post_id));
         }
     }
     
@@ -443,8 +543,7 @@ class AITRFOEL_WPML_Integration extends AITRFOEL_Multilingual_Interface {
      * @return string|null WPML language code (e.g., 'ru') or null
      */
     public function get_language_code($our_language) {
-        // Use parent's mapping
-        return $this->get_code_from_name($our_language);
+        return $this->normalize_language_code($our_language);
     }
     
     /**
@@ -516,7 +615,7 @@ class AITRFOEL_WPML_Integration extends AITRFOEL_Multilingual_Interface {
             ],
             'orderby' => 'title',
             'order' => 'ASC',
-            'suppress_filters' => true // Get posts in all languages
+            'suppress_filters' => true // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.SuppressFilters_suppress_filters -- intentional: Polylang/WPML query filters would hide posts in other languages, which the translator must see (Get posts in all languages)
         ]);
         
         $pages_status = [];

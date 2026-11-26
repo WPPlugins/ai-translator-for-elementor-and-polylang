@@ -10,10 +10,10 @@ if (!defined('ABSPATH')) exit;
 class AITRFOEL_Translate_All {
 
     /**
-     * Server usage factor: the API server counts both source and translated
-     * words, so actual consumption is approximately 2× the source word count.
+     * Server usage factor: changed to 1 because the API server only counts
+     * source words translated.
      */
-    const SERVER_USAGE_FACTOR = 2;
+    const SERVER_USAGE_FACTOR = 1;
 
     private static $instance = null;
 
@@ -41,14 +41,7 @@ class AITRFOEL_Translate_All {
         wp_enqueue_style(
             'aitrfoel-translate-all',
             AITRFOEL_PLUGIN_URL . 'assets/css/translate-all.css',
-            [],
-            AITRFOEL_VERSION
-        );
-        
-        wp_enqueue_style(
-            'aitrfoel-modern-design',
-            AITRFOEL_PLUGIN_URL . 'assets/css/modern-design.css',
-            ['aitrfoel-translate-all'],
+            ['aitrfoel-meep-admin'],
             AITRFOEL_VERSION
         );
 
@@ -63,9 +56,13 @@ class AITRFOEL_Translate_All {
         // Get license info for JS
         $license_info = $this->get_license_info();
 
+        $builtin_active = class_exists('AITRFOEL_Builtin_Integration') && AITRFOEL_Builtin_Integration::is_enabled();
+
         wp_localize_script('aitrfoel-translate-all', 'aitrfoel_translate_all', [
             'ajax_url'  => admin_url('admin-ajax.php'),
             'nonce'     => wp_create_nonce('aitrfoel_translate_all_nonce'),
+            'ajax_nonce' => wp_create_nonce('aitrfoel_ajax_nonce'),
+            'builtin_active' => $builtin_active,
             'plan'      => $license_info['plan'],
             'word_limit' => $license_info['word_limit'],
             'words_used' => $license_info['words_used'],
@@ -97,6 +94,27 @@ class AITRFOEL_Translate_All {
                 'cron_scheduled'      => __('Scheduled translation started! It will process content using your monthly word allowance.', 'ai-translator-for-elementor-and-polylang'),
                 'already_translated'  => __('already translated', 'ai-translator-for-elementor-and-polylang'),
                 'needs_translation'   => __('needs translation', 'ai-translator-for-elementor-and-polylang'),
+                'translate_all_now'   => __('Translate All Now', 'ai-translator-for-elementor-and-polylang'),
+                'translate_selected_now' => /* translators: %d: number of selected items */ __('Translate Selected (%d) Now', 'ai-translator-for-elementor-and-polylang'),
+
+                // Quota check panel
+                'good_news'           => __('Good news!', 'ai-translator-for-elementor-and-polylang'),
+                /* translators: 1: estimated word count, 2: words remaining */
+                'quota_fits'          => __('Your selection will use an estimated %1$s words of API quota and you have %2$s words remaining.', 'ai-translator-for-elementor-and-polylang'),
+                'can_translate_now'   => __('You can translate everything now!', 'ai-translator-for-elementor-and-polylang'),
+                'already_done'        => __('All content is already translated. Nothing to do!', 'ai-translator-for-elementor-and-polylang'),
+                'exceeds_allowance'   => __('Content exceeds your current word allowance', 'ai-translator-for-elementor-and-polylang'),
+                /* translators: 1: estimated word count, 2: words remaining */
+                'quota_exceeds'       => __('Your selection will use an estimated %1$s words of API quota, but you only have %2$s words remaining this month.', 'ai-translator-for-elementor-and-polylang'),
+                'translate_now_partial' => __('Translate Now (Partial)', 'ai-translator-for-elementor-and-polylang'),
+                /* translators: %s: words remaining (formatted number) */
+                'translate_partial_desc' => __('Translate as much as possible with your remaining %s words.', 'ai-translator-for-elementor-and-polylang'),
+                'translation_failed'  => __('Translation failed.', 'ai-translator-for-elementor-and-polylang'),
+
+                // Review prompt
+                'enjoying_plugin'     => __('Enjoying Meep AI Translator? A quick review helps us a lot!', 'ai-translator-for-elementor-and-polylang'),
+                'leave_review'        => __('Leave a Review', 'ai-translator-for-elementor-and-polylang'),
+                'no_thanks'           => __('No thanks', 'ai-translator-for-elementor-and-polylang'),
             ],
         ]);
     }
@@ -112,9 +130,9 @@ class AITRFOEL_Translate_All {
 
         return [
             'plan'       => 'Free',
-            'word_limit' => 1800,
+            'word_limit' => 7200,
             'words_used' => 0,
-            'words_left' => 1800,
+            'words_left' => 7200,
         ];
     }
 
@@ -122,10 +140,13 @@ class AITRFOEL_Translate_All {
      * Get upgrade URL
      */
     private function get_upgrade_url() {
-        if (function_exists('eatp_fs') && eatp_fs()->is_registered()) {
+        if (function_exists('eatp_fs') && is_object(eatp_fs()) && method_exists(eatp_fs(), 'is_registered') && eatp_fs()->is_registered()) {
             return eatp_fs()->get_upgrade_url();
         }
-        return admin_url('admin.php?page=ai-translator-for-elementor-and-polylang-pricing');
+        if (defined('AITRFOEL_VERSION_TYPE') && AITRFOEL_VERSION_TYPE === 'pro') {
+            return 'https://meeptech.com/upgrade?utm_source=wp-plugin&utm_medium=free-plugin&utm_campaign=pro-upgrade';
+        }
+        return aitrfoel_free_upgrade_url('translate-all');
     }
 
     /**
@@ -157,13 +178,9 @@ class AITRFOEL_Translate_All {
             $admin_menu->render_plugin_header(__('Translate All', 'ai-translator-for-elementor-and-polylang'));
             ?>
 
-            <p class="description">
-                <?php esc_html_e('Translate all your website content at once. Select content types and target languages, then start translating.', 'ai-translator-for-elementor-and-polylang'); ?>
-            </p>
-
             <!-- Usage Overview Card -->
-            <div class="eat-card aitrfoel-ta-usage-card">
-                <h3><?php esc_html_e('📊 Plan & Usage', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+            <div class="aitrfoel-card aitrfoel-ta-usage-card">
+                <h3><svg class="aitrfoel-ta-heading-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="12" width="4" height="10" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="9" y="7" width="4" height="15" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="16" y="2" width="4" height="20" rx="1" stroke="currentColor" stroke-width="1.8"/></svg><?php esc_html_e('Plan & Usage', 'ai-translator-for-elementor-and-polylang'); ?></h3>
                 <div class="aitrfoel-ta-usage-grid">
                     <div class="aitrfoel-ta-usage-item">
                         <span class="aitrfoel-ta-usage-label"><?php esc_html_e('Current Plan', 'ai-translator-for-elementor-and-polylang'); ?></span>
@@ -201,7 +218,7 @@ class AITRFOEL_Translate_All {
             </div>
 
             <!-- Step 1: Select Content Types -->
-            <div class="eat-card aitrfoel-ta-step" id="ta-step-1">
+            <div class="aitrfoel-card aitrfoel-ta-step" id="ta-step-1">
                 <h3><?php esc_html_e('Step 1: Select Content Types', 'ai-translator-for-elementor-and-polylang'); ?></h3>
                 <p class="description"><?php esc_html_e('Choose which types of content to translate.', 'ai-translator-for-elementor-and-polylang'); ?></p>
 
@@ -213,13 +230,17 @@ class AITRFOEL_Translate_All {
                     <?php
                     $post_types = $this->get_translatable_post_types();
                     foreach ($post_types as $type_slug => $type_info) :
+                        $precheck_type = ($type_slug === 'page' && !empty($type_info['count']));
                     ?>
                     <label class="aitrfoel-ta-post-type-card">
-                        <input type="checkbox" name="post_types[]" value="<?php echo esc_attr($type_slug); ?>">
+                        <input type="checkbox" name="post_types[]" value="<?php echo esc_attr($type_slug); ?>" <?php checked($precheck_type); ?>>
                         <div class="aitrfoel-ta-post-type-inner">
-                            <span class="aitrfoel-ta-post-type-icon"><?php echo esc_html($type_info['icon']); ?></span>
+                            <span class="aitrfoel-ta-post-type-icon aitrfoel-ta-post-type-icon-<?php echo esc_attr($type_info['icon']); ?>" aria-hidden="true"></span>
                             <span class="aitrfoel-ta-post-type-name"><?php echo esc_html($type_info['label']); ?></span>
-                            <span class="aitrfoel-ta-post-type-count"><?php echo esc_html($type_info['count']); ?> <?php esc_html_e('items', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                            <span class="aitrfoel-ta-post-type-count"><?php
+                                /* translators: %s: number of published items */
+                                echo esc_html(sprintf(_n('%s published', '%s published', (int) $type_info['count'], 'ai-translator-for-elementor-and-polylang'), number_format_i18n((int) $type_info['count'])));
+                            ?></span>
                         </div>
                     </label>
                     <?php endforeach; ?>
@@ -227,35 +248,115 @@ class AITRFOEL_Translate_All {
             </div>
 
             <!-- Step 2: Select Target Languages -->
-            <div class="eat-card aitrfoel-ta-step" id="ta-step-2">
+            <div class="aitrfoel-card aitrfoel-ta-step" id="ta-step-2">
                 <h3><?php esc_html_e('Step 2: Select Target Languages', 'ai-translator-for-elementor-and-polylang'); ?></h3>
                 <p class="description"><?php esc_html_e('Choose which languages to translate your content into. Your default language content will be used as source.', 'ai-translator-for-elementor-and-polylang'); ?></p>
 
-                <div class="aitrfoel-ta-selection-actions">
-                    <button type="button" class="button button-small" id="ta-select-all-langs"><?php esc_html_e('Select All', 'ai-translator-for-elementor-and-polylang'); ?></button>
-                    <button type="button" class="button button-small" id="ta-deselect-all-langs"><?php esc_html_e('Deselect All', 'ai-translator-for-elementor-and-polylang'); ?></button>
-                </div>
-                <div class="aitrfoel-ta-languages">
-                    <?php if (!empty($languages)) : ?>
-                        <?php foreach ($languages as $code => $lang) :
-                            $name = is_object($lang) ? ($lang->name ?? strtoupper($code)) : (is_array($lang) ? ($lang['name'] ?? strtoupper($code)) : strtoupper($code));
-                            $is_default = ($code === $default_lang);
-                            if ($is_default) continue; // Skip default language (it's the source)
+                <?php
+                $target_languages_map = [];
+                if (!empty($languages)) {
+                    foreach ($languages as $code => $lang) {
+                        if ($code === $default_lang) {
+                            continue;
+                        }
+                        $target_languages_map[$code] = is_object($lang)
+                            ? ($lang->name ?? strtoupper($code))
+                            : (is_array($lang) ? ($lang['name'] ?? strtoupper($code)) : strtoupper($code));
+                    }
+                }
+                ?>
+
+                <?php if (!empty($target_languages_map)) : ?>
+                    <div class="aitrfoel-ta-selection-actions">
+                        <button type="button" class="button button-small" id="ta-select-all-langs"><?php esc_html_e('Select All', 'ai-translator-for-elementor-and-polylang'); ?></button>
+                        <button type="button" class="button button-small" id="ta-deselect-all-langs"><?php esc_html_e('Deselect All', 'ai-translator-for-elementor-and-polylang'); ?></button>
+                    </div>
+                    <div class="aitrfoel-ta-languages">
+                        <?php
+                        $auto_check_single_target = (count($target_languages_map) === 1);
+                        foreach ($target_languages_map as $code => $name) :
                         ?>
                         <label class="aitrfoel-ta-lang-card">
-                            <input type="checkbox" name="target_languages[]" value="<?php echo esc_attr($code); ?>">
+                            <input type="checkbox" name="target_languages[]" value="<?php echo esc_attr($code); ?>" <?php checked($auto_check_single_target); ?>>
                             <div class="aitrfoel-ta-lang-inner">
                                 <span class="aitrfoel-ta-lang-code"><?php echo esc_html(strtoupper($code)); ?></span>
                                 <span class="aitrfoel-ta-lang-name"><?php echo esc_html($name); ?></span>
                             </div>
                         </label>
                         <?php endforeach; ?>
-                    <?php else : ?>
-                        <div class="notice notice-warning inline">
-                            <p><?php esc_html_e('No languages configured. Please set up languages in your multilingual plugin first.', 'ai-translator-for-elementor-and-polylang'); ?></p>
-                        </div>
-                    <?php endif; ?>
-                </div>
+                    </div>
+                    <?php
+                    // Inline "+ Add another language" proposition right inside Step 2
+                    $ta_all_choices = [
+                        'es' => 'Spanish (Español)', 'fr' => 'French (Français)', 'de' => 'German (Deutsch)',
+                        'it' => 'Italian (Italiano)', 'nl' => 'Dutch (Nederlands)', 'pl' => 'Polish (Polski)',
+                        'pt' => 'Portuguese (Português)', 'uk' => 'Ukrainian (Українська)', 'ru' => 'Russian (Русский)',
+                        'ar' => 'Arabic (العربية)', 'zh' => 'Chinese (中文)', 'ja' => 'Japanese (日本語)',
+                        'en' => 'English', 'ro' => 'Romanian (Română)', 'cs' => 'Czech (Čeština)',
+                        'sv' => 'Swedish (Svenska)', 'da' => 'Danish (Dansk)', 'fi' => 'Finnish (Suomi)',
+                        'no' => 'Norwegian (Norsk)', 'tr' => 'Turkish (Türkçe)', 'el' => 'Greek (Ελληνικά)',
+                        'hu' => 'Hungarian (Magyar)', 'hr' => 'Croatian (Hrvatski)', 'bg' => 'Bulgarian (Български)',
+                        'sk' => 'Slovak (Slovenčina)', 'sl' => 'Slovenian (Slovenščina)', 'he' => 'Hebrew (עברית)',
+                        'hi' => 'Hindi (हिन्दी)', 'id' => 'Indonesian (Bahasa Indonesia)', 'ko' => 'Korean (한국어)',
+                        'vi' => 'Vietnamese (Tiếng Việt)', 'th' => 'Thai (ไทย)',
+                    ];
+                    $ta_nonce = wp_create_nonce('aitrfoel_ajax_nonce');
+                    ?>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px dashed #e2e8f0;">
+                        <span style="font-size: 12.5px; color: #475569; font-weight: 600;">+ <?php esc_html_e('Need another target language?', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                        <select id="aitrfoel-ta-add-lang-select" style="min-width: 190px; font-size: 12.5px;">
+                            <option value=""><?php esc_html_e('— Add language —', 'ai-translator-for-elementor-and-polylang'); ?></option>
+                            <?php foreach ($ta_all_choices as $c_code => $c_label) :
+                                if ($c_code === $default_lang || isset($languages[$c_code])) continue;
+                            ?>
+                                <option value="<?php echo esc_attr($c_code); ?>" data-name="<?php echo esc_attr(explode(' (', $c_label)[0]); ?>"><?php echo esc_html($c_label); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button type="button" class="button button-secondary button-small" id="aitrfoel-ta-add-lang-btn">
+                            <?php esc_html_e('Add Language', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </button>
+                        <span id="aitrfoel-ta-add-lang-status" style="font-size: 12px; font-weight: 600; color: #2563eb;"></span>
+                    </div>
+                    <script>
+                    (function() {
+                        var btn = document.getElementById('aitrfoel-ta-add-lang-btn');
+                        var sel = document.getElementById('aitrfoel-ta-add-lang-select');
+                        var st  = document.getElementById('aitrfoel-ta-add-lang-status');
+                        if (!btn || !sel) return;
+                        btn.addEventListener('click', function() {
+                            var opt = sel.options[sel.selectedIndex];
+                            if (!opt || !opt.value) return;
+                            btn.disabled = true;
+                            if (st) st.textContent = 'Adding…';
+                            var fd = new FormData();
+                            fd.append('action', 'aitrfoel_manage_builtin_language');
+                            fd.append('nonce', <?php echo wp_json_encode($ta_nonce); ?>);
+                            fd.append('operation', 'add');
+                            fd.append('language_code', opt.value);
+                            fd.append('language_name', opt.getAttribute('data-name') || opt.text);
+                            fetch(ajaxurl, { method: 'POST', body: fd })
+                                .then(function(r) { return r.json(); })
+                                .then(function(res) {
+                                    if (res && res.success) {
+                                        if (st) { st.style.color = '#059669'; st.textContent = '✓ Added! Reloading…'; }
+                                        window.location.reload();
+                                    } else {
+                                        btn.disabled = false;
+                                        if (st) { st.style.color = '#dc2626'; st.textContent = (res && res.data) ? res.data : 'Error'; }
+                                    }
+                                })
+                                .catch(function() { btn.disabled = false; });
+                        });
+                    })();
+                    </script>
+                <?php else : ?>
+                    <?php
+                    if (class_exists('AITRFOEL_Admin_Menu')) {
+                        AITRFOEL_Admin_Menu::get_instance()->render_quick_add_language_card($multilingual);
+                    }
+                    ?>
+                <?php endif; ?>
+
                 <?php if (!empty($default_lang)) : ?>
                 <p class="description" style="margin-top: 10px;">
                     <?php
@@ -267,12 +368,13 @@ class AITRFOEL_Translate_All {
             </div>
 
             <!-- Step 3: Scan & Calculate -->
-            <div class="eat-card aitrfoel-ta-step" id="ta-step-3">
+            <div class="aitrfoel-card aitrfoel-ta-step" id="ta-step-3">
                 <h3><?php esc_html_e('Step 3: Scan & Calculate', 'ai-translator-for-elementor-and-polylang'); ?></h3>
                 <p class="description"><?php esc_html_e('Scan your content to calculate word counts and estimate translation effort.', 'ai-translator-for-elementor-and-polylang'); ?></p>
 
-                <button type="button" class="button button-primary button-large" id="ta-scan-btn">
-                    <?php esc_html_e('🔍 Scan Content', 'ai-translator-for-elementor-and-polylang'); ?>
+                <button type="button" class="button button-primary button-large" id="ta-scan-btn" style="display:inline-flex;align-items:center;gap:6px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <span><?php esc_html_e('Scan Content', 'ai-translator-for-elementor-and-polylang'); ?></span>
                 </button>
                 <span class="spinner" id="ta-scan-spinner" style="float: none;"></span>
 
@@ -341,75 +443,99 @@ class AITRFOEL_Translate_All {
             </div>
 
             <!-- Step 4: Translation Actions -->
-            <div class="eat-card aitrfoel-ta-step" id="ta-step-4" style="display: none;">
+            <div class="aitrfoel-card aitrfoel-ta-step" id="ta-step-4" style="display: none;">
                 <h3><?php esc_html_e('Step 4: Start Translation', 'ai-translator-for-elementor-and-polylang'); ?></h3>
 
                 <div class="aitrfoel-ta-actions" id="ta-actions">
                     <!-- Option A: Translate Now (fits within limit) -->
                     <div id="ta-action-now" class="aitrfoel-ta-action-card" style="display: none;">
-                        <div class="aitrfoel-ta-action-icon">🚀</div>
+                        <div class="aitrfoel-ta-action-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M13 3 6 13h6l-1 8 9-11h-6l1-7z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
                         <h4><?php esc_html_e('Translate Now', 'ai-translator-for-elementor-and-polylang'); ?></h4>
                         <p><?php esc_html_e('Your content fits within your current word allowance. Translate everything now.', 'ai-translator-for-elementor-and-polylang'); ?></p>
                         <button type="button" class="button button-primary button-large" id="ta-start-now-btn">
-                            <?php esc_html_e('🚀 Translate All Now', 'ai-translator-for-elementor-and-polylang'); ?>
+                            <svg class="aitrfoel-ta-btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M13 3 6 13h6l-1 8 9-11h-6l1-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span id="ta-start-now-label"><?php esc_html_e('Translate All Now', 'ai-translator-for-elementor-and-polylang'); ?></span>
                         </button>
+                        <p id="ta-selected-notice" style="display: none; margin-top: 10px; font-size: 12.5px; color: #475569; background: #f8fafc; border-left: 3px solid #3b82f6; padding: 8px 12px; border-radius: 4px; text-align: left;">
+                            <span style="display:inline-flex;align-items:center;vertical-align:-2px;margin-right:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span> <strong><?php esc_html_e('Note:', 'ai-translator-for-elementor-and-polylang'); ?></strong> <?php esc_html_e('Translating selected content will also auto-translate site menus, widgets, and form labels so navigation stays synchronized across all languages.', 'ai-translator-for-elementor-and-polylang'); ?>
+                        </p>
                     </div>
 
                     <!-- Option B: Schedule via Cron (exceeds limit) -->
                     <div id="ta-action-schedule" class="aitrfoel-ta-action-card" style="display: none;">
-                        <div class="aitrfoel-ta-action-icon">⏰</div>
+                        <div class="aitrfoel-ta-action-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
                         <h4><?php esc_html_e('Scheduled Translation', 'ai-translator-for-elementor-and-polylang'); ?></h4>
                         <p><?php esc_html_e('Content exceeds your current word allowance. Schedule translation to process over multiple billing cycles using your monthly word limit.', 'ai-translator-for-elementor-and-polylang'); ?></p>
                         <div class="aitrfoel-ta-schedule-info" id="ta-schedule-info">
                             <!-- Estimated months/cycles shown by JS -->
                         </div>
                         <button type="button" class="button button-primary button-large" id="ta-start-scheduled-btn">
-                            <?php esc_html_e('⏰ Start Scheduled Translation', 'ai-translator-for-elementor-and-polylang'); ?>
+                            <svg class="aitrfoel-ta-btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3.5 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <?php esc_html_e('Start Scheduled Translation', 'ai-translator-for-elementor-and-polylang'); ?>
                         </button>
                     </div>
 
                     <!-- Option C: Upgrade Plan -->
                     <div id="ta-action-upgrade" class="aitrfoel-ta-action-card" style="display: none;">
-                        <div class="aitrfoel-ta-action-icon">⬆️</div>
+                        <div class="aitrfoel-ta-action-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+                        </div>
                         <h4><?php esc_html_e('Upgrade Plan', 'ai-translator-for-elementor-and-polylang'); ?></h4>
                         <p id="ta-upgrade-text"><?php esc_html_e('Get a bigger word allowance to translate all your content at once.', 'ai-translator-for-elementor-and-polylang'); ?></p>
-                        <a href="<?php echo esc_url($this->get_upgrade_url()); ?>" class="button button-primary button-large" id="ta-upgrade-btn">
-                            <?php esc_html_e('⬆️ Upgrade Plan', 'ai-translator-for-elementor-and-polylang'); ?>
+                        <?php $ta_upgrade_url = $this->get_upgrade_url(); ?>
+                        <a href="<?php echo esc_url($ta_upgrade_url); ?>"<?php echo (strpos($ta_upgrade_url, 'meeptech.com') !== false) ? ' target="_blank" rel="noopener noreferrer"' : ''; ?> class="button button-primary button-large" id="ta-upgrade-btn">
+                            <svg class="aitrfoel-ta-btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                            <?php esc_html_e('Upgrade Plan', 'ai-translator-for-elementor-and-polylang'); ?>
                         </a>
                     </div>
                 </div>
             </div>
 
             <!-- Progress Area -->
-            <div class="eat-card aitrfoel-ta-step" id="ta-progress-area" style="display: none;">
-                <h3><?php esc_html_e('Translation Progress', 'ai-translator-for-elementor-and-polylang'); ?></h3>
-                <div class="aitrfoel-ta-progress-wrap">
+            <div class="aitrfoel-card aitrfoel-ta-step aitrfoel-sticky-progress-card" id="ta-progress-area" style="display: none;">
+                <div class="aitrfoel-sticky-progress-header" style="display:flex;justify-content:space-between;align-items:center;">
+                    <h3 style="margin:0;font-size:16px;display:flex;align-items:center;gap:8px;">
+                        <span class="spinner is-active" id="ta-progress-spinner" style="float:none;margin:0;"></span>
+                        <span id="ta-progress-title"><?php esc_html_e('Translation in Progress', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                    </h3>
+                    <div class="aitrfoel-ta-progress-actions" style="margin:0;display:flex;gap:8px;">
+                        <button type="button" class="button button-secondary" id="ta-pause-btn" style="display:none;align-items:center;gap:5px;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                            <span><?php esc_html_e('Pause', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                        </button>
+                        <button type="button" class="button button-primary" id="ta-resume-btn" style="display:none;align-items:center;gap:5px;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            <span><?php esc_html_e('Resume', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                        </button>
+                        <button type="button" class="button button-link-delete" id="ta-cancel-btn" style="display:inline-flex;align-items:center;gap:5px;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            <span><?php esc_html_e('Cancel', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                        </button>
+                    </div>
+                </div>
+                <div class="aitrfoel-ta-progress-wrap" style="margin-top:14px;">
                     <div class="aitrfoel-ta-progress-bar">
                         <div class="aitrfoel-ta-progress-fill" id="ta-progress-fill" style="width: 0%"></div>
                     </div>
-                    <div class="aitrfoel-ta-progress-stats">
+                    <div class="aitrfoel-ta-progress-stats" style="margin-top:8px;display:flex;justify-content:space-between;font-weight:600;font-size:13px;">
                         <span id="ta-progress-text">0%</span>
-                        <span id="ta-progress-detail"></span>
+                        <span id="ta-progress-detail" style="color:#64748b;"></span>
                     </div>
                 </div>
-                <div id="ta-progress-log" class="aitrfoel-ta-progress-log"></div>
-                <div class="aitrfoel-ta-progress-actions">
-                    <button type="button" class="button button-secondary" id="ta-pause-btn" style="display:none;">
-                        ⏸ <?php esc_html_e('Pause', 'ai-translator-for-elementor-and-polylang'); ?>
-                    </button>
-                    <button type="button" class="button button-primary" id="ta-resume-btn" style="display:none;">
-                        ▶ <?php esc_html_e('Resume', 'ai-translator-for-elementor-and-polylang'); ?>
-                    </button>
-                    <button type="button" class="button button-link-delete" id="ta-cancel-btn">
-                        ✕ <?php esc_html_e('Cancel', 'ai-translator-for-elementor-and-polylang'); ?>
-                    </button>
-                </div>
+                <div id="ta-progress-log" class="aitrfoel-ta-progress-log" style="margin-top:14px;max-height:220px;"></div>
             </div>
 
             <!-- Active Scheduled Job Status -->
             <?php if (!empty($cron_status) && isset($cron_status['status']) && in_array($cron_status['status'], ['pending', 'processing'])) : ?>
-            <div class="eat-card aitrfoel-ta-step aitrfoel-ta-cron-status">
-                <h3><?php esc_html_e('📅 Active Scheduled Translation', 'ai-translator-for-elementor-and-polylang'); ?></h3>
+            <div class="aitrfoel-card aitrfoel-ta-step aitrfoel-ta-cron-status">
+                <h3>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <span><?php esc_html_e('Active Scheduled Translation', 'ai-translator-for-elementor-and-polylang'); ?></span>
+                </h3>
                 <div class="aitrfoel-ta-cron-info">
                     <p>
                         <strong><?php esc_html_e('Status:', 'ai-translator-for-elementor-and-polylang'); ?></strong>
@@ -436,12 +562,15 @@ class AITRFOEL_Translate_All {
             </div>
             <?php endif; ?>
             
+            <?php
+            if (method_exists($admin_menu, 'render_quick_tips')) {
+                $admin_menu->render_quick_tips();
+            }
+            ?>
+            
             <!-- MeepTech Footer Branding -->
             <div class="aitrfoel-footer-branding">
-                <a href="https://meeptech.com" target="_blank" rel="noopener noreferrer">
-                    <img src="<?php echo esc_url(AITRFOEL_PLUGIN_URL . 'assets/img/meeptech.svg'); ?>" alt="Meep Tech" class="aitrfoel-footer-logo">
-                </a>
-                <span class="aitrfoel-footer-text"><?php esc_html_e('Powered by', 'ai-translator-for-elementor-and-polylang'); ?> <a href="https://meeptech.com" target="_blank" rel="noopener noreferrer">Meep Tech</a></span>
+                <span class="aitrfoel-footer-text"><?php esc_html_e('Powered by', 'ai-translator-for-elementor-and-polylang'); ?> <a href="https://meeptech.com" target="_blank" rel="noopener noreferrer">Meep Tech</a> &middot; v<?php echo esc_html(AITRFOEL_VERSION); ?></span>
             </div>
         </div>
         <?php
@@ -453,41 +582,161 @@ class AITRFOEL_Translate_All {
     private function get_translatable_post_types() {
         $types = [];
 
+        // When built-in integration is active, only count default-language posts
+        $builtin_active = class_exists('AITRFOEL_Builtin_Integration') && AITRFOEL_Builtin_Integration::is_enabled();
+        $non_default_langs = [];
+        if ($builtin_active) {
+            $builtin = AITRFOEL_Builtin_Integration::get_instance();
+            $default_lang = $builtin->get_default_language();
+            foreach ($builtin->get_available_languages() as $l) {
+                if ($l->code !== $default_lang) {
+                    $non_default_langs[] = $l->code;
+                }
+            }
+        }
+
         // Pages
-        $page_count = wp_count_posts('page');
         $types['page'] = [
             'label' => __('Pages', 'ai-translator-for-elementor-and-polylang'),
-            'icon'  => '📄',
-            'count' => isset($page_count->publish) ? (int) $page_count->publish : 0,
+            'icon'  => 'page',
+            'count' => $this->count_default_language_posts('page', $non_default_langs),
         ];
 
         // Posts
-        $post_count = wp_count_posts('post');
         $types['post'] = [
             'label' => __('Posts', 'ai-translator-for-elementor-and-polylang'),
-            'icon'  => '📝',
-            'count' => isset($post_count->publish) ? (int) $post_count->publish : 0,
+            'icon'  => 'post',
+            'count' => $this->count_default_language_posts('post', $non_default_langs),
         ];
 
-        // Custom post types that support editor
+        // Custom post types that support editor or title (including dynamic tag sources like Testimonials & Employees)
+        $exclude_system_types = [
+            'attachment', 'revision', 'nav_menu_item', 'custom_css', 
+            'customize_changeset', 'oembed_cache', 'user_request', 
+            'wp_block', 'wp_navigation', 'wp_template', 'wp_template_part', 
+            'wp_global_styles', 'elementor_library'
+        ];
         $custom_types = get_post_types([
-            'public'   => true,
+            'show_ui'  => true,
             '_builtin' => false,
         ], 'objects');
 
+        $known_labels = [
+            'page'               => __('Pages', 'ai-translator-for-elementor-and-polylang'),
+            'post'               => __('Posts', 'ai-translator-for-elementor-and-polylang'),
+            'product'            => __('Products', 'ai-translator-for-elementor-and-polylang'),
+            'sureforms_form'     => __('SureForms', 'ai-translator-for-elementor-and-polylang'),
+            'jet-form-builder'   => __('JetFormBuilder Forms', 'ai-translator-for-elementor-and-polylang'),
+            'elementor-hf'       => __('Header & Footer Builder', 'ai-translator-for-elementor-and-polylang'),
+            'jet-theme-core'     => __('JetThemeCore Templates', 'ai-translator-for-elementor-and-polylang'),
+            'jet-engine'         => __('JetEngine Listings', 'ai-translator-for-elementor-and-polylang'),
+            'page-generator-pro' => __('Page Generator Pro', 'ai-translator-for-elementor-and-polylang'),
+        ];
+
         foreach ($custom_types as $cpt) {
-            if (!post_type_supports($cpt->name, 'editor')) continue;
-            $cpt_count = wp_count_posts($cpt->name);
-            $count = isset($cpt_count->publish) ? (int) $cpt_count->publish : 0;
+            if (in_array($cpt->name, $exclude_system_types, true)) {
+                continue;
+            }
+            // Include CPTs that support the editor OR at least a title. JetEngine
+            // (and similar) CPTs often disable editor support and store their content
+            // in custom meta fields, but still register a title — they are translatable
+            // (title + JetEngine meta fields). This mirrors the dashboard, which lists
+            // every public CPT. Truly headless types (no editor, no title) are skipped.
+            if (!post_type_supports($cpt->name, 'editor') && !post_type_supports($cpt->name, 'title')) {
+                continue;
+            }
+            $count = $this->count_default_language_posts($cpt->name, $non_default_langs);
             if ($count === 0) continue; // Hide empty custom post types
             $types[$cpt->name] = [
-                'label' => $cpt->label,
-                'icon'  => '📋',
+                'label' => isset($known_labels[$cpt->name]) ? $known_labels[$cpt->name] : $cpt->label,
+                'icon'  => ($cpt->name === 'product' ? 'product' : 'custom'),
                 'count' => $count,
             ];
         }
 
+        // Elementor templates (headers, footers, sections, etc.)
+        // These are stored as post_type=elementor_library with _elementor_template_type meta.
+        // They are private CPTs so they won't appear in the generic loop above.
+        if (post_type_exists('elementor_library')) {
+            $count = $this->count_elementor_templates($non_default_langs);
+            if ($count > 0) {
+                $types['elementor_library'] = [
+                    'label' => __('Elementor Templates', 'ai-translator-for-elementor-and-polylang'),
+                    'icon'  => 'template',
+                    'count' => $count,
+                ];
+            }
+        }
+
         return $types;
+    }
+
+    /**
+     * Count published posts of a given type, excluding non-default language translations.
+     */
+    private function count_default_language_posts($post_type, $non_default_langs) {
+        if (empty($non_default_langs)) {
+            $counts = wp_count_posts($post_type);
+            return isset($counts->publish) ? (int) $counts->publish : 0;
+        }
+
+        $query = new WP_Query([
+            'post_type'      => $post_type,
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'no_found_rows'  => false,
+            'tax_query'      => [
+                [
+                    'taxonomy' => 'aitrfoel_language',
+                    'field'    => 'slug',
+                    'terms'    => $non_default_langs,
+                    'operator' => 'NOT IN',
+                ],
+            ],
+        ]);
+
+        return (int) $query->found_posts;
+    }
+
+    /**
+     * Count published Elementor templates (headers, footers, sections, etc.)
+     * that have Elementor data, are not kits, and are not already translations.
+     */
+    private function count_elementor_templates($non_default_langs) {
+        $args = [
+            'post_type'      => 'elementor_library',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'no_found_rows'  => false,
+            'meta_query'     => [
+                [
+                    'key'     => '_elementor_data',
+                    'compare' => 'EXISTS',
+                ],
+                [
+                    'key'     => '_elementor_template_type',
+                    'value'   => 'kit',
+                    'compare' => '!=',
+                ],
+            ],
+        ];
+
+        // If built-in language system is active, exclude non-default language posts
+        if (!empty($non_default_langs)) {
+            $args['tax_query'] = [
+                [
+                    'taxonomy' => 'aitrfoel_language',
+                    'field'    => 'slug',
+                    'terms'    => $non_default_langs,
+                    'operator' => 'NOT IN',
+                ],
+            ];
+        }
+
+        $query = new \WP_Query($args);
+        return (int) $query->found_posts;
     }
 
     /**
@@ -500,6 +749,31 @@ class AITRFOEL_Translate_All {
             wp_send_json_error(__('Insufficient permissions.', 'ai-translator-for-elementor-and-polylang'));
         }
 
+        // Wrap the scan in a Throwable guard so a fatal in any parser (malformed
+        // _elementor_data, third-party post-meta surprises) becomes a JSON error
+        // with the actual message instead of a generic 500.
+        try {
+            $this->run_scan_content();
+        } catch (\Throwable $e) {
+            if (class_exists('AITRFOEL_Logger')) {
+                AITRFOEL_Logger::log(
+                    'Translate-All scan failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString(),
+                    'error'
+                );
+            }
+            wp_send_json_error(sprintf(
+                /* translators: %s: PHP exception/error message */
+                __('Scan failed: %s', 'ai-translator-for-elementor-and-polylang'),
+                $e->getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Inner scan implementation. Extracted so ajax_scan_content() can wrap it in
+     * a Throwable guard and surface real error messages to the UI.
+     */
+    private function run_scan_content() {
         $post_types = isset($_POST['post_types']) ? array_map('sanitize_text_field', (array) $_POST['post_types']) : [];
         $target_languages = isset($_POST['target_languages']) ? array_map('sanitize_text_field', (array) $_POST['target_languages']) : [];
 
@@ -560,8 +834,28 @@ class AITRFOEL_Translate_All {
             $type_post_ids = [];
 
             foreach ($posts as $post) {
-                // Calculate word count
-                $word_count = $this->get_post_word_count($post->ID);
+                // Skip Elementor global styles / Default Kit
+                if ($post->post_type === 'elementor_library') {
+                    $template_type = get_post_meta($post->ID, '_elementor_template_type', true);
+                    if ($template_type === 'kit') {
+                        continue;
+                    }
+                }
+
+                // Calculate word count. Wrap per-post so one bad post (malformed
+                // _elementor_data, parser exception) doesn't 500 the entire scan.
+                try {
+                    $word_count = $this->get_post_word_count($post->ID);
+                } catch (\Throwable $e) {
+                    if (class_exists('AITRFOEL_Logger')) {
+                        AITRFOEL_Logger::log(
+                            sprintf('Scan word-count failed for post %d: %s', $post->ID, $e->getMessage()),
+                            'warning',
+                            $post->ID
+                        );
+                    }
+                    $word_count = 0;
+                }
                 $type_words += $word_count;
 
                 // Check which languages are translated and which are not
@@ -625,7 +919,11 @@ class AITRFOEL_Translate_All {
             $words_needed = 0;
             $factor = self::SERVER_USAGE_FACTOR;
             foreach ($posts as $post) {
-                $wc = $this->get_post_word_count($post->ID);
+                try {
+                    $wc = $this->get_post_word_count($post->ID);
+                } catch (\Throwable $e) {
+                    $wc = 0;
+                }
                 if ($multilingual && $multilingual->is_active()) {
                     $existing_translations = $multilingual->get_post_translations($post->ID);
                     foreach ($target_languages as $lang_code) {
@@ -679,73 +977,13 @@ class AITRFOEL_Translate_All {
 
     /**
      * Get word count for a post based on its content type.
-     * Uses the same parsers as the translation engine for accurate estimates.
+     * Uses the cached word count from AITRFOEL_Content_Detector.
      */
     private function get_post_word_count($post_id) {
-        $content_detector = class_exists('AITRFOEL_Content_Detector') ? AITRFOEL_Content_Detector::get_instance() : null;
-        $content_type = $content_detector ? $content_detector->detect($post_id) : 'classic';
-
-        $word_count = 0;
-        $translation_map = [];
-
-        switch ($content_type) {
-            case 'elementor':
-                $elementor_data = get_post_meta($post_id, '_elementor_data', true);
-                if (!empty($elementor_data)) {
-                    $elements = json_decode($elementor_data, true);
-                    if (json_last_error() === JSON_ERROR_NONE && !empty($elements)) {
-                        if (class_exists('AITRFOEL_Widget_Parser')) {
-                            $parser = AITRFOEL_Widget_Parser::get_instance();
-                            $translation_map = $parser->parse_for_translation($elements);
-                        }
-                    }
-                }
-                break;
-
-            case 'gutenberg':
-                if (class_exists('AITRFOEL_Gutenberg_Parser')) {
-                    $parser = AITRFOEL_Gutenberg_Parser::get_instance();
-                    $translation_map = $parser->parse_for_translation($post_id);
-                }
-                break;
-
-            case 'classic':
-                if (class_exists('AITRFOEL_Classic_Parser')) {
-                    $parser = AITRFOEL_Classic_Parser::get_instance();
-                    $translation_map = $parser->parse_for_translation($post_id);
-                }
-                break;
-
-            case 'woocommerce':
-                // WooCommerce product with no editor content — count excerpt words
-                $wc_post = get_post($post_id);
-                if ($wc_post && !empty(trim($wc_post->post_excerpt))) {
-                    $translation_map['wc_excerpt'] = [
-                        'original' => $wc_post->post_excerpt,
-                        'path' => 'excerpt',
-                        'type' => 'text',
-                    ];
-                }
-                break;
-
-            default:
+        if (class_exists('AITRFOEL_Content_Detector')) {
+            return AITRFOEL_Content_Detector::get_instance()->get_cached_word_count($post_id);
         }
-
-        // Count words from parsed translatable strings (same as translation engine)
-        foreach ($translation_map as $entry) {
-            $text = is_array($entry) ? ($entry['original'] ?? '') : $entry;
-            if (is_string($text) && !empty($text)) {
-                $word_count += str_word_count(wp_strip_all_tags($text));
-            }
-        }
-
-        // Add title words
-        $post = get_post($post_id);
-        if ($post && !empty($post->post_title)) {
-            $word_count += str_word_count(wp_strip_all_tags($post->post_title));
-        }
-
-        return $word_count;
+        return 0;
     }
 
     /**
@@ -871,12 +1109,13 @@ class AITRFOEL_Translate_All {
             'created_at'      => current_time('mysql'),
         ]);
 
-        // Process first batch immediately
-        $this->process_immediate_batch($job_id);
+        // Processing is driven by the status-poll loop (ajax_get_status), which
+        // runs a time-budgeted batch on each call. This keeps the start request
+        // instant and removes any WP-Cron dependency for immediate jobs.
     }
 
     /**
-     * Process a batch of immediate translations
+     * Process a batch of immediate translations.
      */
     private function process_immediate_batch($job_id) {
         $job = get_option('aitrfoel_translate_all_job', []);
@@ -884,13 +1123,36 @@ class AITRFOEL_Translate_All {
             return;
         }
 
-        $queue = $job['queue'] ?? [];
-        $completed = $job['completed_items'] ?? 0;
-        $source_language = $job['source_language'] ?? 'auto';
+        // Allow several translations per request rather than one item per poll.
+        if (function_exists('wp_raise_memory_limit')) {
+            wp_raise_memory_limit('admin');
+        }
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(120);
+        }
+        @ignore_user_abort(true);
 
-        // Process one item at a time (AJAX polling will call back for more)
-        if ($completed < count($queue)) {
-            $item = $queue[$completed];
+        $queue           = $job['queue'] ?? [];
+        $source_language = $job['source_language'] ?? 'auto';
+        $total           = count($queue);
+
+        $start  = microtime(true);
+        $budget = 12.0; // seconds of work per request, then return progress
+
+        while (($job['completed_items'] ?? 0) < $total) {
+            // Re-read the job each iteration so a pause/cancel from another
+            // request stops the loop promptly.
+            $fresh = get_option('aitrfoel_translate_all_job', []);
+            if (empty($fresh) || ($fresh['job_id'] ?? '') !== $job_id) {
+                return;
+            }
+            if (($fresh['status'] ?? '') !== 'processing') {
+                return;
+            }
+            $job = $fresh;
+
+            $completed = (int) $job['completed_items'];
+            $item      = $queue[$completed];
 
             $result = $this->translate_single_post($item['post_id'], $item['language'], $source_language);
 
@@ -920,8 +1182,8 @@ class AITRFOEL_Translate_All {
                 }
             } else {
                 // Increment successful translation counter for review prompt
-                $count = (int) get_option('aitrfoel_successful_translations', 0);
-                update_option('aitrfoel_successful_translations', $count + 1);
+                $count = (int) get_option('aitrfoel_successful_translations_count', 0);
+                update_option('aitrfoel_successful_translations_count', $count + 1);
 
                 $job['results'][] = [
                     'post_id'        => $item['post_id'],
@@ -935,11 +1197,17 @@ class AITRFOEL_Translate_All {
             }
 
             // Check if done
-            if ($job['completed_items'] >= count($queue)) {
+            if ($job['completed_items'] >= $total) {
                 $job['status'] = 'completed';
             }
 
+            // Persist after each item so progress survives if the request ends.
             update_option('aitrfoel_translate_all_job', $job);
+
+            // Stop once the per-request time budget is used up; the next poll continues.
+            if ((microtime(true) - $start) >= $budget) {
+                break;
+            }
         }
     }
 
@@ -1016,7 +1284,7 @@ class AITRFOEL_Translate_All {
             $current_item_info = sprintf('%s → %s', $post_title, strtoupper($current['language']));
         }
 
-        $review_eligible = !get_option('aitrfoel_review_dismissed') && ((int) get_option('aitrfoel_successful_translations', 0) >= 1);
+        $review_eligible = !get_option('aitrfoel_review_dismissed') && ((int) get_option('aitrfoel_successful_translations_count', 0) >= 3);
 
         wp_send_json_success([
             'status'           => $job['status'] ?? 'unknown',
