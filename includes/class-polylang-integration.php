@@ -175,7 +175,7 @@ class AITRFOEL_Polylang_Integration extends AITRFOEL_Multilingual_Interface {
      * @return string|null Polylang language code (e.g., 'ru') or null if not found
      */
     public function get_language_code($our_language) {
-        return $this->get_code_from_name($our_language);
+        return $this->normalize_language_code($our_language);
     }
     
     /**

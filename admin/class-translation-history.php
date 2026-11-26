@@ -40,15 +40,15 @@ class AITRFOEL_Translation_History {
         $table = $wpdb->prefix . 'aitrfoel_translation_history';
 
         // Ensure the table exists (may not on first run before re-activation)
-        if ($wpdb->get_var("SHOW TABLES LIKE '$table'") !== $table) {
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) !== $table) {
             return;
         }
 
         $wpdb->insert($table, [
             'original_post_id'   => absint($args['original_post_id'] ?? 0),
             'translated_post_id' => absint($args['translated_post_id'] ?? 0),
-            'source_lang'        => sanitize_text_field($args['source_lang'] ?? ''),
-            'target_lang'        => sanitize_text_field($args['target_lang'] ?? ''),
+            'source_lang'        => self::normalize_lang($args['source_lang'] ?? ''),
+            'target_lang'        => self::normalize_lang($args['target_lang'] ?? ''),
             'content_type'       => sanitize_text_field($args['content_type'] ?? 'elementor'),
             'word_count'         => absint($args['word_count'] ?? 0),
             'status'             => sanitize_text_field($args['status'] ?? 'success'),
@@ -56,6 +56,54 @@ class AITRFOEL_Translation_History {
             'user_id'            => get_current_user_id(),
             'created_at'         => current_time('mysql'),
         ], ['%d', '%d', '%s', '%s', '%s', '%d', '%s', '%f', '%d', '%s']);
+    }
+
+    /**
+     * Normalize a language value to a lowercase code.
+     * Some engine paths pass full names ("German") and others codes ("de"), which split the
+     * History stats into duplicates (DE + GERMAN) and inflated the language count.
+     */
+    public static function normalize_lang($lang) {
+        $lang = trim(sanitize_text_field((string) $lang));
+        if ($lang === '') {
+            return '';
+        }
+        $to_lower = static function ($str) {
+            return function_exists('mb_strtolower') ? mb_strtolower($str, 'UTF-8') : strtolower($str);
+        };
+        if (strlen($lang) > 3 && strpos($lang, '-') === false && strpos($lang, '_') === false
+            && class_exists('AITRFOEL_Language_Mapper')) {
+            $code = AITRFOEL_Language_Mapper::get_code_from_language_name($lang);
+            if ($code) {
+                return $to_lower($code);
+            }
+        }
+        return $to_lower($lang);
+    }
+
+    /**
+     * One-time migration: rewrite rows stored with full language names to codes.
+     */
+    private function maybe_normalize_history_langs($table) {
+        if (get_option('aitrfoel_history_langs_normalized')) {
+            return;
+        }
+        global $wpdb;
+        $safe_table = esc_sql($table);
+        foreach (['source_lang', 'target_lang'] as $col) {
+            if (!in_array($col, ['source_lang', 'target_lang'], true)) {
+                continue;
+            }
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table and whitelisted column names cannot be value placeholders.
+            $values = $wpdb->get_col("SELECT DISTINCT `{$col}` FROM `{$safe_table}`");
+            foreach ((array) $values as $value) {
+                $normalized = self::normalize_lang($value);
+                if ($normalized !== '' && $normalized !== $value) {
+                    $wpdb->update($table, [$col => $normalized], [$col => $value], ['%s'], ['%s']);
+                }
+            }
+        }
+        update_option('aitrfoel_history_langs_normalized', 1, false);
     }
 
     /**
@@ -75,13 +123,14 @@ class AITRFOEL_Translation_History {
         $table = $wpdb->prefix . 'aitrfoel_translation_history';
 
         // Check table exists
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table'") === $table;
+        $table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) === $table;
 
         $rows = [];
         $total = 0;
         $summary = ['total_translations' => 0, 'total_words' => 0, 'languages' => []];
 
         if ($table_exists) {
+            $this->maybe_normalize_history_langs($table);
             // Build WHERE clause
             $where = [];
             $params = [];
@@ -101,12 +150,12 @@ class AITRFOEL_Translation_History {
 
             // Total count
             $count_query = "SELECT COUNT(*) FROM $table $where_sql";
-            $total = $params ? (int) $wpdb->get_var($wpdb->prepare($count_query, ...$params)) : (int) $wpdb->get_var($count_query);
+            $total = $params ? (int) $wpdb->get_var($wpdb->prepare($count_query, ...$params)) : (int) $wpdb->get_var($count_query); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- query built with $wpdb->prepare(); table names are internal ($wpdb->prefix + fixed name)
 
             // Fetch rows
             $query = "SELECT * FROM $table $where_sql ORDER BY created_at DESC LIMIT %d OFFSET %d";
             $all_params = array_merge($params, [$per_page, $offset]);
-            $rows = $wpdb->get_results($wpdb->prepare($query, ...$all_params));
+            $rows = $wpdb->get_results($wpdb->prepare($query, ...$all_params)); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- query built with $wpdb->prepare(); table names are internal ($wpdb->prefix + fixed name)
 
             // Summary stats
             $summary['total_translations'] = (int) $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE status = 'success'");
@@ -133,90 +182,88 @@ class AITRFOEL_Translation_History {
             <?php else: ?>
 
             <!-- Summary Cards -->
-            <div class="aitrfoel-history-summary" style="display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;">
-                <div class="aitrfoel-history-card" style="background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 16px 24px; min-width: 160px;">
+            <div class="aitrfoel-history-summary">
+                <div class="aitrfoel-history-card aitrfoel-history-card-stat">
                     <div class="aitrfoel-history-number"><?php echo number_format($summary['total_translations']); ?></div>
                     <div class="aitrfoel-history-label"><?php esc_html_e('Translations', 'ai-translator-for-elementor-and-polylang'); ?></div>
                 </div>
-                <div class="aitrfoel-history-card" style="background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 16px 24px; min-width: 160px;">
+                <div class="aitrfoel-history-card aitrfoel-history-card-stat">
                     <div class="aitrfoel-history-number"><?php echo number_format($summary['total_words']); ?></div>
                     <div class="aitrfoel-history-label"><?php esc_html_e('Words Translated', 'ai-translator-for-elementor-and-polylang'); ?></div>
                 </div>
-                <div class="aitrfoel-history-card" style="background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 16px 24px; min-width: 160px;">
+                <div class="aitrfoel-history-card aitrfoel-history-card-stat">
                     <div class="aitrfoel-history-number"><?php echo count($summary['languages']); ?></div>
                     <div class="aitrfoel-history-label"><?php esc_html_e('Languages', 'ai-translator-for-elementor-and-polylang'); ?></div>
                 </div>
                 <?php if (!empty($summary['languages'])): ?>
-                <div class="aitrfoel-history-card" style="background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 16px 24px; flex: 1; min-width: 200px;">
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <div class="aitrfoel-history-card aitrfoel-history-card-languages">
+                    <div class="aitrfoel-history-language-list">
                         <?php foreach ($summary['languages'] as $code => $cnt):
                             $filter_url = add_query_arg(['page' => 'ai-translator-for-elementor-and-polylang-history', 'lang' => $code], admin_url('admin.php'));
                             $is_active = (isset($_GET['lang']) && $_GET['lang'] === $code);
                         ?>
-                            <a href="<?php echo esc_url($filter_url); ?>" style="display: inline-block; background: <?php echo $is_active ? '#2271b1' : '#f0f6fc'; ?>; border: 1px solid <?php echo $is_active ? '#2271b1' : '#c3d7ef'; ?>; border-radius: 4px; padding: 2px 8px; font-size: 12px; font-weight: 600; text-decoration: none; color: <?php echo $is_active ? '#fff' : 'inherit'; ?>;" title="<?php echo esc_attr(sprintf(__('Filter by %s', 'ai-translator-for-elementor-and-polylang'), strtoupper($code))); ?>">
-                                <?php echo esc_html(strtoupper($code)); ?> <span style="color: <?php echo $is_active ? 'rgba(255,255,255,0.7)' : '#646970'; ?>; font-weight: 400;">(<?php echo $cnt; ?>)</span>
+                            <a href="<?php echo esc_url($filter_url); ?>" class="aitrfoel-history-language-chip<?php echo $is_active ? ' is-active' : ''; ?>" title="<?php echo esc_attr(sprintf(/* translators: %s: language code */ __('Filter by %s', 'ai-translator-for-elementor-and-polylang'), strtoupper($code))); ?>">
+                                <?php echo esc_html(strtoupper($code)); ?> <span class="aitrfoel-history-language-chip-count">(<?php echo esc_html($cnt); ?>)</span>
                             </a>
                         <?php endforeach; ?>
                     </div>
-                    <div style="color: #646970; font-size: 13px; margin-top: 6px;"><?php esc_html_e('Per Language', 'ai-translator-for-elementor-and-polylang'); ?></div>
+                    <div class="aitrfoel-history-language-caption"><?php esc_html_e('Per Language', 'ai-translator-for-elementor-and-polylang'); ?></div>
                 </div>
                 <?php endif; ?>
             </div>
 
             <!-- Filters -->
-            <form method="get" style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <form method="get" class="aitrfoel-history-filters">
                 <input type="hidden" name="page" value="ai-translator-for-elementor-and-polylang-history" />
-                <style>
-                    .aitrfoel-history-summary select { min-width: 130px; padding: 4px 28px 4px 8px; -webkit-appearance: none; -moz-appearance: none; appearance: none; background: #fff url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5%206l5%205%205-5%22%20fill%3D%22none%22%20stroke%3D%22%23646970%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E') no-repeat right 6px center; background-size: 16px; border: 1px solid #8c8f94; border-radius: 4px; cursor: pointer; }
-                    form[method="get"] select { min-width: 130px; padding: 4px 28px 4px 8px; -webkit-appearance: none; -moz-appearance: none; appearance: none; background: #fff url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5%206l5%205%205-5%22%20fill%3D%22none%22%20stroke%3D%22%23646970%22%20stroke-width%3D%221.5%22%2F%3E%3C%2Fsvg%3E') no-repeat right 6px center; background-size: 16px; border: 1px solid #8c8f94; border-radius: 4px; cursor: pointer; }
-                </style>
                 <?php if (!empty($summary['languages'])): ?>
-                <select name="lang">
+                <select name="lang" class="aitrfoel-history-filter-select">
                     <option value=""><?php esc_html_e('All Languages', 'ai-translator-for-elementor-and-polylang'); ?></option>
                     <?php foreach (array_keys($summary['languages']) as $code): ?>
                         <option value="<?php echo esc_attr($code); ?>" <?php selected($filter_lang, $code); ?>><?php echo esc_html(strtoupper($code)); ?></option>
                     <?php endforeach; ?>
                 </select>
                 <?php endif; ?>
-                <select name="ctype">
+                <select name="ctype" class="aitrfoel-history-filter-select">
                     <option value=""><?php esc_html_e('All Types', 'ai-translator-for-elementor-and-polylang'); ?></option>
                     <option value="elementor" <?php selected($filter_type, 'elementor'); ?>>Elementor</option>
                     <option value="gutenberg" <?php selected($filter_type, 'gutenberg'); ?>>Gutenberg</option>
                     <option value="classic" <?php selected($filter_type, 'classic'); ?>>Classic</option>
                 </select>
-                <select name="status">
+                <select name="status" class="aitrfoel-history-filter-select">
                     <option value=""><?php esc_html_e('All Statuses', 'ai-translator-for-elementor-and-polylang'); ?></option>
-                    <option value="success" <?php selected($filter_status, 'success'); ?>>✅ <?php esc_html_e('Success', 'ai-translator-for-elementor-and-polylang'); ?></option>
-                    <option value="error" <?php selected($filter_status, 'error'); ?>>❌ <?php esc_html_e('Error', 'ai-translator-for-elementor-and-polylang'); ?></option>
+                    <option value="success" <?php selected($filter_status, 'success'); ?>><?php esc_html_e('Success', 'ai-translator-for-elementor-and-polylang'); ?></option>
+                    <option value="error" <?php selected($filter_status, 'error'); ?>><?php esc_html_e('Error', 'ai-translator-for-elementor-and-polylang'); ?></option>
                 </select>
                 <button type="submit" class="button"><?php esc_html_e('Filter', 'ai-translator-for-elementor-and-polylang'); ?></button>
                 <?php if ($filter_lang || $filter_type || $filter_status): ?>
                     <a href="<?php echo esc_url($base_url); ?>" class="button button-link"><?php esc_html_e('Clear', 'ai-translator-for-elementor-and-polylang'); ?></a>
                 <?php endif; ?>
 
-                <span style="flex: 1;"></span>
-                <button type="button" id="aitrfoel-clear-history" class="button" style="color: #d63638;">
-                    🗑️ <?php esc_html_e('Clear History', 'ai-translator-for-elementor-and-polylang'); ?>
+                <span class="aitrfoel-history-filters-spacer"></span>
+                <button type="button" id="aitrfoel-clear-history" class="button aitrfoel-history-clear-btn" style="display:inline-flex;align-items:center;gap:5px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    <span><?php esc_html_e('Clear History', 'ai-translator-for-elementor-and-polylang'); ?></span>
                 </button>
             </form>
 
             <!-- History Table -->
-            <table class="widefat striped" style="border-radius: 6px; overflow: hidden;">
+            <div class="aitrfoel-history-table-wrap">
+            <table class="widefat striped aitrfoel-history-table">
                 <thead>
                     <tr>
-                        <th style="width: 160px;"><?php esc_html_e('Date', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                        <th class="aitrfoel-col-date"><?php esc_html_e('Date', 'ai-translator-for-elementor-and-polylang'); ?></th>
                         <th><?php esc_html_e('Original Page', 'ai-translator-for-elementor-and-polylang'); ?></th>
                         <th><?php esc_html_e('Translated Page', 'ai-translator-for-elementor-and-polylang'); ?></th>
-                        <th style="width: 60px;"><?php esc_html_e('Lang', 'ai-translator-for-elementor-and-polylang'); ?></th>
-                        <th style="width: 90px;"><?php esc_html_e('Type', 'ai-translator-for-elementor-and-polylang'); ?></th>
-                        <th style="width: 80px;"><?php esc_html_e('Words', 'ai-translator-for-elementor-and-polylang'); ?></th>
-                        <th style="width: 70px;"><?php esc_html_e('Time', 'ai-translator-for-elementor-and-polylang'); ?></th>
-                        <th style="width: 70px;"><?php esc_html_e('Status', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                        <th class="aitrfoel-col-lang"><?php esc_html_e('Lang', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                        <th class="aitrfoel-col-type"><?php esc_html_e('Type', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                        <th class="aitrfoel-col-words"><?php esc_html_e('Words', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                        <th class="aitrfoel-col-time"><?php esc_html_e('Time', 'ai-translator-for-elementor-and-polylang'); ?></th>
+                        <th class="aitrfoel-col-status"><?php esc_html_e('Status', 'ai-translator-for-elementor-and-polylang'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($rows)): ?>
-                        <tr><td colspan="8" style="text-align: center; padding: 30px; color: #646970;">
+                        <tr><td colspan="8" class="aitrfoel-history-empty-row">
                             <?php esc_html_e('No translation history yet. Translations will appear here as you translate pages.', 'ai-translator-for-elementor-and-polylang'); ?>
                         </td></tr>
                     <?php else: ?>
@@ -235,7 +282,7 @@ class AITRFOEL_Translation_History {
                             $duration_display = $row->duration > 0 ? round($row->duration, 1) . 's' : '—';
                             ?>
                             <tr>
-                                <td style="color: #646970; font-size: 12px;">
+                                <td class="aitrfoel-history-date-cell">
                                     <?php echo esc_html(wp_date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($row->created_at))); ?>
                                 </td>
                                 <td>
@@ -254,20 +301,20 @@ class AITRFOEL_Translation_History {
                                 </td>
                                 <td>
                                     <?php $lang_filter_url = add_query_arg(['page' => 'ai-translator-for-elementor-and-polylang-history', 'lang' => $row->target_lang], admin_url('admin.php')); ?>
-                                    <a href="<?php echo esc_url($lang_filter_url); ?>" class="eat-lang-flag eat-lang-exists" style="text-decoration: none; cursor: pointer;" title="<?php echo esc_attr(sprintf(__('Filter by %s', 'ai-translator-for-elementor-and-polylang'), strtoupper($row->target_lang))); ?>"><?php echo esc_html(strtoupper($row->target_lang)); ?></a>
+                                    <a href="<?php echo esc_url($lang_filter_url); ?>" class="aitrfoel-lang-flag aitrfoel-lang-exists aitrfoel-history-lang-flag" title="<?php echo esc_attr(sprintf(/* translators: %s: language code */ __('Filter by %s', 'ai-translator-for-elementor-and-polylang'), strtoupper($row->target_lang))); ?>"><?php echo esc_html(strtoupper($row->target_lang)); ?></a>
                                 </td>
                                 <td>
-                                    <span style="display: inline-block; background: <?php echo esc_attr($badge_bg); ?>; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 3px; font-weight: 500;">
+                                    <span class="aitrfoel-history-type-badge aitrfoel-history-type-<?php echo esc_attr(sanitize_html_class($row->content_type)); ?>">
                                         <?php echo esc_html(ucfirst($row->content_type)); ?>
                                     </span>
                                 </td>
-                                <td style="text-align: right;"><?php echo number_format($row->word_count); ?></td>
-                                <td style="text-align: right; color: #646970; font-size: 12px;"><?php echo esc_html($duration_display); ?></td>
+                                <td class="aitrfoel-history-words-cell"><?php echo number_format($row->word_count); ?></td>
+                                <td class="aitrfoel-history-time-cell"><?php echo esc_html($duration_display); ?></td>
                                 <td>
                                     <?php if ($row->status === 'success'): ?>
-                                        <span style="color: #00a32a;">✅</span>
+                                        <span class="aitrfoel-history-status is-success" style="display:inline-flex;align-items:center;" title="<?php esc_attr_e('Success', 'ai-translator-for-elementor-and-polylang'); ?>"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
                                     <?php else: ?>
-                                        <span style="color: #d63638;">❌</span>
+                                        <span class="aitrfoel-history-status is-error" style="display:inline-flex;align-items:center;" title="<?php esc_attr_e('Error', 'ai-translator-for-elementor-and-polylang'); ?>"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
                                     <?php endif; ?>
                                 </td>
                             </tr>
@@ -275,13 +322,14 @@ class AITRFOEL_Translation_History {
                     <?php endif; ?>
                 </tbody>
             </table>
+            </div>
 
             <!-- Pagination -->
             <?php if ($total_pages > 1): ?>
-            <div class="tablenav" style="margin-top: 12px;">
+            <div class="tablenav aitrfoel-history-pagination">
                 <div class="tablenav-pages">
                     <span class="displaying-num">
-                        <?php printf(esc_html__('%s items', 'ai-translator-for-elementor-and-polylang'), number_format($total)); ?>
+                        <?php printf(/* translators: %s: number of history entries */ esc_html__('%s items', 'ai-translator-for-elementor-and-polylang'), number_format($total)); ?>
                     </span>
                     <?php
                     $page_links = paginate_links([
@@ -291,7 +339,7 @@ class AITRFOEL_Translation_History {
                         'total'   => $total_pages,
                         'type'    => 'plain',
                     ]);
-                    echo $page_links;
+                    echo $page_links; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- output of core paginate_links()
                     ?>
                 </div>
             </div>
@@ -301,21 +349,9 @@ class AITRFOEL_Translation_History {
             
             <!-- MeepTech Footer Branding -->
             <div class="aitrfoel-footer-branding">
-                <a href="https://meeptech.com" target="_blank" rel="noopener noreferrer">
-                    <img src="<?php echo esc_url(AITRFOEL_PLUGIN_URL . 'assets/img/meeptech.svg'); ?>" alt="Meep Tech" class="aitrfoel-footer-logo">
-                </a>
                 <span class="aitrfoel-footer-text"><?php esc_html_e('Powered by', 'ai-translator-for-elementor-and-polylang'); ?> <a href="https://meeptech.com" target="_blank" rel="noopener noreferrer">Meep Tech</a> &middot; v<?php echo esc_html(AITRFOEL_VERSION); ?></span>
             </div>
         </div>
-
-        <style>
-            .aitrfoel-history-card { transition: box-shadow 0.2s; }
-            .aitrfoel-history-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-            .aitrfoel-history-number { font-size: 28px; font-weight: 700; color: #1d2327; margin-bottom: 8px; line-height: 1; }
-            .aitrfoel-history-label { color: #646970; font-size: 13px; line-height: 1.3; }
-            .eat-lang-flag { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; line-height: 1.3; }
-            .eat-lang-flag.eat-lang-exists { background: #2271b1; color: #fff; }
-        </style>
 
         <script>
         jQuery(function($) {
