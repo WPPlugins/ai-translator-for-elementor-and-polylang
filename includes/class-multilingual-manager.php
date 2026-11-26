@@ -43,6 +43,16 @@ class AITRFOEL_Multilingual_Manager {
         
         // AJAX handler for dismissing TranslatePress notice
         add_action('wp_ajax_aitrfoel_dismiss_translatepress_notice', [$this, 'ajax_dismiss_translatepress_notice']);
+
+        // Dynamic sorting: sync translated posts array to match original ordering attributes
+        add_filter('the_posts', [$this, 'sync_query_posts_order'], 25, 2);
+
+        // Filter JetEngine Listing Grid loops to preserve original post order
+        add_filter('jet-engine/listing/query/items', [$this, 'sync_jet_listing_items_order'], 25, 3);
+
+        // Filter Elementor Header Footer Builder template IDs
+        add_filter('get_hfe_header_id', [$this, 'swap_hfe_template_id'], 20, 1);
+        add_filter('get_hfe_footer_id', [$this, 'swap_hfe_template_id'], 20, 1);
     }
     
     /**
@@ -162,12 +172,18 @@ class AITRFOEL_Multilingual_Manager {
         <div class="notice notice-warning is-dismissible" id="aitrfoel-translatepress-notice">
             <p><strong><?php esc_html_e('Meep AI Translator — TranslatePress Detected', 'ai-translator-for-elementor-and-polylang'); ?></strong></p>
             <p><?php esc_html_e('TranslatePress uses a fundamentally different translation approach (single-post with inline replacements) that is not compatible with this plugin. Meep AI Translator works with duplicate-post translation systems.', 'ai-translator-for-elementor-and-polylang'); ?></p>
-            <p><?php _e('<strong>Supported systems:</strong> Polylang, WPML, or our Built-in Language System (recommended — includes menu and widget translation).', 'ai-translator-for-elementor-and-polylang'); ?></p>
-            <p><?php _e('You can enable the <strong>Built-in Language System</strong> in <a href="' . esc_url(admin_url('admin.php?page=ai-translator&tab=settings')) . '">Settings → Language Management</a> to get full translation support including menus and widgets.', 'ai-translator-for-elementor-and-polylang'); ?></p>
+            <p><?php echo wp_kses_post(__('<strong>Supported systems:</strong> Polylang, WPML, or our Built-in Language System (recommended — includes menu and widget translation).', 'ai-translator-for-elementor-and-polylang')); ?></p>
+            <p><?php
+                echo wp_kses_post(sprintf(
+                    /* translators: %s: URL to Language Management settings tab */
+                    __('You can enable the <strong>Built-in Language System</strong> in <a href="%s">Settings &rarr; Languages &amp; Switcher</a> to get full translation support including menus and widgets.', 'ai-translator-for-elementor-and-polylang'),
+                    esc_url(admin_url('admin.php?page=ai-translator-for-elementor-and-polylang-settings#tab-languages'))
+                ));
+            ?></p>
         </div>
         <script>
         jQuery(document).on('click', '#aitrfoel-translatepress-notice .notice-dismiss', function() {
-            jQuery.post(ajaxurl, { action: 'aitrfoel_dismiss_translatepress_notice', _wpnonce: '<?php echo wp_create_nonce('aitrfoel_dismiss_tp'); ?>' });
+            jQuery.post(ajaxurl, { action: 'aitrfoel_dismiss_translatepress_notice', _wpnonce: '<?php echo esc_js(wp_create_nonce('aitrfoel_dismiss_tp')); ?>' });
         });
         </script>
         <?php
@@ -491,6 +507,283 @@ class AITRFOEL_Multilingual_Manager {
         }
         
         return null;
+    }
+
+    /**
+     * Sort the queried posts array on-the-fly to match the exact sorting sequence
+     * (menu_order or post_date) of their default-language original source posts.
+     * This bypasses limitations of third-party drag-and-drop post ordering plugins
+     * that update the database using custom SQL queries instead of wp_update_post/save_post.
+     *
+     * @param array    $posts Array of WP_Post objects.
+     * @param WP_Query $query The query object.
+     * @return array
+     */
+    public function sync_query_posts_order($posts, $query) {
+
+        if (!get_option('aitrfoel_preserve_post_order', true)) {
+            return $posts;
+        }
+
+        if (empty($posts) || !$this->integration || !$this->integration->is_active()) {
+            return $posts;
+        }
+
+        // Bypass backend admin post list tables, but run on frontend AJAX and REST queries
+        if (is_admin() && !wp_doing_ajax() && !defined('REST_REQUEST')) {
+            return $posts;
+        }
+
+        $default = $this->get_default_language();
+        $lang = $this->get_post_language($posts[0]->ID);
+        if (!$lang || $lang === $default) {
+            return $posts;
+        }
+
+        // Only sort for post types that use the language taxonomy or are translatable
+        $post_type = $query->get('post_type');
+        if (empty($post_type)) {
+            $post_type = $posts[0]->post_type;
+        }
+        $post_types = (array) $post_type;
+        $applies = false;
+        foreach ($post_types as $pt) {
+            if ($pt && (post_type_exists($pt) || $pt === 'post' || $pt === 'page')) {
+                $applies = true;
+                break;
+            }
+        }
+        if (!$applies) {
+            return $posts;
+        }
+
+        // Determine if the query is sorting by menu_order or date (safely parsing strings and arrays)
+        $orderby = $query->get('orderby');
+        $order = strtoupper((string) $query->get('order')) === 'ASC' ? 'ASC' : 'DESC';
+
+        $sort_by_menu = false;
+        $sort_by_date = false;
+
+        if (is_array($orderby)) {
+            foreach ($orderby as $key => $val) {
+                if (is_string($key)) {
+                    if (strpos($key, 'menu_order') !== false) {
+                        $sort_by_menu = true;
+                    }
+                    if ($key === 'date' || $key === 'post_date' || $key === 'ID') {
+                        $sort_by_date = true;
+                    }
+                }
+            }
+        } elseif (is_string($orderby)) {
+            $sort_by_menu = (strpos($orderby, 'menu_order') !== false);
+            $sort_by_date = ($orderby === '' || $orderby === 'date' || $orderby === 'post_date' || $orderby === 'ID');
+        } else {
+            $sort_by_date = true;
+        }
+
+        if (!$sort_by_menu && !$sort_by_date) {
+            return $posts;
+        }
+
+        // Collect original posts to sort by their attributes
+        $original_ids = [];
+        foreach ($posts as $post) {
+            $src_id = (int) get_post_meta($post->ID, '_aitrfoel_source_page', true);
+            if (!$src_id) {
+                $translations = $this->integration->get_post_translations($post->ID);
+                $src_id = isset($translations[$default]) ? (int) $translations[$default] : $post->ID;
+            }
+            $original_ids[$post->ID] = $src_id;
+        }
+
+        if (empty($original_ids)) {
+            return $posts;
+        }
+
+        // Fetch original post attributes in a single database query for performance
+        global $wpdb;
+        $ids_placeholder = implode(',', array_map('intval', array_unique(array_values($original_ids))));
+        $rows = $wpdb->get_results("SELECT ID, menu_order, post_date FROM {$wpdb->posts} WHERE ID IN ($ids_placeholder)", OBJECT_K);
+
+
+        // Sort the posts array
+        usort($posts, function($a, $b) use ($original_ids, $rows, $sort_by_menu, $order) {
+            $src_a_id = $original_ids[$a->ID] ?? $a->ID;
+            $src_b_id = $original_ids[$b->ID] ?? $b->ID;
+
+            $attr_a = isset($rows[$src_a_id]) ? $rows[$src_a_id] : null;
+            $attr_b = isset($rows[$src_b_id]) ? $rows[$src_b_id] : null;
+
+            if ($sort_by_menu) {
+                $val_a = $attr_a ? (int) $attr_a->menu_order : $a->menu_order;
+                $val_b = $attr_b ? (int) $attr_b->menu_order : $b->menu_order;
+                if ($val_a === $val_b) {
+                    $date_a = $attr_a ? strtotime($attr_a->post_date) : strtotime($a->post_date);
+                    $date_b = $attr_b ? strtotime($attr_b->post_date) : strtotime($b->post_date);
+                    if ($date_a === $date_b) {
+                        return 0;
+                    }
+                    return ($date_a > $date_b) ? -1 : 1; // Default to DESC (newest first)
+                }
+            } else {
+                $val_a = $attr_a ? strtotime($attr_a->post_date) : strtotime($a->post_date);
+                $val_b = $attr_b ? strtotime($attr_b->post_date) : strtotime($b->post_date);
+            }
+
+            if ($val_a === $val_b) {
+                return 0;
+            }
+
+            if ($order === 'ASC') {
+                return ($val_a < $val_b) ? -1 : 1;
+            } else {
+                return ($val_a > $val_b) ? -1 : 1;
+            }
+        });
+
+        return $posts;
+    }
+
+    /**
+     * Filter JetEngine Listing Grid items to ensure translated post order matches default-language order.
+     *
+     * @param array  $items Array of objects/posts.
+     * @param array  $settings Rendering settings.
+     * @param object $render_instance The rendering instance.
+     * @return array
+     */
+    public function sync_jet_listing_items_order($items, $settings, $render_instance) {
+
+        if (!get_option('aitrfoel_preserve_post_order', true)) {
+            return $items;
+        }
+
+        if (empty($items) || !is_array($items) || !$this->integration || !$this->integration->is_active()) {
+            return $items;
+        }
+
+        // Only sort WP_Post objects
+        if (!isset($items[0]) || !($items[0] instanceof WP_Post)) {
+            return $items;
+        }
+
+        $default = $this->get_default_language();
+        $lang = $this->get_post_language($items[0]->ID);
+        if (!$lang || $lang === $default) {
+            return $items;
+        }
+
+        // Collect original posts to sort by their attributes
+        $original_ids = [];
+        foreach ($items as $post) {
+            $src_id = (int) get_post_meta($post->ID, '_aitrfoel_source_page', true);
+            if (!$src_id) {
+                $translations = $this->get_post_translations($post->ID);
+                $src_id = isset($translations[$default]) ? (int) $translations[$default] : $post->ID;
+            }
+            $original_ids[$post->ID] = $src_id;
+        }
+
+        if (empty($original_ids)) {
+            return $items;
+        }
+
+        // Fetch original post attributes in a single database query for performance
+        global $wpdb;
+        $ids_placeholder = implode(',', array_map('intval', array_unique(array_values($original_ids))));
+        $rows = $wpdb->get_results("SELECT ID, menu_order, post_date FROM {$wpdb->posts} WHERE ID IN ($ids_placeholder)", OBJECT_K);
+
+        // JetEngine listing settings for sorting
+        $orderby = $settings['orderby'] ?? '';
+        $order = strtoupper((string) ($settings['order'] ?? 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
+
+        $sort_by_menu = (strpos($orderby, 'menu_order') !== false);
+        $sort_by_date = ($orderby === '' || $orderby === 'date' || $orderby === 'post_date' || $orderby === 'ID');
+
+        if (!$sort_by_menu && !$sort_by_date) {
+            $sort_by_date = true;
+        }
+
+        // Sort the items array
+        usort($items, function($a, $b) use ($original_ids, $rows, $sort_by_menu, $order) {
+            $src_a_id = $original_ids[$a->ID] ?? $a->ID;
+            $src_b_id = $original_ids[$b->ID] ?? $b->ID;
+
+            $attr_a = isset($rows[$src_a_id]) ? $rows[$src_a_id] : null;
+            $attr_b = isset($rows[$src_b_id]) ? $rows[$src_b_id] : null;
+
+            if ($sort_by_menu) {
+                $val_a = $attr_a ? (int) $attr_a->menu_order : $a->menu_order;
+                $val_b = $attr_b ? (int) $attr_b->menu_order : $b->menu_order;
+                if ($val_a === $val_b) {
+                    $date_a = $attr_a ? strtotime($attr_a->post_date) : strtotime($a->post_date);
+                    $date_b = $attr_b ? strtotime($attr_b->post_date) : strtotime($b->post_date);
+                    if ($date_a === $date_b) {
+                        return 0;
+                    }
+                    return ($date_a > $date_b) ? -1 : 1; // Default to DESC (newest first)
+                }
+            } else {
+                $val_a = $attr_a ? strtotime($attr_a->post_date) : strtotime($a->post_date);
+                $val_b = $attr_b ? strtotime($attr_b->post_date) : strtotime($b->post_date);
+            }
+
+            if ($val_a === $val_b) {
+                return 0;
+            }
+
+            if ($order === 'ASC') {
+                return ($val_a < $val_b) ? -1 : 1;
+            } else {
+                return ($val_a > $val_b) ? -1 : 1;
+            }
+        });
+
+        return $items;
+    }
+
+    /**
+     * Swap Elementor Header Footer Builder template ID to current language translation.
+     *
+     * @param int $template_id
+     * @return int
+     */
+    public function swap_hfe_template_id($template_id) {
+        if (!$template_id) {
+            return $template_id;
+        }
+        return $this->get_translated_post_id($template_id);
+    }
+
+    /**
+     * Get translated post ID for the current language.
+     *
+     * @param int $post_id
+     * @return int
+     */
+    public function get_translated_post_id($post_id) {
+        if (!$post_id || !$this->integration || !$this->integration->is_active()) {
+            return $post_id;
+        }
+
+        $current_lang = $this->integration->get_current_language();
+        if (!$current_lang) {
+            return $post_id;
+        }
+
+        // Check if the post itself is already in the current language
+        $post_lang = $this->get_post_language($post_id);
+        if ($post_lang === $current_lang) {
+            return $post_id;
+        }
+
+        $translations = $this->get_post_translations($post_id);
+        if (!empty($translations) && isset($translations[$current_lang])) {
+            return (int) $translations[$current_lang];
+        }
+
+        return $post_id;
     }
 }
 

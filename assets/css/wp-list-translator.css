@@ -1,0 +1,581 @@
+/**
+ * Meep - WP List Table (edit.php) Floating Toolbar & Modal Styles
+ */
+
+/* Floating Bottom Toolbar */
+.aitrfoel-list-bar {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 99990;
+    width: max-content;
+    max-width: 95vw;
+    background: #1e293b;
+    color: #f8fafc;
+    border-radius: 12px;
+    padding: 7px 14px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35), 0 8px 10px -6px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    animation: aitrfoelSlideUp 0.2s ease-out;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+@keyframes aitrfoelSlideUp {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 16px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+.aitrfoel-list-bar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+}
+
+/* Left Section */
+.aitrfoel-list-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.aitrfoel-list-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #60a5fa;
+    padding-right: 8px;
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.aitrfoel-list-count-badge {
+    background: rgba(255, 255, 255, 0.12);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+.aitrfoel-list-clear-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 12px;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+}
+
+.aitrfoel-list-clear-btn:hover {
+    color: #cbd5e1;
+}
+
+/* Center Section */
+.aitrfoel-list-bar-center {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.aitrfoel-list-words-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12.5px;
+}
+
+.aitrfoel-list-words-icon {
+    display: inline-flex;
+    align-items: center;
+    color: #38bdf8;
+}
+
+#aitrfoel-list-words-num {
+    font-weight: 700;
+    color: #38bdf8;
+}
+
+.aitrfoel-list-words-label {
+    color: #cbd5e1;
+}
+
+.aitrfoel-list-quota-pill {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 999px;
+    margin-left: 2px;
+}
+
+.aitrfoel-list-quota-pill.success {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.aitrfoel-list-quota-pill.danger {
+    background: rgba(239, 68, 68, 0.25);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+/* Language Picker */
+.aitrfoel-list-lang-picker {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.aitrfoel-list-lang-label {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.aitrfoel-list-lang-dropdown-wrap {
+    position: relative;
+}
+
+.aitrfoel-list-lang-btn {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: #f8fafc !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    padding: 2px 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    height: auto !important;
+    cursor: pointer;
+}
+
+.aitrfoel-list-lang-btn:hover {
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #fff !important;
+}
+
+.aitrfoel-list-lang-btn .dashicons {
+    font-size: 13px;
+    width: 13px;
+    height: 13px;
+    line-height: 13px;
+    color: #f8fafc !important;
+}
+
+.aitrfoel-list-lang-dropdown {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    min-width: 200px;
+    max-height: 240px;
+    overflow-y: auto;
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+    z-index: 99995;
+}
+
+.aitrfoel-list-lang-select-all {
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 12px;
+}
+
+.aitrfoel-list-lang-select-all label,
+.aitrfoel-list-lang-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #e2e8f0;
+}
+
+.aitrfoel-list-lang-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.aitrfoel-list-lang-code {
+    color: #94a3b8;
+    font-size: 11px;
+}
+
+/* Right Section */
+.aitrfoel-list-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.aitrfoel-list-action-btn {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    font-size: 12.5px !important;
+    border-radius: 7px !important;
+    padding: 3px 12px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4) !important;
+    transition: all 0.15s ease !important;
+    height: auto !important;
+    min-height: 28px !important;
+}
+
+.aitrfoel-list-action-btn:hover {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.5) !important;
+}
+
+.aitrfoel-list-action-btn .dashicons {
+    color: #ffffff !important;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+}
+
+.aitrfoel-list-dismiss-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.aitrfoel-list-dismiss-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    width: 26px;
+    height: 26px;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.15s ease;
+}
+
+.aitrfoel-list-dismiss-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #f8fafc;
+}
+
+.aitrfoel-list-dismiss-btn .dashicons {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+}
+
+/* Dismiss Menu Popover */
+.aitrfoel-list-dismiss-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    right: 0;
+    min-width: 220px;
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 6px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+    z-index: 99995;
+}
+
+.aitrfoel-dismiss-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 6px 10px;
+    background: none;
+    border: none;
+    border-radius: 5px;
+    color: #e2e8f0;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    text-decoration: none;
+    box-sizing: border-box;
+    transition: background 0.15s ease;
+}
+
+.aitrfoel-dismiss-menu-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.aitrfoel-dismiss-menu-item .dashicons {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+    color: #94a3b8;
+}
+
+.aitrfoel-dismiss-menu-item.aitrfoel-dismiss-danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+
+.aitrfoel-dismiss-menu-item.aitrfoel-dismiss-danger:hover .dashicons {
+    color: #fca5a5;
+}
+
+.aitrfoel-dismiss-menu-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 4px 0;
+}
+
+/* Modal Overlay */
+.aitrfoel-list-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.aitrfoel-list-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(4px);
+}
+
+.aitrfoel-list-modal-dialog {
+    position: relative;
+    background: #ffffff;
+    width: 520px;
+    max-width: 90vw;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    z-index: 100001;
+}
+
+.aitrfoel-list-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.aitrfoel-list-modal-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.aitrfoel-list-modal-brand h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.aitrfoel-list-modal-timer {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #e0f2fe;
+    color: #0369a1;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.aitrfoel-list-modal-body {
+    padding: 20px;
+}
+
+.aitrfoel-list-progress-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.aitrfoel-list-progress-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+#aitrfoel-list-progress-pct {
+    font-weight: 700;
+    color: #2563eb;
+    font-size: 14px;
+}
+
+.aitrfoel-list-progress-track {
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.aitrfoel-list-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #6366f1, #10b981);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+
+.aitrfoel-list-progress-details {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 12px;
+}
+
+.aitrfoel-list-log {
+    max-height: 140px;
+    overflow-y: auto;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-family: monospace;
+    line-height: 1.6;
+}
+
+.aitrfoel-list-log-entry.info {
+    color: #475569;
+}
+
+.aitrfoel-list-log-entry.success {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+.aitrfoel-list-log-entry.warning {
+    color: #d97706;
+}
+
+.aitrfoel-list-log-entry.error {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+/* Done View */
+.aitrfoel-list-done-hero {
+    text-align: center;
+    padding: 10px 0 16px;
+}
+
+.aitrfoel-list-done-icon {
+    width: 48px;
+    height: 48px;
+    line-height: 48px;
+    border-radius: 50%;
+    background: #dcfce7;
+    color: #16a34a;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 auto 10px;
+}
+
+.aitrfoel-list-done-hero h4 {
+    margin: 0 0 6px;
+    font-size: 18px;
+    color: #0f172a;
+}
+
+.aitrfoel-list-done-hero p {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.aitrfoel-list-results-list {
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-top: 12px;
+}
+
+.aitrfoel-list-result-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.aitrfoel-list-result-row:last-child {
+    border-bottom: none;
+}
+
+.aitrfoel-list-result-info {
+    font-size: 13px;
+    color: #1e293b;
+}
+
+.aitrfoel-lang-tag {
+    display: inline-block;
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+}
+
+.aitrfoel-list-modal-footer {
+    padding: 12px 20px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+@media (max-width: 900px) {
+    .aitrfoel-list-bar {
+        max-width: 96vw;
+        overflow-x: auto;
+    }
+}
