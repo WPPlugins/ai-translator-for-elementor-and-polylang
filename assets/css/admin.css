@@ -1,4 +1,4 @@
-﻿/* Admin CSS for Elementor AI Translator */
+/* Admin CSS for Elementor AI Translator */
 
 /* NUCLEAR OPTION: Hide Elementor bar immediately on page load - before JavaScript runs */
 #e-admin-top-bar-root,
@@ -50,32 +50,39 @@ body[class*="ai-translator-for-elementor-polylang"] #footer-left *:contains("Ele
 }
 
 /* Reset footer styling on our plugin pages */
-body.toplevel_page_ai-translator-for-elementor-polylang #wpfooter,
-body.ai-translator_page_ai-translator-for-elementor-polylang-settings #wpfooter,
+body.toplevel_page_ai-translator-for-elementor-and-polylang #wpfooter,
+body[class*="ai-translator-for-elementor-and-polylang"] #wpfooter,
+body[class*="page_ai-translator"] #wpfooter,
 body.admin_page_aitrfoel-debug #wpfooter {
-    margin-top: 20px;
+    position: relative !important;
+    clear: both !important;
+    margin-top: 36px !important;
+    padding: 16px 20px !important;
+    bottom: auto !important;
+    z-index: 10 !important;
 }
 
 /* Main wrapper
    IMPORTANT: Scope to plugin wrappers only; avoid styling core .wrap globally */
 .aitrfoel-admin-wrapper, .aitrfoel-dashboard-wrapper {
-    width: calc(100% - 36px);
+    width: 100%;
     max-width: none;
-    margin: 20px 36px 20px 0;
+    margin: 10px 0 20px 0;
     position: relative;
+    box-sizing: border-box;
 }
 
 
-/* Plugin Header - Full Width */
+/* Plugin Header */
 .aitrfoel-plugin-header {
     background: #fff;
-    margin: -20px -36px 20px -20px;
-    padding: 8px 20px;
-    border-bottom: 1px solid #e5e7eb;
+    margin: 0 0 20px 0;
+    padding: 12px 20px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     position: relative;
     z-index: 1;
-    /* Stretch to container edges using negative margins; avoid viewport overflow */
 }
 
 .aitrfoel-plugin-title {
@@ -806,4 +813,156 @@ table.form-table .aitrfoel-usage-progress {
     background: #fff3cd !important;
     color: #856404 !important;
     border: 1px solid #ffeeba !important;
+}
+
+/* Word Count Badges & Quota Feedback */
+.aitrfoel-word-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 7px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+    vertical-align: middle;
+}
+
+.aitrfoel-word-badge-pending {
+    background: #fafafa;
+    color: #94a3b8;
+    border-style: dashed;
+}
+
+.aitrfoel-badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #3b82f6;
+    animation: aitrfoel-pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes aitrfoel-pulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.1); }
+}
+
+#aitrfoel-estimated-words.quota-exceeded {
+    color: #b91c1c !important;
+    font-weight: 600;
+}
+
+/* Site Content & Word Inventory Section */
+.aitrfoel-inventory-section {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.aitrfoel-inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-top: 12px;
+}
+
+.aitrfoel-inv-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 16px;
+    transition: all 0.2s ease;
+}
+
+.aitrfoel-inv-stat-card:hover {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+}
+
+.aitrfoel-inv-stat-card.highlight {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+.aitrfoel-inv-stat-icon {
+    font-size: 26px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.aitrfoel-inv-stat-num {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+.aitrfoel-inv-stat-card.highlight .aitrfoel-inv-stat-num {
+    color: #1d4ed8;
+}
+
+.aitrfoel-inv-stat-label {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 2px;
+    font-weight: 500;
+}
+
+.aitrfoel-inv-breakdown-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 16px;
+}
+
+.aitrfoel-inv-breakdown-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.aitrfoel-inv-breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    background: #ffffff;
+    border: 1px solid #edf2f7;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.aitrfoel-inv-type-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #1e293b;
+}
+
+.aitrfoel-inv-type-stats {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.aitrfoel-inv-count {
+    color: #64748b;
+    font-size: 12px;
+}
+
+.aitrfoel-inv-words {
+    font-weight: 600;
+    color: #0f172a;
+    font-size: 12.5px;
+    background: #f1f5f9;
+    padding: 2px 8px;
+    border-radius: 4px;
 }

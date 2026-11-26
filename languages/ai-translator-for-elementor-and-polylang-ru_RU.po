@@ -2845,3 +2845,2258 @@ msgstr "Патчить SEO заголовки для всех переводов
 
 msgid "Patch Existing SEO Titles"
 msgstr "Патчить существующие SEO заголовки"
+
+
+# --- Added by add-minicart-translations.php (2026-06-03) ---
+
+msgid "Exclude Paths from Language Routing"
+msgstr "Исключить пути из языковой маршрутизации"
+
+msgid "One path or token per line. Matching URLs are never given a language prefix and never redirected — useful for plugin API/rewrite endpoints, webhooks, and callbacks. Example: enter \"wcsag-api\" to exclude /wcsag-api/... requests."
+msgstr "Один путь или токен на строку. Совпадающие URL-адреса никогда не получают языковой префикс и никогда не перенаправляются — полезно для конечных точек API/перезаписи плагина, вебхуков и обратных вызовов. Пример: введите \"wcsag-api\", чтобы исключить запросы /wcsag-api/..."
+
+msgid "REST API (/wp-json/), admin-ajax, WooCommerce API (/wc-api/), feeds, login and XML-RPC are always excluded automatically."
+msgstr "REST API (/wp-json/), admin-ajax, WooCommerce API (/wc-api/), ленты, вход в систему и XML-RPC всегда автоматически исключаются."
+
+msgid "Retranslate Product Short Descriptions"
+msgstr "Повторный перевод коротких описаний продуктов"
+
+msgid "Re-translates the short description (excerpt) for all translated products. Use this if product short descriptions still appear in the source language. Safe to re-run: already-translated products are skipped unless their source text changed, or you tick \"Force re-translate\"."
+msgstr "Повторно переводит короткое описание (аннотацию) для всех переведенных продуктов. Используйте это, если короткие описания продуктов все еще отображаются на исходном языке. Безопасно повторно запускать: уже переведенные продукты пропускаются, если их исходный текст не изменился, или вы отметили \"Принудительный повторный перевод\"."
+
+msgid "Retranslate Short Descriptions"
+msgstr "Повторный перевод коротких описаний"
+
+msgid "Force re-translate (ignore already-translated)"
+msgstr "Принудительный повторный перевод (игнорировать уже переведенные)"
+
+
+# --- Added by add-repair-tool-translations.php (2026-06-04) ---
+
+msgid "Repair Translation Links"
+msgstr "Восстановить ссылки перевода"
+
+msgid "Reconciles translation links so the dashboard list, language switcher, and the cart/checkout page swap all agree. Fixes translated pages that wrongly appear as their own source, and links broken by older versions. Run \"Scan\" first to preview, then \"Repair\"."
+msgstr "Согласует ссылки перевода, чтобы список на панели управления, переключатель языков и страница корзины/оформления заказа совпадали. Исправляет переведенные страницы, которые ошибочно отображаются как свои собственные источники, и ссылки, поврежденные старыми версиями. Сначала выполните \"Сканировать\" для предварительного просмотра, затем \"Восстановить\"."
+
+msgid "Scan (preview)"
+msgstr "Сканировать (предварительный просмотр)"
+
+msgid "Repair Links"
+msgstr "Восстановить ссылки"
+
+msgid "Repaired"
+msgstr "Восстановлено"
+
+msgid "Would repair"
+msgstr "Будет восстановлено"
+
+msgid "groups"
+msgstr "группы"
+
+msgid "links"
+msgstr "ссылки"
+
+msgid "source refs"
+msgstr "ссылки источников"
+
+msgid "language tags"
+msgstr "языковые метки"
+
+msgid "Need manual review (no source link found):"
+msgstr "Требуется ручная проверка (ссылка на источник не найдена):"
+
+msgid "Conflicts:"
+msgstr "Конфликты:"
+
+msgid "Reload the page list to see the result."
+msgstr "Перезагрузите список страниц, чтобы увидеть результат."
+
+msgid "Repair translation links now? This updates link data and is safe to run multiple times."
+msgstr "Восстановить ссылки перевода сейчас? Это обновляет данные ссылок и безопасно выполнять несколько раз."
+
+
+# --- Added by add-repair-tool-translations.php (2026-06-04) ---
+
+msgid "All translation links are already consistent."
+msgstr "Все ссылки перевода уже согласованы."
+
+msgid "missing links"
+msgstr "отсутствующие ссылки"
+
+
+# --- Added by add-string-translations-ui.php (2026-06-13) ---
+
+msgid "String Translations"
+msgstr "Переводы строк"
+
+msgid "Translate interface strings that aren't covered by automatic translation — payment method titles/descriptions, the checkout privacy notice, and text from other plugins. Enter the exact source text on the left, then its translation for each language. Leave a language blank to keep the original."
+msgstr "Переведите строки интерфейса, не охваченные автоматическим переводом, — названия/описания способов оплаты, уведомление о конфиденциальности на странице оформления заказа и тексты других плагинов. Введите точный исходный текст слева, затем перевод для каждого языка. Оставьте поле языка пустым, чтобы сохранить оригинал."
+
+msgid "Source text"
+msgstr "Исходный текст"
+
+
+msgid "+ Add string"
+msgstr "+ Добавить строку"
+
+
+# --- Added by append-string-translations.php (2026-06-13) ---
+
+msgid "Original text…"
+msgstr "Оригинальный текст…"
+
+# --- Added by add-v1702-translations.php (2026-06-14) ---
+
+msgid "Auto-translate strings"
+msgstr "Авто-перевод строк"
+
+msgid "Overwrite existing"
+msgstr "Перезаписать существующее"
+
+msgid "Auto-translate fills every language for the detected strings (your saved entries plus the site's WooCommerce payment titles/descriptions and checkout privacy text) using the translation engine. Review the results — save afterwards is automatic."
+msgstr "Авто-перевод заполняет каждый язык для обнаруженных строк (ваши сохраненные записи плюс названия/описания платежей WooCommerce и текст конфиденциальности на странице оформления заказа) с использованием переводческого движка. Просмотрите результаты — сохранение после этого происходит автоматически."
+
+msgid "🎨 Theme Compatibility (optional)"
+msgstr "🎨 Совместимость темы (необязательно)"
+
+msgid "Most sites need nothing here — page content, Elementor/Gutenberg data, and WooCommerce fields are translated automatically. This section is only for themes that store translatable text in custom meta fields. If the status below says \"Standard\", you can ignore it."
+msgstr "Большинству сайтов здесь ничего не нужно — содержимое страниц, данные Elementor/Gutenberg и поля WooCommerce переводятся автоматически. Этот раздел предназначен только для тем, которые хранят переводимый текст в пользовательских метаполях. Если статус ниже говорит \"Стандартный\", вы можете игнорировать это."
+
+msgid "Custom Types"
+msgstr "Пользовательские типы"
+
+msgid "Translating…"
+msgstr "Перевод…"
+
+
+# --- Added by add-v1703-translations.php (2026-06-14) ---
+
+msgid "Used in"
+msgstr "Используется в"
+
+msgid "WooCommerce · Checkout privacy"
+msgstr "WooCommerce · Конфиденциальность оформления заказа"
+
+msgid "WooCommerce · Payment title (%s)"
+msgstr "WooCommerce · Заголовок платежа (%s)"
+
+msgid "WooCommerce · Payment description"
+msgstr "WooCommerce · Описание платежа"
+
+msgid "Custom"
+msgstr "Пользовательский"
+
+msgid "Override UI strings not covered automatically (gateway titles, privacy text, plugin strings)."
+msgstr "Переопределить строки интерфейса, которые не охвачены автоматически (заголовки шлюзов, текст конфиденциальности, строки плагина)."
+
+
+# --- Added by add-v1710-translations.php (2026-06-16) ---
+
+msgid "Reconcile inconsistent translation links (dashboard list, switcher, cart/checkout swap)."
+msgstr "Согласовать несоответствующие ссылки перевода (список на панели управления, переключатель, замена корзины/оформления заказа)."
+
+msgid "Rewrite [elementor-template id=\"X\"] shortcodes in translated posts to use the per-language template."
+msgstr "Переписать шорткоды [elementor-template id=\"X\"] в переведённых записях, чтобы использовать шаблон для каждого языка."
+
+msgid "Re-translate SEO title, description, OG/Twitter for existing translations."
+msgstr "Перевести заново SEO заголовок, описание, OG/Twitter для существующих переводов."
+
+msgid "Re-translate WooCommerce product short descriptions (post excerpt)."
+msgstr "Перевести заново короткие описания продуктов WooCommerce (аннотация записи)."
+
+msgid "Stop the router from prefixing custom plugin/API endpoints."
+msgstr "Остановить маршрутизатор от добавления префиксов к пользовательским конечным точкам плагина/API."
+
+msgid "Fix Elementor Template Shortcodes"
+msgstr "Исправить шорткоды шаблона Elementor"
+
+msgid "Rewrites [elementor-template id=\"X\"] shortcodes embedded in translated posts so each id points at the per-language translated template instead of the source-language one. Run \"Scan\" to preview which posts would change, then \"Fix Shortcodes\"."
+msgstr "Переписывает шорткоды [elementor-template id=\"X\"] встроенные в переведённые записи, чтобы каждый id указывал на переведённый шаблон для каждого языка вместо шаблона исходного языка. Запустите \"Сканировать\", чтобы предварительно просмотреть, какие записи изменятся, затем \"Исправить шорткоды\"."
+
+msgid "Fix Shortcodes"
+msgstr "Исправить шорткоды"
+
+msgid "Fixed"
+msgstr "Исправлено"
+
+msgid "Would fix"
+msgstr "Исправит"
+
+msgid "No translated posts have source-language template shortcodes."
+msgstr "Нет переведённых записей с шорткодами шаблона исходного языка."
+
+msgid "translated post(s) with [elementor-template id=\"X\"] shortcodes updated to the per-language template."
+msgstr "переведённая запись(и) с шорткодами [elementor-template id=\"X\"] обновлены до шаблона для каждого языка."
+
+msgid "Reload the affected pages to see the result."
+msgstr "Перезагрузите затронутые страницы, чтобы увидеть результат."
+
+msgid "Rewrite Elementor template shortcodes now? This updates post content and is safe to run multiple times."
+msgstr "Переписать шорткоды шаблона Elementor сейчас? Это обновляет содержимое записи и безопасно запускать несколько раз."
+
+msgid "Reconciles translation links so the dashboard page list, language switcher, and the cart/checkout page swap all agree. Fixes translated pages that wrongly appear as their own source and links left inconsistent by older versions. Run \"Scan\" first to preview the number of inconsistencies, then \"Repair Links\"."
+msgstr "Согласует ссылки перевода, чтобы список на панели управления, переключатель языка и замена страниц корзины/оформления заказа все согласовывались. Исправляет переведённые страницы, которые ошибочно отображаются как свои собственные источники, и ссылки, оставшиеся несогласованными из-за более ранних версий. Сначала запустите \"Сканировать\", чтобы предварительно просмотреть количество несоответствий, затем \"Восстановить ссылки\"."
+
+msgid "Delete translations"
+msgstr "Удалить переводы"
+
+msgid "Permanently delete all translations of this page. The source page is kept. Cannot be undone."
+msgstr "Постоянно удалить все переводы этой страницы. Исходная страница сохраняется. Не может быть отменено."
+
+msgid "Permanently delete (cannot be undone)"
+msgstr "Постоянно удалить (не может быть отменено)"
+
+msgid "Delete selected translations"
+msgstr "Удалить выбранные переводы"
+
+
+# --- Added by add-v1711-translations.php (2026-06-16) ---
+
+msgid "Delete page"
+msgstr "Удалить страницу"
+
+msgid "More actions"
+msgstr "Больше действий"
+
+msgid "Delete translations (%d)"
+msgstr "Удалить переводы (%d)"
+
+# --- Automatically added for v1.8.0 release ---
+
+msgid "Meep AI Translator"
+msgstr "Meep AI Translator"
+
+msgid "Meep Translator"
+msgstr "Meep Translator"
+
+msgid "History"
+msgstr "История"
+
+msgid "Activate License"
+msgstr "Активировать лицензию"
+
+msgid "License activation failed."
+msgstr "Не удалось активировать лицензию."
+
+msgid "Please enter a valid license key."
+msgstr "Пожалуйста, введите действующий лицензионный ключ."
+
+msgid "License Status: Active"
+msgstr "Статус лицензии: Активна"
+
+msgid "Expires:"
+msgstr "Истекает:"
+
+msgid "License Status: Expired"
+msgstr "Статус лицензии: Истекла"
+
+msgid "Please renew your license or enter a new license key below."
+msgstr "Пожалуйста, продлите свою лицензию или введите новый лицензионный ключ ниже."
+
+msgid "Enter Your License Key"
+msgstr "Введите ваш лицензионный ключ"
+
+msgid "Enter the license key you received after purchasing the PRO version:"
+msgstr "Введите лицензионный ключ, который вы получили после покупки PRO версии:"
+
+msgid "License Key"
+msgstr "Лицензионный ключ"
+
+msgid "Your license key was sent to your email after purchase."
+msgstr "Ваш лицензионный ключ был отправлен на вашу электронную почту после покупки."
+
+msgid "Go to Account"
+msgstr "Перейти в аккаунт"
+
+msgid "Need Help?"
+msgstr "Нужна помощь?"
+
+msgid "Check your email for the license key (it was sent after purchase)"
+msgstr "Проверьте свою электронную почту на наличие лицензионного ключа (он был отправлен после покупки)"
+
+msgid "Make sure you're using the PRO version of the plugin"
+msgstr "Убедитесь, что вы используете PRO версию плагина"
+
+msgid "The license key starts with \"sk_\" followed by 32 characters"
+msgstr "Лицензионный ключ начинается с \"sk_\", за которым следуют 32 символа"
+
+msgid "Contact support if you need assistance"
+msgstr "Свяжитесь с поддержкой, если вам нужна помощь"
+
+msgid "Alternative Method"
+msgstr "Альтернативный метод"
+
+msgid "If direct activation doesn't work, you can also:"
+msgstr "Если прямая активация не сработала, вы также можете:"
+
+msgid "Go to Plugins → Installed Plugins"
+msgstr "Перейти в Плагины → Установленные плагины"
+
+msgid "Deactivate \"Meep AI Translator PRO\""
+msgstr "Деактивировать \"Meep AI Translator PRO\""
+
+msgid "Activate it again - the license activation dialog will appear"
+msgstr "Активируйте его снова - появится диалог активации лицензии"
+
+msgid "Cached Translations"
+msgstr "Кэшированные переводы"
+
+msgid "Recent API Calls"
+msgstr "Недавние вызовы API"
+
+msgid "Active Model"
+msgstr "Активная модель"
+
+msgid "Pages Available"
+msgstr "Доступные страницы"
+
+msgid "Translate Content"
+msgstr "Перевести контент"
+
+msgid "-- Select a Page --"
+msgstr "-- Выберите страницу --"
+
+msgid "Only pages with Elementor content are shown"
+msgstr "Показаны только страницы с контентом Elementor"
+
+msgid "Leave as auto-detect for automatic language detection"
+msgstr "Оставьте автоопределение для автоматического определения языка"
+
+msgid "Select Content to Translate"
+msgstr "Выберите контент для перевода"
+
+msgid "Total strings:"
+msgstr "Всего строк:"
+
+msgid "💰 Estimate Cost"
+msgstr "💰 Оценить стоимость"
+
+msgid "Translate Selected"
+msgstr "Перевести выбранное"
+
+msgid "Monthly Usage Statistics"
+msgstr "Статистика использования за месяц"
+
+msgid "🔄 Refresh Stats"
+msgstr "🔄 Обновить статистику"
+
+msgid "Rated 5 out of 5 on WordPress.org"
+msgstr "Оценено 5 из 5 на WordPress.org"
+
+msgid "⚠️ API Key Required"
+msgstr "⚠️ Требуется API-ключ"
+
+msgid "To start translating your Elementor content, you need to configure your OpenAI API key."
+msgstr "Чтобы начать переводить ваш контент Elementor, вам необходимо настроить ваш API-ключ OpenAI."
+
+msgid "Configure API Key"
+msgstr "Настроить API-ключ"
+
+msgid "How to get your API key:"
+msgstr "Как получить ваш API-ключ:"
+
+msgid "Visit"
+msgstr "Посетите"
+
+msgid "Sign in with your OpenAI account"
+msgstr "Войдите в свою учетную запись OpenAI"
+
+msgid "Click \"Create new secret key\""
+msgstr "Нажмите \"Создать новый секретный ключ\""
+
+msgid "Copy the key and paste it in the settings page"
+msgstr "Скопируйте ключ и вставьте его на странице настроек"
+
+msgid "English"
+msgstr "Английский"
+
+msgid "Spanish"
+msgstr "Испанский"
+
+msgid "French"
+msgstr "Французский"
+
+msgid "German"
+msgstr "Немецкий"
+
+msgid "Italian"
+msgstr "Итальянский"
+
+msgid "Portuguese"
+msgstr "Португальский"
+
+msgid "Russian"
+msgstr "Русский"
+
+msgid "Ukrainian"
+msgstr "Украинский"
+
+msgid "Belarusian"
+msgstr "Белорусский"
+
+msgid "Czech"
+msgstr "Чешский"
+
+msgid "Polish"
+msgstr "Польский"
+
+msgid "Vietnamese"
+msgstr "Вьетнамский"
+
+msgid "Chinese (Simplified)"
+msgstr "Китайский (упрощенный)"
+
+msgid "Japanese"
+msgstr "Японский"
+
+msgid "Korean"
+msgstr "Корейский"
+
+msgid "Arabic"
+msgstr "Арабский"
+
+msgid "Hebrew"
+msgstr "Иврит"
+
+msgid "Hindi"
+msgstr "Хинди"
+
+msgid "Turkish"
+msgstr "Турецкий"
+
+msgid "Dutch"
+msgstr "Нидерландский"
+
+msgid "Swedish"
+msgstr "Шведский"
+
+msgid "Norwegian"
+msgstr "Норвежский"
+
+msgid "Danish"
+msgstr "Датский"
+
+msgid "Finnish"
+msgstr "Финский"
+
+msgid "System"
+msgstr "Система"
+
+msgid "Ready"
+msgstr "Готово"
+
+msgid "step.01 - language system"
+msgstr "шаг.01 - языковая система"
+
+msgid "Choose your multilingual"
+msgstr "Выберите ваш многоязычный"
+
+msgid "engine"
+msgstr "движок"
+
+msgid "Meep AI Translator includes a lightning-fast native multilingual engine or seamlessly connects to existing WordPress translation plugins."
+msgstr "Meep AI Translator включает в себя молниеносный родной многоязычный движок или бесшовно подключается к существующим плагинам перевода WordPress."
+
+msgid "Recommended"
+msgstr "Рекомендуется"
+
+msgid "Meep Built-in System"
+msgstr "Встроенная система Meep"
+
+msgid "Zero extra plugins. Clean /es/ subdirectories, SEO hreflang tags, automatic URL routing, and built-in language switchers."
+msgstr "Никаких дополнительных плагинов. Чистые подкаталоги /es/, SEO hreflang теги, автоматическая маршрутизация URL и встроенные переключатели языков."
+
+msgid "Active & Detected"
+msgstr "Активно и обнаружено"
+
+msgid "Installed"
+msgstr "Установлено"
+
+msgid "Not installed"
+msgstr "Не установлено"
+
+msgid "Use Polylang to manage language taxonomies, translations relationships, and switcher widgets."
+msgstr "Используйте Polylang для управления языковыми таксономиями, связями переводов и виджетами переключателей."
+
+msgid "Connect directly to WPML translation management and ICL language tables."
+msgstr "Подключитесь напрямую к управлению переводами WPML и таблицам языков ICL."
+
+msgid "Continue to Languages"
+msgstr "Продолжить к языкам"
+
+msgid "step.02 - languages"
+msgstr "шаг.02 - языки"
+
+msgid "Pick the languages your site"
+msgstr "Выберите языки, на которых ваш сайт"
+
+msgid "speaks"
+msgstr "говорит"
+
+msgid "Add 100+ languages in minutes - no copy-paste, no manual work. Choose your default and targets, and AI handles the rest."
+msgstr "Добавьте более 100 языков за считанные минуты - без копирования и вставки, без ручной работы. Выберите ваш основной и целевые языки, а ИИ позаботится об остальном."
+
+msgid "detected"
+msgstr "обнаружено"
+
+msgid "Your language setup is already configured. Meep will connect to it automatically."
+msgstr "Ваша языковая настройка уже сконфигурирована. Meep подключится к ней автоматически."
+
+msgid "Default language"
+msgstr "Основной язык"
+
+msgid "site.locale"
+msgstr "site.locale"
+
+msgid "The original content language. Everything else translates from this."
+msgstr "Язык оригинального контента. Все остальное переводится с этого."
+
+msgid "Target languages"
+msgstr "Целевые языки"
+
+msgid "Popular languages"
+msgstr "Популярные языки"
+
+msgid "Add other languages"
+msgstr "Добавить другие языки"
+
+msgid "Search for a language..."
+msgstr "Поиск языка..."
+
+msgid "Back"
+msgstr "Назад"
+
+msgid "Connect & continue"
+msgstr "Подключиться и продолжить"
+
+msgid "Set up my site"
+msgstr "Настроить мой сайт"
+
+msgid "step.03 - installing"
+msgstr "шаг.03 - установка"
+
+msgid "Configuring your site"
+msgstr "Настройка вашего сайта"
+
+msgid "Setting up multilingual support — this takes just a moment."
+msgstr "Настройка многоязычной поддержки — это займет всего минуту."
+
+msgid "Language management system initialized"
+msgstr "Система управления языками инициализирована"
+
+msgid "Applying language settings & taxonomies"
+msgstr "Применение языковых настроек и таксономий"
+
+msgid "in progress"
+msgstr "в процессе"
+
+msgid "Generating hreflang and URL prefixes"
+msgstr "Генерация hreflang и префиксов URL"
+
+msgid "pending"
+msgstr "ожидание"
+
+msgid "step.04 - ready"
+msgstr "шаг.04 - готово"
+
+msgid "You're ready to ship"
+msgstr "Вы готовы к отправке"
+
+msgid "multilingual"
+msgstr "многоязычный"
+
+msgid "Your site is configured. Translate any page or post and keep Elementor layouts intact."
+msgstr "Ваш сайт настроен. Переведите любую страницу или запись и сохраните макеты Elementor нетронутыми."
+
+msgid "session.summary"
+msgstr "session.summary"
+
+msgid "Setup Time"
+msgstr "Время настройки"
+
+msgid "Help improve Meep AI Translator"
+msgstr "Помогите улучшить Meep AI Translator"
+
+msgid "Share anonymous usage data to help us improve the plugin. No personal data is collected."
+msgstr "Поделитесь анонимными данными об использовании, чтобы помочь нам улучшить плагин. Личные данные не собираются."
+
+msgid "Translate your first page"
+msgstr "Переведите свою первую страницу"
+
+msgid "You can change these settings at any time from"
+msgstr "Вы можете изменить эти настройки в любое время из"
+
+msgid "default"
+msgstr "по умолчанию"
+
+msgid "All Set!"
+msgstr "Все готово!"
+
+msgid "Moving to next step..."
+msgstr "Переход к следующему шагу..."
+
+msgid "Setup failed. Please try again."
+msgstr "Настройка не удалась. Пожалуйста, попробуйте снова."
+
+msgid "Network error. Please try again."
+msgstr "Ошибка сети. Пожалуйста, попробуйте снова."
+
+msgid "Setup Failed"
+msgstr "Настройка не удалась"
+
+msgid "Try again"
+msgstr "Попробуйте снова"
+
+msgid "Translating your homepage…"
+msgstr "Перевод вашей главной страницы…"
+
+msgid "Homepage translated!"
+msgstr "Главная страница переведена!"
+
+msgid "Homepage skipped (too large)"
+msgstr "Главная страница пропущена (слишком большая)"
+
+msgid "Security check failed."
+msgstr "Проверка безопасности не удалась."
+
+msgid "Language code and name are required."
+msgstr "Код языка и название обязательны."
+
+msgid "Language added."
+msgstr "Язык добавлен."
+
+msgid "Language already exists or could not be added."
+msgstr "Язык уже существует или не может быть добавлен."
+
+msgid "Language removed."
+msgstr "Язык удален."
+
+msgid "Cannot remove this language."
+msgstr "Не удается удалить этот язык."
+
+msgid "Default language updated."
+msgstr "Язык по умолчанию обновлен."
+
+msgid "Could not set default language."
+msgstr "Не удалось установить язык по умолчанию."
+
+msgid "Built-in language system disabled."
+msgstr "Встроенная языковая система отключена."
+
+msgid "Invalid operation."
+msgstr "Недопустимая операция."
+
+msgid "License activated successfully!"
+msgstr "Лицензия успешно активирована!"
+
+msgid "Your plan has been upgraded."
+msgstr "Ваш план был обновлен."
+
+msgid "Almost there!"
+msgstr "Почти готово!"
+
+msgid "Please check your email and click the confirmation link to complete the license activation."
+msgstr "Пожалуйста, проверьте свою электронную почту и нажмите на ссылку подтверждения, чтобы завершить активацию лицензии."
+
+msgid "Meep AI Translator Dashboard"
+msgstr "Панель управления Meep AI Translator"
+
+msgid "Required Plugins Missing"
+msgstr "Отсутствуют необходимые плагины"
+
+msgid "The Meep AI Translator plugin requires the following plugins to be installed and activated:"
+msgstr "Плагин Meep AI Translator требует установки и активации следующих плагинов:"
+
+msgid "Install now"
+msgstr "Установить сейчас"
+
+msgid "Please update Elementor to version 3.0 or higher"
+msgstr "Пожалуйста, обновите Elementor до версии 3.0 или выше"
+
+msgid "Multilingual Plugin"
+msgstr "Многоязычный плагин"
+
+msgid "Install one of the following:"
+msgstr "Установите один из следующих:"
+
+msgid "free"
+msgstr "бесплатный"
+
+msgid "premium"
+msgstr "премиум"
+
+msgid "Please contact your hosting provider to upgrade PHP"
+msgstr "Пожалуйста, свяжитесь с вашим хостинг-провайдером для обновления PHP"
+
+msgid "After installing the required plugins and setting up the languages, please refresh this page."
+msgstr "После установки необходимых плагинов и настройки языков, пожалуйста, обновите эту страницу."
+
+msgid "Translation Dashboard"
+msgstr "Панель перевода"
+
+msgid "%s is installed - Languages needed"
+msgstr "%s установлен - требуются языки"
+
+msgid "No languages have been configured yet. You need at least 2 languages to use the translation feature."
+msgstr "Языки еще не настроены. Вам нужно как минимум 2 языка, чтобы использовать функцию перевода."
+
+msgid "Only 1 language is configured. You need at least 2 languages to translate between."
+msgstr "Настроен только 1 язык. Вам нужно как минимум 2 языка для перевода между ними."
+
+msgid "Set up languages in %s"
+msgstr "Настройте языки в %s"
+
+msgid "After setting up the languages, please refresh this page."
+msgstr "После настройки языков, пожалуйста, обновите эту страницу."
+
+msgid "Monthly word limit reached (100% used)"
+msgstr "Достигнут месячный лимит слов (100% использовано)"
+
+msgid "You've used %d%% of your free monthly word quota (%s / %s words)"
+msgstr "Вы использовали %d%% вашего бесплатного месячного квоты слов (%s / %s слов)"
+
+msgid "Upgrade to Pro to unlock unlimited words, bulk site translation, automated synchronization, and priority AI processing."
+msgstr "Обновите до Pro, чтобы разблокировать неограниченное количество слов, массовый перевод сайта, автоматическую синхронизацию и приоритетную обработку ИИ."
+
+msgid "Dismiss notice"
+msgstr "Закрыть уведомление"
+
+msgid "Your site is translation-ready"
+msgstr "Ваш сайт готов к переводу"
+
+msgid "No translations yet. Select your pages below and hit Translate — results appear here."
+msgstr "Переводов еще нет. Выберите ваши страницы ниже и нажмите Перевести — результаты появятся здесь."
+
+msgid "Translate all pages →"
+msgstr "Перевести все страницы →"
+
+msgid "Or use the bar below to translate page by page."
+msgstr "Или используйте панель ниже, чтобы переводить страницу за страницей."
+
+msgid "Select languages"
+msgstr "Выберите языки"
+
+msgid "Translate your entire site at once"
+msgstr "Переведите весь сайт сразу"
+
+msgid "Translate All Site"
+msgstr "Перевести весь сайт"
+
+msgid "AI is preparing your translations…"
+msgstr "ИИ подготавливает ваши переводы…"
+
+msgid "Products"
+msgstr "Продукты"
+
+msgid "Elements & Templates"
+msgstr "Элементы и Шаблоны"
+
+msgid "Custom Post Types"
+msgstr "Пользовательские типы записей"
+
+msgid "translations selected"
+msgstr "выбрано переводов"
+
+msgid "Publish selected"
+msgstr "Опубликовать выбранные"
+
+msgid "Retranslate selected"
+msgstr "Перевести выбранные заново"
+
+msgid "Expand/Collapse"
+msgstr "Развернуть/Свернуть"
+
+msgid "Post"
+msgstr "Запись"
+
+msgid "Product Type"
+msgstr "Тип продукта"
+
+msgid "Element / Template"
+msgstr "Элемент / Шаблон"
+
+msgid "Element Type"
+msgstr "Тип элемента"
+
+msgid "Item"
+msgstr "Элемент"
+
+msgid "Enjoying AI Translator?"
+msgstr "Нравится ИИ Переводчик?"
+
+msgid "You've successfully completed several translations! If our plugin is saving you time, could you take 30 seconds to rate us on WordPress.org? It helps us keep improving the plugin."
+msgstr "Вы успешно завершили несколько переводов! Если наш плагин экономит ваше время, не могли бы вы уделить 30 секунд, чтобы оценить нас на WordPress.org? Это помогает нам продолжать улучшать плагин."
+
+msgid "Leave a 5-Star Review"
+msgstr "Оставить отзыв на 5 звезд"
+
+msgid "Remind me later"
+msgstr "Напомнить позже"
+
+msgid "Already reviewed / Dismiss"
+msgstr "Уже оценено / Закрыть"
+
+msgid "Built with Elementor - full translation support"
+msgstr "Создано с Elementor - полная поддержка перевода"
+
+msgid "Gutenberg"
+msgstr "Гутенберг"
+
+msgid "Built with Block Editor - can be translated"
+msgstr "Создано с Блоковым Редактором - может быть переведено"
+
+msgid "Classic"
+msgstr "Классический"
+
+msgid "Classic Editor content - can be translated"
+msgstr "Содержимое Классического Редактора - может быть переведено"
+
+msgid "WooCommerce product - title, description, attributes and meta are translated"
+msgstr "Продукт WooCommerce - заголовок, описание, атрибуты и мета переведены"
+
+msgid "Unknown"
+msgstr "Неизвестно"
+
+msgid "No translatable content detected"
+msgstr "Не обнаружено переводимого контента"
+
+msgid "Built with Elementor - can be translated"
+msgstr "Создано с Elementor - может быть переведено"
+
+msgid "Standard WordPress page - limited translation support"
+msgstr "Стандартная страница WordPress - ограниченная поддержка перевода"
+
+msgid "No pages or posts found."
+msgstr "Страницы или записи не найдены."
+
+msgid "Multilingual plugin not active."
+msgstr "Многоязычный плагин не активен."
+
+msgid "Header/Footer"
+msgstr "Заголовок/Подвал"
+
+msgid "Form"
+msgstr "Форма"
+
+msgid "Expand translations"
+msgstr "Развернуть переводы"
+
+msgid "Select this translation"
+msgstr "Выбрать этот перевод"
+
+msgid "Translation of"
+msgstr "Перевод"
+
+msgid "Complete"
+msgstr "Завершено"
+
+msgid "Publish this translation"
+msgstr "Опубликовать этот перевод"
+
+msgid "Publish"
+msgstr "Опубликовать"
+
+msgid "Review"
+msgstr "Обзор"
+
+msgid "Re-run translation from the source — replaces this translation (e.g. after adding Exclude Words)"
+msgstr "Повторно запустить перевод из источника — заменяет этот перевод (например, после добавления Исключаемых слов)"
+
+msgid "Retranslate"
+msgstr "Перевести заново"
+
+msgid "%d languages"
+msgstr "%d языков"
+
+msgid "AI is preparing your translations"
+msgstr "ИИ подготавливает ваши переводы"
+
+msgid "Enjoying Meep AI Translator? A quick review helps us a lot!"
+msgstr "Нравится Meep AI Translator? Быстрый обзор очень помогает!"
+
+msgid "No thanks"
+msgstr "Нет, спасибо"
+
+msgid "Choose pages to translate"
+msgstr "Выберите страницы для перевода"
+
+msgid "Selected: %d page"
+msgstr "Выбрано: %d страница"
+
+msgid "Selected: %d pages"
+msgstr "Выбрано: %d страницы"
+
+msgid "Ready: %d translation job"
+msgstr "Готово: %d задание на перевод"
+
+msgid "Ready: %d translation jobs"
+msgstr "Готово: %d задания на перевод"
+
+msgid "All selected pages are fully translated"
+msgstr "Все выбранные страницы полностью переведены"
+
+msgid "Limit reached"
+msgstr "Достигнут лимит"
+
+msgid "Resets %s"
+msgstr "Сбрасывает %s"
+
+msgid "Unlimited words"
+msgstr "Неограниченное количество слов"
+
+msgid "used this month"
+msgstr "использовано в этом месяце"
+
+msgid "Upgrade for instant access"
+msgstr "Обновите для мгновенного доступа"
+
+msgid "You're almost out of words"
+msgstr "Вы почти исчерпали лимит слов"
+
+msgid "Upgrade →"
+msgstr "Обновить →"
+
+msgid "Your license has expired. You have been downgraded to the Free plan."
+msgstr "Ваша лицензия истекла. Вы были понижены до бесплатного плана."
+
+msgid "Expired"
+msgstr "Истекло"
+
+msgid "%1$s Plan: %2$s words included"
+msgstr "%1$s План: %2$s слов включено"
+
+msgid "Extra %s words pack activated"
+msgstr "Дополнительный пакет из %s слов активирован"
+
+msgid "bonus"
+msgstr "бонус"
+
+msgid "Renew License"
+msgstr "Продлить лицензию"
+
+msgid "Meep AI Translator PRO"
+msgstr "Meep AI Translator PRO"
+
+msgid "Translate your site, %1$spage by page%2$s."
+msgstr "Переведите ваш сайт, %1$spage за страницей%2$s."
+
+msgid "Manage translations for your pages and posts. Select source content to create bulk translations."
+msgstr "Управляйте переводами для ваших страниц и записей. Выберите исходный контент для создания массовых переводов."
+
+msgid "dashboard"
+msgstr "панель управления"
+
+msgid "settings"
+msgstr "настройки"
+
+msgid "Set up languages, switcher behavior, SEO translation, WooCommerce options, glossary, and advanced rules."
+msgstr "Настройте языки, поведение переключателя, SEO-перевод, параметры WooCommerce, глоссарий и расширенные правила."
+
+msgid "translation history"
+msgstr "история переводов"
+
+msgid "Track completed translations, monitor usage trends, and inspect your recent translation records."
+msgstr "Отслеживайте завершенные переводы, контролируйте тенденции использования и просматривайте свои последние записи переводов."
+
+msgid "translate all"
+msgstr "перевести все"
+
+msgid "Select post types and target languages, estimate words, and launch or schedule large translation batches."
+msgstr "Выберите типы записей и целевые языки, оцените количество слов и запустите или запланируйте большие партии переводов."
+
+msgid "review translation"
+msgstr "проверить перевод"
+
+msgid "Inspect each translated segment side by side with the source. Click any cell to edit and save changes directly."
+msgstr "Просмотрите каждый переведенный сегмент рядом с исходным. Нажмите на любую ячейку, чтобы отредактировать и сохранить изменения напрямую."
+
+msgid "Support & Resources"
+msgstr "Поддержка и ресурсы"
+
+msgid "We continuously improve our translation algorithms. If you have questions, feedback, or need help with any page, we are here for you."
+msgstr "Мы постоянно улучшаем наши алгоритмы перевода. Если у вас есть вопросы, отзывы или нужна помощь с любой страницей, мы здесь для вас."
+
+msgid "Feedback & Support"
+msgstr "Обратная связь и поддержка"
+
+msgid "Love Our Plugin?"
+msgstr "Нравится наш плагин?"
+
+msgid "If you enjoy using Meep AI Translator, please take a moment to rate us on WordPress.org! Your feedback helps us continue improving the plugin."
+msgstr "Если вам нравится использовать Meep AI Translator, пожалуйста, уделите минуту, чтобы оценить нас на WordPress.org! Ваши отзывы помогают нам продолжать улучшать плагин."
+
+msgid "Translation cache: %d entries cleared"
+msgstr "Кэш переводов: %d записей очищено"
+
+msgid "Usage statistics: %d entries cleared"
+msgstr "Статистика использования: %d записей очищено"
+
+msgid "WordPress options cleared"
+msgstr "Параметры WordPress очищены"
+
+msgid "Debug logs cleared"
+msgstr "Логи отладки очищены"
+
+msgid "✅ Translation History Cleared!"
+msgstr "✅ История переводов очищена!"
+
+msgid "Clear Translation History"
+msgstr "Очистить историю переводов"
+
+msgid "⚠️ Warning: Destructive Action"
+msgstr "⚠️ Внимание: Разрушительное действие"
+
+msgid "This action will permanently delete:"
+msgstr "Это действие навсегда удалит:"
+
+msgid "All cached translations (to force re-translation)"
+msgstr "Все кэшированные переводы (для принудительного повторного перевода)"
+
+msgid "All usage statistics and word counts"
+msgstr "Все статистические данные использования и подсчеты слов"
+
+msgid "Cooldown timers and limits"
+msgstr "Таймеры ожидания и лимиты"
+
+msgid "Debug logs and temporary data"
+msgstr "Логи отладки и временные данные"
+
+msgid "⚠️ This is useful for testing but will increase API costs as translations will not be cached."
+msgstr "⚠️ Это полезно для тестирования, но увеличит затраты на API, так как переводы не будут кэшироваться."
+
+msgid "Current Statistics"
+msgstr "Текущая статистика"
+
+msgid "entries"
+msgstr "записи"
+
+msgid "Usage Records"
+msgstr "Записи использования"
+
+msgid "records"
+msgstr "записи"
+
+msgid "Words This Month"
+msgstr "Слова в этом месяце"
+
+msgid "Cooldown Status"
+msgstr "Статус ожидания"
+
+msgid "Active (%s remaining)"
+msgstr "Активно (%s осталось)"
+
+msgid "Not active"
+msgstr "Не активно"
+
+msgid "Are you ABSOLUTELY SURE you want to delete ALL translation history? This cannot be undone!"
+msgstr "Вы абсолютно уверены, что хотите удалить ВСЮ историю переводов? Это действие нельзя отменить!"
+
+msgid "Clear All Translation History"
+msgstr "Очистить всю историю переводов"
+
+msgid "This is a temporary debug tool to help test translations. Use with caution!"
+msgstr "Это временный инструмент отладки, чтобы помочь протестировать переводы. Используйте с осторожностью!"
+
+msgid "💡 What happens after clearing?"
+msgstr "💡 Что произойдет после очистки?"
+
+msgid "You can immediately start new translations"
+msgstr "Вы можете немедленно начать новые переводы"
+
+msgid "Cooldown period will be removed"
+msgstr "Период ожидания будет удален"
+
+msgid "Word count limit resets to 0"
+msgstr "Лимит количества слов сброшен до 0"
+
+msgid "All translations will be fetched from OpenAI API again (costs money)"
+msgstr "Все переводы будут загружены снова из OpenAI API (это стоит денег)"
+
+msgid "Previously translated pages remain unchanged"
+msgstr "Ранее переведенные страницы остаются без изменений"
+
+msgid "Languages Configured"
+msgstr "Языки настроены"
+
+msgid "Language Switcher"
+msgstr "Переключатель языка"
+
+msgid "AI Translator - Setup Checklist"
+msgstr "AI Translator - Контрольный список настройки"
+
+msgid "%1$d of %2$d steps completed"
+msgstr "%1$d из %2$d шагов завершено"
+
+msgid "Go to AI Translator Dashboard"
+msgstr "Перейти к панели управления AI Translator"
+
+msgid "No supported forms or filters were found on this site."
+msgstr "На этом сайте не найдено поддерживаемых форм или фильтров."
+
+msgid "Detected — %s. Click \"Auto-translate strings\" to translate them into every language."
+msgstr "Обнаружено — %s. Нажмите \"Авто-перевести строки\", чтобы перевести их на каждый язык."
+
+msgid "You do not have permission to perform this action."
+msgstr "У вас нет разрешения на выполнение этого действия."
+
+msgid "No published pages or posts found."
+msgstr "Не найдено опубликованных страниц или записей."
+
+msgid "Invalid page ID."
+msgstr "Недействительный идентификатор страницы."
+
+msgid "No Elementor data found for this page."
+msgstr "Данные Elementor для этой страницы не найдены."
+
+msgid "Invalid Elementor data format."
+msgstr "Недействующий формат данных Elementor."
+
+msgid "No translatable content found."
+msgstr "Не найдено переводимого контента."
+
+msgid "Word count: %1$d words (%2$d elements)"
+msgstr "Количество слов: %1$d слов (%2$d элементов)"
+
+msgid "Widget parser not available."
+msgstr "Парсер виджетов недоступен."
+
+msgid "No Elementor data found."
+msgstr "Данные Elementor не найдены."
+
+msgid "Failed to decode Elementor data."
+msgstr "Не удалось декодировать данные Elementor."
+
+msgid "Gutenberg parser not available."
+msgstr "Парсер Gutenberg недоступен."
+
+msgid "Classic parser not available."
+msgstr "Классический парсер недоступен."
+
+msgid "This page does not contain any translatable content. Please ensure the page has content created with Elementor, Gutenberg (Block Editor), or Classic Editor."
+msgstr "Эта страница не содержит переводимого контента. Пожалуйста, убедитесь, что на странице есть контент, созданный с помощью Elementor, Gutenberg (Блоковый редактор) или Классического редактора."
+
+msgid "Target language is required."
+msgstr "Требуется целевой язык."
+
+msgid "Please configure your OpenAI API key in the settings."
+msgstr "Пожалуйста, настройте свой ключ API OpenAI в настройках."
+
+msgid "Translation failed. Please check the logs for details."
+msgstr "Ошибка перевода. Пожалуйста, проверьте журналы для получения подробной информации."
+
+msgid "Translation completed successfully! %1$d words translated in %2$s seconds."
+msgstr "Перевод успешно завершен! %1$d слов переведено за %2$s секунд."
+
+msgid "You do not have permission to view statistics."
+msgstr "У вас нет разрешения на просмотр статистики."
+
+msgid "You do not have permission to clear cache."
+msgstr "У вас нет разрешения на очистку кэша."
+
+msgid "Cache cleared successfully! %d entries removed."
+msgstr "Кэш успешно очищен! Удалено %d записей."
+
+msgid "You do not have permission to view cache statistics."
+msgstr "У вас нет разрешения на просмотр статистики кэша."
+
+msgid "Permission denied."
+msgstr "Доступ запрещен."
+
+msgid "Missing page ID."
+msgstr "Отсутствует идентификатор страницы."
+
+msgid "Page not found."
+msgstr "Страница не найдена."
+
+msgid "Page \"%s\" has been published successfully!"
+msgstr "Страница \"%s\" успешно опубликована!"
+
+msgid "API key is invalid or missing. Please check your settings."
+msgstr "Ключ API недействителен или отсутствует. Пожалуйста, проверьте свои настройки."
+
+msgid "API rate limit exceeded. Please wait a moment and try again."
+msgstr "Превышен лимит запросов API. Пожалуйста, подождите немного и попробуйте снова."
+
+msgid "API quota exceeded or billing issue. Please check your API account."
+msgstr "Превышена квота API или проблема с выставлением счетов. Пожалуйста, проверьте свой аккаунт API."
+
+msgid "Network connection error. Please check your internet connection and try again."
+msgstr "Ошибка сетевого соединения. Пожалуйста, проверьте ваше интернет-соединение и попробуйте снова."
+
+msgid "Request timed out. The page might be too large. Try translating smaller sections."
+msgstr "Время запроса истекло. Страница может быть слишком большой. Попробуйте перевести меньшие разделы."
+
+msgid "Data format error. Please try refreshing the page and trying again."
+msgstr "Ошибка формата данных. Пожалуйста, попробуйте обновить страницу и повторить попытку."
+
+msgid "Translation error: %s"
+msgstr "Ошибка перевода: %s"
+
+msgid "Pages and languages are required."
+msgstr "Страницы и языки обязательны."
+
+msgid "Content detector class not loaded. Please refresh the page."
+msgstr "Класс детектора контента не загружен. Пожалуйста, обновите страницу."
+
+msgid "Page ID %d not found."
+msgstr "Идентификатор страницы %d не найден."
+
+msgid "Insufficient words available. This translation requires %1$s words, but you only have %2$s words left in your %3$s plan."
+msgstr "Недостаточно доступных слов. Этот перевод требует %1$s слов, но у вас осталось только %2$s слов в вашем %3$s плане."
+
+msgid "Content detector is not available. Please reload the page and try again."
+msgstr "Детектор контента недоступен. Пожалуйста, перезагрузите страницу и попробуйте снова."
+
+msgid "Bulk translation queue is not available. Please reload the page and try again."
+msgstr "Очередь массового перевода недоступна. Пожалуйста, перезагрузите страницу и попробуйте снова."
+
+msgid "Translation engine is not available. Please reload the page and try again."
+msgstr "Движок перевода недоступен. Пожалуйста, перезагрузите страницу и попробуйте снова."
+
+msgid "Bulk translation started for %1$d pages to %2$d languages."
+msgstr "Массовый перевод начат для %1$d страниц на %2$d языков."
+
+msgid "Missing proxy_job_id."
+msgstr "Отсутствует proxy_job_id."
+
+msgid "Job ID is required."
+msgstr "Идентификатор задания обязателен."
+
+msgid "Translation paused successfully."
+msgstr "Перевод успешно приостановлен."
+
+msgid "Translation resumed successfully."
+msgstr "Перевод успешно возобновлен."
+
+msgid "Translation cancelled successfully."
+msgstr "Перевод успешно отменен."
+
+msgid "You do not have permission to publish pages."
+msgstr "У вас нет разрешения на публикацию страниц."
+
+msgid "4 translations published successfully."
+msgstr "4 перевода успешно опубликованы."
+
+msgid "Pages are required."
+msgstr "Страницы обязательны."
+
+msgid "Translation queued and waiting to start..."
+msgstr "Перевод поставлен в очередь и ожидает начала..."
+
+msgid "Translation in progress... %d%% completed"
+msgstr "Перевод в процессе... %d%% завершено"
+
+msgid "Translation failed. Please check the error details."
+msgstr "Перевод не удался. Пожалуйста, проверьте детали ошибки."
+
+msgid "Translation was cancelled."
+msgstr "Перевод был отменен."
+
+msgid "Unknown status."
+msgstr "Неизвестный статус."
+
+msgid "Cron triggered successfully."
+msgstr "Cron успешно запущен."
+
+msgid "You are in a monthly cooldown period. Your translation limit will reset in %d days. Upgrade your plan to continue translating immediately."
+msgstr "Вы находитесь в месячном периоде ожидания. Ваш лимит перевода будет сброшен через %d дней. Обновите свой план, чтобы продолжить перевод немедленно."
+
+msgid "Word limit reached! You have used all %1$s words in your %2$s plan. Upgrade to continue or wait for the monthly reset period."
+msgstr "Достигнут лимит слов! Вы использовали все %1$s слов в вашем %2$s плане. Обновите, чтобы продолжить, или дождитесь окончания месячного периода сброса."
+
+msgid "Not enough words remaining. This translation requires approximately %1$s words, but you only have %2$s words left in your %3$s plan."
+msgstr "Недостаточно оставшихся слов. Этот перевод требует примерно %1$s слов, но у вас осталось только %2$s слов в вашем %3$s плане."
+
+msgid "Built-in language system is not active."
+msgstr "Встроенная языковая система не активна."
+
+msgid "Cannot translate to the default language."
+msgstr "Невозможно перевести на язык по умолчанию."
+
+msgid "Menus translated and assigned for %s."
+msgstr "Меню переведены и назначены для %s."
+
+msgid "No translatable widget content found."
+msgstr "Не найдено содержимого виджета для перевода."
+
+msgid "Widget content translated for %s: %d items."
+msgstr "Содержимое виджета переведено для %s: %d элементов."
+
+msgid "No target language specified."
+msgstr "Не указан целевой язык."
+
+msgid "Elementor is not active."
+msgstr "Elementor не активен."
+
+msgid "No multilingual system active."
+msgstr "Многоязычная система не активна."
+
+msgid "⏭ %s — already translated"
+msgstr "⏭ %s — уже переведено"
+
+msgid "✗ %s — %s"
+msgstr "✗ %s — %s"
+
+msgid "✓ %s → translated"
+msgstr "✓ %s → переведено"
+
+msgid "No Elementor templates found to translate."
+msgstr "Не найдено шаблонов Elementor для перевода."
+
+msgid "No active Elementor templates found to translate."
+msgstr "Не найдено активных шаблонов Elementor для перевода."
+
+msgid "No advanced Elementor templates found to translate."
+msgstr "Не найдено продвинутых шаблонов Elementor для перевода."
+
+msgid "%d template(s) to translate, %d already done."
+msgstr "%d шаблон(ов) для перевода, %d уже переведено."
+
+msgid "🔄 %s — re-translating (old translation removed)"
+msgstr "🔄 %s — повторный перевод (старый перевод удален)"
+
+msgid "Elementor templates for %s: %d translated, %d skipped, %d errors."
+msgstr "Шаблоны Elementor для %s: %d переведено, %d пропущено, %d ошибок."
+
+msgid "Review Translations"
+msgstr "Просмотреть переводы"
+
+msgid "Save"
+msgstr "Сохранить"
+
+msgid "Saving…"
+msgstr "Сохранение…"
+
+msgid "Saved"
+msgstr "Сохранено"
+
+msgid "Save failed. Please try again."
+msgstr "Не удалось сохранить. Пожалуйста, попробуйте еще раз."
+
+msgid "You do not have permission to access this page."
+msgstr "У вас нет разрешения на доступ к этой странице."
+
+msgid "Post not found."
+msgstr "Запись не найдена."
+
+msgid "Edit in WP"
+msgstr "Редактировать в WP"
+
+msgid "View Translation"
+msgstr "Просмотреть перевод"
+
+msgid "Update"
+msgstr "Обновить"
+
+msgid "Working…"
+msgstr "Работаем…"
+
+msgid "Re-translate this page from the source? This refreshes the translation and may overwrite manual edits made here."
+msgstr "Перевести эту страницу заново из источника? Это обновит перевод и может перезаписать ручные изменения, сделанные здесь."
+
+msgid "Action failed."
+msgstr "Действие не выполнено."
+
+msgid "No editable segments were found for this translation."
+msgstr "Не найдено редактируемых сегментов для этого перевода."
+
+msgid "Source"
+msgstr "Источник"
+
+msgid "Translation (%s)"
+msgstr "Перевод (%s)"
+
+msgid "Click to edit"
+msgstr "Нажмите для редактирования"
+
+msgid "Missing parameters."
+msgstr "Отсутствуют параметры."
+
+msgid "Insufficient permissions for this post."
+msgstr "Недостаточно прав для этой записи."
+
+msgid "Invalid field."
+msgstr "Неверное поле."
+
+msgid "Segment saved."
+msgstr "Сегмент сохранен."
+
+msgid "Classic parser unavailable."
+msgstr "Классический парсер недоступен."
+
+msgid "Segment not found."
+msgstr "Сегмент не найден."
+
+msgid "Gutenberg parser unavailable."
+msgstr "Парсер Gutenberg недоступен."
+
+msgid "Segment not found in Gutenberg content."
+msgstr "Сегмент не найден в содержимом Gutenberg."
+
+msgid "Elementor data could not be decoded."
+msgstr "Данные Elementor не удалось декодировать."
+
+msgid "Segment path not found in Elementor data."
+msgstr "Путь сегмента не найден в данных Elementor."
+
+msgid "Failed to encode Elementor data."
+msgstr "Не удалось закодировать данные Elementor."
+
+msgid "Segment path not found for WooCommerce content."
+msgstr "Путь сегмента не найден для содержимого WooCommerce."
+
+msgid "🔍 Side-by-Side Review Workspace"
+msgstr "🔍 Рабочее пространство для совместного просмотра"
+
+msgid "Select any translated page, template, or post to view its original source text and translated segments side-by-side with full inline editing capability."
+msgstr "Выберите любую переведенную страницу, шаблон или запись, чтобы просмотреть ее оригинальный текст и переведенные сегменты рядом с возможностью полного редактирования."
+
+msgid "Translate More Content"
+msgstr "Перевести больше контента"
+
+msgid "No Translations Ready for Review Yet"
+msgstr "Переводы еще не готовы к просмотру"
+
+msgid "Once you translate pages or posts using Meep AI Translator, they will appear here for side-by-side diff review and granular segment editing."
+msgstr "После того как вы переведете страницы или записи с помощью Meep AI Translator, они появятся здесь для совместного просмотра различий и детального редактирования сегментов."
+
+msgid "Start Batch Translation"
+msgstr "Начать пакетный перевод"
+
+msgid "Source Content"
+msgstr "Исходный контент"
+
+msgid "Available Translations & Review"
+msgstr "Доступные переводы и обзор"
+
+msgid "General & Performance"
+msgstr "Общие настройки и производительность"
+
+msgid "Languages & Switcher"
+msgstr "Языки и переключатель"
+
+msgid "Site Elements & Auto-Translate"
+msgstr "Элементы сайта и авто-перевод"
+
+msgid "Plugin Integrations"
+msgstr "Интеграции плагинов"
+
+msgid "Brand & Glossary"
+msgstr "Бренд и глоссарий"
+
+msgid "Tools & Advanced"
+msgstr "Инструменты и расширенные настройки"
+
+msgid "%d%% used"
+msgstr "%d%% использовано"
+
+msgid "Published (Recommended)"
+msgstr "Опубликовано (рекомендуется)"
+
+msgid "Draft (Review before publishing)"
+msgstr "Черновик (проверьте перед публикацией)"
+
+msgid "Status for newly created translated pages. Published makes translations immediately accessible."
+msgstr "Статус для вновь созданных переведенных страниц. Опубликованные переводы становятся доступными сразу."
+
+msgid "Translate URL Slugs"
+msgstr "Перевести URL-слиги"
+
+msgid "Generate translated URL slugs from translated titles"
+msgstr "Генерировать переведенные URL-слиги из переведенных заголовков"
+
+msgid "When enabled, translated posts/pages/products get localized slugs (post_name). Disable to keep source-style slugs instead of translating them."
+msgstr "При включении переведенные посты/страницы/товары получают локализованные слиги (post_name). Отключите, чтобы сохранить слиги в исходном стиле вместо перевода."
+
+msgid "Localize Internal Links"
+msgstr "Локализовать внутренние ссылки"
+
+msgid "Rewrite absolute internal links (e.g. /fr/...) in content and widgets to the current language"
+msgstr "Переписывать абсолютные внутренние ссылки (например, /fr/...) в контенте и виджетах на текущий язык"
+
+msgid "When enabled, hard-coded internal links inside content/Elementor widgets are pointed to the translated target on translated pages (when a translation exists). Links without a translation are left unchanged."
+msgstr "При включении жестко закодированные внутренние ссылки внутри контента/виджетов Elementor указывают на переведенную цель на переведенных страницах (если перевод существует). Ссылки без перевода остаются без изменений."
+
+msgid "Switcher Theme"
+msgstr "Темы переключателя"
+
+msgid "Default (bordered)"
+msgstr "По умолчанию (с рамкой)"
+
+msgid "Light border"
+msgstr "Светлая рамка"
+
+msgid "Minimal (no border / transparent)"
+msgstr "Минимально (без рамки / прозрачный)"
+
+msgid "Pill (rounded)"
+msgstr "Пилот (округленный)"
+
+msgid "Visual style for the Dropdown switcher. Tip: for a compact flag-only switcher, choose the Dropdown style and turn off \"Show language names\" — the languages still appear (with names) inside the dropdown."
+msgstr "Визуальный стиль для переключателя Dropdown. Совет: для компактного переключателя только с флагами выберите стиль Dropdown и отключите \"Показать названия языков\" — языки все равно будут отображаться (с названиями) внутри выпадающего списка."
+
+msgid "Border Color"
+msgstr "Цвет рамки"
+
+msgid "Border colour for the switcher (and dropdown). Leave empty to use the theme default."
+msgstr "Цвет рамки для переключателя (и выпадающего списка). Оставьте пустым, чтобы использовать цвет по умолчанию темы."
+
+msgid "Flag Size (px)"
+msgstr "Размер флага (пиксели)"
+
+msgid "Flag width in pixels (8–128). Leave empty for the default size."
+msgstr "Ширина флага в пикселях (8–128). Оставьте пустым для размера по умолчанию."
+
+msgid "Show language names inside the dropdown list"
+msgstr "Показать названия языков внутри выпадающего списка"
+
+msgid "Applies to the Dropdown style only. Turn the trigger to flag-only above and leave this on to get a compact flag with named entries in the dropdown; turn it off for flags-only entries."
+msgstr "Применяется только к стилю Dropdown. Включите переключатель на флагах только выше и оставьте это включенным, чтобы получить компактный флаг с названными записями в выпадающем списке; отключите для записей только с флагами."
+
+msgid "Show language names on mobile (flag-only on desktop)"
+msgstr "Показать названия языков на мобильных устройствах (только флаг на десктопе)"
+
+msgid "Dropdown style only, when language names are off. Keeps the desktop header compact (flag only) but shows the language name in the mobile menu, where there is more room."
+msgstr "Только стиль Dropdown, когда названия языков отключены. Сохраняет компактный заголовок на десктопе (только флаг), но показывает название языка в мобильном меню, где больше места."
+
+msgid "This preview updates live as you change the options above. Save settings to apply them on the frontend."
+msgstr "Этот предварительный просмотр обновляется в реальном времени по мере изменения параметров выше. Сохраните настройки, чтобы применить их на фронтенде."
+
+msgid "Generate Sample CSS"
+msgstr "Сгенерировать образец CSS"
+
+msgid "Generates a starting template based on your current switcher style."
+msgstr "Генерирует стартовый шаблон на основе вашего текущего стиля переключателя."
+
+msgid "detected — template translation is available."
+msgstr "обнаружено — перевод шаблона доступен."
+
+msgid "Elementor is not active. These settings will apply when Elementor is installed and activated."
+msgstr "Elementor не активен. Эти настройки будут применены, когда Elementor будет установлен и активирован."
+
+msgid "Auto-translate templates when translating a page"
+msgstr "Авто-перевод шаблонов при переводе страницы"
+
+msgid "When a page is translated, also translate any Elementor templates that are not yet translated into that language — including embedded templates and theme-builder single/header/footer templates (e.g. a custom-post-type single). This means non-technical users don't have to know a page pulls in an extra template. Note: translating templates uses additional words."
+msgstr "Когда страница переводится, также переводите любые шаблоны Elementor, которые еще не переведены на этот язык — включая встроенные шаблоны и шаблоны темы для одиночных/заголовков/подвалов (например, одиночный для пользовательского типа поста). Это означает, что нетехническим пользователям не нужно знать, что страница использует дополнительный шаблон. Примечание: перевод шаблонов использует дополнительные слова."
+
+msgid "Additional template post types"
+msgstr "Дополнительные типы постов шаблонов"
+
+msgid "Comma-separated post-type slugs to treat as translatable Elementor templates (translated + swapped at render). Elementor Library and JetEngine listings (jet-engine) are already included. Add others here — e.g. JetThemeCore parts — without editing code."
+msgstr "Слоги типов записей, разделенные запятыми, которые следует считать переводимыми шаблонами Elementor (переведены + заменены при рендеринге). Библиотека Elementor и списки JetEngine (jet-engine) уже включены. Добавьте другие здесь — например, части JetThemeCore — без редактирования кода."
+
+msgid "Currently recognised as translatable templates:"
+msgstr "В настоящее время распознаются как переводимые шаблоны:"
+
+msgid "Translated template ID"
+msgstr "ID переведенного шаблона"
+
+msgid "Copy [elementor-template id=\"%d\"] to clipboard"
+msgstr "Скопировать [elementor-template id=\"%d\"] в буфер обмена"
+
+msgid "Force re-translate this template"
+msgstr "Принудительно перевести этот шаблон снова"
+
+msgid "Translate this template"
+msgstr "Перевести этот шаблон"
+
+msgid "Translate Advanced Templates Only"
+msgstr "Перевести только расширенные шаблоны"
+
+msgid "📝 Contact Forms"
+msgstr "📝 Контактные формы"
+
+msgid "Translate the labels, placeholders, options, buttons, and messages of your contact forms — Contact Form 7, WPForms, Gravity Forms, and JetFormBuilder. Scan to see what was detected, then translate. Detected strings also appear in String Translations below, where you can fine-tune any wording. (JetSmartFilters and other filter labels live in String Translations.)"
+msgstr "Переведите метки, заполнители, опции, кнопки и сообщения ваших контактных форм — Contact Form 7, WPForms, Gravity Forms и JetFormBuilder. Просканируйте, чтобы увидеть, что было обнаружено, затем переведите. Обнаруженные строки также появляются в переводах строк ниже, где вы можете уточнить формулировки. (Метки JetSmartFilters и другие метки фильтров находятся в переводах строк.)"
+
+msgid "Scan forms"
+msgstr "Сканировать формы"
+
+msgid "Translate form strings"
+msgstr "Перевести строки формы"
+
+msgid "Scanning…"
+msgstr "Сканирование…"
+
+msgid "Reloading…"
+msgstr "Перезагрузка…"
+
+msgid "🔤 String Translations"
+msgstr "🔤 Переводы строк"
+
+msgid "JetSmartFilters · \"Show all\""
+msgstr "JetSmartFilters · \"Показать все\""
+
+msgid "JetSmartFilters · Filter label"
+msgstr "JetSmartFilters · Метка фильтра"
+
+msgid "JetSmartFilters · Filter option"
+msgstr "JetSmartFilters · Опция фильтра"
+
+msgid "Translate interface strings that aren't covered by automatic translation — payment method titles/descriptions, the checkout privacy notice, JetSmartFilters labels (the \"Show all\" option and filter terms), and text from other plugins. Use Scan strings to detect filter labels, then Auto-translate strings to fill them in — they appear as rows below. You can also enter the exact source text on the left and its translation for each language; leave a language blank to keep the original."
+msgstr "Переведите строки интерфейса, которые не охвачены автоматическим переводом — названия/описания методов оплаты, уведомление о конфиденциальности на странице оформления заказа, метки JetSmartFilters (опция \"Показать все\" и условия фильтра) и текст из других плагинов. Используйте Сканировать строки, чтобы обнаружить метки фильтров, затем Авто-перевод строк, чтобы заполнить их — они появляются в виде строк ниже. Вы также можете ввести точный исходный текст слева и его перевод для каждого языка; оставьте язык пустым, чтобы сохранить оригинал."
+
+msgid "Search strings, filters, or translations…"
+msgstr "Искать строки, фильтры или переводы…"
+
+msgid "Scan strings"
+msgstr "Сканировать строки"
+
+msgid "Scan forms reports which forms, filters, and SureCart products were detected. Auto-translate then fills every language for all detected strings (your saved entries, WooCommerce payment/checkout text, and the labels of JetFormBuilder, WPForms, Contact Form 7, Gravity Forms, and JetSmartFilters) using the translation engine. SureCart products are translated separately, on the Products tab. Review the results — save afterwards is automatic."
+msgstr "Сканировать отчеты форм, какие формы, фильтры и продукты SureCart были обнаружены. Авто-перевод затем заполняет каждый язык для всех обнаруженных строк (ваши сохраненные записи, текст оплаты/оформления WooCommerce и метки JetFormBuilder, WPForms, Contact Form 7, Gravity Forms и JetSmartFilters) с использованием переводческого движка. Продукты SureCart переводятся отдельно, на вкладке Продукты. Просмотрите результаты — сохранение после этого происходит автоматически."
+
+msgid "strings found"
+msgstr "строки найдены"
+
+msgid "Counting products…"
+msgstr "Подсчет продуктов…"
+
+msgid "No translated products found."
+msgstr "Переведенные продукты не найдены."
+
+msgid "short descriptions."
+msgstr "короткие описания."
+
+msgid "🛍️ SureCart"
+msgstr "🛍️ SureCart"
+
+msgid "detected — product translation is available."
+msgstr "обнаружено — перевод продукта доступен."
+
+msgid "Enable SureCart product translation"
+msgstr "Включить перевод продуктов SureCart"
+
+msgid "Translates SureCart product names and descriptions and renders the translated version in the visitor's language across product pages, collection grids, and checkout. Products are translated and reviewed on the dashboard's Products tab, just like WooCommerce products — there is nothing else to configure here."
+msgstr "Переводит названия и описания продуктов SureCart и отображает переведенную версию на языке посетителя на страницах продуктов, в коллекциях и при оформлении заказа. Продукты переводятся и проверяются на вкладке Продукты в панели управления, так же как и продукты WooCommerce — здесь ничего больше настраивать не нужно."
+
+msgid "Re-translates SEO title, meta description, OG, and Twitter fields for all already-translated pages. Use this if translated pages still show the source-language SEO title. (To fix product short descriptions, use the \"Retranslate Short Descriptions\" tool below.)"
+msgstr "Снова переводит SEO заголовок, метаописание, OG и Twitter поля для всех уже переведенных страниц. Используйте это, если переведенные страницы все еще показывают SEO заголовок на исходном языке. (Чтобы исправить короткие описания продуктов, используйте инструмент \"Перевести короткие описания\" ниже.)"
+
+msgid "🧠 Brand Intelligence & Glossary"
+msgstr "🧠 Интеллект бренда и Глоссарий"
+
+msgid "Define brand names, slogans, and company terminology that must NEVER be translated, or specify exact custom translations for specific terms across languages."
+msgstr "Определите названия брендов, слоганы и терминологию компании, которые НИКОГДА не должны переводиться, или укажите точные пользовательские переводы для конкретных терминов на разных языках."
+
+msgid "Add Glossary Term"
+msgstr "Добавить термин в глоссарий"
+
+msgid "Export CSV"
+msgstr "Экспортировать CSV"
+
+msgid "Import CSV"
+msgstr "Импортировать CSV"
+
+msgid "Term / Phrase"
+msgstr "Термин / Фраза"
+
+msgid "Rule / Translation"
+msgstr "Правило / Перевод"
+
+msgid "Action"
+msgstr "Действие"
+
+msgid "No glossary terms added yet. Click \"Add Glossary Term\" above to create your first brand protection rule."
+msgstr "Пока не добавлено ни одного термина в глоссарий. Нажмите \"Добавить термин в глоссарий\" выше, чтобы создать ваше первое правило защиты бренда."
+
+msgid "Do Not Translate (Keep exact source)"
+msgstr "Не переводить (Сохранить точный источник)"
+
+msgid "Add Glossary Rule"
+msgstr "Добавить правило глоссария"
+
+msgid "Term / Phrase / Brand Name"
+msgstr "Термин / Фраза / Название бренда"
+
+msgid "Rule Type"
+msgstr "Тип правила"
+
+msgid "Do Not Translate (Keep exact source text)"
+msgstr "Не переводить (Сохранить точный исходный текст)"
+
+msgid "Custom Translation (Replace with specific term)"
+msgstr "Пользовательский перевод (Заменить на конкретный термин)"
+
+msgid "Target Translation Replacement"
+msgstr "Замена целевого перевода"
+
+msgid "Applies To Language"
+msgstr "Применяется к языку"
+
+msgid "All Languages (Universal Rule)"
+msgstr "Все языки (Универсальное правило)"
+
+msgid "Save Term"
+msgstr "Сохранить термин"
+
+msgid "Raw Text Format (Alternative)"
+msgstr "Формат сырого текста (Альтернативный)"
+
+msgid "Glossary Textarea"
+msgstr "Текстовое поле глоссария"
+
+msgid "Optional quick multiline input: Term = Translation (lang_code)"
+msgstr "Необязательный быстрый ввод в несколько строк: Термин = Перевод (код_языка)"
+
+msgid "🚫 Excluded Terms (Quick List)"
+msgstr "🚫 Исключенные термины (Быстрый список)"
+
+msgid "Words or terms listed here will never be translated — they are automatically preserved as-is across all languages alongside your Glossary rules. Use this for brand names, company names, or technical terms."
+msgstr "Слова или термины, указанные здесь, никогда не будут переведены — они автоматически сохраняются как есть на всех языках вместе с вашими правилами глоссария. Используйте это для названий брендов, названий компаний или технических терминов."
+
+msgid "🛠 Tools & Maintenance"
+msgstr "🛠 Инструменты и обслуживание"
+
+msgid "Maintenance and one-off actions, gathered in one place. Each card opens its tool below."
+msgstr "Обслуживание и разовые действия, собранные в одном месте. Каждая карточка открывает свой инструмент ниже."
+
+msgid "Repair Page Content Links"
+msgstr "Восстановить ссылки на содержимое страницы"
+
+msgid "Re-localize internal links inside translated page content and Elementor data."
+msgstr "Переопределить внутренние ссылки внутри переведенного содержимого страницы и данных Elementor."
+
+msgid "Switch Default Language"
+msgstr "Сменить язык по умолчанию"
+
+msgid "Move root URLs and migrate translation groups when changing default language."
+msgstr "Переместить корневые URL и мигрировать группы переводов при смене языка по умолчанию."
+
+msgid "Reconciles translation links so the dashboard page list, language switcher, and the cart/checkout page swap all agree. Fixes translated pages that wrongly appear as their own source, links left inconsistent by older versions, and re-attaches translated child pages to their translated parent (so a translated sub-page nests under the translated parent instead of the original). Run \"Scan\" first to preview, then \"Repair Links\"."
+msgstr "Согласует ссылки перевода, чтобы список страниц на панели управления, переключатель языков и страницы корзины/оформления заказа согласовывались. Исправляет переведенные страницы, которые ошибочно отображаются как свои собственные источники, ссылки, оставшиеся несогласованными из-за более ранних версий, и повторно прикрепляет переведенные дочерние страницы к их переведенным родителям (так что переведенная подстраница располагается под переведенным родителем, а не под оригиналом). Сначала запустите \"Сканировать\", чтобы просмотреть, затем \"Восстановить ссылки\"."
+
+msgid "Loops through all translated posts/pages and re-localizes internal links inside their Elementor data based on the latest translation mappings and slug resolution fallbacks. Use this after shifting domains or nesting paths to fix outdated or broken links in translations without re-translating."
+msgstr "Перебирает все переведенные посты/страницы и переопределяет внутренние ссылки внутри их данных Elementor на основе последних сопоставлений переводов и резервных копий разрешения слагов. Используйте это после смены доменов или вложенных путей, чтобы исправить устаревшие или сломанные ссылки в переводах без повторного перевода."
+
+msgid "Repair Page Links"
+msgstr "Восстановить ссылки на страницы"
+
+msgid "child pages re-parented"
+msgstr "дочерние страницы переназначены"
+
+msgid "language records reconciled"
+msgstr "записи языков согласованы"
+
+msgid "WooCommerce cart/checkout link status:"
+msgstr "Статус ссылки корзины/оформления заказа WooCommerce:"
+
+msgid "NONE — not linked"
+msgstr "НЕТ — не связано"
+
+msgid "All page links are already localized and up-to-date."
+msgstr "Все ссылки на страницы уже локализованы и актуальны."
+
+msgid "translated page(s) out of"
+msgstr "переведенные страницы из"
+
+msgid "scanned."
+msgstr "отсканировано."
+
+msgid "Affected page content and Elementor CSS caches have been updated."
+msgstr "Затронутое содержимое страницы и кэши CSS Elementor были обновлены."
+
+msgid "Repair links inside translated page content now? This will inspect all translated pages and re-localize their internal links. This is safe to run multiple times."
+msgstr "Восстановить ссылки внутри переведенного содержимого страницы сейчас? Это проверит все переведенные страницы и переопределит их внутренние ссылки. Это безопасно запускать несколько раз."
+
+msgid "Preserve Post Order"
+msgstr "Сохранить порядок постов"
+
+msgid "Mirror default-language sorting order on translation pages"
+msgstr "Сохранить порядок сортировки языка по умолчанию на страницах перевода"
+
+msgid "When enabled, translated posts are automatically sorted to match the order of their original post counterparts. This prevents page builder listings (such as JetEngine grids) from displaying items in a scrambled order due to different translation creation dates."
+msgstr "При включении переведенные посты автоматически сортируются в соответствии с порядком их оригинальных постов. Это предотвращает отображение элементов в перемешанном порядке в списках конструктора страниц (таких как сетки JetEngine) из-за разных дат создания переводов."
+
+msgid "Inspect Elementor Data"
+msgstr "Просмотреть данные Elementor"
+
+msgid "Post/Template ID"
+msgstr "ID поста/шаблона"
+
+msgid "Inspect"
+msgstr "Просмотреть"
+
+msgid "Read-only diagnostic: prints the Elementor structure (widget types + setting shapes) for a page/template. Useful for support — paste the result back to us."
+msgstr "Только для чтения диагностика: выводит структуру Elementor (типы виджетов + формы настроек) для страницы/шаблона. Полезно для поддержки — вставьте результат обратно к нам."
+
+msgid "Loading…"
+msgstr "Загрузка…"
+
+msgid "Request failed."
+msgstr "Запрос не удался."
+
+msgid "This will reset all built-in language settings, disable the built-in system, and reset plugin options to defaults. Your API key and license will be preserved. Translated pages will NOT be deleted."
+msgstr "Это сбросит все встроенные языковые настройки, отключит встроенную систему и вернет параметры плагина к значениям по умолчанию. Ваш API-ключ и лицензия будут сохранены. Переведенные страницы НЕ будут удалены."
+
+msgid ""
+"Are you sure you want to reset all plugin data? This will:\n"
+"\n"
+"• Disable the built-in language system\n"
+"• Remove configured languages\n"
+"• Reset plugin options to defaults\n"
+"• Clear cache and temporary state\n"
+"\n"
+"Your API key, translated pages, and license will be preserved.\n"
+"\n"
+"Continue?"
+msgstr ""
+"Вы уверены, что хотите сбросить все данные плагина? Это:\n"
+"\n"
+"• Отключит встроенную языковую систему\n"
+"• Удалит настроенные языки\n"
+"• Вернет параметры плагина к значениям по умолчанию\n"
+"• Очистит кэш и временное состояние\n"
+"\n"
+"Ваш API-ключ, переведенные страницы и лицензия будут сохранены.\n"
+"\n"
+"Продолжить?"
+
+msgid "Replace current CSS with the generated sample? Click Cancel to append instead."
+msgstr "Заменить текущий CSS сгенерированным образцом? Нажмите Отмена, чтобы добавить вместо этого."
+
+msgid "Generated!"
+msgstr "Сгенерировано!"
+
+msgid "Translating"
+msgstr "Перевод"
+
+msgid "advanced"
+msgstr "расширенный"
+
+msgid "Re-translate"
+msgstr "Перевести заново"
+
+msgid "The existing translation will be replaced. Uses translation credits."
+msgstr "Существующий перевод будет заменен. Использует кредиты перевода."
+
+msgid "A translation is already in progress. Please wait."
+msgstr "Перевод уже выполняется. Пожалуйста, подождите."
+
+msgid "advanced templates only"
+msgstr "только расширенные шаблоны"
+
+msgid "🔄 Switch Default Language"
+msgstr "🔄 Переключить язык по умолчанию"
+
+msgid "Make a different language the one served at the root of your site (no /xx/ prefix). This re-homes slug ownership per translation group — the chosen language takes the clean URLs, the current default moves under its prefix — and adds 301 redirects for the old URLs. Translate everything first (pages, posts, products, and your menus & widgets); the migration only re-homes content that already has a version in the new default language. Always run \"Preview\" first, back up your database, and test on staging before production."
+msgstr "Сделайте другой язык основным на вашем сайте (без префикса /xx/). Это изменит владение слагами для каждой группы перевода — выбранный язык получит чистые URL, текущий язык по умолчанию переместится под свой префикс — и добавит 301 редиректы для старых URL. Сначала переведите все (страницы, записи, продукты, а также ваши меню и виджеты); миграция только изменяет местоположение контента, который уже имеет версию на новом языке по умолчанию. Всегда сначала запускайте \"Предварительный просмотр\", создайте резервную копию вашей базы данных и протестируйте на тестовом сервере перед производством."
+
+msgid "New default language:"
+msgstr "Новый язык по умолчанию:"
+
+msgid "current default"
+msgstr "текущий язык по умолчанию"
+
+msgid "Changing the default language has to move your content, not just flip a flag — otherwise the site keeps serving the original language at the root. Use the Switch Default Language migration (with Preview + redirects) below. Jump to it now?"
+msgstr "Изменение языка по умолчанию должно переместить ваш контент, а не просто переключить флаг — в противном случае сайт продолжит отображать оригинальный язык на корневом уровне. Используйте миграцию Переключить язык по умолчанию (с Предварительным просмотром + редиректами) ниже. Перейти к ней сейчас?"
+
+msgid "translation group(s) will change."
+msgstr "группа(ы) перевода изменится."
+
+msgid "Click \"Switch Default Language\" to apply. Back up first."
+msgstr "Нажмите \"Переключить язык по умолчанию\", чтобы применить. Сначала создайте резервную копию."
+
+msgid "Done."
+msgstr "Готово."
+
+msgid "is now the default."
+msgstr "теперь является языком по умолчанию."
+
+msgid "groups updated,"
+msgstr "группы обновлены,"
+
+msgid "redirects added. Reloading…"
+msgstr "редиректы добавлены. Перезагрузка…"
+
+msgid "Switch the default language to"
+msgstr "Переключить язык по умолчанию на"
+
+msgid "This rewrites URLs across the site and cannot be auto-undone. Make sure you have a backup and have tested on staging."
+msgstr "Это переписывает URL по всему сайту и не может быть отменено автоматически. Убедитесь, что у вас есть резервная копия и что вы протестировали на тестовом сервере."
+
+msgid "Unauthorized"
+msgstr "Неавторизованный"
+
+msgid "Source term cannot be empty"
+msgstr "Исходный термин не может быть пустым"
+
+msgid "Target translation cannot be empty for replacement rules"
+msgstr "Целевой перевод не может быть пустым для правил замены"
+
+msgid "Failed to save term in database"
+msgstr "Не удалось сохранить термин в базе данных"
+
+msgid "Term added successfully"
+msgstr "Термин успешно добавлен"
+
+msgid "Invalid term ID"
+msgstr "Неверный идентификатор термина"
+
+msgid "Failed to delete term"
+msgstr "Не удалось удалить термин"
+
+msgid "Term deleted"
+msgstr "Термин удален"
+
+msgid "No CSV file uploaded"
+msgstr "CSV файл не загружен"
+
+msgid "Could not read uploaded file"
+msgstr "Не удалось прочитать загруженный файл"
+
+msgid "%d terms imported successfully"
+msgstr "%d термин(ов) успешно импортировано"
+
+msgid "Good news!"
+msgstr "Хорошие новости!"
+
+msgid "Your selection will use an estimated %1$s words of API quota and you have %2$s words remaining."
+msgstr "Ваш выбор использует приблизительно %1$s слов квоты API, и у вас осталось %2$s слов."
+
+msgid "You can translate everything now!"
+msgstr "Теперь вы можете перевести все!"
+
+msgid "All content is already translated. Nothing to do!"
+msgstr "Весь контент уже переведен. Ничего не нужно делать!"
+
+msgid "Content exceeds your current word allowance"
+msgstr "Контент превышает вашу текущую квоту слов"
+
+msgid "Your selection will use an estimated %1$s words of API quota, but you only have %2$s words remaining this month."
+msgstr "Ваш выбор использует приблизительно %1$s слов квоты API, но у вас осталось только %2$s слов в этом месяце."
+
+msgid "Translate Now (Partial)"
+msgstr "Перевести сейчас (частично)"
+
+msgid "Translate as much as possible with your remaining %s words."
+msgstr "Переведите как можно больше с вашими оставшимися %s словами."
+
+msgid "Translation failed."
+msgstr "Ошибка перевода."
+
+msgid "Plan & Usage"
+msgstr "План и использование"
+
+msgid "Translate All Now"
+msgstr "Перевести все сейчас"
+
+msgid "Start Scheduled Translation"
+msgstr "Начать запланированный перевод"
+
+msgid "SureForms"
+msgstr "SureForms"
+
+msgid "JetFormBuilder Forms"
+msgstr "JetFormBuilder Формы"
+
+msgid "Header & Footer Builder"
+msgstr "Конструктор заголовков и подвалов"
+
+msgid "JetThemeCore Templates"
+msgstr "JetThemeCore Шаблоны"
+
+msgid "JetEngine Listings"
+msgstr "JetEngine Списки"
+
+msgid "Page Generator Pro"
+msgstr "Page Generator Pro"
+
+msgid "Elementor Templates"
+msgstr "Шаблоны Elementor"
+
+msgid "Scan failed: %s"
+msgstr "Сканирование не удалось: %s"
+
+msgid "Pending"
+msgstr "В ожидании"
+
+msgid "Language:"
+msgstr "Язык:"
+
+msgid "Translation"
+msgstr "Перевод"
+
+msgid "Languages configured! %d languages set up. Redirecting to dashboard..."
+msgstr "Языки настроены! %d языков настроено. Перенаправление на панель управления..."
+
+msgid "Setup complete. Ready to translate."
+msgstr "Настройка завершена. Готовы к переводу."
+
+msgid "Homepage is large — skipped to keep setup fast."
+msgstr "Главная страница большая — пропущена для ускорения настройки."
+
+msgid "Every 5 Minutes (AI Translator)"
+msgstr "Каждые 5 минут (AI Translator)"
+
+msgid "Buy More Tokens"
+msgstr "Купить больше токенов"
+
+msgid "Buy More"
+msgstr "Купить больше"
+
+msgid "Pages Left"
+msgstr "Страниц осталось"
+
+msgid "Used: %1$s of %2$s words"
+msgstr "Использовано: %1$s из %2$s слов"
+
+msgid "Tokens Left"
+msgstr "Токенов осталось"
+
+msgid "Translate to %s"
+msgstr "Перевести на %s"
+
+msgid "Translated successfully!"
+msgstr "Успешно переведено!"
+
+msgid "Translation failed"
+msgstr "Ошибка перевода"
+
+msgid "This plugin requires a multilingual plugin to be installed and activated."
+msgstr "Этот плагин требует установки и активации многоязычного плагина."
+
+msgid "Supported plugins:"
+msgstr "Поддерживаемые плагины:"
+
+msgid "or"
+msgstr "или"
+
+msgid "Meep AI Translator requires PHP version 7.4 or higher."
+msgstr "Meep AI Translator требует версию PHP 7.4 или выше."
+
+msgid "%s is active (%d languages)"
+msgstr "%s активен (%d языков)"
+
+msgid "%s active - set up languages"
+msgstr "%s активен - настройте языки"
+
+msgid "Configure"
+msgstr "Настроить"
+
+msgid "No multilingual plugin"
+msgstr "Нет многоязычного плагина"
+
+msgid "Target language not found."
+msgstr "Целевой язык не найден."
+
+msgid "That language is already the default."
+msgstr "Этот язык уже является языком по умолчанию."
+
+msgid "Cannot switch the default language: %d item(s) have an inconsistent language assignment (the translation-group record disagrees with the post's language tag). Run Tools → Repair Translation Links first, then try again. Nothing was changed."
+msgstr "Не удается переключить язык по умолчанию: %d элемент(ов) имеют несоответствующее назначение языка (запись группы перевода не совпадает с языковым тегом поста). Сначала выполните Инструменты → Исправить ссылки перевода, затем попробуйте снова. Ничего не было изменено."
+
+msgid "def"
+msgstr "def"
+
+msgid "Post language code"
+msgstr "Код языка поста"
+
+msgid "Translations of this post"
+msgstr "Переводы этого поста"
+
+msgid "Meep AI Translator:"
+msgstr "Meep AI Translator:"
+
+msgid "Elementor \"Element Caching\" is enabled. It can cache widget output (links and products) in a single language and show it on translated pages, bypassing Meep's localization. We recommend turning it off at Elementor → Settings → Features while using translated pages."
+msgstr "Элемент \"Кэширование элементов\" в Elementor включен. Он может кэшировать вывод виджетов (ссылки и продукты) на одном языке и отображать его на переведенных страницах, обходя локализацию Meep. Мы рекомендуем отключить его в Elementor → Настройки → Функции при использовании переведенных страниц."
+
+msgid "Open Elementor Features"
+msgstr "Открыть функции Elementor"
+
+msgid "Show in Languages:"
+msgstr "Показать на языках:"
+
+msgid "All languages"
+msgstr "Все языки"
+
+msgid "Select specific languages to show this widget only for those languages, or leave \"All\" checked."
+msgstr "Выберите конкретные языки, чтобы показать этот виджет только для этих языков, или оставьте отмеченным \"Все\"."
+
+msgid "Missing required parameters"
+msgstr "Отсутствуют обязательные параметры"
+
+msgid "API client not loaded"
+msgstr "Клиент API не загружен"
+
+msgid "AI Translator – Language Switcher"
+msgstr "AI Translator – Переключатель языков"
+
+msgid "Display a language switcher for the built-in language system."
+msgstr "Отобразить переключатель языков для встроенной языковой системы."
+
+msgid "Title:"
+msgstr "Название:"
+
+msgid "Display Style:"
+msgstr "Стиль отображения:"
+
+msgid "List"
+msgstr "Список"
+
+msgid "Flags / Codes"
+msgstr "Флаги / Коды"
+
+msgid "Flags + Text"
+msgstr "Флаги + Текст"
+
+msgid "Show flags"
+msgstr "Показать флаги"
+
+msgid "Show names"
+msgstr "Показать названия"
+
+msgid "Job ID, page IDs, and target languages are required."
+msgstr "Требуются ID задания, ID страниц и целевые языки."
+
+msgid "Failed to create bulk translation job."
+msgstr "Не удалось создать задание на массовый перевод."
+
+msgid "Failed to delete bulk translation job."
+msgstr "Не удалось удалить задание на массовый перевод."
+
+msgid "Classic Editor"
+msgstr "Классический редактор"
+
+msgid "WooCommerce Product"
+msgstr "Продукт WooCommerce"
+
+msgid "Failed to connect to translation service: "
+msgstr "Не удалось подключиться к сервису перевода: "
+
+msgid "Translation service error"
+msgstr "Ошибка сервиса перевода"
+
+msgid "Invalid response from translation service"
+msgstr "Недействительный ответ от сервиса перевода"
+
+msgid "No translated text in response"
+msgstr "Нет переведенного текста в ответе"
+
+msgid "AI Translator: Monthly Limit Reached"
+msgstr "AI Translator: Достигнут месячный лимит"
+
+msgid "You have used all 7,200 words in your free plan this month. Your word count will reset in %d days, or you can "
+msgstr "Вы использовали все 7,200 слов в вашем бесплатном плане в этом месяце. Ваш лимит слов будет сброшен через %d дней, или вы можете "
+
+msgid "upgrade now"
+msgstr "обновить сейчас"
+
+msgid "for immediate access to more words."
+msgstr "для немедленного доступа к большему количеству слов."
+
+msgid "AI Translator License Expired"
+msgstr "Срок действия лицензии AI Translator истек"
+
+msgid "Your Meep AI Translator license has expired or been cancelled."
+msgstr "Ваша лицензия Meep AI Translator истекла или была отменена."
+
+msgid "You have been downgraded to the"
+msgstr "Вы были понижены до"
+
+msgid "Free plan (7,200 words/month)"
+msgstr "Бесплатного плана (7,200 слов/месяц)"
+
+msgid "Dismiss"
+msgstr "Закрыть"
+
+msgid "Meep AI Translator Warning"
+msgstr "Предупреждение Meep AI Translator"
+
+msgid "Translation Limit Exceeded!"
+msgstr "Превышен лимит перевода!"
+
+msgid "You have used all words in your %1\\$s plan. Translations are currently paused. Your limit will reset in %2\\$d days, or upgrade now to resume translating immediately."
+msgstr "Вы использовали все слова в вашем плане %1\\$s. Переводы в настоящее время приостановлены. Ваш лимит будет сброшен через %2\\$d дней, или обновите план, чтобы немедленно возобновить перевод."
+
+msgid "You have used 100%% of your %1\\$s plan's words. Translations are currently paused. Upgrade your plan or purchase an addon words pack to resume translating immediately."
+msgstr "Вы использовали 100%% ваших слов в плане %1\\$s. Переводы в настоящее время приостановлены. Обновите свой план или купите пакет слов дополнения, чтобы немедленно возобновить перевод."
+
+msgid "Upgrade Plan & Resume"
+msgstr "Обновить план и возобновить"
+
+msgid "Dismiss for 24h"
+msgstr "Закрыть на 24 часа"
+
+msgid "You're almost out of words!"
+msgstr "Вы почти исчерпали лимит слов!"
+
+msgid "You have used %1\\$s%% of your monthly translation words (%2\\$s / %3\\$s words). Upgrade your plan now to ensure uninterrupted translation."
+msgstr "Вы использовали %1\\$s%% ваших ежемесячных слов для перевода (%2\\$s / %3\\$s слов). Обновите свой план сейчас, чтобы обеспечить непрерывный перевод."
+
+msgid "Enjoying the plugin?"
+msgstr "Нравится плагин?"
+
+msgid "If Meep AI Translator is helpful, please take a moment to rate us on WordPress.org! Your 5-star review helps us grow and keep improving."
+msgstr "Если Meep AI Translator полезен, пожалуйста, уделите минуту, чтобы оценить нас на WordPress.org! Ваш отзыв на 5 звезд помогает нам расти и продолжать улучшаться."
+
+msgid "Meep AI Translator — TranslatePress Detected"
+msgstr "Meep AI Translator — Обнаружен TranslatePress"
+
+msgid "TranslatePress uses a fundamentally different translation approach (single-post with inline replacements) that is not compatible with this plugin. Meep AI Translator works with duplicate-post translation systems."
+msgstr "TranslatePress использует принципиально другой подход к переводу (один пост с встроенными заменами), который несовместим с этим плагином. Meep AI Translator работает с системами перевода дублированных постов."
+
+msgid "<strong>Supported systems:</strong> Polylang, WPML, or our Built-in Language System (recommended — includes menu and widget translation)."
+msgstr "<strong>Поддерживаемые системы:</strong> Polylang, WPML или наша встроенная языковая система (рекомендуется — включает перевод меню и виджетов)."
+
+msgid "None"
+msgstr "Нет"
+
+msgid "No multilingual plugin is active."
+msgstr "Ни один многоязычный плагин не активен."
+
+msgid "Empty translation response"
+msgstr "Пустой ответ перевода"
+
+msgid "Invalid JSON format (strict)"
+msgstr "Неверный формат JSON (строгий)"
+
+msgid "Failed to parse translation response"
+msgstr "Не удалось разобрать ответ перевода"
+
+msgid "Translation job failed on server."
+msgstr "Задача перевода не удалась на сервере."
+
+msgid "Translation context expired. Please retry the translation."
+msgstr "Контекст перевода истек. Пожалуйста, повторите попытку перевода."
+
+msgid "No translatable content found in this page."
+msgstr "Не найдено переводимого контента на этой странице."
+
+msgid "Translation resulted in invalid Elementor structure."
+msgstr "Перевод привел к недопустимой структуре Elementor."
+
+msgid "No content found in this page."
+msgstr "Контент на этой странице не найден."
+
+msgid "Product not found."
+msgstr "Продукт не найден."
+
+msgid "This product has no translatable content."
+msgstr "У этого продукта нет переводимого контента."
+
+msgid "Content type does not support async translation."
+msgstr "Тип контента не поддерживает асинхронный перевод."
+
+msgid "Cannot apply translations: unsupported content type."
+msgstr "Не удается применить переводы: неподдерживаемый тип контента."
+
+msgid "You have reached your monthly limit of %1$s words. Free plan users must wait %2$d more days for the limit to reset. Upgrade to a paid plan for immediate access."
+msgstr "Вы достигли своего ежемесячного лимита в %1$s слов. Пользователи бесплатного плана должны подождать еще %2$d дней, чтобы лимит сбросился. Обновите до платного плана для немедленного доступа."
+
+msgid "This translation requires approximately %1$s words, but you only have %2$s words remaining in your plan. Please <a href=\"%3$s\">upgrade your plan</a> or wait for your monthly limit to reset."
+msgstr "Этот перевод требует примерно %1$s слов, но у вас осталось только %2$s слов в вашем плане. Пожалуйста, <a href=\"%3$s\">обновите свой план</a> или подождите, пока ваш ежемесячный лимит сбросится."
+
+msgid "This product has no translatable content (no title or short description)."
+msgstr "У этого продукта нет переводимого контента (нет заголовка или краткого описания)."
+
+msgid "You have reached your monthly limit. Free plan users must wait %d more days for the limit to reset."
+msgstr "Вы достигли своего ежемесячного лимита. Пользователи бесплатного плана должны подождать еще %d дней, чтобы лимит сбросился."
+
+msgid "This translation requires approximately %s words, but you only have %s words remaining."
+msgstr "Этот перевод требует примерно %s слов, но у вас осталось только %s слов."
+
+msgid "Original page not found."
+msgstr "Оригинальная страница не найдена."
+

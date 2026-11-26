@@ -33,6 +33,13 @@ class AITRFOEL_Bulk_Translation_Queue {
      */
     public function maybe_create_table() {
         global $wpdb;
+
+        // PERFORMANCE: only run dbDelta + column migrations when the schema version changes,
+        // not on every request (this hook fires on every front-end and admin page load).
+        $schema_version = '2';
+        if (get_option('aitrfoel_bulk_jobs_schema') === $schema_version) {
+            return;
+        }
         
         $charset_collate = $wpdb->get_charset_collate();
         
@@ -65,6 +72,8 @@ class AITRFOEL_Bulk_Translation_Queue {
         
         // Check if new columns exist and add them if not
         $this->maybe_add_new_columns();
+
+        update_option('aitrfoel_bulk_jobs_schema', $schema_version, true);
     }
 
     /**

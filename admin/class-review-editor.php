@@ -23,8 +23,6 @@ class AITRFOEL_Review_Editor {
 
 	private function __construct() {
 		add_action( 'admin_menu', [ $this, 'register_page' ], 25 );
-		// Hide from submenu after WP has validated the page slug (admin_head fires after admin_menu).
-		add_action( 'admin_head', [ $this, 'hide_from_submenu' ] );
 		// Enqueue assets in <head>, not mid-render.
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 		add_action( 'wp_ajax_aitrfoel_save_segment_edit', [ $this, 'handle_save_segment' ] );
@@ -37,23 +35,11 @@ class AITRFOEL_Review_Editor {
 	public function register_page() {
 		add_submenu_page(
 			'ai-translator-for-elementor-and-polylang',
-			__( 'Review Translation', 'ai-translator-for-elementor-and-polylang' ),
-			__( 'Review Translation', 'ai-translator-for-elementor-and-polylang' ),
+			__( 'Review Translations', 'ai-translator-for-elementor-and-polylang' ),
+			__( 'Review Translations', 'ai-translator-for-elementor-and-polylang' ),
 			'edit_posts',
 			'ai-translator-for-elementor-and-polylang-review',
 			[ $this, 'render_page' ]
-		);
-	}
-
-	/**
-	 * Remove the Review page from the visible submenu.
-	 * Called on admin_head (after admin_menu) so WordPress has already validated
-	 * the page slug — removing it too early caused a dashboard redirect.
-	 */
-	public function hide_from_submenu() {
-		remove_submenu_page(
-			'ai-translator-for-elementor-and-polylang',
-			'ai-translator-for-elementor-and-polylang-review'
 		);
 	}
 
@@ -126,7 +112,8 @@ class AITRFOEL_Review_Editor {
 		$lang      = sanitize_text_field( $_GET['lang'] ?? '' );
 
 		if ( ! $source_id || ! $post_id ) {
-			wp_die( esc_html__( 'Invalid parameters.', 'ai-translator-for-elementor-and-polylang' ) );
+			$this->render_selector_page();
+			return;
 		}
 
 		$source_post = get_post( $source_id );
@@ -141,6 +128,28 @@ class AITRFOEL_Review_Editor {
 			: 'classic';
 		$source_segments = $this->get_segments( $source_id );
 		$trans_segments  = $this->get_segments( $post_id );
+
+		// Pair segments by structural path to guarantee 1-to-1 alignment between source & translation.
+		$paired_segments = [];
+		$all_paths = array_unique( array_merge( array_keys( $source_segments ), array_keys( $trans_segments ) ) );
+		foreach ( $all_paths as $path ) {
+			$src = $source_segments[ $path ] ?? null;
+			$trs = $trans_segments[ $path ] ?? null;
+			$src_text = isset( $src['text'] ) ? $src['text'] : '';
+			$trs_text = isset( $trs['text'] ) ? $trs['text'] : '';
+
+			if ( trim( wp_strip_all_tags( $src_text ) ) === '' && trim( wp_strip_all_tags( $trs_text ) ) === '' ) {
+				continue;
+			}
+
+			$paired_segments[] = [
+				'path'        => $path,
+				'source_text' => $src_text,
+				'trans_text'  => $trs_text,
+				'type'        => $src['type'] ?? ( $trs['type'] ?? $content_type ),
+				'label'       => $src['label'] ?? ( $trs['label'] ?? '' ),
+			];
+		}
 
 		$dashboard_url = admin_url( 'admin.php?page=ai-translator-for-elementor-and-polylang' );
 		$view_url      = get_permalink( $post_id );
@@ -174,12 +183,53 @@ class AITRFOEL_Review_Editor {
 					<a href="<?php echo esc_url( $view_url ); ?>" class="button" target="_blank" rel="noopener">
 						<?php esc_html_e( 'View Translation', 'ai-translator-for-elementor-and-polylang' ); ?>
 					</a>
+					<?php $aitrfoel_is_draft = in_array( $trans_post->post_status, [ 'draft', 'pending', 'auto-draft' ], true ); ?>
+					<button type="button" id="aitrfoel-review-action" class="button button-primary"
+						data-mode="<?php echo $aitrfoel_is_draft ? 'publish' : 'update'; ?>"
+						data-page-id="<?php echo absint( $post_id ); ?>"
+						data-source-id="<?php echo absint( $source_id ); ?>"
+						data-lang="<?php echo esc_attr( $lang ); ?>"
+						data-nonce="<?php echo esc_attr( wp_create_nonce( 'aitrfoel_ajax_nonce' ) ); ?>">
+						<?php echo $aitrfoel_is_draft
+							? esc_html__( 'Publish', 'ai-translator-for-elementor-and-polylang' )
+							: esc_html__( 'Update', 'ai-translator-for-elementor-and-polylang' ); ?>
+					</button>
 				</div>
 			</div>
+			<script>
+			(function($){
+				var $b = $('#aitrfoel-review-action');
+				var T = {
+					publish:   '<?php echo esc_js( __( 'Publish', 'ai-translator-for-elementor-and-polylang' ) ); ?>',
+					update:    '<?php echo esc_js( __( 'Update', 'ai-translator-for-elementor-and-polylang' ) ); ?>',
+					working:   '<?php echo esc_js( __( 'Working…', 'ai-translator-for-elementor-and-polylang' ) ); ?>',
+					confirm:   '<?php echo esc_js( __( 'Re-translate this page from the source? This refreshes the translation and may overwrite manual edits made here.', 'ai-translator-for-elementor-and-polylang' ) ); ?>',
+					failed:    '<?php echo esc_js( __( 'Action failed.', 'ai-translator-for-elementor-and-polylang' ) ); ?>'
+				};
+				$b.on('click', function(){
+					var mode = $b.data('mode');
+					if (mode === 'publish') {
+						$b.prop('disabled', true).text(T.working);
+						$.post(ajaxurl, { action: 'aitrfoel_publish_page', nonce: $b.data('nonce'), page_id: $b.data('page-id') }, function(r){
+							$b.prop('disabled', false);
+							if (r && r.success) { $b.data('mode', 'update').text(T.update); }
+							else { $b.text(T.publish); alert((r && r.data && r.data.message) || T.failed); }
+						});
+					} else {
+						if (!window.confirm(T.confirm)) { return; }
+						$b.prop('disabled', true).text(T.working);
+						$.post(ajaxurl, { action: 'aitrfoel_retranslate_post', nonce: $b.data('nonce'), source_id: $b.data('source-id'), lang: $b.data('lang') }, function(r){
+							if (r && r.success) { window.location.reload(); }
+							else { $b.prop('disabled', false).text(T.update); alert((r && r.data && r.data.message) || T.failed); }
+						});
+					}
+				});
+			})(jQuery);
+			</script>
 
 			<div id="aitrfoel-review-notice" class="aitrfoel-review-notice" style="display:none;" aria-live="polite"></div>
 
-			<?php if ( empty( $trans_segments ) ) : ?>
+			<?php if ( empty( $paired_segments ) ) : ?>
 				<div class="aitrfoel-review-empty">
 					<p><?php esc_html_e( 'No editable segments were found for this translation.', 'ai-translator-for-elementor-and-polylang' ); ?></p>
 				</div>
@@ -204,16 +254,10 @@ class AITRFOEL_Review_Editor {
 				</thead>
 				<tbody>
 					<?php
-					$count = max( count( $source_segments ), count( $trans_segments ) );
-					for ( $i = 0; $i < $count; $i++ ) :
-						$src = $source_segments[ $i ] ?? null;
-						$trs = $trans_segments[ $i ] ?? null;
-						if ( ! $src && ! $trs ) {
-							continue;
-						}
-						$trs_text    = isset( $trs['text'] ) ? $trs['text'] : '';
-						$trs_path    = isset( $trs['path'] ) ? $trs['path'] : '';
-						$src_display = isset( $src['text'] ) ? wp_strip_all_tags( $src['text'] ) : '';
+					foreach ( $paired_segments as $i => $segment ) :
+						$trs_text    = $segment['trans_text'];
+						$trs_path    = $segment['path'];
+						$src_display = wp_strip_all_tags( $segment['source_text'] );
 						$trs_display = wp_strip_all_tags( $trs_text );
 						?>
 						<tr class="aitrfoel-review-row"
@@ -244,7 +288,7 @@ class AITRFOEL_Review_Editor {
 								</div>
 							</td>
 						</tr>
-					<?php endfor; ?>
+					<?php endforeach; ?>
 				</tbody>
 			</table>
 			<?php endif; ?>
@@ -257,10 +301,10 @@ class AITRFOEL_Review_Editor {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Extract translatable segments from a post.
+	 * Extract translatable segments from a post keyed by structural path.
 	 *
 	 * @param int $post_id
-	 * @return array  Ordered list of ['key', 'path', 'text', 'type']
+	 * @return array<string, array{key:string, path:string, text:string, type:string, label:string}>
 	 */
 	private function get_segments( $post_id ) {
 		if ( ! class_exists( 'AITRFOEL_Content_Detector' ) ) {
@@ -294,7 +338,7 @@ class AITRFOEL_Review_Editor {
 				$post = get_post( $post_id );
 				if ( $post ) {
 					if ( ! empty( $post->post_title ) ) {
-						$translation_map['woo_title'] = [
+						$translation_map['woocommerce/title'] = [
 							'original' => (string) $post->post_title,
 							'path'     => 'woocommerce/title',
 							'type'     => 'text',
@@ -302,15 +346,15 @@ class AITRFOEL_Review_Editor {
 					}
 
 					if ( ! empty( trim( (string) $post->post_excerpt ) ) ) {
-						$translation_map['woo_excerpt'] = [
+						$translation_map['woocommerce/excerpt'] = [
 							'original' => (string) $post->post_excerpt,
 							'path'     => 'woocommerce/excerpt',
 							'type'     => 'text',
 						];
 					}
 
-					if ( ! empty( trim( (string) $post->post_content ) ) ) {
-						$translation_map['woo_content'] = [
+					if ( 'sc_product' !== $post->post_type && ! empty( trim( (string) $post->post_content ) ) ) {
+						$translation_map['woocommerce/content'] = [
 							'original' => (string) $post->post_content,
 							'path'     => 'woocommerce/content',
 							'type'     => 'html',
@@ -327,17 +371,33 @@ class AITRFOEL_Review_Editor {
 				break;
 		}
 
+		// Custom-field text (JetEngine / ACF / Meta Box / plain meta) — editable even
+		// when the body is empty (the common case for meta-only JetEngine CPTs that
+		// would otherwise show "no editable segments").
+		if ( class_exists( 'AITRFOEL_Translation_Engine' ) ) {
+			$engine = AITRFOEL_Translation_Engine::get_instance();
+			if ( method_exists( $engine, 'get_translatable_meta_map' ) ) {
+				foreach ( $engine->get_translatable_meta_map( $post_id ) as $meta_key => $meta_val ) {
+					$translation_map[ 'meta/' . $meta_key ] = [
+						'original' => (string) $meta_val,
+						'path'     => 'meta/' . $meta_key,
+						'type'     => 'meta',
+						'label'    => $meta_key,
+					];
+				}
+			}
+		}
+
 		$segments = [];
 		foreach ( $translation_map as $key => $item ) {
 			$text = is_array( $item['original'] ) ? implode( "\n", $item['original'] ) : (string) $item['original'];
-			if ( trim( wp_strip_all_tags( $text ) ) === '' ) {
-				continue;
-			}
-			$segments[] = [
-				'key'  => $key,
-				'path' => $item['path'] ?? $key,
-				'text' => $text,
-				'type' => $type,
+			$path = $item['path'] ?? (string) $key;
+			$segments[ $path ] = [
+				'key'   => $key,
+				'path'  => $path,
+				'text'  => $text,
+				'type'  => $type,
+				'label' => $item['label'] ?? '',
 			];
 		}
 
@@ -366,6 +426,26 @@ class AITRFOEL_Review_Editor {
 
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			wp_send_json_error( [ 'message' => __( 'Insufficient permissions for this post.', 'ai-translator-for-elementor-and-polylang' ) ] );
+		}
+
+		// Custom-field segments (JetEngine / ACF / other meta) — identified by a
+		// "meta/{key}" path — save straight to post meta regardless of content type.
+		if ( strpos( $path, 'meta/' ) === 0 ) {
+			$meta_key = substr( $path, strlen( 'meta/' ) );
+			// Only the custom fields this screen lists for the post may be written;
+			// never arbitrary/internal meta (_wp_attached_file, _wp_page_template, ...).
+			$allowed_keys = [];
+			if ( class_exists( 'AITRFOEL_Translation_Engine' ) ) {
+				$engine = AITRFOEL_Translation_Engine::get_instance();
+				if ( method_exists( $engine, 'get_translatable_meta_map' ) ) {
+					$allowed_keys = array_map( 'strval', array_keys( (array) $engine->get_translatable_meta_map( $post_id ) ) );
+				}
+			}
+			if ( $meta_key === '' || ! in_array( $meta_key, $allowed_keys, true ) ) {
+				wp_send_json_error( [ 'message' => __( 'Invalid field.', 'ai-translator-for-elementor-and-polylang' ) ] );
+			}
+			update_post_meta( $post_id, $meta_key, $new_text );
+			wp_send_json_success( [ 'message' => __( 'Segment saved.', 'ai-translator-for-elementor-and-polylang' ) ] );
 		}
 
 		switch ( $content_type ) {
@@ -482,7 +562,14 @@ class AITRFOEL_Review_Editor {
 			return new WP_Error( 'bad_path', __( 'Segment path not found in Elementor data.', 'ai-translator-for-elementor-and-polylang' ) );
 		}
 
-		$current[ $last_key ] = $new_text;
+		// Elementor v4 atomic widgets store text in a typed prop object
+		// ({"$$type":"html-v3","value":[...]}); replace the text inside it instead of
+		// overwriting the object with a plain string, which breaks the widget.
+		if ( is_array( $current[ $last_key ] ) && isset( $current[ $last_key ]['$$type'] ) && class_exists( 'AITRFOEL_Widget_Parser' ) ) {
+			$current[ $last_key ] = AITRFOEL_Widget_Parser::get_instance()->apply_atomic_translation( $current[ $last_key ], $new_text );
+		} else {
+			$current[ $last_key ] = $new_text;
+		}
 
 		$encoded = wp_json_encode( $data );
 		if ( false === $encoded ) {
@@ -539,5 +626,116 @@ class AITRFOEL_Review_Editor {
 
 		clean_post_cache( $post_id );
 		return true;
+	}
+
+	/**
+	 * Render translation selector screen when no post_id is provided.
+	 */
+	public function render_selector_page() {
+		$admin_menu   = class_exists( 'AITRFOEL_Admin_Menu' ) ? AITRFOEL_Admin_Menu::get_instance() : null;
+		$pages_data   = [];
+		if ( $admin_menu ) {
+			if ( method_exists( $admin_menu, 'get_pages_with_translations' ) ) {
+				$pages_data = $admin_menu->get_pages_with_translations();
+			} elseif ( method_exists( $admin_menu, 'get_all_pages_with_translations' ) ) {
+				$pages_data = $admin_menu->get_all_pages_with_translations();
+			}
+		}
+
+		// Filter for items that have at least one translation
+		$translated_items = [];
+		foreach ( $pages_data as $group ) {
+			if ( ! empty( $group['translations'] ) ) {
+				$translated_items[] = $group;
+			}
+		}
+		?>
+		<div class="wrap aitrfoel-admin-wrapper aitrfoel-review-selector-wrap">
+			<?php
+			if ( $admin_menu ) {
+				$admin_menu->render_plugin_header( __( 'Review Translations', 'ai-translator-for-elementor-and-polylang' ) );
+			}
+			?>
+
+			<div class="aitrfoel-settings-section" style="margin-top:20px;">
+				<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+					<div>
+						<h3 style="margin:0 0 6px;"><?php esc_html_e( 'Side-by-Side Review Workspace', 'ai-translator-for-elementor-and-polylang' ); ?></h3>
+						<p class="description" style="margin:0;">
+							<?php esc_html_e( 'Select any translated page, template, or post to view its original source text and translated segments side-by-side with full inline editing capability.', 'ai-translator-for-elementor-and-polylang' ); ?>
+						</p>
+					</div>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=ai-translator-for-elementor-and-polylang-translate-all' ) ); ?>" class="button button-primary" style="display:inline-flex;align-items:center;gap:6px;">
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+						<span><?php esc_html_e( 'Translate More Content', 'ai-translator-for-elementor-and-polylang' ); ?></span>
+					</a>
+				</div>
+
+				<?php if ( empty( $translated_items ) ) : ?>
+					<div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:12px;padding:48px 24px;text-align:center;">
+						<div style="margin-bottom:12px;color:#94a3b8;"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+						<h4 style="margin:0 0 8px;font-size:16px;color:#0f172a;"><?php esc_html_e( 'No Translations Ready for Review Yet', 'ai-translator-for-elementor-and-polylang' ); ?></h4>
+						<p style="color:#64748b;max-width:500px;margin:0 auto 20px;font-size:13px;">
+							<?php esc_html_e( 'Once you translate pages or posts using Meep AI Translator, they will appear here for side-by-side diff review and granular segment editing.', 'ai-translator-for-elementor-and-polylang' ); ?>
+						</p>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=ai-translator-for-elementor-and-polylang-translate-all' ) ); ?>" class="button button-primary button-hero">
+							<?php esc_html_e( 'Start Batch Translation', 'ai-translator-for-elementor-and-polylang' ); ?>
+						</a>
+					</div>
+				<?php else : ?>
+					<table class="wp-list-table widefat fixed striped">
+						<thead>
+							<tr>
+								<th style="width: 40%;"><?php esc_html_e( 'Source Content', 'ai-translator-for-elementor-and-polylang' ); ?></th>
+								<th style="width: 20%;"><?php esc_html_e( 'Content Type', 'ai-translator-for-elementor-and-polylang' ); ?></th>
+								<th style="width: 40%;"><?php esc_html_e( 'Available Translations & Review', 'ai-translator-for-elementor-and-polylang' ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $translated_items as $item ) : 
+								$src = $item['source'];
+								$pt_label = ucfirst( $src->post_type );
+								if ( $src->post_type === 'elementor-hf' ) { $pt_label = 'Header/Footer'; }
+								elseif ( $src->post_type === 'elementor_library' ) { $pt_label = 'Elementor Template'; }
+								elseif ( strpos( $src->post_type, 'form' ) !== false ) { $pt_label = 'Form'; }
+							?>
+							<tr>
+								<td>
+									<strong><?php echo esc_html( $src->post_title ); ?></strong>
+									<div style="font-size:12px;color:#64748b;margin-top:2px;">
+										ID #<?php echo absint( $src->ID ); ?> &middot; <?php echo esc_html( get_the_date( '', $src->ID ) ); ?>
+									</div>
+								</td>
+								<td>
+									<span class="badge" style="background:#f1f5f9;color:#334155;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;">
+										<?php echo esc_html( $pt_label ); ?>
+									</span>
+								</td>
+								<td>
+									<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+										<?php foreach ( $item['translations'] as $tlang => $tpost ) : 
+											$review_url = admin_url( sprintf(
+												'admin.php?page=ai-translator-for-elementor-and-polylang-review&source_id=%d&post_id=%d&lang=%s',
+												$src->ID,
+												$tpost->ID,
+												urlencode( $tlang )
+											) );
+										?>
+											<a href="<?php echo esc_url( $review_url ); ?>" class="button button-small" style="display:inline-flex;align-items:center;gap:5px;">
+												<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+												<strong><?php echo esc_html( strtoupper( $tlang ) ); ?></strong>
+												<span style="color:#64748b;font-size:10px;">(<?php echo esc_html( $tpost->post_status ); ?>)</span>
+											</a>
+										<?php endforeach; ?>
+									</div>
+								</td>
+							</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				<?php endif; ?>
+			</div>
+		</div>
+		<?php
 	}
 }

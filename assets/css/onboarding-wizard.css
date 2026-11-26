@@ -444,6 +444,11 @@
     flex-shrink: 0;
 }
 
+.lang-btn:not(.selected) .check svg,
+.lang-btn:not(.selected) .lang-check svg {
+    opacity: 0; /* unselected = empty circle; a tick looked already selected */
+}
+
 .lang-btn.selected .check,
 .lang-btn.selected .lang-check {
     background: var(--primary);
@@ -889,8 +894,11 @@
 }
 
 .optin,
-.aitrfoel-wiz-optin {
+.aitrfoel-wiz-optin,
+.wizard-card .optin {
     display: flex;
+    flex-wrap: nowrap;
+    flex-direction: row;
     align-items: center;
     gap: 14px;
     background: var(--surface);
@@ -903,7 +911,7 @@
 }
 
 .aitrfoel-wiz-optin-text {
-    flex: 1;
+    flex: 1 1 auto;
     min-width: 0;
 }
 
@@ -916,6 +924,16 @@
     margin-top: 4px;
 }
 
+/* Toggle wrap: explicit size so the absolute input doesn't collapse layout
+   and so it sits inline next to the text instead of dropping below it. */
+.aitrfoel-wiz-optin-toggle {
+    position: relative;
+    flex: 0 0 38px;
+    width: 38px;
+    height: 22px;
+    display: block;
+}
+
 .aitrfoel-wiz-optin-toggle input {
     position: absolute;
     opacity: 0;
@@ -926,6 +944,7 @@
 }
 
 .aitrfoel-wiz-optin-toggle .toggle-slider {
+    display: block;
     position: relative;
     width: 38px;
     height: 22px;

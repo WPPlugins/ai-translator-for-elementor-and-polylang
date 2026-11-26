@@ -34,6 +34,15 @@ class AITRFOEL_Translation_Engine {
      */
     private $cache_enabled = true;
 
+    /**
+     * Custom (non-taxonomy) WooCommerce attribute renames made by
+     * translate_product_attributes(), keyed by translated product ID, so
+     * translate_product_variations() can point the variations at the translated
+     * attribute name and option values.
+     * [ product_id => [ 'attribute_size' => [ 'key' => 'attribute_grosse', 'values' => [ 'Large' => 'Groß' ] ] ] ]
+     */
+    private $wc_custom_attribute_maps = [];
+
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -44,6 +53,46 @@ class AITRFOEL_Translation_Engine {
     private function __construct() {
         $this->batch_size = get_option('aitrfoel_batch_size', 20);
         $this->cache_enabled = (bool) get_option('aitrfoel_cache_enabled', true);
+    }
+
+    /**
+     * Name of the active SEO plugin whose meta fields get translated, or '' if none.
+     *
+     * @return string
+     */
+    public static function detected_seo_plugin() {
+        if (defined('WPSEO_VERSION') || class_exists('WPSEO_Meta')) {
+            return 'Yoast SEO';
+        }
+        if (class_exists('RankMath') || defined('RANK_MATH_VERSION')) {
+            return 'Rank Math';
+        }
+        if (defined('SEOPRESS_VERSION') || function_exists('seopress_init')) {
+            return 'SEOPress';
+        }
+        if (defined('SURERANK_VERSION') || defined('SURERANK_FILE')) {
+            return 'SureRank';
+        }
+        return '';
+    }
+
+    /**
+     * Build a URL slug using the target language's transliteration rules
+     * (German "Über" → "ueber", not "uber"; Danish "æ" → "ae"…). WordPress only
+     * applies these when the *site* locale matches, and translations run in the admin's locale.
+     */
+    public static function localized_slug($title, $target_lang) {
+        $locale_map = [
+            'de' => 'de_DE', 'de-at' => 'de_AT', 'de-ch' => 'de_CH',
+            'da' => 'da_DK', 'ca' => 'ca', 'sr' => 'sr_RS', 'bs' => 'bs_BA',
+        ];
+        $lang   = strtolower((string) $target_lang);
+        $locale = $locale_map[$lang] ?? ($locale_map[substr($lang, 0, 2)] ?? '');
+        if ($locale !== '' && function_exists('remove_accents')) {
+            // remove_accents() accepts a locale since WordPress 6.1.
+            $title = remove_accents((string) $title, $locale);
+        }
+        return sanitize_title($title);
     }
 
     /**
@@ -93,6 +142,11 @@ class AITRFOEL_Translation_Engine {
         // language prefix, and the wc page-id option filters can swap to it.
         $is_wc_structural = $this->is_wc_structural_page($page_id);
 
+        // Contact Form 7 specific translation path
+        if (get_post_type($page_id) === 'wpcf7_contact_form') {
+            return $this->translate_contact_form_7($page_id, $target_lang, $source_lang, $translation_start_time);
+        }
+
         // Route to appropriate translation method based on content type
         $result = null;
         switch ($content_type) {
@@ -134,7 +188,180 @@ class AITRFOEL_Translation_Engine {
             return $this->translate_wc_structural_page($page_id, $target_lang, $source_lang, $translation_start_time);
         }
 
+        // After a page is translated, optionally translate the Elementor templates it
+        // relies on (embedded [elementor-template] / Template widget, plus theme-builder
+        // singles/headers/footers) into the same language, so non-technical users don't
+        // have to know a page pulls in an extra template. Opt-in; uses extra words.
+        if (!is_wp_error($result) && get_post_type($page_id) !== 'elementor_library') {
+            $this->maybe_auto_translate_templates($page_id, $target_lang, $source_lang);
+        }
+
         return $result;
+    }
+
+    /**
+     * If auto-translate-templates is enabled, translate every untranslated Elementor
+     * template into $target_lang (covers embeds and theme-builder templates). Guarded
+     * against re-entry so translating a template never recurses.
+     *
+     * @param int    $page_id      The page that was just translated (for logging).
+     * @param string $target_lang
+     * @param string $source_lang
+     */
+    private function maybe_auto_translate_templates($page_id, $target_lang, $source_lang) {
+        static $running = false;
+        if ($running) {
+            return;
+        }
+        if (!get_option('aitrfoel_auto_translate_templates', false)) {
+            return;
+        }
+        if (!post_type_exists('elementor_library')) {
+            return;
+        }
+
+        $template_ids = $this->get_untranslated_template_ids($target_lang);
+        if (empty($template_ids)) {
+            return;
+        }
+
+        $running = true;
+        $done = 0;
+        foreach ($template_ids as $tid) {
+            try {
+                $res = $this->translate_page((int) $tid, $target_lang, $source_lang);
+                if (!is_wp_error($res)) {
+                    $done++;
+                }
+            } catch (\Throwable $e) {
+                if (class_exists('AITRFOEL_Logger')) {
+                    AITRFOEL_Logger::log('Auto template translation failed for #' . $tid . ': ' . $e->getMessage(), 'warning', $tid);
+                }
+            }
+        }
+        $running = false;
+
+        if ($done > 0 && class_exists('AITRFOEL_Logger')) {
+            AITRFOEL_Logger::log(
+                sprintf('Auto-translated %d Elementor template(s) to %s after translating page %d', $done, $target_lang, $page_id),
+                'success', $page_id
+            );
+        }
+    }
+
+    /**
+     * IDs of published default-language Elementor templates that have no translation in
+     * $target_lang yet. Excludes templates that are themselves translations.
+     *
+     * @param string $target_lang
+     * @return int[]
+     */
+    public function get_untranslated_template_ids($target_lang) {
+        // Elementor templates, plus JetEngine listing items (post type 'jet-engine')
+        // which are Elementor-built templates carrying static text (labels) that need
+        // translating too. Extensible via filter for other builder template types.
+        $template_types = apply_filters('aitrfoel_template_post_types', ['elementor_library', 'jet-engine', 'jet-theme-core', 'elementor-hf']);
+        $template_types = array_values(array_filter((array) $template_types, 'post_type_exists'));
+        if (empty($template_types)) {
+            return [];
+        }
+        $mm = class_exists('AITRFOEL_Multilingual_Manager') ? AITRFOEL_Multilingual_Manager::get_instance() : null;
+
+        $all = get_posts([
+            'post_type'        => $template_types,
+            'post_status'      => 'publish',
+            'posts_per_page'   => -1,
+            'fields'           => 'ids',
+            'no_found_rows'    => true,
+            'suppress_filters' => true, // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.SuppressFilters_suppress_filters -- intentional: Polylang/WPML query filters would hide posts in other languages, which the translator must see
+        ]);
+
+        $ids = [];
+        foreach ($all as $tid) {
+            $tid = (int) $tid;
+            // Skip templates that are themselves a translation.
+            $src = (int) get_post_meta($tid, '_aitrfoel_source_page', true);
+            if ($src && $src !== $tid) {
+                continue;
+            }
+            // Skip if a translation already exists in the target language.
+            if ($mm && method_exists($mm, 'get_post_translations')) {
+                $tr = $mm->get_post_translations($tid);
+                if (is_array($tr) && isset($tr[$target_lang])) {
+                    continue;
+                }
+            }
+            $ids[] = $tid;
+        }
+        return $ids;
+    }
+
+    /**
+     * Approximate translatable word count across all untranslated templates for a
+     * language — used to warn the user before a bulk template translation.
+     *
+     * @param string $target_lang
+     * @return array{count:int,words:int}
+     */
+    /**
+     * Find every Elementor template that is actually referenced (embedded) somewhere,
+     * so templates without display conditions but used via the Template/Loop widgets
+     * or an [elementor-template] shortcode are recognised as "used" rather than
+     * buried as optional. Scans _elementor_data and post_content; cached briefly.
+     *
+     * @return int[] Referenced template IDs.
+     */
+    public function get_referenced_template_ids() {
+        $cached = get_transient('aitrfoel_referenced_template_ids');
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        global $wpdb;
+        $ids = [];
+
+        // Elementor widgets that embed a template store "template_id":"123" (Template
+        // widget, Loop Grid, Theme Builder, Posts/Portfolio with a skin, etc.).
+        $data_rows = $wpdb->get_col(
+            "SELECT meta_value FROM {$wpdb->postmeta}
+             WHERE meta_key = '_elementor_data'
+             AND (meta_value LIKE '%template_id%' OR meta_value LIKE '%elementor-template%')"
+        );
+        foreach ((array) $data_rows as $data) {
+            if (preg_match_all('/"(?:template_id|selected_template|listing_id)"\s*:\s*"?(\d+)"?/', (string) $data, $m)) {
+                foreach ($m[1] as $id) { $ids[(int) $id] = true; }
+            }
+            if (preg_match_all('/elementor-template\s+id=\\\\?["\']?(\d+)/', (string) $data, $m2)) {
+                foreach ($m2[1] as $id) { $ids[(int) $id] = true; }
+            }
+        }
+
+        // [elementor-template id="123"] shortcodes embedded in post content.
+        $content_rows = $wpdb->get_col(
+            "SELECT post_content FROM {$wpdb->posts}
+             WHERE post_content LIKE '%elementor-template%' AND post_status NOT IN ('trash','auto-draft')"
+        );
+        foreach ((array) $content_rows as $content) {
+            if (preg_match_all('/elementor-template\s+id=["\']?(\d+)/', (string) $content, $m)) {
+                foreach ($m[1] as $id) { $ids[(int) $id] = true; }
+            }
+        }
+
+        $result = array_values(array_map('intval', array_keys($ids)));
+        set_transient('aitrfoel_referenced_template_ids', $result, 5 * MINUTE_IN_SECONDS);
+        return $result;
+    }
+
+    public function get_untranslated_templates_summary($target_lang) {
+        $ids = $this->get_untranslated_template_ids($target_lang);
+        $words = 0;
+        foreach ($ids as $tid) {
+            $raw = get_post_meta($tid, '_elementor_data', true);
+            if (!empty($raw)) {
+                $words += self::count_words(wp_strip_all_tags((string) $raw));
+            }
+        }
+        return ['count' => count($ids), 'words' => $words];
     }
 
     /**
@@ -638,6 +865,9 @@ class AITRFOEL_Translation_Engine {
         if (method_exists($this, 'swap_elementor_template_refs_in_data')) {
             $this->swap_elementor_template_refs_in_data($translated_data, $target_lang);
         }
+        if (method_exists($this, 'swap_form_refs_in_data')) {
+            $this->swap_form_refs_in_data($translated_data, $target_lang);
+        }
 
         // Translate the post title (single quick call).
         $orig_post = get_post($context['page_id']);
@@ -665,13 +895,20 @@ class AITRFOEL_Translation_Engine {
         }
 
         if (class_exists('AITRFOEL_Translation_History')) {
+            $async_words = 0;
+            foreach ((array) $originals as $orig_str) {
+                $async_words += self::count_words(wp_strip_all_tags((string) $orig_str));
+            }
+            if ($orig_post && !empty($orig_post->post_title)) {
+                $async_words += self::count_words(wp_strip_all_tags($orig_post->post_title));
+            }
             AITRFOEL_Translation_History::record([
                 'original_post_id'   => $context['page_id'],
                 'translated_post_id' => $new_page_id,
                 'source_lang'        => $detected_lang,
                 'target_lang'        => $target_lang,
                 'content_type'       => 'elementor',
-                'word_count'         => 0,
+                'word_count'         => $async_words,
                 'status'             => 'success',
                 'duration'           => round(microtime(true) - ($context['start_time'] ?? microtime(true)), 2),
             ]);
@@ -679,6 +916,9 @@ class AITRFOEL_Translation_Engine {
 
         delete_transient('aitrfoel_async_' . $handle);
         AITRFOEL_License_Manager_Server::get_instance()->clear_status_cache();
+        // Increment global successful translations counter for milestone review prompts
+        $rev_count = (int) get_option('aitrfoel_successful_translations_count', 0);
+        update_option('aitrfoel_successful_translations_count', $rev_count + 1, false);
 
         AITRFOEL_Logger::log(
             sprintf('Elementor async complete: page=%d → new_page=%d lang=%s', $context['page_id'], $new_page_id, $target_lang),
@@ -700,18 +940,18 @@ class AITRFOEL_Translation_Engine {
         switch ($content_type) {
             case AITRFOEL_Content_Detector::TYPE_CLASSIC: {
                 $post = get_post($page_id);
-                if (!$post || empty($post->post_content)) {
+                if (!$post || (empty($post->post_content) && empty(trim($post->post_title ?? '')))) {
                     return new WP_Error('no_content', __('No content found in this page.', 'ai-translator-for-elementor-and-polylang'));
                 }
                 $parser  = AITRFOEL_Classic_Parser::get_instance();
-                $map     = $parser->parse_for_translation($page_id);
-                if (empty($map)) {
+                $map     = !empty($post->post_content) ? $parser->parse_for_translation($page_id) : [];
+                if (empty($map) && empty(trim($post->post_title ?? ''))) {
                     return new WP_Error('no_translatable_content', __('No translatable content found in this page.', 'ai-translator-for-elementor-and-polylang'));
                 }
                 $strings          = array_values($map);
                 $title_in_content = false;
                 foreach ($strings as $s) {
-                    if (trim(wp_strip_all_tags($s['original'] ?? '')) === trim($post->post_title)) {
+                    if (trim(wp_strip_all_tags($s['original'] ?? '')) === trim($post->post_title ?? '')) {
                         $title_in_content = true;
                         break;
                     }
@@ -725,7 +965,7 @@ class AITRFOEL_Translation_Engine {
                     'detected_lang'=> $detected,
                     'extra'        => [
                         'post_title'       => $post->post_title,
-                        'post_content'     => $post->post_content,
+                        'post_content'     => $post->post_content ?? '',
                         'title_in_content' => $title_in_content,
                     ],
                 ];
@@ -733,18 +973,18 @@ class AITRFOEL_Translation_Engine {
 
             case AITRFOEL_Content_Detector::TYPE_GUTENBERG: {
                 $post = get_post($page_id);
-                if (!$post || empty($post->post_content)) {
+                if (!$post || (empty($post->post_content) && empty(trim($post->post_title ?? '')))) {
                     return new WP_Error('no_content', __('No content found in this page.', 'ai-translator-for-elementor-and-polylang'));
                 }
                 $parser  = AITRFOEL_Gutenberg_Parser::get_instance();
-                $map     = $parser->parse_for_translation($page_id);
-                if (empty($map)) {
+                $map     = !empty($post->post_content) ? $parser->parse_for_translation($page_id) : [];
+                if (empty($map) && empty(trim($post->post_title ?? ''))) {
                     return new WP_Error('no_translatable_content', __('No translatable content found in this page.', 'ai-translator-for-elementor-and-polylang'));
                 }
                 $strings          = array_values($map);
                 $title_in_content = false;
                 foreach ($strings as $s) {
-                    if (trim(wp_strip_all_tags($s['original'] ?? '')) === trim($post->post_title)) {
+                    if (trim(wp_strip_all_tags($s['original'] ?? '')) === trim($post->post_title ?? '')) {
                         $title_in_content = true;
                         break;
                     }
@@ -758,7 +998,7 @@ class AITRFOEL_Translation_Engine {
                     'detected_lang'=> $detected,
                     'extra'        => [
                         'post_title'       => $post->post_title,
-                        'post_content'     => $post->post_content,
+                        'post_content'     => $post->post_content ?? '',
                         'title_in_content' => $title_in_content,
                     ],
                 ];
@@ -813,6 +1053,19 @@ class AITRFOEL_Translation_Engine {
 
         // Merge cached hits + proxy results into one complete map
         $full_map = array_merge($context['cached_map'] ?? [], $translations_map);
+
+        // Populate stats so track_translation_success records accurate word count in History
+        $async_word_count = 0;
+        if (!empty($strings) && is_array($strings)) {
+            foreach ($strings as $s) {
+                $orig_text = is_array($s) ? ($s['original'] ?? '') : (string) $s;
+                $async_word_count += self::count_words(wp_strip_all_tags((string) $orig_text));
+            }
+        }
+        $this->last_translation_stats = [
+            'word_count'    => $async_word_count,
+            'strings_count' => is_array($strings) ? count($strings) : 0,
+        ];
 
         switch ($content_type) {
             case AITRFOEL_Content_Detector::TYPE_CLASSIC: {
@@ -962,7 +1215,7 @@ class AITRFOEL_Translation_Engine {
             'info',
             $page_id
         );
-        $server_factor = defined('AITRFOEL_Translate_All::SERVER_USAGE_FACTOR') ? AITRFOEL_Translate_All::SERVER_USAGE_FACTOR : 2;
+        $server_factor = defined('AITRFOEL_Translate_All::SERVER_USAGE_FACTOR') ? AITRFOEL_Translate_All::SERVER_USAGE_FACTOR : 1;
 
         // Refine the estimate by subtracting words for strings already in cache.
         // On retries, most strings are cached so the real cost is a small fraction
@@ -1064,14 +1317,26 @@ class AITRFOEL_Translation_Engine {
                         $page_id
                     );
                     
+                    $tm_stats = class_exists('AITRFOEL_Translation_Memory') ? AITRFOEL_Translation_Memory::get_instance()->get_stats() : ['total_words_saved' => 0];
+                    $tm_saved = isset($tm_stats['total_words_saved']) ? intval($tm_stats['total_words_saved']) : 0;
+                    $tm_msg = $tm_saved > 0 ? sprintf(/* translators: %s: number of words saved */ __(' (You also saved +%s words for FREE via Smart Translation Memory!)', 'ai-translator-for-elementor-and-polylang'), number_format_i18n($tm_saved)) : '';
+
                     return new WP_Error(
                         'cooldown_active',
                         sprintf(
-                            /* translators: 1: Word limit (formatted number), 2: Number of days remaining */
-                            __('You have reached your monthly limit of %1$s words. Free plan users must wait %2$d more days for the limit to reset. Upgrade to a paid plan for immediate access.', 'ai-translator-for-elementor-and-polylang'),
-                            number_format($word_limit),
-                            $days_left
-                        )
+                            /* translators: 1: Word limit (formatted number), 2: Number of days remaining, 3: TM savings text */
+                            __('You have reached your monthly limit of %1$s words%3$s. Free plan users must wait %2$d more days for the limit to reset. Upgrade to a paid plan for immediate access.', 'ai-translator-for-elementor-and-polylang'),
+                            number_format_i18n($word_limit),
+                            $days_left,
+                            $tm_msg
+                        ),
+                        [
+                            'type'            => 'cooldown',
+                            'words_limit'     => $word_limit,
+                            'words_used'      => $words_used,
+                            'words_saved_tm'  => $tm_saved,
+                            'days_left'       => $days_left,
+                        ]
                     );
                 }
             }
@@ -1083,17 +1348,32 @@ class AITRFOEL_Translation_Engine {
                 $page_id
             );
             
-            $upgrade_link = admin_url('admin.php?page=ai-translator-for-elementor-and-polylang-pricing');
+            $tm_stats = class_exists('AITRFOEL_Translation_Memory') ? AITRFOEL_Translation_Memory::get_instance()->get_stats() : ['total_words_saved' => 0];
+            $tm_saved = isset($tm_stats['total_words_saved']) ? intval($tm_stats['total_words_saved']) : 0;
+            $tm_msg = $tm_saved > 0 ? sprintf(/* translators: %s: number of words saved */ __(' (Note: You already saved +%s words for FREE via Translation Memory!)', 'ai-translator-for-elementor-and-polylang'), number_format_i18n($tm_saved)) : '';
+
+            $upgrade_link = (function_exists('eatp_fs') && is_object(eatp_fs()) && method_exists(eatp_fs(), 'is_registered') && eatp_fs()->is_registered())
+                ? eatp_fs()->get_upgrade_url()
+                : ((defined('AITRFOEL_VERSION_TYPE') && AITRFOEL_VERSION_TYPE === 'pro')
+                    ? 'https://meeptech.com/upgrade?utm_source=wp-plugin&utm_medium=free-plugin&utm_campaign=pro-upgrade'
+                    : 'https://meeptech.com/products/ai-translator-for-elementor-polylang/?utm_source=wp-plugin&utm_medium=engine-limit-error&utm_campaign=pro-upgrade#pricing');
             
             return new WP_Error(
                 'insufficient_words',
                 sprintf(
-                    /* translators: 1: Estimated words needed (formatted number), 2: Words remaining (formatted number), 3: Upgrade URL */
-                    __('This translation requires approximately %1$s words, but you only have %2$s words remaining in your plan. Please <a href="%3$s">upgrade your plan</a> or wait for your monthly limit to reset.', 'ai-translator-for-elementor-and-polylang'),
-                    number_format($estimated_words),
-                    number_format($words_left),
-                    esc_url($upgrade_link)
-                )
+                    /* translators: 1: Estimated words needed (formatted number), 2: Words remaining (formatted number), 3: Upgrade URL, 4: TM bonus text */
+                    __('This translation requires approximately %1$s words, but you only have %2$s words remaining in your plan%4$s. Please <a href="%3$s">upgrade your plan</a> to complete your translation without waiting.', 'ai-translator-for-elementor-and-polylang'),
+                    number_format_i18n($estimated_words),
+                    number_format_i18n($words_left),
+                    esc_url($upgrade_link),
+                    $tm_msg
+                ),
+                [
+                    'type'            => 'insufficient_words',
+                    'words_needed'    => $estimated_words,
+                    'words_remaining' => $words_left,
+                    'words_saved_tm'  => $tm_saved,
+                ]
             );
         }
         
@@ -1870,6 +2150,11 @@ class AITRFOEL_Translation_Engine {
             AITRFOEL_Logger::log("Swapped $template_refs_swapped nested Elementor template references for $target_lang", 'info', $page_id);
         }
 
+        $form_refs_swapped = $this->swap_form_refs_in_data($translated_data, $target_lang);
+        if ($form_refs_swapped > 0) {
+            AITRFOEL_Logger::log("Swapped $form_refs_swapped form references for $target_lang", 'info', $page_id);
+        }
+
         // Create new page with translations
         $new_page_id = $this->create_translated_page($page_id, $translated_data, $target_lang, $detected_lang, $pre_translated_title, $timed_out);
         
@@ -1936,6 +2221,9 @@ class AITRFOEL_Translation_Engine {
         // server-side — no separate report-usage call is needed (it would double-count).
         // Just invalidate the cached license status so the next word-limit check is fresh.
         AITRFOEL_License_Manager_Server::get_instance()->clear_status_cache();
+        // Increment global successful translations counter for milestone review prompts
+        $rev_count = (int) get_option('aitrfoel_successful_translations_count', 0);
+        update_option('aitrfoel_successful_translations_count', $rev_count + 1, false);
         
         // Track successful translation with PostHog Analytics
         if (function_exists('aitrfoel_analytics')) {
@@ -1978,20 +2266,20 @@ class AITRFOEL_Translation_Engine {
         );
         
         $post = get_post($page_id);
-        if (!$post || empty($post->post_content)) {
+        if (!$post || (empty($post->post_content) && empty(trim($post->post_title ?? '')))) {
             $this->track_translation_failure('no_content', 'No content found in Gutenberg page', $translation_start_time);
             return new WP_Error('no_content', __('No content found in this page.', 'ai-translator-for-elementor-and-polylang'));
         }
         
         AITRFOEL_Logger::log(
-            sprintf('Gutenberg page %d has %d characters of content', $page_id, strlen($post->post_content)),
+            sprintf('Gutenberg page %d has %d characters of content', $page_id, strlen($post->post_content ?? '')),
             'info',
             $page_id
         );
         
         // Parse Gutenberg blocks
         $parser = AITRFOEL_Gutenberg_Parser::get_instance();
-        $translation_map = $parser->parse_for_translation($page_id);
+        $translation_map = !empty($post->post_content) ? $parser->parse_for_translation($page_id) : [];
         
         AITRFOEL_Logger::log(
             sprintf('Gutenberg parser found %d translatable items', count($translation_map)),
@@ -2000,14 +2288,45 @@ class AITRFOEL_Translation_Engine {
         );
         
         if (empty($translation_map)) {
-            $this->track_translation_failure('no_translatable_content', 'No translatable content found in Gutenberg blocks', $translation_start_time);
-            return new WP_Error('no_translatable_content', __('No translatable content found in this page.', 'ai-translator-for-elementor-and-polylang'));
+            $has_title = !empty(trim($post->post_title ?? ''));
+            if (!$has_title) {
+                $this->track_translation_failure('no_translatable_content', 'No translatable content found in Gutenberg blocks or title', $translation_start_time);
+                return new WP_Error('no_translatable_content', __('No translatable content found in this page.', 'ai-translator-for-elementor-and-polylang'));
+            }
         }
         
         // Convert to strings array for word limit check
         $strings_to_translate = [];
         foreach ($translation_map as $key => $data) {
             $strings_to_translate[] = $data;
+        }
+        // Extract SureForms post meta (_srfm_submit_button_text, _srfm_form_confirmation) when translating a SureForms form
+        $is_sureform = in_array($post->post_type, ['sureforms_form', 'sf_form'], true);
+        $srfm_submit_text = '';
+        $srfm_confirmations = null;
+        if ($is_sureform) {
+            $srfm_submit_text = (string) get_post_meta($page_id, '_srfm_submit_button_text', true);
+            if (!empty(trim($srfm_submit_text))) {
+                $strings_to_translate[] = [
+                    'original'    => $srfm_submit_text,
+                    'path'        => '__srfm_submit_button_text__',
+                    'type'        => 'attribute',
+                    'widget_type' => 'sureforms_meta',
+                ];
+            }
+            $srfm_confirmations = get_post_meta($page_id, '_srfm_form_confirmation', true);
+            if (is_array($srfm_confirmations)) {
+                foreach ($srfm_confirmations as $c_idx => $conf) {
+                    if (is_array($conf) && !empty($conf['message']) && is_string($conf['message'])) {
+                        $strings_to_translate[] = [
+                            'original'    => $conf['message'],
+                            'path'        => '__srfm_confirmation_' . $c_idx . '__',
+                            'type'        => 'html',
+                            'widget_type' => 'sureforms_meta',
+                        ];
+                    }
+                }
+            }
         }
         
         // Word limit check (reuse existing logic)
@@ -2065,6 +2384,11 @@ class AITRFOEL_Translation_Engine {
             );
             return $translations;
         }
+
+        if (empty($translations) && !empty($strings_to_translate)) {
+            $this->track_translation_failure('translation_failed', 'Translation API returned no translations', $translation_start_time);
+            return new WP_Error('translation_failed', __('Failed to translate page content.', 'ai-translator-for-elementor-and-polylang'));
+        }
         
         // Extract translated title from batch results
         // batch_translate_strings keys results by original text, not by path
@@ -2107,6 +2431,25 @@ class AITRFOEL_Translation_Engine {
         }
         
         // Track success
+        // Save translated SureForms post meta (_srfm_submit_button_text & _srfm_form_confirmation)
+        if (!empty($is_sureform)) {
+            if (!empty(trim($srfm_submit_text)) && isset($translations[$srfm_submit_text])) {
+                update_post_meta($new_page_id, '_srfm_submit_button_text', $translations[$srfm_submit_text]);
+            }
+            if (is_array($srfm_confirmations)) {
+                $conf_changed = false;
+                foreach ($srfm_confirmations as $c_idx => &$conf) {
+                    if (is_array($conf) && !empty($conf['message']) && isset($translations[$conf['message']])) {
+                        $conf['message'] = $translations[$conf['message']];
+                        $conf_changed = true;
+                    }
+                }
+                unset($conf);
+                if ($conf_changed) {
+                    update_post_meta($new_page_id, '_srfm_form_confirmation', $srfm_confirmations);
+                }
+            }
+        }
         $this->track_translation_success($page_id, $new_page_id, $target_lang, $detected_lang, $translation_start_time, 'gutenberg');
         
         AITRFOEL_Logger::log(
@@ -2133,34 +2476,57 @@ class AITRFOEL_Translation_Engine {
         }
         
         $post = get_post($page_id);
-        if (!$post) {
-            $this->track_translation_failure('no_content', 'Post not found', $translation_start_time);
+        if (!$post || (empty($post->post_content) && empty(trim($post->post_title ?? '')))) {
+            $this->track_translation_failure('no_content', 'Post not found or empty', $translation_start_time);
             return new WP_Error('no_content', __('No content found in this page.', 'ai-translator-for-elementor-and-polylang'));
         }
 
-        // Parse Classic Editor content. Pages with no body (e.g. WooCommerce shop/cart/
-        // checkout pages) are allowed through with an empty map — the title will be
-        // translated below and a shell page created for the language switcher.
+        // Parse Classic Editor content. Pages with media-only body or no text
+        // are allowed through with an empty map — the title will be
+        // translated and the content replicated.
         $parser = AITRFOEL_Classic_Parser::get_instance();
-        $has_body = !empty(trim($post->post_content));
+        $has_body = !empty(trim($post->post_content ?? ''));
         $translation_map = $has_body ? $parser->parse_for_translation($page_id) : [];
 
-        if (empty($translation_map) && !$has_body) {
-            // Title-only page: allowed if there is a non-empty title to translate.
-            if (empty(trim($post->post_title))) {
-                $this->track_translation_failure('no_translatable_content', 'No translatable content found in Classic Editor', $translation_start_time);
+        if (empty($translation_map)) {
+            if (empty(trim($post->post_title ?? ''))) {
+                $this->track_translation_failure('no_translatable_content', 'No translatable content found in Classic Editor or title', $translation_start_time);
                 return new WP_Error('no_translatable_content', __('No translatable content found in this page.', 'ai-translator-for-elementor-and-polylang'));
             }
-            // Proceed with empty map; the title will be added to the batch below.
-        } elseif (empty($translation_map)) {
-            $this->track_translation_failure('no_translatable_content', 'No translatable content found in Classic Editor', $translation_start_time);
-            return new WP_Error('no_translatable_content', __('No translatable content found in this page.', 'ai-translator-for-elementor-and-polylang'));
         }
         
         // Convert to strings array for word limit check
         $strings_to_translate = [];
         foreach ($translation_map as $key => $data) {
             $strings_to_translate[] = $data;
+        }
+        // Extract SureForms post meta (_srfm_submit_button_text, _srfm_form_confirmation) when translating a SureForms form
+        $is_sureform = in_array($post->post_type, ['sureforms_form', 'sf_form'], true);
+        $srfm_submit_text = '';
+        $srfm_confirmations = null;
+        if ($is_sureform) {
+            $srfm_submit_text = (string) get_post_meta($page_id, '_srfm_submit_button_text', true);
+            if (!empty(trim($srfm_submit_text))) {
+                $strings_to_translate[] = [
+                    'original'    => $srfm_submit_text,
+                    'path'        => '__srfm_submit_button_text__',
+                    'type'        => 'attribute',
+                    'widget_type' => 'sureforms_meta',
+                ];
+            }
+            $srfm_confirmations = get_post_meta($page_id, '_srfm_form_confirmation', true);
+            if (is_array($srfm_confirmations)) {
+                foreach ($srfm_confirmations as $c_idx => $conf) {
+                    if (is_array($conf) && !empty($conf['message']) && is_string($conf['message'])) {
+                        $strings_to_translate[] = [
+                            'original'    => $conf['message'],
+                            'path'        => '__srfm_confirmation_' . $c_idx . '__',
+                            'type'        => 'html',
+                            'widget_type' => 'sureforms_meta',
+                        ];
+                    }
+                }
+            }
         }
         
         // Word limit check (reuse existing logic)
@@ -2207,6 +2573,11 @@ class AITRFOEL_Translation_Engine {
         
         if (is_wp_error($translations)) {
             return $translations;
+        }
+
+        if (empty($translations) && !empty($strings_to_translate)) {
+            $this->track_translation_failure('translation_failed', 'Translation API returned no translations', $translation_start_time);
+            return new WP_Error('translation_failed', __('Failed to translate page content.', 'ai-translator-for-elementor-and-polylang'));
         }
         
         // Extract translated title from batch results
@@ -2373,11 +2744,11 @@ class AITRFOEL_Translation_Engine {
     /**
      * Check word limit for translation
      * 
-     * @param array $strings_to_translate Strings to translate
+     * @param array|int $strings_to_translate Strings to translate or word count
      * @param int $page_id Page ID for logging
      * @return true|WP_Error True if within limit, error otherwise
      */
-    private function check_word_limit($strings_to_translate, $page_id) {
+    public function check_word_limit($strings_to_translate, $page_id = 0) {
         $license_manager = AITRFOEL_License_Manager_Server::get_instance();
         $license_status = $license_manager->get_license_status();
         
@@ -2386,16 +2757,20 @@ class AITRFOEL_Translation_Engine {
         $words_left = $license_status['words_left'];
         
         // Calculate estimated word count
-        // Server counts both source + translated words, so apply 2× factor
         $source_words = 0;
-        foreach ($strings_to_translate as $string_data) {
-            if (isset($string_data['original'])) {
-                $text = wp_strip_all_tags($string_data['original']);
-                $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                $source_words += self::count_words($text);
+        if (is_numeric($strings_to_translate)) {
+            $source_words = intval($strings_to_translate);
+        } elseif (is_array($strings_to_translate)) {
+            foreach ($strings_to_translate as $string_data) {
+                if (isset($string_data['original'])) {
+                    $text = wp_strip_all_tags($string_data['original']);
+                    $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                    $source_words += self::count_words($text);
+                }
             }
         }
-        $server_factor = defined('AITRFOEL_Translate_All::SERVER_USAGE_FACTOR') ? AITRFOEL_Translate_All::SERVER_USAGE_FACTOR : 2;
+        
+        $server_factor = defined('AITRFOEL_Translate_All::SERVER_USAGE_FACTOR') ? AITRFOEL_Translate_All::SERVER_USAGE_FACTOR : 1;
         $estimated_words = $source_words * $server_factor;
         
         if ($word_limit !== -1 && $estimated_words > $words_left) {
@@ -2407,7 +2782,7 @@ class AITRFOEL_Translation_Engine {
                     return new WP_Error(
                         'cooldown_active',
                         sprintf(
-                            __('You have reached your monthly limit. Free plan users must wait %d more days for the limit to reset.', 'ai-translator-for-elementor-and-polylang'),
+                            /* translators: %d: days left */ __('You have reached your monthly limit. Free plan users must wait %d more days for the limit to reset.', 'ai-translator-for-elementor-and-polylang'),
                             $days_left
                         )
                     );
@@ -2417,7 +2792,7 @@ class AITRFOEL_Translation_Engine {
             return new WP_Error(
                 'insufficient_words',
                 sprintf(
-                    __('This translation requires approximately %s words, but you only have %s words remaining.', 'ai-translator-for-elementor-and-polylang'),
+                    /* translators: 1: estimated words needed, 2: words left this month */ __('This translation requires approximately %s words, but you only have %s words remaining.', 'ai-translator-for-elementor-and-polylang'),
                     number_format($estimated_words),
                     number_format($words_left)
                 )
@@ -2439,9 +2814,36 @@ class AITRFOEL_Translation_Engine {
         if ($source_lang !== 'auto') {
             return $source_lang;
         }
-        
+
         $detected = $this->detect_source_language($strings_to_translate, $page_id);
-        return $detected ? $detected : 'en';
+        if ($detected) {
+            return $detected;
+        }
+
+        // Content too short/empty to auto-detect (e.g. a meta-only JetEngine CPT whose
+        // post body is empty). Fall back to the source post's assigned language, then
+        // the site's default language, before the last-resort 'en'. Without this, a
+        // Dutch-default site translates "nl → en" as "en → en" — a no-op that leaves
+        // titles and custom fields untranslated.
+        if (class_exists('AITRFOEL_Multilingual_Manager')) {
+            $mm = AITRFOEL_Multilingual_Manager::get_instance();
+            if ($mm) {
+                if (method_exists($mm, 'get_post_language')) {
+                    $assigned = $mm->get_post_language($page_id);
+                    if ($assigned) {
+                        return $assigned;
+                    }
+                }
+                if (method_exists($mm, 'get_default_language')) {
+                    $default = $mm->get_default_language();
+                    if ($default) {
+                        return $default;
+                    }
+                }
+            }
+        }
+
+        return 'en';
     }
     
     /**
@@ -2453,6 +2855,70 @@ class AITRFOEL_Translation_Engine {
      * @param int $page_id Page ID for logging
      * @return array|WP_Error Array of original => translated, or error
      */
+    /**
+     * Short strings of a post that are translated right after its content by separate
+     * API calls: the title, the excerpt and the SEO title/description fields. Returned so
+     * batch_translate_strings() can send them along with the content.
+     *
+     * Only strings that are not already in the batch, the cache or Translation Memory.
+     * Returns [] when Translation Memory is off (nothing could reuse the result).
+     *
+     * @param int      $page_id
+     * @param string   $target_lang
+     * @param string   $source_lang
+     * @param string[] $already  Strings already handled by the batch.
+     * @return string[]
+     */
+    private function get_prefetch_strings($page_id, $target_lang, $source_lang, array $already) {
+        $post = $page_id ? get_post($page_id) : null;
+        $tm   = class_exists('AITRFOEL_Translation_Memory') ? AITRFOEL_Translation_Memory::get_instance() : null;
+        if (!$post || !$tm || !$tm->is_enabled()) {
+            return [];
+        }
+
+        $candidates = [(string) $post->post_title, trim((string) $post->post_excerpt)];
+
+        if (get_option('aitrfoel_seo_translation_enabled', true)) {
+            $seo_keys = [
+                '_yoast_wpseo_title', '_yoast_wpseo_metadesc',
+                'rank_math_title', 'rank_math_description',
+                '_seopress_titles_title', '_seopress_titles_desc',
+                'surerank_settings_page_title', 'surerank_settings_page_description',
+            ];
+            foreach ($seo_keys as $key) {
+                $val = get_post_meta($page_id, $key, true);
+                if (!is_string($val) || trim($val) === '') {
+                    continue;
+                }
+                // Same rule as translate_post_meta_fields(): skip values made only of SEO variables.
+                $letters = preg_replace('/%%?[a-z0-9_\-]+%%?|\{[a-z0-9_\-]+\}/iu', '', $val);
+                $letters = is_string($letters) ? preg_replace('/[\s\p{P}\p{S}]+/u', '', $letters) : '';
+                if ($letters === '' || $letters === null) {
+                    continue;
+                }
+                $candidates[] = $val;
+            }
+        }
+
+        $already = array_flip(array_map('strval', $already));
+        $out     = [];
+        foreach ($candidates as $c) {
+            if (trim($c) === '' || strlen($c) > 2000 || isset($already[$c]) || in_array($c, $out, true)) {
+                continue;
+            }
+            $out[] = $c;
+        }
+        if (empty($out)) {
+            return [];
+        }
+
+        // Drop what Translation Memory already knows.
+        $lookup = $tm->lookup_batch($out, $target_lang, $source_lang);
+        $misses = isset($lookup['misses']) && is_array($lookup['misses']) ? array_values($lookup['misses']) : $out;
+
+        return array_slice($misses, 0, 12);
+    }
+
     private function batch_translate_strings($strings_to_translate, $target_lang, $source_lang, $page_id) {
         $api = AITRFOEL_OpenAI_API::get_instance();
         $cache = AITRFOEL_Cache_Manager::get_instance();
@@ -2492,6 +2958,17 @@ class AITRFOEL_Translation_Engine {
             $page_id
         );
         
+        // Piggyback the page title, excerpt and SEO fields on this request. They used to be
+        // separate blocking API calls after the content; sent here they are stored in
+        // Translation Memory, so the later translate_title() / meta translation is instant.
+        $prefetch = [];
+        if (!empty($uncached_strings)) {
+            $prefetch = $this->get_prefetch_strings($page_id, $target_lang, $source_lang, array_merge(array_keys($translations), $uncached_strings));
+            foreach ($prefetch as $p) {
+                $uncached_strings[] = $p;
+            }
+        }
+
         // Batch translate uncached strings
         if (!empty($uncached_strings)) {
             // Split by word count (~1500 words per batch) to avoid API timeouts on large content
@@ -2534,6 +3011,7 @@ class AITRFOEL_Translation_Engine {
                     }
                 } else {
                     AITRFOEL_Logger::log('Parallel batch error: ' . $parallel_result->get_error_message(), 'error', $page_id);
+                    return $parallel_result;
                 }
             } else {
                 // Single batch — use normal sequential path
@@ -2558,10 +3036,27 @@ class AITRFOEL_Translation_Engine {
                     }
                 } else {
                     AITRFOEL_Logger::log('Batch translation error: ' . $result->get_error_message(), 'error', $page_id);
+                    return $result;
                 }
             }
         }
         
+        // Prefetched strings are not page content: move them to Translation Memory and
+        // keep them out of the returned map and the word statistics.
+        if (!empty($prefetch)) {
+            $tm = class_exists('AITRFOEL_Translation_Memory') ? AITRFOEL_Translation_Memory::get_instance() : null;
+            foreach ($prefetch as $p) {
+                if (!array_key_exists($p, $translations)) {
+                    continue;
+                }
+                $p_translated = $translations[$p];
+                unset($translations[$p]);
+                if ($tm && is_string($p_translated) && trim($p_translated) !== '') {
+                    $tm->save_single($p, $p_translated, $target_lang, $source_lang);
+                }
+            }
+        }
+
         // Track word count
         $word_count = 0;
         foreach ($translations as $original => $translated) {
@@ -2590,6 +3085,30 @@ class AITRFOEL_Translation_Engine {
      * @param string $content_type Content type (gutenberg/classic)
      * @return int|WP_Error New page ID or error
      */
+    private function get_translated_parent_id($parent_id, $target_lang) {
+        $parent_id = (int) $parent_id;
+        if (!$parent_id) {
+            return 0;
+        }
+        if (class_exists('AITRFOEL_Builtin_Integration') && AITRFOEL_Builtin_Integration::is_enabled()) {
+            $translations = AITRFOEL_Builtin_Integration::get_instance()->get_post_translations($parent_id);
+            if (!empty($translations[$target_lang])) {
+                return (int) $translations[$target_lang];
+            }
+        }
+        if (function_exists('pll_get_post')) {
+            $tp = pll_get_post($parent_id, $target_lang);
+            if ($tp) {
+                return (int) $tp;
+            }
+        }
+        $wpml = apply_filters('wpml_object_id', $parent_id, get_post_type($parent_id), false, $target_lang);
+        if ($wpml && (int) $wpml !== $parent_id) {
+            return (int) $wpml;
+        }
+        return $parent_id; // no translated parent yet — keep under the source parent
+    }
+
     private function create_translated_page_generic($original_page_id, $translated_content, $target_lang, $source_lang, $content_type, $pre_translated_title = null) {
         $original_page = get_post($original_page_id);
         
@@ -2609,6 +3128,16 @@ class AITRFOEL_Translation_Engine {
                 $target_code = $resolved;
             }
         }
+
+        // Rewrite [elementor-template id="X"] and form shortcodes in the translated post_content
+        // so each id points at the X-language translation. This makes
+        // the translated post self-contained and immune to render paths that bypass
+        // our pre_do_shortcode_tag runtime swap (which still acts as a safety net).
+        if (is_string($translated_content) && $translated_content !== '') {
+            $translated_content = $this->rewrite_elementor_template_shortcode_ids($translated_content, $target_code);
+            $translated_content = $this->rewrite_form_shortcode_ids($translated_content, $target_code);
+        }
+
         $existing_page_id = isset($existing_translations[$target_code]) ? (int) $existing_translations[$target_code] : 0;
 
         // Fallback: if the multilingual plugin didn't register the relationship (e.g. on a
@@ -2664,9 +3193,10 @@ class AITRFOEL_Translation_Engine {
             if (!is_wp_error($translated_title) && !empty($translated_title)) {
                 $update_args['post_title'] = $translated_title;
 
-                // Optionally update slug from translated title.
-                if (get_option('aitrfoel_translate_url_slugs', true)) {
-                    $translated_slug = sanitize_title($translated_title);
+                // Optionally update slug from translated title (unless preserve slug on retranslation is enabled).
+                $preserve_slug = get_option('aitrfoel_preserve_slug_on_retranslate', true);
+                if (!$preserve_slug && get_option('aitrfoel_translate_url_slugs', true)) {
+                    $translated_slug = self::localized_slug($translated_title, $target_lang);
                     if (!empty($translated_slug)) {
                         $update_args['post_name'] = $translated_slug;
                     }
@@ -2704,6 +3234,25 @@ class AITRFOEL_Translation_Engine {
 
             // Translate and assign post categories/tags (non-WooCommerce)
             $this->translate_post_taxonomies($original_page_id, $existing_page_id, $target_lang);
+
+            // If the source post is not Elementor, remove stale Elementor data/edit-mode so post_content renders
+            if ($content_type !== 'elementor') {
+                delete_post_meta($existing_page_id, '_elementor_edit_mode');
+                delete_post_meta($existing_page_id, '_elementor_data');
+            }
+
+            // Invalidate post cache, Elementor CSS cache, and page cache
+            delete_post_meta($existing_page_id, '_elementor_css');
+            clean_post_cache($existing_page_id);
+            if (class_exists('\Elementor\Plugin')) {
+                \Elementor\Plugin::$instance->files_manager->clear_cache();
+            }
+            if (function_exists('litespeed_purge_post')) {
+                litespeed_purge_post($existing_page_id);
+            }
+            if (isset($GLOBALS['wp_fastest_cache']) && method_exists($GLOBALS['wp_fastest_cache'], 'singleDeleteCache')) {
+                $GLOBALS['wp_fastest_cache']->singleDeleteCache(false, $existing_page_id);
+            }
             
             return $existing_page_id;
         }
@@ -2726,16 +3275,16 @@ class AITRFOEL_Translation_Engine {
         }
         
         // Create new page
-        $target_status = get_option('aitrfoel_translated_page_status', 'draft');
+        $target_status = get_option('aitrfoel_translated_page_status', 'publish');
         
         // If 'inherit', match the original post's status
         if ($target_status === 'inherit') {
-            $target_status = ($original_page->post_status === 'publish') ? 'publish' : 'draft';
+            $target_status = ($original_page->post_status === 'publish') ? 'publish' : 'publish';
         }
         
         // Optionally generate a translated slug; otherwise preserve source-style slug.
         if (get_option('aitrfoel_translate_url_slugs', true)) {
-            $translated_slug = sanitize_title($translated_title);
+            $translated_slug = self::localized_slug($translated_title, $target_lang);
             if (empty($translated_slug)) {
                 $translated_slug = $original_page->post_name . '-' . $target_lang;
             }
@@ -2749,8 +3298,10 @@ class AITRFOEL_Translation_Engine {
             'post_content' => $translated_content,
             'post_status' => $target_status,
             'post_type' => $original_page->post_type,
-            'post_parent' => $original_page->post_parent,
+            'post_parent' => $this->get_translated_parent_id($original_page->post_parent, $target_lang),
             'menu_order' => $original_page->menu_order,
+            'post_date' => $original_page->post_date,
+            'post_date_gmt' => $original_page->post_date_gmt,
             'post_excerpt' => $original_page->post_excerpt,
         ];
         
@@ -2859,6 +3410,9 @@ class AITRFOEL_Translation_Engine {
         // All translations go through MeepTech's /translate endpoint which auto-counts words.
         // Invalidate cached license status so next word-limit check fetches fresh data.
         AITRFOEL_License_Manager_Server::get_instance()->clear_status_cache();
+        // Increment global successful translations counter for milestone review prompts
+        $rev_count = (int) get_option('aitrfoel_successful_translations_count', 0);
+        update_option('aitrfoel_successful_translations_count', $rev_count + 1, false);
         
         // Record in translation history
         $translation_duration = microtime(true) - $translation_start_time;
@@ -3359,7 +3913,21 @@ class AITRFOEL_Translation_Engine {
         $u = wp_parse_url($url);
         // Relative URL => internal
         if ($u === false || !isset($u['host'])) return true;
-        return isset($home_parts['host']) && strcasecmp($home_parts['host'], $u['host']) === 0;
+        
+        $is_internal = isset($home_parts['host']) && strcasecmp($home_parts['host'], $u['host']) === 0;
+        
+        // Support staging/production domain mismatch during local development
+        if (!$is_internal && isset($home_parts['host'])) {
+            $path = isset($u['path']) ? $u['path'] : '';
+            if ($path !== '' && $path !== '/' && !preg_match('/\\.(jpg|jpeg|png|gif|css|js|pdf|zip|svg)$/i', $path)) {
+                $local_url = str_replace($u['host'], $home_parts['host'], $url);
+                if (url_to_postid($local_url) > 0) {
+                    return true;
+                }
+            }
+        }
+        
+        return $is_internal;
     }
 
     /**
@@ -3370,12 +3938,13 @@ class AITRFOEL_Translation_Engine {
         $u = wp_parse_url($href);
         if ($u === false) return $href;
         if (isset($u['scheme']) && isset($u['host'])) return $href; // already absolute
-        // Relative path
-        if (isset($u['path']) && substr($u['path'], 0, 1) === '/') {
-            return home_url($u['path'] . (isset($u['query']) ? ('?' . $u['query']) : '') . (isset($u['fragment']) ? ('#' . $u['fragment']) : ''));
+
+        $path = isset($u['path']) ? $u['path'] : '';
+        if (strpos($path, '/') !== 0) {
+            // Relative path - resolve relative to home_url (simplistic fallback)
+            $path = '/' . $path;
         }
-        // Bare relative like "contact"
-        $path = isset($u['path']) ? ('/' . ltrim($u['path'], '/')) : '/';
+
         return home_url($path . (isset($u['query']) ? ('?' . $u['query']) : '') . (isset($u['fragment']) ? ('#' . $u['fragment']) : ''));
     }
 
@@ -3400,14 +3969,84 @@ class AITRFOEL_Translation_Engine {
 
         // 1) Best-effort: map post ID to its translation
         $post_id = url_to_postid($base_no_qf);
-        if ($post_id) {
-            if (function_exists('pll_get_post') && $target_code) {
-                $translated_id = pll_get_post($post_id, $target_code);
-                if ($translated_id) {
-                    $new = get_permalink($translated_id);
-                    if (is_string($new) && $new !== '') {
-                        return $new . $suffix;
+        if (!$post_id && isset($parts['host'])) {
+            $local_host = wp_parse_url(home_url(), PHP_URL_HOST);
+            if ($local_host && strcasecmp($parts['host'], $local_host) !== 0) {
+                $local_base = str_replace($parts['host'], $local_host, $base_no_qf);
+                $post_id = url_to_postid($local_base);
+            }
+        }
+
+        // Fallback: Resolve by slug (last path segment) if url_to_postid failed.
+        // This handles shortened URLs, legacy/redirect links, or nested pages
+        // whose static links in the database don't reflect the full current nested path.
+        if (!$post_id && isset($parts['path'])) {
+            $path_trimmed = trim($parts['path'], '/');
+            if ($path_trimmed !== '') {
+                $path_segments = explode('/', $path_trimmed);
+                $slug = end($path_segments);
+                if ($slug !== '') {
+                    global $wpdb;
+                    $pt_allowed = ['page', 'post', 'product'];
+                    $pt_allowed = apply_filters('aitrfoel_link_resolution_post_types', $pt_allowed);
+                    $pt_allowed = array_values(array_map('strval', (array) $pt_allowed));
+                    if (empty($pt_allowed)) {
+                        $pt_allowed = ['']; // same as the old IN ('') - matches nothing, still valid SQL
                     }
+                    $pt_placeholders = implode(',', array_fill(0, count($pt_allowed), '%s'));
+                    
+                    $resolved_id = (int) $wpdb->get_var($wpdb->prepare(
+                        "SELECT ID FROM {$wpdb->posts} WHERE post_name = %s AND post_type IN ($pt_placeholders) AND post_status = 'publish' LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $pt_placeholders is only '%s' placeholders.
+                        array_merge([$slug], $pt_allowed)
+                    ));
+                    if ($resolved_id > 0) {
+                        $post_id = $resolved_id;
+                    }
+                }
+            }
+        }
+
+        if ($post_id) {
+            $multilingual = class_exists('AITRFOEL_Multilingual_Manager') ? AITRFOEL_Multilingual_Manager::get_instance() : null;
+            $translated_id = 0;
+            if ($multilingual && $multilingual->is_active()) {
+                $translations = $multilingual->get_post_translations($post_id);
+                if (isset($translations[$target_code])) {
+                    $translated_id = (int) $translations[$target_code];
+                } else {
+                    $norm_target = strtolower(str_replace('_', '-', $target_code));
+                    $base_target = explode('-', $norm_target)[0];
+                    foreach ($translations as $t_lang => $t_id) {
+                        $norm_t = strtolower(str_replace('_', '-', (string)$t_lang));
+                        if ($norm_t === $norm_target || $norm_t === $base_target || explode('-', $norm_t)[0] === $base_target) {
+                            $translated_id = (int) $t_id;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if ($translated_id <= 0 && function_exists('pll_get_post') && $target_code) {
+                $translated_id = (int) pll_get_post($post_id, $target_code);
+                if ($translated_id <= 0 && strpos($target_code, '-') !== false) {
+                    $translated_id = (int) pll_get_post($post_id, explode('-', $target_code)[0]);
+                }
+            }
+
+            if ($translated_id > 0) {
+                $new = get_permalink($translated_id);
+                if (is_string($new) && $new !== '') {
+                    // Restore original host/scheme if mismatch (local dev / production database sync support)
+                    if (isset($parts['host'])) {
+                        $new_parts = wp_parse_url($new);
+                        if ($new_parts && isset($new_parts['host'])) {
+                            $new = str_replace($new_parts['host'], $parts['host'], $new);
+                            if (isset($parts['scheme']) && isset($new_parts['scheme'])) {
+                                $new = str_replace($new_parts['scheme'] . '://', $parts['scheme'] . '://', $new);
+                            }
+                        }
+                    }
+                    return $new . $suffix;
                 }
             }
         }
@@ -3451,7 +4090,7 @@ class AITRFOEL_Translation_Engine {
     /**
      * Rewrite href attributes inside an HTML blob to the target language.
      */
-    private function localize_hrefs_in_html($html, $target_lang) {
+    public function localize_hrefs_in_html($html, $target_lang) {
         if (!is_string($html) || stripos($html, '<a') === false || stripos($html, 'href=') === false) return $html;
         $self = $this;
         $cb = function($m) use ($self, $target_lang) {
@@ -3578,22 +4217,26 @@ class AITRFOEL_Translation_Engine {
     /**
      * Walk Elementor translated data and localize internal links for target language.
      */
-    private function localize_internal_links(&$data, $target_lang) {
+    public function localize_internal_links(&$data, $target_lang) {
         $walker = function (&$node, $keyPath = []) use (&$walker, $target_lang) {
             if (is_array($node)) {
-                // Special-case: Elementor setting 'link' => ['url' => ...]
-                if (isset($node['url']) && is_string($node['url'])) {
-                    // Heuristic: if parent path ends with '.settings.link' or contains '.link.' treat as link url
-                    $pathStr = implode('.', $keyPath);
-                    if (preg_match('~(^|\.)link(\.|$)~', $pathStr)) {
-                        $new = $this->localize_single_url($node['url'], $target_lang);
-                        if ($new !== $node['url']) {
-                            $node['url'] = $new;
-                        }
+                // Elementor URL control structure: ['url' => '...']
+                if (isset($node['url']) && is_string($node['url']) && $node['url'] !== '' && $this->is_internal_url($node['url'])) {
+                    $new = $this->localize_single_url($node['url'], $target_lang);
+                    if ($new !== $node['url']) {
+                        $node['url'] = $new;
                     }
                 }
                 foreach ($node as $k => &$v) {
-                    $walker($v, array_merge($keyPath, [$k]));
+                    // Also localize standalone string URLs stored under link-related keys
+                    if (is_string($v) && is_string($k) && preg_match('~(link|url|href)~i', $k) && $this->is_internal_url($v)) {
+                        $new = $this->localize_single_url($v, $target_lang);
+                        if ($new !== $v) {
+                            $v = $new;
+                        }
+                    } else {
+                        $walker($v, array_merge($keyPath, [$k]));
+                    }
                 }
                 unset($v);
                 return;
@@ -3610,6 +4253,504 @@ class AITRFOEL_Translation_Engine {
             }
         };
         $walker($data, []);
+    }
+
+    /**
+     * Rewrite [elementor-template id="X"] shortcodes inside post_content so each
+     * id points at the current-language translation of template X.
+     *
+     * Safe to call on any string: only the `id` attribute of `elementor-template`
+     * shortcodes is touched, and only when a published translation exists in
+     * $target_lang. Source-language posts and non-translated templates are left
+     * untouched. The runtime pre_do_shortcode_tag swap added in 1.7.07 acts as
+     * a fallback for posts that still carry source ids.
+     *
+     * @param string $content     Post content (may contain shortcodes).
+     * @param string $target_lang Target language code (e.g. 'de').
+     * @return string Rewritten content.
+     */
+    public function rewrite_elementor_template_shortcode_ids($content, $target_lang) {
+        if (!is_string($content) || $content === '' || stripos($content, '[elementor-template') === false) {
+            return $content;
+        }
+        $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
+        if (!$multilingual || !$multilingual->is_active()) {
+            return $content;
+        }
+
+        return preg_replace_callback(
+            '/\[elementor-template\b([^\]]*)\]/i',
+            function ($m) use ($multilingual, $target_lang) {
+                $attrs = $m[1];
+                if (!preg_match('/\bid\s*=\s*(["\']?)(\d+)\1/i', $attrs, $idm)) {
+                    return $m[0];
+                }
+                $orig_id = (int) $idm[2];
+                if ($orig_id <= 0 || get_post_type($orig_id) !== 'elementor_library') {
+                    return $m[0];
+                }
+                $translations = $multilingual->get_post_translations($orig_id);
+                if (!isset($translations[$target_lang])) {
+                    return $m[0];
+                }
+                $new_id = (int) $translations[$target_lang];
+                if ($new_id <= 0 || $new_id === $orig_id || get_post_status($new_id) !== 'publish') {
+                    return $m[0];
+                }
+                $new_attrs = preg_replace(
+                    '/\bid\s*=\s*(["\']?)(\d+)\1/i',
+                    'id=' . ($idm[1] !== '' ? $idm[1] : '"') . $new_id . ($idm[1] !== '' ? $idm[1] : '"'),
+                    $attrs,
+                    1
+                );
+                return '[elementor-template' . $new_attrs . ']';
+            },
+            $content
+        );
+    }
+
+    /**
+     * Swap form references and shortcodes inside Elementor data structure.
+     *
+     * @param array  &$data       Elementor data array (modified in place).
+     * @param string $target_lang Target language code.
+     * @return int Number of form references swapped.
+     */
+    private function swap_form_refs_in_data(&$data, $target_lang) {
+        $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
+        if (!$multilingual || !$multilingual->is_active()) {
+            return 0;
+        }
+
+        $swapped = 0;
+        foreach ($data as &$element) {
+            if (!is_array($element)) continue;
+
+            $widget_type = isset($element['widgetType']) ? $element['widgetType'] : '';
+
+            // 1. Rewrite shortcode widget or any string setting containing form shortcodes
+            if (isset($element['settings']) && is_array($element['settings'])) {
+                foreach ($element['settings'] as $sk => &$sv) {
+                    if (is_string($sv) && (stripos($sv, '[contact-form-7') !== false || stripos($sv, '[sureforms') !== false || stripos($sv, '[srfm_form') !== false || stripos($sv, '[wpforms') !== false)) {
+                        $rewritten = $this->rewrite_form_shortcode_ids($sv, $target_lang);
+                        if ($rewritten !== $sv) {
+                            $sv = $rewritten;
+                            $swapped++;
+                        }
+                    }
+                }
+                unset($sv);
+
+                // 2. WPForms widget settings: form_id
+                // 2. WPForms & SureForms widget settings
+                if (in_array($widget_type, ['sureforms_form', 'srfm-form', 'sureforms'], true)) {
+                    foreach (['srfm_form_block', 'form_id', 'sureforms_form_id', 'id'] as $sf_key) {
+                        if (!empty($element['settings'][$sf_key]) && is_numeric($element['settings'][$sf_key])) {
+                            $orig_fid = (int) $element['settings'][$sf_key];
+                            if ($orig_fid > 0) {
+                                $translations = $multilingual->get_post_translations($orig_fid);
+                                if (!empty($translations[$target_lang])) {
+                                    $element['settings'][$sf_key] = (string) $translations[$target_lang];
+                                    $swapped++;
+                                }
+                            }
+                        }
+                    }
+                }
+                if ($widget_type === 'wpforms' && isset($element['settings']['form_id'])) {
+                    $orig_fid = (int) $element['settings']['form_id'];
+                    if ($orig_fid > 0) {
+                        $translations = $multilingual->get_post_translations($orig_fid);
+                        if (!empty($translations[$target_lang])) {
+                            $element['settings']['form_id'] = (string) $translations[$target_lang];
+                            $swapped++;
+                        }
+                    }
+                }
+            }
+
+            if (isset($element['elements']) && is_array($element['elements'])) {
+                $swapped += $this->swap_form_refs_in_data($element['elements'], $target_lang);
+            }
+        }
+        unset($element);
+
+        return $swapped;
+    }
+
+    /**
+     * Rewrite form shortcode and block IDs in translated post_content.
+     * Covers:
+     *   - Contact Form 7: [contact-form-7 id="123" ...] and <!-- wp:contact-form-7/form {"id":123} /-->
+     *   - SureForms: [sureforms id="123"] and <!-- wp:sureforms/form {"formId":123} /-->
+     *   - WPForms: [wpforms id="123"] and <!-- wp:wpforms/form-selector {"formId":"123"} /-->
+     *
+     * @param string $content     Post content.
+     * @param string $target_lang Target language code.
+     * @return string
+     */
+    public function rewrite_form_shortcode_ids($content, $target_lang) {
+        if (!is_string($content) || $content === '') {
+            return $content;
+        }
+        $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
+        if (!$multilingual || !$multilingual->is_active()) {
+            return $content;
+        }
+
+        $get_trans_id = function($orig_id) use ($multilingual, $target_lang) {
+            $orig_id = (int) $orig_id;
+            if ($orig_id <= 0) return 0;
+            $translations = $multilingual->get_post_translations($orig_id);
+            if (!isset($translations[$target_lang])) return 0;
+            $tid = (int) $translations[$target_lang];
+            return ($tid > 0 && $tid !== $orig_id && get_post_status($tid) === 'publish') ? $tid : 0;
+        };
+
+        // 1. Contact Form 7 shortcodes: [contact-form-7 id="123" ...]
+        if (stripos($content, '[contact-form-7') !== false) {
+            $content = preg_replace_callback(
+                '/\[contact-form-7\b([^\]]*)\]/i',
+                function ($m) use ($get_trans_id) {
+                    $attrs = $m[1];
+                    if (!preg_match('/\bid\s*=\s*(["\']?)(\d+)\1/i', $attrs, $idm)) {
+                        return $m[0];
+                    }
+                    $new_id = $get_trans_id($idm[2]);
+                    if (!$new_id) return $m[0];
+                    $new_attrs = preg_replace('/\bid\s*=\s*(["\']?)(\d+)\1/i', 'id=' . ($idm[1] ?: '"') . $new_id . ($idm[1] ?: '"'), $attrs, 1);
+                    return '[contact-form-7' . $new_attrs . ']';
+                },
+                $content
+            );
+        }
+
+        // 2. SureForms shortcodes: [sureforms id="123"]
+        if (stripos($content, '[sureforms') !== false || stripos($content, '[srfm_form') !== false) {
+            $content = preg_replace_callback(
+                '/\[(sureforms|srfm_form)\b([^\]]*)\]/i',
+                function ($m) use ($get_trans_id) {
+                    $tag = $m[1];
+                    $attrs = $m[2];
+                    if (!preg_match('/\bid\s*=\s*(["\']?)(\d+)\1/i', $attrs, $idm)) {
+                        return $m[0];
+                    }
+                    $new_id = $get_trans_id($idm[2]);
+                    if (!$new_id) return $m[0];
+                    $new_attrs = preg_replace('/\bid\s*=\s*(["\']?)(\d+)\1/i', 'id=' . ($idm[1] ?: '"') . $new_id . ($idm[1] ?: '"'), $attrs, 1);
+                    return '[' . $tag . $new_attrs . ']';
+                },
+                $content
+            );
+        }
+        if (false && stripos($content, '[sureforms') !== false) {
+            $content = preg_replace_callback(
+                '/\[sureforms\b([^\]]*)\]/i',
+                function ($m) use ($get_trans_id) {
+                    $attrs = $m[1];
+                    if (!preg_match('/\bid\s*=\s*(["\']?)(\d+)\1/i', $attrs, $idm)) {
+                        return $m[0];
+                    }
+                    $new_id = $get_trans_id($idm[2]);
+                    if (!$new_id) return $m[0];
+                    $new_attrs = preg_replace('/\bid\s*=\s*(["\']?)(\d+)\1/i', 'id=' . ($idm[1] ?: '"') . $new_id . ($idm[1] ?: '"'), $attrs, 1);
+                    return '[sureforms' . $new_attrs . ']';
+                },
+                $content
+            );
+        }
+
+        // 3. WPForms shortcodes: [wpforms id="123" ...]
+        if (stripos($content, '[wpforms') !== false) {
+            $content = preg_replace_callback(
+                '/\[wpforms\b([^\]]*)\]/i',
+                function ($m) use ($get_trans_id) {
+                    $attrs = $m[1];
+                    if (!preg_match('/\bid\s*=\s*(["\']?)(\d+)\1/i', $attrs, $idm)) {
+                        return $m[0];
+                    }
+                    $new_id = $get_trans_id($idm[2]);
+                    if (!$new_id) return $m[0];
+                    $new_attrs = preg_replace('/\bid\s*=\s*(["\']?)(\d+)\1/i', 'id=' . ($idm[1] ?: '"') . $new_id . ($idm[1] ?: '"'), $attrs, 1);
+                    return '[wpforms' . $new_attrs . ']';
+                },
+                $content
+            );
+        }
+
+        // 4. Gutenberg block comments:
+        // SureForms block: <!-- wp:sureforms/form {"formId":123} /-->
+        if (strpos($content, 'wp:sureforms/form') !== false || strpos($content, 'wp:srfm/form') !== false) {
+            $content = preg_replace_callback(
+                '/<!--\s*wp:(sureforms\/form|srfm\/form)\s+(\{.*?\})\s*(\/-->|-->)/s',
+                function ($m) use ($get_trans_id) {
+                    $bname = $m[1];
+                    $json = json_decode($m[2], true);
+                    $close = $m[3];
+                    if (is_array($json)) {
+                        $id_key = !empty($json['id']) ? 'id' : (!empty($json['formId']) ? 'formId' : '');
+                        if ($id_key) {
+                            $new_id = $get_trans_id($json[$id_key]);
+                            if ($new_id) {
+                                $json[$id_key] = $new_id;
+                                return '<!-- wp:' . $bname . ' ' . wp_json_encode($json) . ' ' . $close;
+                            }
+                        }
+                    }
+                    return $m[0];
+                },
+                $content
+            );
+        }
+        if (false && strpos($content, 'wp:sureforms/form') !== false) {
+            $content = preg_replace_callback(
+                '/<!--\s*wp:sureforms\/form\s+(\{.*?\})\s*\/-->/s',
+                function ($m) use ($get_trans_id) {
+                    $json = json_decode($m[1], true);
+                    if (is_array($json) && !empty($json['formId'])) {
+                        $new_id = $get_trans_id($json['formId']);
+                        if ($new_id) {
+                            $json['formId'] = $new_id;
+                            return '<!-- wp:sureforms/form ' . wp_json_encode($json) . ' /-->';
+                        }
+                    }
+                    return $m[0];
+                },
+                $content
+            );
+        }
+
+        // CF7 block: <!-- wp:contact-form-7/form {"id":123} -->
+        if (strpos($content, 'wp:contact-form-7') !== false) {
+            $content = preg_replace_callback(
+                '/<!--\s*wp:contact-form-7\/form\s+(\{.*?\})\s*-->/s',
+                function ($m) use ($get_trans_id) {
+                    $json = json_decode($m[1], true);
+                    if (is_array($json) && !empty($json['id'])) {
+                        $new_id = $get_trans_id($json['id']);
+                        if ($new_id) {
+                            $json['id'] = $new_id;
+                            return '<!-- wp:contact-form-7/form ' . wp_json_encode($json) . ' -->';
+                        }
+                    }
+                    return $m[0];
+                },
+                $content
+            );
+        }
+
+        return $content;
+    }
+
+    /**
+     * Translate a Contact Form 7 form post.
+     * Translates post_title, form tags (labels, placeholders, submit text, choice options),
+     * _messages array meta, and _mail subject meta.
+     *
+     * @param int    $page_id
+     * @param string $target_lang
+     * @param string $source_lang
+     * @param float  $translation_start_time
+     * @return int|WP_Error
+     */
+    public function translate_contact_form_7($page_id, $target_lang, $source_lang = 'auto', $translation_start_time = null) {
+        if (!$translation_start_time) {
+            $translation_start_time = microtime(true);
+        }
+
+        $post = get_post($page_id);
+        if (!$post || empty($post->post_title)) {
+            $this->track_translation_failure('no_content', 'Contact Form 7 post not found', $translation_start_time);
+            return new WP_Error('no_content', __('Contact Form 7 post not found.', 'ai-translator-for-elementor-and-polylang'));
+        }
+
+        // Collect translatable strings
+        $strings_to_translate = [];
+        $strings_to_translate[] = [
+            'original'    => $post->post_title,
+            'type'        => 'title',
+            'widget_type' => 'wpcf7_contact_form',
+            'path'        => 'title',
+        ];
+
+        // 1. Extract translatable strings from CF7 form content (post_content)
+        $raw_content = (string) $post->post_content;
+
+        // Submit button labels: [submit "Label"] or [submit 'Label']
+        if (preg_match_all('/\[submit\s+["\']([^"\']+)["\']/i', $raw_content, $sm)) {
+            foreach ($sm[1] as $s_text) {
+                if (strlen(trim($s_text)) > 0) {
+                    $strings_to_translate[] = ['original' => $s_text, 'type' => 'submit_button', 'widget_type' => 'wpcf7_contact_form'];
+                }
+            }
+        }
+
+        // Placeholders: placeholder "Label" or placeholder 'Label'
+        if (preg_match_all('/placeholder\s+["\']([^"\']+)["\']/i', $raw_content, $pm)) {
+            foreach ($pm[1] as $p_text) {
+                if (strlen(trim($p_text)) > 0) {
+                    $strings_to_translate[] = ['original' => $p_text, 'type' => 'placeholder', 'widget_type' => 'wpcf7_contact_form'];
+                }
+            }
+        }
+
+        // Select/checkbox/radio option strings inside quotes: e.g. [select ... "Option 1" "Option 2"]
+        if (preg_match_all('/\[(select|checkbox|radio)\b[^\]]*\]/i', $raw_content, $opt_tags)) {
+            foreach ($opt_tags[0] as $tag_str) {
+                if (preg_match_all('/"([^"]+)"|\'([^\']+)\'/i', $tag_str, $quoted)) {
+                    $all_opts = array_filter(array_merge($quoted[1], $quoted[2]));
+                    foreach ($all_opts as $opt_text) {
+                        if (strlen(trim($opt_text)) > 0 && !preg_match('/^[a-z0-9_-]+$/i', $opt_text)) {
+                            $strings_to_translate[] = ['original' => $opt_text, 'type' => 'choice', 'widget_type' => 'wpcf7_contact_form'];
+                        } elseif (strlen(trim($opt_text)) > 1) {
+                            $strings_to_translate[] = ['original' => $opt_text, 'type' => 'choice', 'widget_type' => 'wpcf7_contact_form'];
+                        }
+                    }
+                }
+            }
+        }
+
+        // Label/paragraph texts outside of CF7 bracket tags [ ... ]
+        $content_without_tags = preg_replace('/\[[^\]]+\]/', '', $raw_content);
+        $classic_parser = AITRFOEL_Classic_Parser::get_instance();
+        $label_strings = $classic_parser->extract_text_from_html($content_without_tags);
+        foreach ($label_strings as $ls) {
+            $strings_to_translate[] = ['original' => $ls, 'type' => 'label_html', 'widget_type' => 'wpcf7_contact_form'];
+        }
+
+        // 2. Extract _messages meta
+        $messages = get_post_meta($page_id, '_messages', true);
+        if (is_array($messages)) {
+            foreach ($messages as $m_key => $m_val) {
+                if (is_string($m_val) && strlen(trim($m_val)) > 1) {
+                    $strings_to_translate[] = ['original' => $m_val, 'type' => 'cf7_message', 'widget_type' => 'wpcf7_contact_form'];
+                }
+            }
+        }
+
+        // 3. Extract _mail meta subject
+        $mail = get_post_meta($page_id, '_mail', true);
+        if (is_array($mail) && !empty($mail['subject']) && is_string($mail['subject'])) {
+            $strings_to_translate[] = ['original' => $mail['subject'], 'type' => 'cf7_mail_subject', 'widget_type' => 'wpcf7_contact_form'];
+        }
+
+        // Word limit check
+        $word_limit_check = $this->check_word_limit($strings_to_translate, $page_id);
+        if (is_wp_error($word_limit_check)) {
+            return $word_limit_check;
+        }
+
+        // Detect source language
+        $detected_lang = $this->detect_source_language_from_content($strings_to_translate, $source_lang, $page_id);
+
+        // Batch translate strings
+        $translations = $this->batch_translate_strings($strings_to_translate, $target_lang, $detected_lang, $page_id);
+        if (is_wp_error($translations)) {
+            $this->track_translation_failure('translation_failed', $translations->get_error_message(), $translation_start_time);
+            return $translations;
+        }
+
+        // Translate title
+        $translated_title = isset($translations[$post->post_title]) ? $translations[$post->post_title] : ($post->post_title . ' (' . strtoupper($target_lang) . ')');
+
+        // Apply translations to post_content
+        $translated_content = $raw_content;
+        uksort($translations, function($a, $b) { return strlen($b) - strlen($a); });
+        foreach ($translations as $orig => $trans) {
+            if ($orig === $post->post_title || empty($orig) || empty($trans) || $orig === $trans) {
+                continue;
+            }
+            $translated_content = str_replace($orig, $trans, $translated_content);
+        }
+
+        // Target code
+        $target_code = $target_lang;
+        if (strlen($target_lang) > 3 && class_exists('AITRFOEL_Language_Mapper')) {
+            $resolved = AITRFOEL_Language_Mapper::get_code_from_language_name($target_lang);
+            if ($resolved) {
+                $target_code = $resolved;
+            }
+        }
+
+        // Check if translated form already exists
+        $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
+        $existing_translations = $multilingual->is_active() ? $multilingual->get_post_translations($page_id) : [];
+        $existing_page_id = isset($existing_translations[$target_code]) ? (int) $existing_translations[$target_code] : 0;
+
+        $target_status = get_option('aitrfoel_translated_page_status', 'publish');
+        if ($target_status === 'inherit') {
+            $target_status = $post->post_status;
+        }
+
+        $translated_slug = self::localized_slug($translated_title, $target_lang);
+        if (empty($translated_slug)) {
+            $translated_slug = $post->post_name . '-' . $target_code;
+        }
+
+        $post_data = [
+            'post_title'   => $translated_title,
+            'post_name'    => $translated_slug,
+            'post_content' => $translated_content,
+            'post_status'  => $target_status,
+            'post_type'    => 'wpcf7_contact_form',
+        ];
+
+        if ($existing_page_id && get_post($existing_page_id)) {
+            $post_data['ID'] = $existing_page_id;
+            $new_page_id = wp_update_post($post_data);
+        } else {
+            $new_page_id = wp_insert_post($post_data);
+        }
+
+        if (is_wp_error($new_page_id) || !$new_page_id) {
+            $this->track_translation_failure('insert_failed', 'Failed to create translated CF7 form post', $translation_start_time);
+            return is_wp_error($new_page_id) ? $new_page_id : new WP_Error('insert_failed', __('Failed to create translated CF7 form.', 'ai-translator-for-elementor-and-polylang'));
+        }
+
+        // Save CF7 meta fields
+        update_post_meta($new_page_id, '_form', $translated_content);
+
+        // Translated messages
+        if (is_array($messages)) {
+            $trans_messages = [];
+            foreach ($messages as $mk => $mv) {
+                $trans_messages[$mk] = isset($translations[$mv]) ? $translations[$mv] : $mv;
+            }
+            update_post_meta($new_page_id, '_messages', $trans_messages);
+        }
+
+        // Translated mail settings
+        if (is_array($mail)) {
+            $trans_mail = $mail;
+            if (!empty($mail['subject']) && isset($translations[$mail['subject']])) {
+                $trans_mail['subject'] = $translations[$mail['subject']];
+            }
+            update_post_meta($new_page_id, '_mail', $trans_mail);
+        }
+
+        $mail_2 = get_post_meta($page_id, '_mail_2', true);
+        if (is_array($mail_2)) {
+            update_post_meta($new_page_id, '_mail_2', $mail_2);
+        }
+
+        $add_settings = get_post_meta($page_id, '_additional_settings', true);
+        if ($add_settings !== '') {
+            update_post_meta($new_page_id, '_additional_settings', $add_settings);
+        }
+
+        // Set tracking metadata
+        update_post_meta($new_page_id, '_aitrfoel_content_type', 'wpcf7_contact_form');
+        update_post_meta($new_page_id, '_aitrfoel_source_page', $page_id);
+        update_post_meta($new_page_id, '_aitrfoel_translated_from', $page_id . '_' . $target_code);
+
+        // Setup multilingual relationship
+        if ($multilingual->is_active()) {
+            $multilingual->setup_translation_relationship($page_id, $new_page_id, $target_lang);
+        }
+
+        $this->track_translation_success($page_id, $new_page_id, $target_lang, $detected_lang, $translation_start_time, 'wpcf7_contact_form');
+
+        return $new_page_id;
     }
 
     /**
@@ -3747,6 +4888,13 @@ class AITRFOEL_Translation_Engine {
             // Update existing translated page's Elementor data
             update_post_meta($existing_page_id, '_elementor_data', wp_slash(json_encode($translated_data)));
 
+            // Update existing page's post_content with localized links
+            $content_local = $this->localize_hrefs_in_html($original_page->post_content, $target_lang);
+            wp_update_post([
+                'ID'           => $existing_page_id,
+                'post_content' => $content_local,
+            ]);
+
             // Translated templates must NEVER have display conditions — ensure they are removed
             // even if a previous plugin version accidentally copied them.
             if (get_post_type($original_page_id) === 'elementor_library') {
@@ -3758,6 +4906,8 @@ class AITRFOEL_Translation_Engine {
                     unset($page_settings['conditions']);
                     update_post_meta($existing_page_id, '_elementor_page_settings', $page_settings);
                 }
+                // Synchronize all template taxonomies, metadata, and compile CSS stylesheet
+                $this->sync_elementor_template_meta_and_taxonomies($original_page_id, $existing_page_id);
             }
             
             // Use pre-translated title if available (from batch), otherwise translate separately
@@ -3775,9 +4925,10 @@ class AITRFOEL_Translation_Engine {
                     'post_title' => $translated_title,
                 ];
 
-                // Optionally update slug from translated title.
-                if (get_option('aitrfoel_translate_url_slugs', true)) {
-                    $translated_slug = sanitize_title($translated_title);
+                // Optionally update slug from translated title (unless preserve slug on retranslation is enabled).
+                $preserve_slug = get_option('aitrfoel_preserve_slug_on_retranslate', true);
+                if (!$preserve_slug && get_option('aitrfoel_translate_url_slugs', true)) {
+                    $translated_slug = self::localized_slug($translated_title, $target_lang);
                     if (!empty($translated_slug)) {
                         $update_args['post_name'] = $translated_slug;
                     }
@@ -3831,8 +4982,18 @@ class AITRFOEL_Translation_Engine {
             // Translate and assign post categories/tags (non-WooCommerce)
             $this->translate_post_taxonomies($original_page_id, $existing_page_id, $target_lang);
 
-            // Ensure the source-page meta is present (may be missing on older translations)
-            update_post_meta($existing_page_id, '_aitrfoel_source_page', $original_page_id);
+            // Invalidate post cache, Elementor CSS cache, and page cache
+            delete_post_meta($existing_page_id, '_elementor_css');
+            clean_post_cache($existing_page_id);
+            if (class_exists('\Elementor\Plugin')) {
+                \Elementor\Plugin::$instance->files_manager->clear_cache();
+            }
+            if (function_exists('litespeed_purge_post')) {
+                litespeed_purge_post($existing_page_id);
+            }
+            if (isset($GLOBALS['wp_fastest_cache']) && method_exists($GLOBALS['wp_fastest_cache'], 'singleDeleteCache')) {
+                $GLOBALS['wp_fastest_cache']->singleDeleteCache(false, $existing_page_id);
+            }
 
             AITRFOEL_Logger::log(
                 sprintf('Successfully updated existing translation (ID %d)', $existing_page_id),
@@ -3856,16 +5017,16 @@ class AITRFOEL_Translation_Engine {
         }
         
         // Create new page with intelligent status selection
-        $target_status = get_option('aitrfoel_translated_page_status', 'draft');
+        $target_status = get_option('aitrfoel_translated_page_status', 'publish');
         
         // If 'inherit', match the original post's status
         if ($target_status === 'inherit') {
-            $target_status = ($original_page->post_status === 'publish') ? 'publish' : 'draft';
+            $target_status = ($original_page->post_status === 'publish') ? 'publish' : 'publish';
         }
         
         // Optionally generate a translated slug; otherwise preserve source-style slug.
         if (get_option('aitrfoel_translate_url_slugs', true)) {
-            $translated_slug = sanitize_title($translated_title);
+            $translated_slug = self::localized_slug($translated_title, $target_lang);
             if (empty($translated_slug)) {
                 $translated_slug = $original_page->post_name . '-' . $target_lang;
             }
@@ -3873,15 +5034,19 @@ class AITRFOEL_Translation_Engine {
             $translated_slug = $original_page->post_name . '-' . $target_lang;
         }
         
+        $content_local = $this->localize_hrefs_in_html($original_page->post_content, $target_lang);
+        
         $new_page_args = [
             'post_title' => $translated_title,
             'post_name' => $translated_slug,
-            'post_content' => $original_page->post_content,
+            'post_content' => $content_local,
             'post_status' => $target_status,
             'post_type' => $original_page->post_type,
-            'post_parent' => $original_page->post_parent,
+            'post_parent' => $this->get_translated_parent_id($original_page->post_parent, $target_lang),
             'menu_order' => $original_page->menu_order,
             'post_excerpt' => $original_page->post_excerpt,
+            'post_date' => $original_page->post_date,
+            'post_date_gmt' => $original_page->post_date_gmt,
         ];
         
         $new_page_id = wp_insert_post($new_page_args);
@@ -3906,16 +5071,19 @@ class AITRFOEL_Translation_Engine {
         }
         
         // Update Elementor data
-    update_post_meta($new_page_id, '_elementor_data', wp_slash(json_encode($translated_data)));
+        update_post_meta($new_page_id, '_elementor_data', wp_slash(json_encode($translated_data)));
         update_post_meta($new_page_id, '_elementor_edit_mode', 'builder');
         
         // Copy other Elementor meta
         $elementor_meta_keys = [
             '_elementor_template_type',
+            '_elementor_template_sub_type',
             '_elementor_version',
             '_elementor_pro_version',
             '_elementor_page_settings',
             '_elementor_controls_usage',
+            '_elementor_page_assets',
+            '_elementor_screenshot',
         ];
         
         // Copy Astra theme meta fields to preserve page layout settings
@@ -3956,6 +5124,7 @@ class AITRFOEL_Translation_Engine {
         // candidate list at runtime by swapping originals, so conditions are not needed.
         if ($is_elementor_template) {
             delete_post_meta($new_page_id, '_elementor_conditions');
+            $this->sync_elementor_template_meta_and_taxonomies($original_page_id, $new_page_id);
         }
         
         // Handle multilingual plugin (Polylang or WPML) via abstraction layer
@@ -4030,14 +5199,554 @@ class AITRFOEL_Translation_Engine {
      * @param string $target_lang  Target language code
      * @param string $source_lang  Source language code
      */
+    /**
+     * Whether JetEngine is active on this site.
+     *
+     * @return bool
+     */
+    private function is_jetengine_active() {
+        return defined('JET_ENGINE_VERSION') || class_exists('Jet_Engine');
+    }
+
+    /**
+     * Decode a JetEngine option that may be stored as a JSON string or a PHP array.
+     *
+     * @param mixed $val
+     * @return array
+     */
+    private function jet_maybe_decode($val) {
+        if (is_string($val)) {
+            $decoded = json_decode($val, true);
+            return (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) ? $decoded : [];
+        }
+        return is_array($val) ? $val : [];
+    }
+
+    /**
+     * Flatten a JetEngine "meta_fields" definition array into [ meta_key => type ].
+     *
+     * @param mixed $meta_fields
+     * @param array $out  Accumulator passed by reference.
+     */
+    private function jet_collect_fields($meta_fields, &$out) {
+        if (!is_array($meta_fields)) {
+            return;
+        }
+        foreach ($meta_fields as $field) {
+            $field = (array) $field;
+            $name  = isset($field['name']) ? trim((string) $field['name']) : '';
+            if ($name === '') {
+                continue;
+            }
+            $type = isset($field['type']) ? (string) $field['type'] : 'text';
+            $out[$name] = $type;
+        }
+    }
+
+    /**
+     * Map of JetEngine custom fields registered for a post type: [ meta_key => type ].
+     * Reads both JetEngine-registered CPTs (jet_post_types) and standalone meta boxes
+     * (jet_engine_meta_boxes). Cached per request. Returns [] when JetEngine is inactive.
+     *
+     * @param string $post_type
+     * @return array
+     */
+    private function get_jetengine_fields($post_type) {
+        static $cache = [];
+        if (isset($cache[$post_type])) {
+            return $cache[$post_type];
+        }
+
+        $fields = [];
+        if (!$this->is_jetengine_active() || $post_type === '') {
+            return $cache[$post_type] = $fields;
+        }
+
+        // 1) Custom post types registered through JetEngine.
+        $cpts = $this->jet_maybe_decode(get_option('jet_post_types', []));
+        foreach ($cpts as $cpt) {
+            $cpt  = (array) $cpt;
+            $slug = isset($cpt['slug']) ? $cpt['slug'] : (isset($cpt['args']['slug']) ? $cpt['args']['slug'] : '');
+            if ($slug !== $post_type) {
+                continue;
+            }
+            $this->jet_collect_fields(isset($cpt['meta_fields']) ? $cpt['meta_fields'] : [], $fields);
+        }
+
+        // 2) Standalone JetEngine meta boxes attached to this post type.
+        $boxes = $this->jet_maybe_decode(get_option('jet_engine_meta_boxes', []));
+        foreach ($boxes as $box) {
+            $box  = (array) $box;
+            $args = isset($box['args']) ? (array) $box['args'] : [];
+            $allowed = [];
+            if (isset($args['allowed_post_type'])) {
+                $allowed = (array) $args['allowed_post_type'];
+            } elseif (isset($args['post_type'])) {
+                $allowed = (array) $args['post_type'];
+            }
+            if (!in_array($post_type, $allowed, true)) {
+                continue;
+            }
+            $this->jet_collect_fields(isset($box['meta_fields']) ? $box['meta_fields'] : [], $fields);
+        }
+
+        return $cache[$post_type] = $fields;
+    }
+
+    /**
+     * Meta keys of JetEngine text-type fields (text / textarea / wysiwyg / html) for
+     * a post type — the fields whose values should be translated.
+     *
+     * @param string $post_type
+     * @return string[]
+     */
+    private function get_jetengine_text_meta_keys($post_type) {
+        $text_types = ['text', 'textarea', 'wysiwyg', 'html'];
+        $keys = [];
+        foreach ($this->get_jetengine_fields($post_type) as $key => $type) {
+            if (in_array($type, $text_types, true)) {
+                $keys[] = $key;
+            }
+        }
+        return $keys;
+    }
+
+    /**
+     * Copy every JetEngine custom field value from the source post to the translation,
+     * verbatim. Ensures non-text fields (media, dates, numbers, relations) are present
+     * on the translation; text fields are translated afterwards by the caller. No-op
+     * when JetEngine is inactive or the post type has no JetEngine fields.
+     *
+     * @param int $original_id
+     * @param int $target_id
+     */
+    private function copy_jetengine_meta($original_id, $target_id) {
+        $fields = $this->get_jetengine_fields(get_post_type($original_id));
+        if (empty($fields)) {
+            return;
+        }
+        $copied = 0;
+        foreach ($fields as $key => $type) {
+            $val = get_post_meta($original_id, $key, true);
+            if ($val === '' || $val === null) {
+                continue;
+            }
+            update_post_meta($target_id, $key, $val);
+            $copied++;
+        }
+        if ($copied > 0 && class_exists('AITRFOEL_Logger')) {
+            AITRFOEL_Logger::log(
+                sprintf('Copied %d JetEngine field value(s) for post %d → %d', $copied, $original_id, $target_id),
+                'info', $original_id, $target_id
+            );
+        }
+    }
+
+    /**
+     * Whether a meta key should be skipped when copying custom fields to a
+     * translation. Excludes WordPress internals, our own tracking meta, Elementor
+     * data (the translation has its own translated copy), and SEO/featured-image
+     * keys that are handled explicitly elsewhere in translate_post_meta_fields().
+     *
+     * @param string $key
+     * @return bool
+     */
+    private function is_meta_copy_excluded($key) {
+        if (!is_string($key) || $key === '') {
+            return true;
+        }
+        // Internal / separately-handled keys, by prefix.
+        $blocked_prefixes = [
+            '_elementor', '_aitrfoel', '_edit_', '_wp_old', '_wp_page_template',
+            '_yoast_wpseo', '_seopress', '_oembed_', '_wp_trash', '_menu_item', '_pingme',
+            '_encloseme', '_thumbnail_id',
+        ];
+        $excluded = false;
+        foreach ($blocked_prefixes as $bp) {
+            if (strpos($key, $bp) === 0) {
+                $excluded = true;
+                break;
+            }
+        }
+        // SEO (Rank Math) is translated separately.
+        if (!$excluded && strpos($key, 'rank_math') === 0) {
+            $excluded = true;
+        }
+        /**
+         * Filter whether a meta key is excluded from being copied to a translation.
+         * Return true to skip a key, or false to force-copy one that is excluded by
+         * default.
+         *
+         * @param bool   $excluded
+         * @param string $key
+         */
+        return (bool) apply_filters('aitrfoel_exclude_meta_from_copy', $excluded, $key);
+    }
+
+    /**
+     * Copy every (non-excluded) custom-field value from the source post to the
+     * translation, verbatim. Generic across JetEngine, ACF, Meta Box, Pods and plain
+     * custom fields — ensures galleries, media, dates, numbers, relations and
+     * repeaters are present on the translation. Text fields are translated afterwards
+     * by the caller. Internal/handled keys (Elementor data, SEO, thumbnails, our
+     * tracking meta) are skipped.
+     *
+     * @param int $original_id
+     * @param int $target_id
+     */
+    private function copy_all_custom_meta($original_id, $target_id) {
+        if (!get_option('aitrfoel_copy_custom_media_fields', true)) {
+            return;
+        }
+        $all = get_post_meta($original_id);
+        if (!is_array($all) || empty($all)) {
+            return;
+        }
+        $copied = 0;
+        foreach ($all as $key => $values) {
+            if ($this->is_meta_copy_excluded($key) || !is_array($values)) {
+                continue;
+            }
+            // Protected (underscore) keys:
+            // Allow:
+            // 1. ACF field references (values starting with 'field_')
+            // 2. Any media, gallery, image, photo, attachment, slider, or portfolio field
+            // 3. Custom plugin/theme metadata (e.g. JetEngine, Meta Box, Pods, theme metaboxes)
+            if ($key[0] === '_') {
+                $first = isset($values[0]) ? $values[0] : '';
+                $is_acf = (is_string($first) && strpos($first, 'field_') === 0);
+                $is_media_or_gallery = (
+                    stripos($key, 'gallery') !== false ||
+                    stripos($key, 'image') !== false ||
+                    stripos($key, 'media') !== false ||
+                    stripos($key, 'photo') !== false ||
+                    stripos($key, 'slide') !== false ||
+                    stripos($key, 'attach') !== false ||
+                    stripos($key, 'thumb') !== false ||
+                    stripos($key, 'carousel') !== false ||
+                    stripos($key, 'picture') !== false ||
+                    stripos($key, 'portfolio') !== false ||
+                    stripos($key, 'banner') !== false ||
+                    stripos($key, 'case') !== false
+                );
+                $is_custom_plugin_meta = (
+                    strpos($key, '_wp_') === false &&
+                    strpos($key, '_edit_') === false &&
+                    strpos($key, '_elementor') === false &&
+                    strpos($key, '_aitrfoel') === false
+                );
+                if (!$is_acf && !$is_media_or_gallery && !$is_custom_plugin_meta) {
+                    continue;
+                }
+            }
+            // Replace any existing values for this key on the translation, then add
+            // each stored value (handles multi-value meta) in its original form.
+            delete_post_meta($target_id, $key);
+            foreach ($values as $raw) {
+                $value = maybe_unserialize($raw);
+                add_post_meta($target_id, $key, wp_slash($value));
+                $copied++;
+            }
+        }
+
+        // Also ensure _product_image_gallery (WooCommerce / Custom) is directly synchronized if present
+        $wc_gallery = get_post_meta($original_id, '_product_image_gallery', true);
+        if (!empty($wc_gallery)) {
+            update_post_meta($target_id, '_product_image_gallery', $wc_gallery);
+        }
+
+        // Copy page template if defined on source
+        $page_template = get_post_meta($original_id, '_wp_page_template', true);
+        if (!empty($page_template) && $page_template !== 'default') {
+            update_post_meta($target_id, '_wp_page_template', $page_template);
+        }
+
+        if ($copied > 0 && class_exists('AITRFOEL_Logger')) {
+            AITRFOEL_Logger::log(
+                sprintf('Copied %d custom field value(s) for post %d → %d', $copied, $original_id, $target_id),
+                'info', $original_id, $target_id
+            );
+        }
+    }
+
+    /**
+     * Meta keys of ACF text-type fields (text / textarea / wysiwyg) attached to a
+     * post, whose values should be translated. Returns [] when ACF is inactive.
+     *
+     * @param int $post_id
+     * @return string[]
+     */
+    private function get_acf_text_meta_keys($post_id) {
+        if (!function_exists('get_field_objects')) {
+            return [];
+        }
+        $objects = get_field_objects($post_id, false, false);
+        if (!is_array($objects) || empty($objects)) {
+            return [];
+        }
+        $text_types = ['text', 'textarea', 'wysiwyg'];
+        $keys = [];
+        foreach ($objects as $name => $obj) {
+            $type = is_array($obj) && isset($obj['type']) ? $obj['type'] : '';
+            if (in_array($type, $text_types, true)) {
+                $keys[] = is_string($name) ? $name : (isset($obj['name']) ? $obj['name'] : '');
+            }
+        }
+        return array_values(array_filter($keys));
+    }
+
+    /**
+     * Remap relational custom fields (ACF relationship / post_object / page_link, and
+     * any plain meta whose value is a post ID) on the translation so they point at the
+     * target-language translations of the referenced posts instead of the source ones.
+     * No-op when no multilingual backend or no relational fields are found.
+     *
+     * @param int    $original_id
+     * @param int    $target_id
+     * @param string $target_lang
+     */
+    private function remap_relational_meta_fields($original_id, $target_id, $target_lang) {
+        $mm = class_exists('AITRFOEL_Multilingual_Manager') ? AITRFOEL_Multilingual_Manager::get_instance() : null;
+        if (!$mm || !method_exists($mm, 'get_post_translations')) {
+            return;
+        }
+
+        // Collect relational ACF field meta keys (if ACF is present).
+        $relational_keys = [];
+        if (function_exists('get_field_objects')) {
+            $objects = get_field_objects($original_id, false, false);
+            if (is_array($objects)) {
+                $relational_types = ['relationship', 'post_object', 'page_link'];
+                foreach ($objects as $name => $obj) {
+                    $type = is_array($obj) && isset($obj['type']) ? $obj['type'] : '';
+                    if (in_array($type, $relational_types, true)) {
+                        $relational_keys[] = is_string($name) ? $name : (isset($obj['name']) ? $obj['name'] : '');
+                    }
+                }
+            }
+        }
+
+        /**
+         * Filter the meta keys treated as post-ID references to remap to translations.
+         * Useful for JetEngine relation fields, Meta Box post fields, or plain ID meta.
+         *
+         * @param string[] $relational_keys
+         * @param int      $original_id
+         * @param string   $target_lang
+         */
+        $relational_keys = apply_filters('aitrfoel_relational_meta_keys', $relational_keys, $original_id, $target_lang);
+        $relational_keys = array_values(array_unique(array_filter((array) $relational_keys)));
+        if (empty($relational_keys)) {
+            return;
+        }
+
+        $remapped = 0;
+        foreach ($relational_keys as $key) {
+            if (!is_string($key) || $key === '') {
+                continue;
+            }
+            $value = get_post_meta($target_id, $key, true); // copied source value
+            $new   = $this->remap_relational_value($value, $target_lang, $mm, $changed);
+            if (!empty($changed)) {
+                update_post_meta($target_id, $key, $new);
+                $remapped++;
+            }
+        }
+
+        if ($remapped > 0 && class_exists('AITRFOEL_Logger')) {
+            AITRFOEL_Logger::log(
+                sprintf('Remapped %d relational field(s) to %s translations for post %d', $remapped, $target_lang, $target_id),
+                'info', $original_id, $target_id
+            );
+        }
+    }
+
+    /**
+     * Remap a relational field value (scalar ID or array of IDs) to the target-language
+     * translations. Sets $changed by reference. Non-ID values (e.g. page_link URLs) are
+     * returned unchanged.
+     *
+     * @param mixed                          $value
+     * @param string                         $target_lang
+     * @param AITRFOEL_Multilingual_Manager  $mm
+     * @param bool|null                      $changed
+     * @return mixed
+     */
+    private function remap_relational_value($value, $target_lang, $mm, &$changed = false) {
+        $changed = false;
+        if (is_array($value)) {
+            $out = [];
+            foreach ($value as $item) {
+                $out[] = $this->remap_single_post_id($item, $target_lang, $mm, $changed);
+            }
+            return $out;
+        }
+        return $this->remap_single_post_id($value, $target_lang, $mm, $changed);
+    }
+
+    /**
+     * If $id is a post ID with a translation in $target_lang, return the translation's
+     * ID (as the same scalar type), flipping $changed to true; otherwise return $id.
+     *
+     * @param mixed                         $id
+     * @param string                        $target_lang
+     * @param AITRFOEL_Multilingual_Manager $mm
+     * @param bool                          $changed
+     * @return mixed
+     */
+    private function remap_single_post_id($id, $target_lang, $mm, &$changed) {
+        if (!is_numeric($id) || (int) $id <= 0) {
+            return $id;
+        }
+        $translations = $mm->get_post_translations((int) $id);
+        if (is_array($translations) && isset($translations[$target_lang])) {
+            $translated = (int) $translations[$target_lang];
+            if ($translated > 0 && $translated !== (int) $id) {
+                $changed = true;
+                return is_string($id) ? (string) $translated : $translated;
+            }
+        }
+        return $id;
+    }
+
+    /**
+     * Heuristically detect custom-field meta keys whose values are human-readable
+     * text worth translating, by inspecting the source post's actual meta. Used as a
+     * fallback when field-framework definitions can't be read. Conservative: only
+     * multi-word, non-token, non-URL, non-serialized, non-numeric string values
+     * qualify, so slugs, CSS classes (e.g. "jet-engine-cpt-1"), IDs, dates, colors
+     * and option keys are left alone.
+     *
+     * @param int $post_id
+     * @return string[]
+     */
+    private function get_heuristic_text_meta_keys($post_id) {
+        $all = get_post_meta($post_id);
+        if (!is_array($all) || empty($all)) {
+            return [];
+        }
+        $keys = [];
+        foreach ($all as $key => $values) {
+            if (!is_string($key) || $key === '' || $key[0] === '_') {
+                continue; // private/internal keys are not user content
+            }
+            if ($this->is_meta_copy_excluded($key)) {
+                continue;
+            }
+            $raw = isset($values[0]) ? $values[0] : '';
+            if ($this->is_probably_translatable_text($raw)) {
+                $keys[] = $key;
+            }
+        }
+        return $keys;
+    }
+
+    /**
+     * Whether a meta value looks like translatable human text (multi-word prose),
+     * as opposed to a slug, id, class name, URL, email, number, date, color or
+     * serialized structure.
+     *
+     * @param mixed $value
+     * @return bool
+     */
+    private function is_probably_translatable_text($value) {
+        if (!is_string($value)) {
+            return false;
+        }
+        $t = trim($value);
+        if (strlen($t) < 3) {
+            return false;
+        }
+        if (is_numeric($t) || is_serialized($value)) {
+            return false;
+        }
+        // JSON object/array.
+        if (($t[0] === '{' || $t[0] === '[') && json_decode($t) !== null) {
+            return false;
+        }
+        // URL or email.
+        if (stripos($t, 'http://') === 0 || stripos($t, 'https://') === 0 || strpos($t, '://') !== false) {
+            return false;
+        }
+        if (is_email($t)) {
+            return false;
+        }
+        // Must contain a letter.
+        if (!preg_match('/[A-Za-z\x80-\xff]/', $t)) {
+            return false;
+        }
+        // Require multiple words (a space between word characters). Single tokens —
+        // slugs, classes, enums, hex colors, ids — are skipped. Strip tags first so
+        // wysiwyg/HTML still counts its inner words.
+        $plain = trim(wp_strip_all_tags($t));
+        if (strpos($plain, ' ') === false) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Translatable custom-field text values for a post (JetEngine + ACF + heuristic),
+     * after the translatable-keys filter. Public so the word-count estimator can include
+     * custom-field text in quota calculations.
+     *
+     * @param int $post_id
+     * @return string[]
+     */
+    public function get_translatable_meta_texts($post_id) {
+        return array_values($this->get_translatable_meta_map($post_id));
+    }
+
+    /**
+     * Translatable custom-field text for a post as [ meta_key => value ]. Used by the
+     * review editor to present custom fields as editable segments, and by the word
+     * estimator. Covers JetEngine + ACF + heuristic detection, after the filter.
+     *
+     * @param int $post_id
+     * @return array<string,string>
+     */
+    public function get_translatable_meta_map($post_id) {
+        $keys = array_values(array_unique(array_merge(
+            $this->get_jetengine_text_meta_keys(get_post_type($post_id)),
+            $this->get_acf_text_meta_keys($post_id),
+            $this->get_heuristic_text_meta_keys($post_id)
+        )));
+        $keys = apply_filters('aitrfoel_translatable_meta_keys', $keys, $post_id, 0, '');
+        if (!is_array($keys)) {
+            return [];
+        }
+        $map = [];
+        foreach ($keys as $key) {
+            if (!is_string($key) || $key === '') {
+                continue;
+            }
+            $val = get_post_meta($post_id, $key, true);
+            if (is_string($val) && trim($val) !== '') {
+                $map[$key] = $val;
+            }
+        }
+        return $map;
+    }
+
     private function translate_post_meta_fields($original_id, $target_id, $target_lang, $source_lang = 'auto') {
+        // Copy all custom-field values (galleries, media, dates, numbers, relations,
+        // repeaters and text) from the source to the translation first, so nothing is
+        // missing on the translation. This covers JetEngine, ACF, Meta Box, Pods and
+        // plain custom fields generically. Text-type fields are overwritten with their
+        // translations further down. Internal/handled keys are excluded.
+        $this->copy_all_custom_meta($original_id, $target_id);
+
         // Keep featured image in sync for translated posts/pages/products.
         $thumbnail_id = get_post_thumbnail_id($original_id);
         if ($thumbnail_id) {
             set_post_thumbnail($target_id, (int) $thumbnail_id);
+            update_post_meta($target_id, '_thumbnail_id', (int) $thumbnail_id);
         } else {
             delete_post_thumbnail($target_id);
         }
+
+        // Remap media attachments if duplicate media attachments is enabled
+        $this->remap_post_media_attachments($target_id, $original_id, $target_lang, $source_lang);
 
         $seo_translate_keys = [];
 
@@ -4085,13 +5794,54 @@ class AITRFOEL_Translation_Engine {
             }
         }
 
+        // SEOPress
+        if ($seo_enabled && (defined('SEOPRESS_VERSION') || function_exists('seopress_init'))) {
+            $seo_translate_keys[] = '_seopress_titles_title';
+            $seo_translate_keys[] = '_seopress_titles_desc';
+
+            if ($seo_og_enabled) {
+                $seo_translate_keys[] = '_seopress_social_og_title';
+                $seo_translate_keys[] = '_seopress_social_og_desc';
+            }
+            if ($seo_twitter_enabled) {
+                $seo_translate_keys[] = '_seopress_social_twitter_title';
+                $seo_translate_keys[] = '_seopress_social_twitter_desc';
+            }
+        }
+
+        // SureRank (stores each field as its own surerank_settings_* meta key)
+        if ($seo_enabled && (defined('SURERANK_VERSION') || defined('SURERANK_FILE'))) {
+            $seo_translate_keys[] = 'surerank_settings_page_title';
+            $seo_translate_keys[] = 'surerank_settings_page_description';
+
+            if ($seo_og_enabled) {
+                $seo_translate_keys[] = 'surerank_settings_facebook_title';
+                $seo_translate_keys[] = 'surerank_settings_facebook_description';
+            }
+            if ($seo_twitter_enabled) {
+                $seo_translate_keys[] = 'surerank_settings_twitter_title';
+                $seo_translate_keys[] = 'surerank_settings_twitter_description';
+            }
+            // Focus keyword: copied verbatim like Yoast / Rank Math (done by the generic
+            // meta copy, since surerank_settings_* keys are not excluded from it).
+        }
+
         // Collect non-empty values for batch translation
         $to_translate = [];
         foreach ($seo_translate_keys as $key) {
             $val = get_post_meta($original_id, $key, true);
-            if (!empty($val)) {
-                $to_translate[$key] = $val;
+            if (!is_string($val) || trim($val) === '') {
+                continue;
             }
+            // Skip values made only of SEO variables (e.g. "%title% - %site_name%",
+            // "%%title%% %%sep%%", "{post_title}"): nothing to translate, and the
+            // plugin resolves them per page anyway.
+            $letters = preg_replace('/%%?[a-z0-9_\-]+%%?|\{[a-z0-9_\-]+\}/iu', '', $val);
+            $letters = is_string($letters) ? preg_replace('/[\s\p{P}\p{S}]+/u', '', $letters) : '';
+            if ($letters === '' || $letters === null) {
+                continue;
+            }
+            $to_translate[$key] = $val;
         }
 
         // Translate post excerpt (also serves as WooCommerce short description).
@@ -4112,6 +5862,44 @@ class AITRFOEL_Translation_Engine {
             }
         }
 
+        // Custom-field text: many CPTs store their real content in text/textarea/
+        // wysiwyg meta fields (rendered via JetEngine Listings, ACF blocks, dynamic
+        // tags), leaving post_content empty. Translate those text fields so the
+        // content — not just the title — gets translated. Non-text fields were copied
+        // verbatim above. Covers JetEngine and ACF field definitions.
+        $custom_text_keys = array_merge(
+            $this->get_jetengine_text_meta_keys(get_post_type($original_id)),
+            $this->get_acf_text_meta_keys($original_id),
+            // Heuristic fallback: detect human-readable text in any custom field even
+            // when the framework's field definitions can't be read. Covers JetEngine
+            // setups where the meta-box config isn't in the expected option, plus Pods,
+            // Meta Box, and plain custom fields.
+            $this->get_heuristic_text_meta_keys($original_id)
+        );
+        $custom_text_keys = array_values(array_unique($custom_text_keys));
+        /**
+         * Filter which custom-field meta keys are translated for a post. Add keys the
+         * auto-detection missed, or remove keys that should stay in the source language.
+         *
+         * @param string[] $custom_text_keys
+         * @param int      $original_id
+         * @param int      $target_id
+         * @param string   $target_lang
+         */
+        $custom_text_keys = apply_filters('aitrfoel_translatable_meta_keys', $custom_text_keys, $original_id, $target_id, $target_lang);
+        if (!is_array($custom_text_keys)) {
+            $custom_text_keys = [];
+        }
+        foreach ($custom_text_keys as $custom_key) {
+            if (!is_string($custom_key) || $custom_key === '' || isset($to_translate[$custom_key])) {
+                continue;
+            }
+            $custom_val = get_post_meta($original_id, $custom_key, true);
+            if (is_string($custom_val) && trim($custom_val) !== '') {
+                $to_translate[$custom_key] = $custom_val;
+            }
+        }
+
         if (!empty($to_translate)) {
             $api = AITRFOEL_OpenAI_API::get_instance();
             $texts = array_values($to_translate);
@@ -4120,24 +5908,38 @@ class AITRFOEL_Translation_Engine {
             $translated = $api->translate_batch($texts, $target_lang, $source_lang);
 
             if (!is_wp_error($translated) && is_array($translated)) {
-                foreach ($translated as $i => $translated_text) {
-                    if (!isset($keys[$i]) || is_wp_error($translated_text)) {
+                // translate_batch() returns an associative map [ original_text => translation ],
+                // NOT a positional array — so look up each field's translation by its source
+                // value, not by index. (A positional lookup silently writes nothing.)
+                $written = [];
+                foreach ($keys as $idx => $key) {
+                    $original = isset($texts[$idx]) ? $texts[$idx] : null;
+                    if ($original === null || !isset($translated[$original])) {
                         continue;
                     }
-                    $key = $keys[$i];
+                    $translated_text = $translated[$original];
+                    if (is_wp_error($translated_text) || $translated_text === '' || $translated_text === null) {
+                        continue;
+                    }
                     if ($key === '__excerpt__') {
                         wp_update_post(['ID' => $target_id, 'post_excerpt' => $translated_text]);
                     } else {
                         update_post_meta($target_id, $key, $translated_text);
                     }
+                    $written[] = $key;
                 }
 
                 AITRFOEL_Logger::log(
-                    sprintf('Translated %d SEO/meta fields for post %d → %d (%s)', count($translated), $original_id, $target_id, $target_lang),
+                    sprintf('Translated %d SEO/meta field(s) for post %d → %d (%s): %s', count($written), $original_id, $target_id, $target_lang, implode(', ', $written)),
                     'info', $original_id, $target_id
                 );
             }
         }
+
+        // ACF (and similar) relational fields store post IDs pointing at the source-
+        // language items. Remap them to the target-language translation so e.g. a
+        // "related projects" field links to translated posts instead of the originals.
+        $this->remap_relational_meta_fields($original_id, $target_id, $target_lang);
 
         // WooCommerce: copy non-translatable product meta
         if (get_post_type($original_id) === 'product' && get_option('aitrfoel_woocommerce_support', true)) {
@@ -4312,6 +6114,93 @@ class AITRFOEL_Translation_Engine {
     }
 
     /**
+     * Synchronize Elementor template taxonomies, metadata, and compile CSS for translated templates.
+     * Ensures translated templates stay categorized under Saved Templates (container, section, page)
+     * and do not get misplaced into Theme Builder or lose styling.
+     *
+     * @param int $original_page_id Source template post ID.
+     * @param int $target_page_id   Translated template post ID.
+     */
+    public function sync_elementor_template_meta_and_taxonomies($original_page_id, $target_page_id) {
+        $post_type = get_post_type($original_page_id);
+        if ($post_type !== 'elementor_library') {
+            return;
+        }
+
+        // 1. Copy & synchronize elementor_library_type taxonomy terms
+        $types = wp_get_object_terms($original_page_id, 'elementor_library_type', ['fields' => 'slugs']);
+        if (!empty($types) && !is_wp_error($types)) {
+            wp_set_object_terms($target_page_id, $types, 'elementor_library_type');
+        } else {
+            // Fallback to _elementor_template_type post meta if taxonomy terms were not set on source
+            $source_type = get_post_meta($original_page_id, '_elementor_template_type', true);
+            if (!empty($source_type)) {
+                wp_set_object_terms($target_page_id, (string) $source_type, 'elementor_library_type');
+            }
+        }
+
+        // 2. Copy & synchronize elementor_library_category taxonomy terms
+        $cats = wp_get_object_terms($original_page_id, 'elementor_library_category', ['fields' => 'slugs']);
+        if (!empty($cats) && !is_wp_error($cats)) {
+            wp_set_object_terms($target_page_id, $cats, 'elementor_library_category');
+        }
+
+        // 3. Synchronize all Elementor template meta fields
+        $elementor_meta_keys = [
+            '_elementor_template_type',
+            '_elementor_template_sub_type',
+            '_elementor_version',
+            '_elementor_pro_version',
+            '_elementor_page_settings',
+            '_elementor_controls_usage',
+            '_elementor_page_assets',
+            '_elementor_screenshot',
+        ];
+
+        foreach ($elementor_meta_keys as $meta_key) {
+            $meta_value = get_post_meta($original_page_id, $meta_key, true);
+            if ($meta_value !== '') {
+                // Strip display conditions from _elementor_page_settings for translated templates.
+                if ($meta_key === '_elementor_page_settings' && is_array($meta_value)) {
+                    unset($meta_value['conditions']);
+                }
+                update_post_meta($target_page_id, $meta_key, $meta_value);
+            }
+        }
+
+        update_post_meta($target_page_id, '_elementor_edit_mode', 'builder');
+
+        // Translated templates must never inherit display conditions
+        delete_post_meta($target_page_id, '_elementor_conditions');
+
+        // 4. Invalidate and compile Elementor CSS stylesheet for translated template
+        delete_post_meta($target_page_id, '_elementor_css');
+        clean_post_cache($target_page_id);
+
+        if (class_exists('\Elementor\Core\Files\CSS\Post')) {
+            try {
+                $css_file = \Elementor\Core\Files\CSS\Post::create($target_page_id);
+                if ($css_file) {
+                    $css_file->update();
+                }
+            } catch (\Throwable $e) {
+                // Graceful fallback
+            }
+        }
+
+        if (class_exists('\Elementor\Plugin')) {
+            \Elementor\Plugin::$instance->files_manager->clear_cache();
+        }
+
+        AITRFOEL_Logger::log(
+            sprintf('Synchronized Elementor template taxonomies & CSS for #%d -> #%d', $original_page_id, $target_page_id),
+            'info',
+            $original_page_id,
+            $target_page_id
+        );
+    }
+
+    /**
      * Translate and assign regular post categories and tags.
      * Called for non-WooCommerce posts during translation.
      *
@@ -4324,6 +6213,12 @@ class AITRFOEL_Translation_Engine {
 
         // Skip WooCommerce products (handled by translate_product_taxonomies)
         if ($post_type === 'product') {
+            return;
+        }
+
+        // Elementor library templates require internal taxonomy synchronization
+        if ($post_type === 'elementor_library') {
+            $this->sync_elementor_template_meta_and_taxonomies($original_id, $translated_id);
             return;
         }
 
@@ -4368,6 +6263,7 @@ class AITRFOEL_Translation_Engine {
 
         $api = AITRFOEL_OpenAI_API::get_instance();
         $translated_attributes = [];
+        $translated_options = [];
         $texts_to_translate = [];
         $text_keys = []; // Track which attribute+field each text belongs to
 
@@ -4412,32 +6308,64 @@ class AITRFOEL_Translation_Engine {
                     $translated_attributes[$attr_key]['value'] = implode(' | ', $slugs);
                 }
             } else {
-                // Custom (local) attribute — translate the name and pipe-delimited values
+                // Custom (local) attribute — translate the name and each pipe-delimited
+                // option separately, so the option list keeps its "|" structure and every
+                // option has a known translation that variations can be mapped to.
                 if (!empty($attr_data['name'])) {
                     $texts_to_translate[] = $attr_data['name'];
                     $text_keys[] = ['attr' => $attr_key, 'field' => 'name'];
                 }
                 if (!empty($attr_data['value'])) {
-                    $texts_to_translate[] = $attr_data['value'];
-                    $text_keys[] = ['attr' => $attr_key, 'field' => 'value'];
+                    $options = array_values(array_filter(array_map('trim', explode('|', (string) $attr_data['value'])), 'strlen'));
+                    foreach ($options as $opt_index => $option) {
+                        $texts_to_translate[] = $option;
+                        $text_keys[] = ['attr' => $attr_key, 'field' => 'option', 'index' => $opt_index];
+                    }
+                    $translated_options[$attr_key] = ['source' => $options, 'translated' => $options];
                 }
             }
         }
 
-        // Batch-translate custom attribute names and values
+        // Batch-translate custom attribute names and options
         if (!empty($texts_to_translate)) {
             $translated_texts = $api->translate_batch($texts_to_translate, $target_lang, $source_lang);
             if (!is_wp_error($translated_texts) && is_array($translated_texts)) {
                 foreach ($translated_texts as $i => $translated_text) {
-                    if (!isset($text_keys[$i]) || is_wp_error($translated_text)) {
+                    if (!isset($text_keys[$i]) || is_wp_error($translated_text) || !is_string($translated_text)) {
+                        continue;
+                    }
+                    // "|" is WooCommerce's option separator; it must not appear inside one.
+                    $translated_text = trim(str_replace('|', '/', $translated_text));
+                    if ($translated_text === '') {
                         continue;
                     }
                     $attr = $text_keys[$i]['attr'];
-                    $field = $text_keys[$i]['field'];
-                    $translated_attributes[$attr][$field] = $translated_text;
+                    if ($text_keys[$i]['field'] === 'option') {
+                        $translated_options[$attr]['translated'][$text_keys[$i]['index']] = $translated_text;
+                    } else {
+                        $translated_attributes[$attr]['name'] = $translated_text;
+                    }
                 }
             }
         }
+
+        // Rebuild option lists and remember how variation meta must follow the rename:
+        // WooCommerce links a variation to a custom attribute by the meta key
+        // "attribute_" . sanitize_title(name) and by the exact option text.
+        $variation_map = [];
+        foreach ($translated_options as $attr_key => $opts) {
+            $translated_attributes[$attr_key]['value'] = implode(' | ', $opts['translated']);
+            if (empty($attributes[$attr_key]['is_variation'])) {
+                continue;
+            }
+            $orig_name = isset($attributes[$attr_key]['name']) ? (string) $attributes[$attr_key]['name'] : (string) $attr_key;
+            $new_name  = isset($translated_attributes[$attr_key]['name']) ? (string) $translated_attributes[$attr_key]['name'] : $orig_name;
+            $variation_map['attribute_' . sanitize_title($orig_name)] = [
+                'key'    => 'attribute_' . sanitize_title($new_name),
+                'values' => array_combine($opts['source'], $opts['translated']),
+            ];
+        }
+        $this->wc_custom_attribute_maps[(int) $translated_id] = $variation_map;
 
         update_post_meta($translated_id, '_product_attributes', $translated_attributes);
 
@@ -4524,6 +6452,8 @@ class AITRFOEL_Translation_Engine {
             }
         }
 
+        $custom_attr_map = isset($this->wc_custom_attribute_maps[(int) $translated_id]) ? $this->wc_custom_attribute_maps[(int) $translated_id] : [];
+
         // Meta keys to copy directly (non-translatable variation data)
         $variation_copy_keys = [
             '_regular_price', '_sale_price', '_price', '_sku',
@@ -4562,6 +6492,30 @@ class AITRFOEL_Translation_Engine {
                 if (strpos($meta_key, 'attribute_') === 0) {
                     $attr_value = $meta_values[0];
                     $taxonomy = str_replace('attribute_', '', $meta_key);
+
+                    // Custom attribute renamed/translated on the parent: follow it, or
+                    // WooCommerce can no longer match this variation.
+                    if (isset($custom_attr_map[$meta_key])) {
+                        $map = $custom_attr_map[$meta_key];
+                        if ($attr_value !== '' && $attr_value !== null) {
+                            $mapped = null;
+                            foreach ($map['values'] as $src_opt => $dst_opt) {
+                                if ((string) $src_opt === (string) $attr_value) {
+                                    $mapped = $dst_opt;
+                                    break;
+                                }
+                                if (sanitize_title((string) $src_opt) === (string) $attr_value) {
+                                    $mapped = sanitize_title($dst_opt); // older stores keep the slug
+                                    break;
+                                }
+                            }
+                            if ($mapped !== null) {
+                                $attr_value = $mapped;
+                            }
+                        }
+                        update_post_meta($new_variation_id, $map['key'], $attr_value);
+                        continue;
+                    }
 
                     // For taxonomy attributes, try to find translated term slug
                     if (taxonomy_exists($taxonomy) && !empty($attr_value)) {
@@ -4730,6 +6684,287 @@ class AITRFOEL_Translation_Engine {
     }
 
     /**
+     * Localize a media attachment by creating a linked attachment record in the
+     * WordPress database for the target language (sharing the same physical file on disk).
+     *
+     * @param int    $source_attachment_id
+     * @param string $target_lang
+     * @param string $source_lang
+     * @return int Localized attachment ID (or original ID on failure)
+     */
+    public function localize_attachment($source_attachment_id, $target_lang, $source_lang = 'auto') {
+        $source_attachment_id = (int) $source_attachment_id;
+        if ($source_attachment_id <= 0) {
+            return 0;
+        }
+
+        // 1. Check if a localized attachment already exists
+        $existing = get_posts([
+            'post_type'        => 'attachment',
+            'post_status'      => 'inherit',
+            'meta_key'         => '_aitrfoel_source_attachment',
+            'meta_value'       => (string) $source_attachment_id,
+            'posts_per_page'   => -1,
+            'suppress_filters' => true, // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.SuppressFilters_suppress_filters -- intentional: Polylang/WPML query filters would hide posts in other languages, which the translator must see
+        ]);
+
+        if (!empty($existing)) {
+            $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
+            foreach ($existing as $p) {
+                $lang = $multilingual->get_post_language($p->ID);
+                if ($lang === $target_lang) {
+                    return (int) $p->ID;
+                }
+                $saved_target = get_post_meta($p->ID, '_aitrfoel_attachment_target_lang', true);
+                if ($saved_target === $target_lang) {
+                    return (int) $p->ID;
+                }
+            }
+        }
+
+        // 2. Fetch original attachment post
+        $src_post = get_post($source_attachment_id);
+        if (!$src_post || $src_post->post_type !== 'attachment') {
+            return $source_attachment_id;
+        }
+
+        // 3. Prepare translatable text (Title, Caption, Description, Alt text)
+        $orig_title = $src_post->post_title;
+        $orig_caption = $src_post->post_excerpt;
+        $orig_desc = $src_post->post_content;
+        $orig_alt = get_post_meta($source_attachment_id, '_wp_attachment_image_alt', true);
+
+        $translatable = [];
+        $keys = [];
+        if (!empty(trim($orig_title))) {
+            $translatable[] = $orig_title;
+            $keys[] = 'title';
+        }
+        if (!empty(trim($orig_caption))) {
+            $translatable[] = $orig_caption;
+            $keys[] = 'caption';
+        }
+        if (!empty(trim($orig_desc))) {
+            $translatable[] = $orig_desc;
+            $keys[] = 'desc';
+        }
+        if (!empty(trim($orig_alt))) {
+            $translatable[] = $orig_alt;
+            $keys[] = 'alt';
+        }
+
+        $trans_map = [
+            'title'   => $orig_title,
+            'caption' => $orig_caption,
+            'desc'    => $orig_desc,
+            'alt'     => $orig_alt,
+        ];
+
+        if (!empty($translatable)) {
+            $api = AITRFOEL_OpenAI_API::get_instance();
+            $results = $api->translate_batch($translatable, $target_lang, $source_lang);
+            if (is_array($results) && !is_wp_error($results)) {
+                foreach ($keys as $idx => $k) {
+                    if (isset($results[$idx]) && !is_wp_error($results[$idx])) {
+                        $trans_map[$k] = $results[$idx];
+                    }
+                }
+            }
+        }
+
+        // 4. Create new attachment post referencing the exact same physical file
+        $target_attachment_id = wp_insert_post([
+            'post_title'     => $trans_map['title'],
+            'post_excerpt'   => $trans_map['caption'],
+            'post_content'   => $trans_map['desc'],
+            'post_status'    => 'inherit',
+            'post_type'      => 'attachment',
+            'post_mime_type' => $src_post->post_mime_type,
+            'guid'           => $src_post->guid,
+        ]);
+
+        if (is_wp_error($target_attachment_id) || !$target_attachment_id) {
+            return $source_attachment_id;
+        }
+
+        // 5. Copy attachment file path & thumbnail metadata from source
+        $attached_file = get_post_meta($source_attachment_id, '_wp_attached_file', true);
+        if (!empty($attached_file)) {
+            update_post_meta($target_attachment_id, '_wp_attached_file', $attached_file);
+        }
+
+        $attach_meta = get_post_meta($source_attachment_id, '_wp_attachment_metadata', true);
+        if (!empty($attach_meta)) {
+            update_post_meta($target_attachment_id, '_wp_attachment_metadata', $attach_meta);
+        }
+
+        if (!empty($trans_map['alt'])) {
+            update_post_meta($target_attachment_id, '_wp_attachment_image_alt', sanitize_text_field($trans_map['alt']));
+        }
+
+        // 6. Set tracking metadata
+        update_post_meta($target_attachment_id, '_aitrfoel_source_attachment', $source_attachment_id);
+        update_post_meta($target_attachment_id, '_aitrfoel_attachment_target_lang', $target_lang);
+        update_post_meta($target_attachment_id, '_aitrfoel_translated_from', $source_attachment_id . '_' . $target_lang);
+
+        // 7. Register language in Polylang / WPML / Built-in
+        $multilingual = AITRFOEL_Multilingual_Manager::get_instance();
+        $multilingual->set_post_language($target_attachment_id, $target_lang);
+        $multilingual->setup_translation_relationship($source_attachment_id, $target_attachment_id, $target_lang);
+
+        if (class_exists('AITRFOEL_Logger')) {
+            AITRFOEL_Logger::log(
+                sprintf('Localized media attachment %d → %d for [%s]', $source_attachment_id, $target_attachment_id, $target_lang),
+                'info', $source_attachment_id, $target_attachment_id
+            );
+        }
+
+        return (int) $target_attachment_id;
+    }
+
+    /**
+     * Remap all media attachments (featured image, galleries, ACF fields, JetEngine fields,
+     * and Elementor data) on a translated post to their localized attachment counterparts.
+     *
+     * @param int    $target_id
+     * @param int    $original_id
+     * @param string $target_lang
+     * @param string $source_lang
+     */
+    public function remap_post_media_attachments($target_id, $original_id, $target_lang, $source_lang = 'auto') {
+        if (!get_option('aitrfoel_duplicate_media_attachments', false)) {
+            return;
+        }
+
+        // 1. Remap featured image
+        $orig_thumb = get_post_thumbnail_id($original_id);
+        if ($orig_thumb) {
+            $new_thumb = $this->localize_attachment($orig_thumb, $target_lang, $source_lang);
+            if ($new_thumb && $new_thumb !== $orig_thumb) {
+                set_post_thumbnail($target_id, $new_thumb);
+                update_post_meta($target_id, '_thumbnail_id', $new_thumb);
+            }
+        }
+
+        // 2. Remap custom meta fields (galleries, ACF, JetEngine, WooCommerce)
+        $all_meta = get_post_meta($original_id);
+        if (is_array($all_meta)) {
+            foreach ($all_meta as $key => $values) {
+                if (empty($values) || !is_array($values)) continue;
+                
+                $is_media_field = (
+                    stripos($key, 'gallery') !== false ||
+                    stripos($key, 'image') !== false ||
+                    stripos($key, 'media') !== false ||
+                    stripos($key, 'photo') !== false ||
+                    stripos($key, 'slide') !== false ||
+                    stripos($key, 'picture') !== false ||
+                    $key === '_product_image_gallery'
+                );
+
+                if (!$is_media_field) continue;
+
+                foreach ($values as $raw) {
+                    $val = maybe_unserialize($raw);
+                    if (is_numeric($val) && (int)$val > 0) {
+                        $loc_id = $this->localize_attachment((int)$val, $target_lang, $source_lang);
+                        if ($loc_id) {
+                            update_post_meta($target_id, $key, $loc_id);
+                        }
+                    } elseif (is_array($val)) {
+                        $remapped = [];
+                        foreach ($val as $k => $item) {
+                            if (is_numeric($item) && (int)$item > 0) {
+                                $remapped[$k] = $this->localize_attachment((int)$item, $target_lang, $source_lang);
+                            } else {
+                                $remapped[$k] = $item;
+                            }
+                        }
+                        update_post_meta($target_id, $key, $remapped);
+                    } elseif (is_string($val) && strpos($val, ',') !== false) {
+                        $ids = array_map('trim', explode(',', $val));
+                        $all_num = true;
+                        foreach ($ids as $id_str) {
+                            if (!is_numeric($id_str)) { $all_num = false; break; }
+                        }
+                        if ($all_num && !empty($ids)) {
+                            $new_ids = [];
+                            foreach ($ids as $id_num) {
+                                $new_ids[] = $this->localize_attachment((int)$id_num, $target_lang, $source_lang);
+                            }
+                            update_post_meta($target_id, $key, implode(',', $new_ids));
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Remap attachment IDs inside Elementor data
+        $elementor_raw = get_post_meta($target_id, '_elementor_data', true);
+        if (!empty($elementor_raw)) {
+            $data = is_array($elementor_raw) ? $elementor_raw : json_decode($elementor_raw, true);
+            if (is_array($data)) {
+                $modified = false;
+                $this->remap_elementor_media_ids($data, $target_lang, $source_lang, $modified);
+                if ($modified) {
+                    update_post_meta($target_id, '_elementor_data', wp_slash(json_encode($data)));
+                }
+            }
+        }
+    }
+
+    /**
+     * Recursively remap media attachment IDs inside Elementor data structure
+     */
+    private function remap_elementor_media_ids(&$elements, $target_lang, $source_lang, &$modified) {
+        if (!is_array($elements)) {
+            return;
+        }
+
+        foreach ($elements as &$el) {
+            if (isset($el['settings']) && is_array($el['settings'])) {
+                // Check single image widget settings
+                if (isset($el['settings']['image']['id']) && is_numeric($el['settings']['image']['id']) && (int)$el['settings']['image']['id'] > 0) {
+                    $orig = (int) $el['settings']['image']['id'];
+                    $loc = $this->localize_attachment($orig, $target_lang, $source_lang);
+                    if ($loc && $loc !== $orig) {
+                        $el['settings']['image']['id'] = $loc;
+                        $modified = true;
+                    }
+                }
+
+                // Check gallery / wp_gallery widget settings
+                if (isset($el['settings']['wp_gallery']) && is_array($el['settings']['wp_gallery'])) {
+                    foreach ($el['settings']['wp_gallery'] as &$g_item) {
+                        if (isset($g_item['id']) && is_numeric($g_item['id']) && (int)$g_item['id'] > 0) {
+                            $orig = (int) $g_item['id'];
+                            $loc = $this->localize_attachment($orig, $target_lang, $source_lang);
+                            if ($loc && $loc !== $orig) {
+                                $g_item['id'] = $loc;
+                                $modified = true;
+                            }
+                        }
+                    }
+                }
+
+                // Check background image settings
+                if (isset($el['settings']['background_image']['id']) && is_numeric($el['settings']['background_image']['id']) && (int)$el['settings']['background_image']['id'] > 0) {
+                    $orig = (int) $el['settings']['background_image']['id'];
+                    $loc = $this->localize_attachment($orig, $target_lang, $source_lang);
+                    if ($loc && $loc !== $orig) {
+                        $el['settings']['background_image']['id'] = $loc;
+                        $modified = true;
+                    }
+                }
+            }
+
+            if (isset($el['elements']) && is_array($el['elements'])) {
+                $this->remap_elementor_media_ids($el['elements'], $target_lang, $source_lang, $modified);
+            }
+        }
+    }
+
+    /**
      * Post-creation processing for translated pages
      * Handles cache warming, HTML regeneration, and LiteSpeed optimizations
      *
@@ -4747,9 +6982,14 @@ class AITRFOEL_Translation_Engine {
                 
                 if ($document && !is_wp_error($document)) {
                     AITRFOEL_Logger::log("Regenerating Elementor HTML for page $page_id", 'info', $page_id);
-                    
-                    // Force save to regenerate HTML - this updates post_content
+
+                    // Force save to regenerate HTML - this updates post_content.
+                    // Buffer it: Elementor can print regenerated CSS (atomic container
+                    // variables, etc.) during save, which would otherwise leak into an
+                    // AJAX response and corrupt the JSON ("request failed").
+                    ob_start();
                     $document->save([]);
+                    ob_end_clean();
                     
                     // Alternative method for older Elementor versions
                     if (method_exists($document, 'get_main_post')) {

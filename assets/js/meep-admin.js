@@ -1,4 +1,4 @@
-﻿/* ============================================================================
+/* ============================================================================
    meep-admin.js — Phase B
    --------------------------------------------------------------------------
    Companion JS for meep-admin.css.
@@ -51,6 +51,9 @@
   //   - SVG icon (Lucide-style stroked, 16×16, viewBox 24 24)
   const SECTION_MAP = {
     'section-license':            { eyebrow: 'license',      icon: iconKey() },
+    'section-ai-engine':          { eyebrow: 'engine',       icon: iconBolt() },
+    'section-auto-sync':          { eyebrow: 'auto-sync',    icon: iconArrowSwap() },
+    'section-content-inventory':  { eyebrow: 'inventory',    icon: iconGrid() },
     'section-multilingual':       { eyebrow: 'multilingual', icon: iconGlobe() },
     'section-switcher':           { eyebrow: 'switcher',     icon: iconArrowSwap() },
     'section-menus-widgets':      { eyebrow: 'menus',        icon: iconList() },
@@ -59,6 +62,8 @@
     'section-page-creation':      { eyebrow: 'pages',        icon: iconDoc() },
     'section-seo':                { eyebrow: 'seo',          icon: iconSearch() },
     'section-woocommerce':        { eyebrow: 'commerce',     icon: iconCart() },
+    'section-strings':           { eyebrow: 'strings',      icon: iconList() },
+    'section-tools':              { eyebrow: 'tools',        icon: iconCog() },
     'section-exclude-words':      { eyebrow: 'exclude',      icon: iconEyeOff() },
     'section-glossary':           { eyebrow: 'glossary',     icon: iconBook() },
     'section-theme':              { eyebrow: 'theme',        icon: iconPalette() },
@@ -109,31 +114,71 @@
         const eyebrow = document.createElement('div');
         eyebrow.className = 'meep-section-eyebrow';
         eyebrow.textContent = '// ' + meta.eyebrow;
-        section.insertBefore(eyebrow, h3);
+        if (h3.parentNode) {
+          h3.parentNode.insertBefore(eyebrow, h3);
+        }
       }
     });
   }
 
   function upgradeSettingsNavPills() {
+    // 1) Handle sidebar links if present
     const nav = document.getElementById('aitrfoel-settings-nav');
-    if (!nav) return;
+    if (nav) {
+      const links = nav.querySelectorAll('a[href^="#"]');
+      links.forEach((link) => {
+        if (link.dataset.meepNavUpgraded === '1') return;
+        link.dataset.meepNavUpgraded = '1';
 
-    const links = nav.querySelectorAll('a[href^="#"]');
-    links.forEach((link) => {
-      if (link.dataset.meepNavUpgraded === '1') return;
-      link.dataset.meepNavUpgraded = '1';
+        const rawText = (link.textContent || '').replace(LEADING_EMOJI, '').trim();
+        link.textContent = rawText;
 
-      const rawText = (link.textContent || '').replace(LEADING_EMOJI, '').trim();
-      link.textContent = rawText;
+        const targetId = (link.getAttribute('href') || '').replace('#', '');
+        const meta = SECTION_MAP[targetId] || null;
+        if (meta) {
+          const iconWrap = document.createElement('span');
+          iconWrap.className = 'meep-settings-nav-icon';
+          iconWrap.setAttribute('aria-hidden', 'true');
+          iconWrap.innerHTML = meta.icon;
+          link.prepend(iconWrap);
+        }
+      });
+    }
 
-      const targetId = (link.getAttribute('href') || '').replace('#', '');
-      const meta = SECTION_MAP[targetId] || null;
-      if (meta) {
+    // 2) Handle top 6-tab navigation buttons (.aitrfoel-settings-tab-btn)
+    const tabBtns = document.querySelectorAll('.aitrfoel-settings-tab-btn');
+    const TAB_ICON_MAP = {
+      'tab-general':      iconKey(),
+      'tab-languages':    iconGlobe(),
+      'tab-components':   iconBolt(),
+      'tab-integrations': svg('<path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 01-12 0V8z"/>'),
+      'tab-glossary':     iconBook(),
+      'tab-advanced':     iconCog(),
+    };
+
+    tabBtns.forEach((btn) => {
+      if (btn.dataset.meepTabUpgraded === '1') return;
+      btn.dataset.meepTabUpgraded = '1';
+
+      if (btn.querySelector('svg')) {
+        return; // Already has crisp SVG from PHP template
+      }
+
+      const rawText = (btn.textContent || '').replace(LEADING_EMOJI, '').trim();
+      btn.textContent = rawText;
+
+      const tabKey = btn.dataset.tab || '';
+      const iconSvg = TAB_ICON_MAP[tabKey] || null;
+      if (iconSvg) {
         const iconWrap = document.createElement('span');
-        iconWrap.className = 'meep-settings-nav-icon';
+        iconWrap.className = 'meep-settings-tab-icon';
+        iconWrap.style.display = 'inline-flex';
+        iconWrap.style.alignItems = 'center';
+        iconWrap.style.marginRight = '7px';
+        iconWrap.style.verticalAlign = 'middle';
         iconWrap.setAttribute('aria-hidden', 'true');
-        iconWrap.innerHTML = meta.icon;
-        link.prepend(iconWrap);
+        iconWrap.innerHTML = iconSvg;
+        btn.prepend(iconWrap);
       }
     });
   }
@@ -178,6 +223,9 @@
     let brandText = (typeof meepAdmin !== 'undefined' && meepAdmin.pluginName)
       ? meepAdmin.pluginName
       : 'Meep AI Translator';
+    let logoSrc = (typeof meepAdmin !== 'undefined' && meepAdmin.logoUrl)
+      ? meepAdmin.logoUrl
+      : '';
     if (header) {
       const titleNode = header.querySelector('.aitrfoel-plugin-title');
       if (titleNode) {
@@ -186,13 +234,16 @@
 
       const logoNode = header.querySelector('img');
       if (logoNode && logoNode.src) {
-        const brandLogo = document.createElement('img');
-        brandLogo.className = 'meep-hero-brand-logo';
-        brandLogo.src = logoNode.src;
-        brandLogo.alt = '';
-        brandLogo.setAttribute('aria-hidden', 'true');
-        brand.appendChild(brandLogo);
+        logoSrc = logoNode.src;
       }
+    }
+    if (logoSrc) {
+      const brandLogo = document.createElement('img');
+      brandLogo.className = 'meep-hero-brand-logo';
+      brandLogo.src = logoSrc;
+      brandLogo.alt = '';
+      brandLogo.setAttribute('aria-hidden', 'true');
+      brand.appendChild(brandLogo);
     }
 
     const brandTextNode = document.createElement('span');
@@ -309,7 +360,7 @@
      Each function returns an SVG string used inside .meep-section-icon
      ----------------------------------------------------------------------- */
   function svg(paths) {
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
       'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
   }
 

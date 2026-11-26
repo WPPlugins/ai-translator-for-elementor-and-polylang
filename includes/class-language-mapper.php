@@ -213,6 +213,14 @@ class AITRFOEL_Language_Mapper {
                 return $code;
             }
         }
+        // Third pass: normalize parentheses and punctuation (e.g. 'Chinese (Simplified)' vs 'Chinese Simplified')
+        $norm_input = preg_replace('/\s+/', ' ', strtolower(trim(str_replace(['(', ')', '-', '_'], ' ', $name))));
+        foreach (self::$language_map as $code => $mapped_name) {
+            $norm_mapped = preg_replace('/\s+/', ' ', strtolower(trim(str_replace(['(', ')', '-', '_'], ' ', $mapped_name))));
+            if ($norm_mapped === $norm_input) {
+                return $code;
+            }
+        }
         return null;
     }
 
@@ -474,6 +482,18 @@ class AITRFOEL_Language_Mapper {
      * @param int $width Flag width in pixels (used for fallback CDN sizing)
      * @return string Flag image URL
      */
+    /**
+     * Flag URL for a country code: bundled SVG first, CDN only for flags we don't ship.
+     */
+    public static function get_flag_url_for_country($country_code, $width = 40) {
+        $country_code = strtolower(preg_replace('/[^a-z]/i', '', (string) $country_code));
+        $local_file = 'assets/img/flags/' . $country_code . '.svg';
+        if ($country_code && defined('AITRFOEL_PLUGIN_DIR') && file_exists(AITRFOEL_PLUGIN_DIR . $local_file)) {
+            return AITRFOEL_PLUGIN_URL . $local_file;
+        }
+        return 'https://flagcdn.com/w' . max(20, intval($width)) . '/' . $country_code . '.png';
+    }
+
     public static function get_flag_url($lang_code, $width = 24) {
         $country_code = self::get_country_code($lang_code);
         $local_file = 'assets/img/flags/' . $country_code . '.svg';

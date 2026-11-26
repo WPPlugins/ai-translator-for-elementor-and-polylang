@@ -1,4 +1,4 @@
-﻿// NUCLEAR: Ultra-aggressive Elementor bar removal
+// NUCLEAR: Ultra-aggressive Elementor bar removal
 (function() {
     function nukeElementorBar() {
         const selectors = [
@@ -178,6 +178,18 @@ jQuery(document).ready(function($) {
             childList: true,
             subtree: true
         });
+    }
+
+    // Normalize AJAX URL to match current origin/port (prevents CORS on custom LocalWP ports)
+    if (typeof aitrfoel_ajax !== 'undefined' && aitrfoel_ajax.ajax_url && window.location && window.location.origin) {
+        try {
+            var parsedUrl = new URL(aitrfoel_ajax.ajax_url, window.location.origin);
+            if (parsedUrl.hostname === window.location.hostname && parsedUrl.port !== window.location.port) {
+                parsedUrl.port = window.location.port;
+                parsedUrl.protocol = window.location.protocol;
+                aitrfoel_ajax.ajax_url = parsedUrl.toString();
+            }
+        } catch (e) {}
     }
 
     const fetchBtn = $('#aitrfoel-fetch-strings-button');
@@ -363,7 +375,7 @@ jQuery(document).ready(function($) {
                     if (errorData && errorData.type && (errorData.type === 'cooldown' || errorData.type === 'limit_reached' || errorData.type === 'insufficient_words')) {
                         // Show cooldown/limit popup with countdown timer
                         if (typeof EAT_LicenseHelper !== 'undefined' && EAT_LicenseHelper.showCooldownPopup) {
-                            EAT_LicenseHelper.showCooldownPopup(errorData.words_used || 0, errorData.word_limit || 1800, errorData);
+                            EAT_LicenseHelper.showCooldownPopup(errorData.words_used || 0, errorData.word_limit || 7200, errorData);
                         } else {
                             // Fallback to alert
                             alert(errorData.message + '\n\nUpgrade at: ' + errorData.upgrade_url);
@@ -409,7 +421,7 @@ jQuery(document).ready(function($) {
                         // Check if this is a structured error
                         if (errorData && errorData.type && (errorData.type === 'cooldown' || errorData.type === 'limit_reached' || errorData.type === 'insufficient_words')) {
                             if (typeof EAT_LicenseHelper !== 'undefined' && EAT_LicenseHelper.showCooldownPopup) {
-                                EAT_LicenseHelper.showCooldownPopup(errorData.words_used || 0, errorData.word_limit || 1800, errorData);
+                                EAT_LicenseHelper.showCooldownPopup(errorData.words_used || 0, errorData.word_limit || 7200, errorData);
                             } else {
                                 alert(errorData.message);
                             }
@@ -490,7 +502,7 @@ jQuery(document).ready(function($) {
 
         const $btn = $(this);
         const originalText = $btn.text();
-        $btn.prop('disabled', true).text('🔄 Clearing...');
+        $btn.prop('disabled', true).text('Clearing...');
 
         $.ajax({
             url: aitrfoel_ajax.ajax_url,
@@ -501,13 +513,13 @@ jQuery(document).ready(function($) {
             },
             success: function(response) {
                 if (response.success) {
-                    alert('✅ ' + response.data.message);
+                    alert(response.data.message);
                 } else {
-                    alert('❌ Error: ' + (response.data?.message || 'Unknown error'));
+                    alert('Error: ' + (response.data?.message || 'Unknown error'));
                 }
             },
             error: function(xhr, status, error) {
-                alert('❌ Failed to clear cache: ' + error);
+                alert('Failed to clear cache: ' + error);
             },
             complete: function() {
                 $btn.prop('disabled', false).text(originalText);
@@ -703,7 +715,7 @@ jQuery(document).ready(function($) {
         let successHtml = `
             <div class="aitrfoel-translation-success">
                 <div class="aitrfoel-success-message">
-                    <strong>✅ ${data.message}</strong>
+                    <strong><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><polyline points="20 6 9 17 4 12"></polyline></svg>${data.message}</strong>
                     <p>"${translatedTitle}" has been created as a ${isDraft ? 'draft' : 'published page'}.</p>
                 </div>
                 <div class="aitrfoel-action-buttons">
@@ -712,7 +724,7 @@ jQuery(document).ready(function($) {
         // Preview button (always available)
         successHtml += `
             <button class="button button-primary aitrfoel-preview-btn" data-page-id="${data.translated_page_id}">
-                👁️ Preview Translation
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>Preview Translation
             </button>
         `;
         
@@ -720,7 +732,7 @@ jQuery(document).ready(function($) {
         if (isDraft) {
             successHtml += `
                 <button class="button button-secondary aitrfoel-publish-btn" data-page-id="${data.translated_page_id}">
-                    🚀 Publish Now
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4.5c1.45-1.47 4.5-2 4.5-2"></path><path d="M15 12v5s3.03-.55 4.5-2c1.47-1.45 2-4.5 2-4.5"></path></svg>Publish Now
                 </button>
             `;
         }
@@ -728,7 +740,7 @@ jQuery(document).ready(function($) {
         // Edit button
         successHtml += `
             <a href="${data.edit_url}" target="_blank" class="button button-secondary">
-                ✏️ Edit Page
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>Edit Page
             </a>
         `;
         
@@ -736,7 +748,7 @@ jQuery(document).ready(function($) {
         if (!isDraft) {
             successHtml += `
                 <a href="${data.view_url}" target="_blank" class="button button-secondary">
-                    🔗 View Live Page
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>View Live Page
                 </a>
             `;
         }
@@ -757,9 +769,14 @@ jQuery(document).ready(function($) {
         if (data.review_eligible) {
             successHtml += `
                 <div class="aitrfoel-review-prompt" style="margin-top: 15px; padding: 12px 16px; background: linear-gradient(135deg, #fef9e7, #fdf2d1); border: 1px solid #f0d78c; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                    <span style="font-size: 0.95em; color: #5a4e2f;">⭐ Enjoying Meep AI Translator? A quick review helps us a lot!</span>
+                    <span style="font-size: 0.95em; color: #5a4e2f; display: inline-flex; align-items: center; gap: 6px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b" stroke="#d97706" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        Enjoying Meep AI Translator? A quick review helps us a lot!
+                    </span>
                     <span style="white-space: nowrap;">
-                        <a href="https://wordpress.org/support/plugin/ai-translator-for-elementor-and-polylang/reviews/#new-post" target="_blank" class="button button-small button-primary" style="margin-right: 6px;">Leave a Review</a>
+                        <a href="https://wordpress.org/support/plugin/ai-translator-for-elementor-and-polylang/reviews/#new-post" target="_blank" class="button button-small button-primary" style="margin-right: 6px;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="#f59e0b" stroke="#d97706" stroke-width="1.5" style="vertical-align: -1px; margin-right: 3px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>Leave a Review
+                        </a>
                         <button type="button" class="button button-small aitrfoel-dismiss-review">No thanks</button>
                     </span>
                 </div>
@@ -807,7 +824,7 @@ jQuery(document).ready(function($) {
                     window.open(response.data.preview_url, '_blank');
                     
                     // Show success message
-                    showStatus(`Preview opened for "${response.data.title}" ✨`, 'info');
+                    showStatus(`Preview opened for "${response.data.title}"`, 'info');
                 } else {
                     showStatus('Failed to open preview: ' + (response.data?.message || 'Unknown error'), 'error');
                 }
@@ -816,7 +833,7 @@ jQuery(document).ready(function($) {
                 showStatus('Failed to open preview. Please try again.', 'error');
             },
             complete: function() {
-                button.prop('disabled', false).text('👁️ Preview Translation');
+                button.prop('disabled', false).html('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>Preview Translation');
             }
         });
     });
@@ -849,14 +866,14 @@ jQuery(document).ready(function($) {
                     // Replace publish button with view button
                     button.replaceWith(`
                         <a href="${response.data.view_url}" target="_blank" class="button button-secondary">
-                            🔗 View Live Page
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>View Live Page
                         </a>
                     `);
                     
                     // Update status details
-                    successDiv.find('.aitrfoel-translation-details').append('<br>• ✅ Published at: ' + new Date().toLocaleString());
+                    successDiv.find('.aitrfoel-translation-details').append('<br>• Published at: ' + new Date().toLocaleString());
                     
-                    showStatus(response.data.message + ' 🎉', 'success');
+                    showStatus(response.data.message, 'success');
                 } else {
                     showStatus('Failed to publish: ' + (response.data?.message || 'Unknown error'), 'error');
                 }
@@ -866,7 +883,7 @@ jQuery(document).ready(function($) {
             },
             complete: function() {
                 if (button.length) {
-                    button.prop('disabled', false).text('🚀 Publish Now');
+                    button.prop('disabled', false).html('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4.5c1.45-1.47 4.5-2 4.5-2"></path><path d="M15 12v5s3.03-.55 4.5-2c1.47-1.45 2-4.5 2-4.5"></path></svg>Publish Now');
                 }
             }
         });
@@ -883,32 +900,36 @@ jQuery(document).ready(function($) {
             return;
         }
 
-        // Простая версия без сложной логики
         let icon = '';
         let statusText = '';
         
+        let statusMessage = status.message;
         if (status.confidence === 'high') {
-            icon = '✅';
-            statusText = 'Full Support';
+            icon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+            statusText = 'Full support';
         } else if (status.confidence === 'medium') {
-            icon = '🟡';
-            statusText = 'Automatic Compatibility';
+            icon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+            statusText = 'Compatible';
         } else {
-            icon = '🔴';
-            statusText = 'Configuration Required';
+            // Low confidence is normal for Elementor/WooCommerce/Gutenberg sites —
+            // their content lives in post content/builder data, not theme meta fields.
+            // Present it calmly as optional, not as an error.
+            icon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+            statusText = 'Standard — no extra setup needed';
+            statusMessage = 'Your content is translated automatically. Adding custom meta keys below is optional, only needed if your theme stores text in custom fields.';
         }
 
         const fieldsCount = Array.isArray(status.detected_fields) ? status.detected_fields.length : Object.keys(status.detected_fields || {}).length;
         const fieldsArray = Array.isArray(status.detected_fields) ? status.detected_fields : Object.values(status.detected_fields || {}); // ИСПРАВЛЕНО: Object.values вместо Object.keys
-        
+
         const html = `
             <div style="padding: 15px; border: 1px solid #ddd; border-radius: 5px; background: #f9f9f9;">
                 <p><strong>${icon} Theme: ${status.theme_name} v${status.theme_version}</strong></p>
                 <p>Status: ${statusText}</p>
-                <p>Found fields: ${fieldsCount} 
+                <p>Found fields: ${fieldsCount}
                     ${fieldsCount > 0 ? '<span class="theme-fields-info" style="cursor: pointer; color: #0073aa; font-weight: bold; margin-left: 5px;" title="Show field list">[i]</span>' : ''}
                 </p>
-                <p><em>${status.message}</em></p>
+                <p><em>${statusMessage}</em></p>
             </div>
         `;
         
@@ -992,7 +1013,10 @@ jQuery(document).ready(function($) {
                             border-radius: 4px; 
                             cursor: pointer;
                             font-size: 12px;
-                        ">📋 Copy all fields</button>
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 5px;
+                        "><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy all fields</button>
                     </div>
                     
                     <div style="border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: #f9f9f9;">
@@ -1028,9 +1052,9 @@ jQuery(document).ready(function($) {
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(fieldsText).then(function() {
                     // Success animation
-                    $btn.addClass('copied').text('✅ Copied!');
+                    $btn.addClass('copied').html('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!');
                     setTimeout(() => {
-                        $btn.removeClass('copied').text('📋 Copy all fields').prop('disabled', false);
+                        $btn.removeClass('copied').html('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy all fields').prop('disabled', false);
                     }, 2000);
                 }).catch(function(err) {
                     console.log('Clipboard API failed, using fallback:', err);
@@ -1063,9 +1087,9 @@ jQuery(document).ready(function($) {
             const successful = document.execCommand('copy');
             if (successful) {
                 // Success animation
-                $btn.addClass('copied').text('✅ Copied!');
+                $btn.addClass('copied').html('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!');
                 setTimeout(() => {
-                    $btn.removeClass('copied').text('📋 Copy all fields').prop('disabled', false);
+                    $btn.removeClass('copied').html('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy all fields').prop('disabled', false);
                 }, 2000);
             } else {
                 throw new Error('execCommand returned false');
@@ -1073,9 +1097,9 @@ jQuery(document).ready(function($) {
         } catch (err) {
             console.log('Fallback copy failed:', err);
             // Error animation
-            $btn.addClass('error').text('❌ Copy error');
+            $btn.addClass('error').html('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> Copy error');
             setTimeout(() => {
-                $btn.removeClass('error').text('📋 Copy all fields').prop('disabled', false);
+                $btn.removeClass('error').html('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy all fields').prop('disabled', false);
             }, 3000);
         }
         
@@ -1084,7 +1108,7 @@ jQuery(document).ready(function($) {
 
     // Function to trigger the diagnosis via AJAX
     function diagnoseTheme() {
-        diagnoseBtn.prop('disabled', true).text('🔍 Checking...');
+        diagnoseBtn.prop('disabled', true).html('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>Checking...');
         themeStatusWrapper.html('<p><i>Running compatibility check...</i></p>');
 
         const ajaxData = {
@@ -1107,7 +1131,7 @@ jQuery(document).ready(function($) {
                 themeStatusWrapper.html('<p style="color: red;">AJAX request failed. Check browser console for details.</p>');
             },
             complete: function() {
-                diagnoseBtn.prop('disabled', false).text('🔍 Re-check Compatibility');
+                diagnoseBtn.prop('disabled', false).html('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>Re-check Compatibility');
             }
         });
     }
@@ -1123,7 +1147,7 @@ jQuery(document).ready(function($) {
         }
         
         const $estimateBtn = $('#aitrfoel-estimate-cost-btn');
-        $estimateBtn.prop('disabled', true).text('💰 Calculating...');
+        $estimateBtn.prop('disabled', true).html('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>Calculating...');
         
         $.ajax({
             url: aitrfoel_ajax.ajax_url,
@@ -1145,7 +1169,7 @@ jQuery(document).ready(function($) {
                 showStatus('Failed to estimate cost: ' + error, 'error');
             },
             complete: function() {
-                $estimateBtn.prop('disabled', false).text('💰 Estimate Cost');
+                $estimateBtn.prop('disabled', false).html('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>Estimate Cost');
             }
         });
     }
@@ -1160,7 +1184,10 @@ jQuery(document).ready(function($) {
                 background: #f0f8ff; 
                 margin: 10px 0;
             ">
-                <h4 style="margin: 0 0 10px 0; color: #0073aa;">💰 Translation Cost Estimate</h4>
+                <h4 style="margin: 0 0 10px 0; color: #0073aa; display: inline-flex; align-items: center; gap: 6px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0073aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                    Translation Cost Estimate
+                </h4>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div><strong>Estimated Cost:</strong> ${data.cost}</div>
                     <div><strong>Word Count:</strong> ${data.breakdown.word_count} words</div>
